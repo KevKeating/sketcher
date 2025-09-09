@@ -46,6 +46,10 @@ jobs:
       - name: Determine build type
         run: echo BUILD_TYPE=${{ matrix.build-output == 'memtest' && 'Debug' || 'Release' }} >> "$GITHUB_ENV"
 
+      - name: Determine compiler
+        if: matrix.os == 'macos-latest'
+        run: echo CXX=clang++ >> "$GITHUB_ENV"
+
       - name: Read external/versions.json
         run: |
           {
