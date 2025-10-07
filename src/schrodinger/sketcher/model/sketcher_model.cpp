@@ -40,6 +40,8 @@ std::vector<ModelKey> get_model_keys()
         ModelKey::MONOMER_TOOL_TYPE,
         ModelKey::AMINO_ACID,
         ModelKey::NUCLEIC_ACID,
+        ModelKey::ALLOWED_INTERFACE_TYPE,
+        ModelKey::CURRENT_INTERFACE_TYPE,
     };
 }
 

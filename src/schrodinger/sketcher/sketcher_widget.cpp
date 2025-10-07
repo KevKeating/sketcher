@@ -443,11 +443,14 @@ void SketcherWidget::setInterfaceType(bool allow_monomeric, bool allow_atomistic
 {
     InterfaceType interface_type = InterfaceType::ATOMISTIC_OR_MONOMERIC;
     if (!allow_monomeric) {
+        std::cout << "atomistic\n";
         interface_type = InterfaceType::ATOMISTIC;
     } else if (!allow_atomistic) {
+        std::cout << "monomeric\n";
         interface_type = InterfaceType::MONOMERIC;
     }
-    m_sketcher_model->setValue(ModelKey::ALLOWED_INTERFACE_TYPE, interface_type);
+    std::cout << "interface_type = " << static_cast<int>(interface_type) << "\n";
+    // m_sketcher_model->setValue(ModelKey::ALLOWED_INTERFACE_TYPE, interface_type);
 }
 
 std::string SketcherWidget::getClipboardContents() const

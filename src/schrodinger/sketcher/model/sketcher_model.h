@@ -295,6 +295,7 @@ enum class MonomerToolType {
     NUCLEIC_ACID,
 };
 
+// TODO: rename to StdAminoAcid
 enum class AminoAcid {
     ALA,
     ARG,
@@ -319,6 +320,7 @@ enum class AminoAcid {
     UNK,
 };
 
+// TODO: rename to StdNucleicAcid
 enum class NucleicAcid {
     A,
     U,
@@ -337,6 +339,9 @@ enum class NucleicAcid {
     dRP,
 };
 
+// TODO: move this someplace public so we can use it as an argument for
+//       SketcherWidget ctor
+// TODO: make this into bit flags?
 enum class InterfaceType {
     ATOMISTIC,
     MONOMERIC,

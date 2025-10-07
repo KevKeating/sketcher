@@ -9,6 +9,8 @@
 #include <emscripten/bind.h>
 #endif
 
+#include <iostream>
+
 #include <QApplication>
 #include <QFile>
 
@@ -129,6 +131,7 @@ int main(int argc, char** argv)
 #ifdef SKETCHER_STATIC_DEFINE
     Q_INIT_RESOURCE(sketcher);
 #endif
+    std::cout << "Instantiated application\n";
 
 #ifdef __EMSCRIPTEN__
     // Only apply this stylesheet for the WASM build
@@ -140,7 +143,13 @@ int main(int argc, char** argv)
 #else
     SketcherWidget sk;
 #endif
+    // TODO: enable monomeric Sketcher based on a command-line option or an
+    //       environment variable
+    std::cout << "Instantiated SketcherWidget\n";
 
     sk.show();
-    return application.exec();
+    std::cout << "Showed SketcherWidget\n";
+    auto retval = application.exec();
+    std::cout << "retval = " << retval << "\n";
+    return retval;
 }
