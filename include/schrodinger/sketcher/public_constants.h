@@ -22,5 +22,15 @@ enum class SelectionTool {
     FRAGMENT,
 };
 
+typedef uint8_t InterfaceType_t;
+namespace InterfaceType
+{
+enum : InterfaceType_t { // clang-format off
+    ATOMISTIC = 1 << 0,
+    MONOMERIC = 1 << 1,
+    ATOMISTIC_OR_MONOMERIC = ATOMISTIC | MONOMERIC,
+};
+}
+
 } // namespace sketcher
 } // namespace schrodinger

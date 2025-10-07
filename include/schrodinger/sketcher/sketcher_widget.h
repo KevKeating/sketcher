@@ -107,7 +107,7 @@ class SKETCHER_API SketcherWidget : public QWidget
      */
     bool isEmpty() const;
 
-    void setInterfaceType(bool allow_monomeric = false, bool allow_atomistic = true);
+    void setInterfaceType(InterfaceType interface_type);
 
     /**
      * Enable select-only mode, which removes the toolbars and limits user
