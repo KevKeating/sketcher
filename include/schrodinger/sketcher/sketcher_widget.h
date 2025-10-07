@@ -64,7 +64,7 @@ class SKETCHER_API SketcherWidget : public QWidget
     Q_OBJECT
 
   public:
-    SketcherWidget(QWidget* parent = nullptr, bool allow_monomeric = false, bool allow_atomistic = true);
+    SketcherWidget(QWidget* parent = nullptr, const InterfaceType interface_type = InterfaceType::ATOMISTIC);
     ~SketcherWidget();
 
     /**
@@ -107,7 +107,7 @@ class SKETCHER_API SketcherWidget : public QWidget
      */
     bool isEmpty() const;
 
-    void setInterfaceType(InterfaceType interface_type);
+    void setInterfaceType(const InterfaceType interface_type);
 
     /**
      * Enable select-only mode, which removes the toolbars and limits user

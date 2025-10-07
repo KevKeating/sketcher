@@ -90,7 +90,7 @@ ModelObjsByType::ModelObjsByType(
 {
 }
 
-SketcherWidget::SketcherWidget(QWidget* parent, bool allow_monomeric, bool allow_atomistic) :
+SketcherWidget::SketcherWidget(QWidget* parent, const InterfaceType interface_type) :
     QWidget(parent),
     m_undo_stack(new QUndoStack(this)),
     m_mol_model(new MolModel(m_undo_stack))
@@ -100,7 +100,7 @@ SketcherWidget::SketcherWidget(QWidget* parent, bool allow_monomeric, bool allow
     // This is controlled by the order in which parent relationships
     // are defined.
     m_mol_model->setParent(this);
-    setInterfaceType(allow_monomeric, allow_atomistic);
+    setInterfaceType(interface_type);
 
     m_ui.reset(new Ui::SketcherWidgetForm());
     m_ui->setupUi(this);
@@ -439,18 +439,10 @@ QSet<const RDKit::Bond*> SketcherWidget::getSelectedBonds() const
     return QSet(bonds_from_copy.begin(), bonds_from_copy.end());
 }
 
-void SketcherWidget::setInterfaceType(bool allow_monomeric, bool allow_atomistic)
+void SketcherWidget::setInterfaceType(InterfaceType interface_type)
 {
-    InterfaceType interface_type = InterfaceType::ATOMISTIC_OR_MONOMERIC;
-    if (!allow_monomeric) {
-        std::cout << "atomistic\n";
-        interface_type = InterfaceType::ATOMISTIC;
-    } else if (!allow_atomistic) {
-        std::cout << "monomeric\n";
-        interface_type = InterfaceType::MONOMERIC;
-    }
-    std::cout << "interface_type = " << static_cast<int>(interface_type) << "\n";
-    // m_sketcher_model->setValue(ModelKey::ALLOWED_INTERFACE_TYPE, interface_type);
+    // std::cout << "interface_type = " << static_cast<int>(interface_type) << "\n";
+    m_sketcher_model->setValue(ModelKey::ALLOWED_INTERFACE_TYPE, interface_type);
 }
 
 std::string SketcherWidget::getClipboardContents() const

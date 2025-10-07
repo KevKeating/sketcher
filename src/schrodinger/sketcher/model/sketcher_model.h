@@ -339,15 +339,6 @@ enum class NucleicAcid {
     dRP,
 };
 
-// TODO: move this someplace public so we can use it as an argument for
-//       SketcherWidget ctor
-// TODO: make this into bit flags?
-enum class InterfaceType {
-    ATOMISTIC,
-    MONOMERIC,
-    ATOMISTIC_OR_MONOMERIC,
-};
-
 /**
  * @return Every element of `ModelKey`.
  */
