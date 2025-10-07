@@ -5,6 +5,7 @@
 #include "schrodinger/sketcher/definitions.h"
 #include "schrodinger/sketcher/widget/sketcher_view.h"
 
+class QAbstractButton;
 class QWidget;
 
 namespace Ui
@@ -29,6 +30,7 @@ class SKETCHER_API SketcherSideBar : public SketcherView
     ~SketcherSideBar();
 
     void setModel(SketcherModel* model) override;
+    void updateWidgetsEnabled() override;
 
   signals:
     void selectAllRequested();
@@ -37,6 +39,8 @@ class SKETCHER_API SketcherSideBar : public SketcherView
 
   protected:
     std::unique_ptr<Ui::SketcherSideBar> ui;
+    
+    void onAtomisticOrMonomerButtonClicked(QAbstractButton* button);
 };
 
 } // namespace sketcher

@@ -54,6 +54,7 @@ class FileExportDialog;
 class FileSaveImageDialog;
 class RenderingSettingsDialog;
 class ModelObjsByType;
+enum class MoleculeType;
 
 /**
  * Sketcher widget meant for use in LiveDesign and Maestro.
@@ -63,7 +64,7 @@ class SKETCHER_API SketcherWidget : public QWidget
     Q_OBJECT
 
   public:
-    SketcherWidget(QWidget* parent = nullptr);
+    SketcherWidget(QWidget* parent = nullptr, bool allow_monomeric = false, bool allow_atomistic = true);
     ~SketcherWidget();
 
     /**
@@ -105,6 +106,8 @@ class SKETCHER_API SketcherWidget : public QWidget
      * @return true if the scene is empty
      */
     bool isEmpty() const;
+
+    void setInterfaceType(bool allow_monomeric = false, bool allow_atomistic = true);
 
     /**
      * Enable select-only mode, which removes the toolbars and limits user

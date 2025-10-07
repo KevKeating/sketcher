@@ -90,7 +90,7 @@ ModelObjsByType::ModelObjsByType(
 {
 }
 
-SketcherWidget::SketcherWidget(QWidget* parent) :
+SketcherWidget::SketcherWidget(QWidget* parent, bool allow_monomeric, bool allow_atomistic) :
     QWidget(parent),
     m_undo_stack(new QUndoStack(this)),
     m_mol_model(new MolModel(m_undo_stack))
@@ -100,6 +100,7 @@ SketcherWidget::SketcherWidget(QWidget* parent) :
     // This is controlled by the order in which parent relationships
     // are defined.
     m_mol_model->setParent(this);
+    setInterfaceType(allow_monomeric, allow_atomistic);
 
     m_ui.reset(new Ui::SketcherWidgetForm());
     m_ui->setupUi(this);
@@ -436,6 +437,17 @@ QSet<const RDKit::Bond*> SketcherWidget::getSelectedBonds() const
     auto bonds_from_copy =
         get_corresponding_bonds_from_different_mol(bonds, mol.get());
     return QSet(bonds_from_copy.begin(), bonds_from_copy.end());
+}
+
+void SketcherWidget::setInterfaceType(bool allow_monomeric, bool allow_atomistic)
+{
+    InterfaceType interface_type = InterfaceType::ATOMISTIC_OR_MONOMERIC;
+    if (!allow_monomeric) {
+        interface_type = InterfaceType::ATOMISTIC;
+    } else if (!allow_atomistic) {
+        interface_type = InterfaceType::MONOMERIC;
+    }
+    m_sketcher_model->setValue(ModelKey::ALLOWED_INTERFACE_TYPE, interface_type);
 }
 
 std::string SketcherWidget::getClipboardContents() const

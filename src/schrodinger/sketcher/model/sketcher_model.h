@@ -258,6 +258,7 @@ enum class DrawTool {
     ENUMERATION,
     RESIDUE,
     EXPLICIT_H,
+    MONOMER,
 };
 
 /**
@@ -282,6 +283,64 @@ enum class ModelKey {
     ATOM_QUERY,
     RGROUP_NUMBER,
     RESIDUE_TYPE,
+    MONOMER_TOOL_TYPE,
+    AMINO_ACID,
+    NUCLEIC_ACID,
+    ALLOWED_INTERFACE_TYPE,
+    CURRENT_INTERFACE_TYPE,
+};
+
+enum class MonomerToolType {
+    AMINO_ACID,
+    NUCLEIC_ACID,
+};
+
+enum class AminoAcid {
+    ALA,
+    ARG,
+    ASN,
+    ASP,
+    CYS,
+    GLN,
+    GLU,
+    GLY,
+    HIS,
+    ILE,
+    LEU,
+    LYS,
+    MET,
+    PHE,
+    PRO,
+    SER,
+    THR,
+    TRP,
+    TYR,
+    VAL,
+    UNK,
+};
+
+enum class NucleicAcid {
+    A,
+    U,
+    G,
+    C,
+    N,
+    R,
+    P,
+    RP,
+    dA,
+    dT,
+    dG,
+    dC,
+    dN,
+    dR,
+    dRP,
+};
+
+enum class InterfaceType {
+    ATOMISTIC,
+    MONOMERIC,
+    ATOMISTIC_OR_MONOMERIC,
 };
 
 /**
@@ -327,6 +386,11 @@ class SKETCHER_API SketcherModel : public QObject
     EnumerationTool getEnumerationTool() const;
     Element getElement() const;
     AtomQuery getAtomQuery() const;
+    MonomerToolType getMonomerToolType() const;
+    AminoAcid getAminoAcidTool() const;
+    NucleicAcid getNucleicAcidTool() const;
+    InterfaceType getAllowedInterfaceType() const;
+    InterfaceType getCurrentInterfaceType() const;
 
     /**
      * Retrieve data from the model's state map.
