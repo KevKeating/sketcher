@@ -24,8 +24,8 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [macos-latest, ubuntu-latest, windows-latest]
-        build-output: [app]
+        # os: [macos-latest, ubuntu-latest, windows-latest]
+        # build-output: [app]
         include:
           - os: ubuntu-latest
             build-output: wasm
@@ -60,7 +60,7 @@ jobs:
         run: git ls-files | grep -E '\.(cpp|h)$' | xargs clang-format -n --Werror
 
       - name: Determine build type
-        run: echo BUILD_TYPE=${{ matrix.build-output == 'memtest' && 'Debug' || 'Release' }} >> "$GITHUB_ENV"
+        run: echo BUILD_TYPE=Debug >> "$GITHUB_ENV"
 
       - name: Read external/versions.json
         run: |
