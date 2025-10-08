@@ -100,7 +100,6 @@ SketcherWidget::SketcherWidget(QWidget* parent, const InterfaceType interface_ty
     // This is controlled by the order in which parent relationships
     // are defined.
     m_mol_model->setParent(this);
-    setInterfaceType(interface_type);
 
     m_ui.reset(new Ui::SketcherWidgetForm());
     m_ui->setupUi(this);
@@ -237,6 +236,8 @@ SketcherWidget::SketcherWidget(QWidget* parent, const InterfaceType interface_ty
     m_scene->addItem(m_watermark_item);
     connect(m_scene, &Scene::changed, this, &SketcherWidget::updateWatermark);
     connect(m_ui->view, &View::resized, this, &SketcherWidget::updateWatermark);
+
+    setInterfaceType(interface_type);
 }
 
 SketcherWidget::~SketcherWidget() = default;
