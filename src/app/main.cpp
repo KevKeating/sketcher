@@ -132,6 +132,7 @@ int main(int argc, char** argv)
     // Only apply this stylesheet for the WASM build
     apply_stylesheet(application);
     auto& sk = get_sketcher_instance();
+    sk.setAttribute(Qt::WA_AlwaysShowToolTips);
     QObject::connect(&sk, &SketcherWidget::moleculeChanged, &sketcher_changed);
     QObject::connect(&sk, &SketcherWidget::representationChanged,
                      &sketcher_changed);
