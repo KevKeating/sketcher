@@ -16,7 +16,10 @@ SketcherWelcomeDialog::SketcherWelcomeDialog(QWidget* parent) :
     connect(m_ui->ok_btn, &QPushButton::clicked, this,
             &SketcherWelcomeDialog::accept);
     connect(m_ui->do_not_show_cb, &QCheckBox::stateChanged, this,
-            &SketcherWelcomeDialog::doNotShowCheckboxStateChanged);
+            [this](Qt::CheckState checked) {
+                doNotShowCheckboxStateChanged(checked ==
+                                              Qt::CheckState::Checked);
+            });
 }
 
 SketcherWelcomeDialog::~SketcherWelcomeDialog() = default;

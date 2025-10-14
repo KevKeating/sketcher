@@ -27,7 +27,7 @@ FileSaveImagePopup::FileSaveImagePopup(QWidget* parent, SketcherModel* model) :
             &FileSaveImagePopup::renderOptionsChanged);
     connect(m_ui->height_sb, &QSpinBox::valueChanged, this,
             &FileSaveImagePopup::renderOptionsChanged);
-    connect(m_ui->transparent_cb, &QCheckBox::stateChanged, this,
+    connect(m_ui->transparent_cb, &QCheckBox::checkStateChanged, this,
             &FileSaveImagePopup::renderOptionsChanged);
     connect(model, &SketcherModel::backgroundColorChanged, this,
             [this](const QColor& color) {
