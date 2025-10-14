@@ -52,8 +52,8 @@ runs:
 
     # save the dependency build even if the rest of the build fails
     - name: Save dependency to cache
-      uses: actions/cache@v4
-      id: cache-check
+      if: steps.cache-check.outputs.cache-hit != 'true'
+      uses: actions/cache/save@v4
       with:
         path: ${{ steps.vars.outputs.lib-dir }}
         key: ${{ inputs.library }}-${{ inputs.version }}-${{ runner.os }}-${{ matrix.build-output }}${{ inputs.host-build == 'true' && '-host' || '' }}-${{ hashFiles('external/CMakeLists.txt') }}
