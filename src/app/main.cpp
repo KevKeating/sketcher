@@ -17,11 +17,11 @@
 #include "schrodinger/sketcher/sketcher_widget.h"
 
 #ifdef SKETCHER_STATIC_DEFINE
-#include <QtPlugin>
-Q_IMPORT_PLUGIN(qfreetype)
-Q_IMPORT_PLUGIN(qjpeg)
-Q_IMPORT_PLUGIN(qpng)
-#endif
+// #include <QtPlugin>
+// Q_IMPORT_PLUGIN(qfreetype)
+// Q_IMPORT_PLUGIN(qjpeg)
+// Q_IMPORT_PLUGIN(qpng)
+// #endif
 
 using schrodinger::rdkit_extensions::Format;
 using schrodinger::sketcher::ImageFormat;
