@@ -16,6 +16,12 @@
 #include "schrodinger/sketcher/image_generation.h"
 #include "schrodinger/sketcher/sketcher_widget.h"
 
+#ifdef SKETCHER_STATIC_DEFINE
+Q_IMPORT_PLUGIN(qfreetype)
+Q_IMPORT_PLUGIN(qjpeg)
+Q_IMPORT_PLUGIN(qpng)
+#endif
+
 using schrodinger::rdkit_extensions::Format;
 using schrodinger::sketcher::ImageFormat;
 using schrodinger::sketcher::SketcherWidget;
