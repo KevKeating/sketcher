@@ -266,4 +266,7 @@ ExternalProject_Add(
     -DQT_BUILD_TESTS=OFF
     -DQT_FEATURE_brotli=OFF
     -DQT_FEATURE_sql=OFF
+    -DQT_FEATURE_system_jpeg=OFF
+    -DQT_FEATURE_system_png=OFF
+    -DQT_FEATURE_system_freetype=OFF
     ${EXTRA_QT_CMAKE_ARGS})
