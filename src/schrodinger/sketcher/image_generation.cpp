@@ -425,7 +425,7 @@ template <typename T> void save_image_file(const T& input,
     QFile file(path);
     bool success = file.open(QIODevice::WriteOnly);
     if (!success) {
-        throw std : runtime_error("Could not open file");
+        throw std::runtime_error("Could not open file");
     }
     file.write(data);
 }
