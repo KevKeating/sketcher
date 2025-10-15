@@ -84,13 +84,19 @@ jobs:
             echo "${{ github.workspace }}/build/external/emsdk-${{ env.VERSION }}/emsdk/" >> $GITHUB_PATH && \
             echo "${{ github.workspace }}/build/external/emsdk-${{ env.VERSION }}/emsdk/upstream/emscripten" >> $GITHUB_PATH
 
-      - name: Activate Fortran
+      - name: Install Fortran
         if: matrix.os == 'windows-latest'
+        id: install-fortran
         uses: fortran-lang/setup-fortran@v1
         with:
           compiler: 'intel'
           version: '2025.2'
-        
+          update-environment: false
+
+      - name: Activate Fortran
+        if: matrix.os == 'windows-latest'
+        run: echo FC=${{ steps.install-fortran.outputs.fc }} >> $GITHUB_ENV
+
       - name: Activate MSVC
         if: matrix.os == 'windows-latest'
         uses: ilammy/msvc-dev-cmd@v1
