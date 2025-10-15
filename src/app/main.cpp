@@ -16,7 +16,7 @@
 #include "schrodinger/sketcher/image_generation.h"
 #include "schrodinger/sketcher/sketcher_widget.h"
 
-#ifdef SKETCHER_STATIC_DEFINE
+// #ifdef SKETCHER_STATIC_DEFINE
 // #include <QtPlugin>
 // Q_IMPORT_PLUGIN(qfreetype)
 // Q_IMPORT_PLUGIN(qjpeg)
