@@ -101,8 +101,8 @@ function(setup_target TARGET)
     target_compile_definitions(
       ${TARGET} PRIVATE RDKIT_EXTENSIONS_STATIC_DEFINE SKETCHER_STATIC_DEFINE
                         BOOST_BEAST_HEADER_ONLY)
-    if(WIN32)
-      target_link_libraries(${TARGET} PUBLIC -static)
+    if(WIN32 && NOT MSVC)
+      target_link_options(${TARGET} PUBLIC -static)
     endif()
   endif()
   if(EMSCRIPTEN)
