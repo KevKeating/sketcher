@@ -88,7 +88,7 @@ jobs:
         run: |
             ${{ matrix.build-output == 'wasm' && 'emcmake ' || '' }}\
                 cmake -B build/external/ -S external/ -G Ninja \
-                -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }}
+                -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }} sfkjghxsfjfhsal
 
       - name: Configure host Qt CMake
         if: matrix.build-output == 'wasm'
