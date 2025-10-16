@@ -4,6 +4,9 @@ description: >
   compiler, since gfortran doesn't work with MSVC. This action should only be
   run on Windows runners.
 
+default:
+  shell: bash
+
 runs:
   using: "composite"
   steps:
