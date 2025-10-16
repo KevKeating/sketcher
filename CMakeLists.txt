@@ -102,13 +102,7 @@ function(setup_target TARGET)
       ${TARGET} PRIVATE RDKIT_EXTENSIONS_STATIC_DEFINE SKETCHER_STATIC_DEFINE
                         BOOST_BEAST_HEADER_ONLY)
     if(WIN32)
-      if (MSVC)
-        set_property(TARGET ${TARGET}
-                     PROPERTY MSVC_RUNTIME_LIBRARY
-                     "MultiThreaded$<$<CONFIG:Debug>:Debug>")
-      else()
-        target_link_options(${TARGET} PUBLIC -static)
-      endif()
+      target_link_options(${TARGET} PUBLIC -static)
     endif()
   endif()
   if(EMSCRIPTEN)
@@ -191,6 +185,7 @@ target_link_libraries(
 configure_file(${PROJECT_SOURCE_DIR}/include/schrodinger/sketcher/version.h.in
                ${PROJECT_BINARY_DIR}/include/schrodinger/sketcher/version.h)
 enable_qt_moc(${SKETCHER_TARGET})
+# qt_import_plugins(${SKETCHER_TARGET} INCLUDE_BY_TYPE imageformats Qt::QJpegPlugin)
 
 # Standalone executable
 set(APP_TARGET sketcher_app)
@@ -211,6 +206,7 @@ target_link_libraries(
                         Qt6::Widgets
                         ${SKETCHER_TARGET}
                         ${EXTRA_SKETCHER_APP_LINK_FLAGS})
+# qt_import_plugins(${APP_TARGET} INCLUDE_BY_TYPE imageformats Qt::QJpegPlugin)
 
 # Tests
 if(ENABLE_TESTING)
