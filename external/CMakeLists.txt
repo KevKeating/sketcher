@@ -40,6 +40,14 @@ else()
   if(LINUX)
     list(APPEND EXTRA_QT_CMAKE_ARGS -DFEATURE_xlib=ON -DFEATURE_xcb=ON
          -DFEATURE_xcb_xlib=ON -DFEATURE_xkbcommon=ON)
+  else(WIN32 AND NOT BUILD_SHARED_LIBS)
+    # If Qt uses the system versions of libjpeg, libpng, and freetype on
+    # Windows, it'll dynamically link to them
+    list(APPEND EXTRA_QT_CMAKE_ARGS
+        -DQT_FEATURE_system_jpeg=OFF
+        -DQT_FEATURE_system_png=OFF
+        -DQT_FEATURE_system_freetype=OFF)
+    
   endif()
 endif()
 
