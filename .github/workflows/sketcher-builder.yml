@@ -204,13 +204,11 @@ jobs:
           ${{ matrix.build-output == 'wasm' && 'emcmake ' || '' }}\
           cmake -B build -S . -G Ninja \
                 -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }} \
-                -DBUILD_SHARED_LIBS=OFF \
                 -DCMAKE_FIND_PACKAGE_PREFER_CONFIG=ON \
                 -DCMAKE_PREFIX_PATH="${{ env.CMAKE_PREFIX_PATH }}" \
                 ${{ matrix.build-output == 'wasm' && '-DENABLE_TESTING=OFF' || '' }}
 
       - name: Build
-        id: sketcher-build
         run: cmake --build build --verbose --config ${{ env.BUILD_TYPE }}
 
       - name: Create wasm tarball
@@ -242,7 +240,7 @@ jobs:
         uses: test-summary/action@v2
         with:
           paths: "build/junit-report.xml"
-        if: always() && steps.sketcher-build.outcome == 'success'
+        if: always()
 
       - name: Download sketcher executable
         if: matrix.build-output != 'wasm'

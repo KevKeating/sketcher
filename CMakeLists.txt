@@ -102,7 +102,7 @@ function(setup_target TARGET)
       ${TARGET} PRIVATE RDKIT_EXTENSIONS_STATIC_DEFINE SKETCHER_STATIC_DEFINE
                         BOOST_BEAST_HEADER_ONLY)
     if(WIN32)
-      target_link_options(${TARGET} PUBLIC -static)
+      target_link_libraries(${TARGET} PUBLIC -static)
     endif()
   endif()
   if(EMSCRIPTEN)
