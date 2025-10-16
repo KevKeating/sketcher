@@ -103,6 +103,8 @@ function(setup_target TARGET)
                         BOOST_BEAST_HEADER_ONLY)
     if(WIN32)
       if (MSVC)
+        # use the static version of the runtime library instead of the default
+        # shared version
         set_property(TARGET ${TARGET}
                      PROPERTY MSVC_RUNTIME_LIBRARY
                      "MultiThreaded$<$<CONFIG:Debug>:Debug>")
