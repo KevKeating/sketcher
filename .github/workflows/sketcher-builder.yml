@@ -84,6 +84,7 @@ jobs:
             echo "${{ github.workspace }}/build/external/emsdk-${{ env.VERSION }}/emsdk/" >> $GITHUB_PATH && \
             echo "${{ github.workspace }}/build/external/emsdk-${{ env.VERSION }}/emsdk/upstream/emscripten" >> $GITHUB_PATH
 
+    # TODO: move all of this code to a separate file?
       # gfortran doesn't work with MSVC, so we install ifx
       - name: Install Fortran
         if: matrix.os == 'windows-latest'
