@@ -4,9 +4,6 @@ description: >
   compiler, since gfortran doesn't work with MSVC. This action should only be
   run on Windows runners.
 
-default:
-  shell: bash
-
 runs:
   using: "composite"
   steps:
@@ -23,6 +20,7 @@ runs:
       # compiler. Instead, we manually set the Fortran compiler environment
       # variable here.
     - name: Activate Fortran
+      shell: bash
       run: echo FC=${{ steps.install-fortran.outputs.fc }} >> $GITHUB_ENV
 
     - name: Activate MSVC
