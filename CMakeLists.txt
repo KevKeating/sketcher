@@ -101,8 +101,14 @@ function(setup_target TARGET)
     target_compile_definitions(
       ${TARGET} PRIVATE RDKIT_EXTENSIONS_STATIC_DEFINE SKETCHER_STATIC_DEFINE
                         BOOST_BEAST_HEADER_ONLY)
-    if(WIN32 AND NOT MSVC)
-      target_link_options(${TARGET} PUBLIC -static)
+    if(WIN32)
+      if (MSVC)
+        set_property(TARGET ${TARGET}
+                     PROPERTY MSVC_RUNTIME_LIBRARY
+                     "MultiThreaded$<$<CONFIG:Debug>:Debug>")
+      else()
+        target_link_options(${TARGET} PUBLIC -static)
+      endif()
     endif()
   endif()
   if(EMSCRIPTEN)
