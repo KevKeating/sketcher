@@ -40,9 +40,6 @@ else()
   if(LINUX)
     list(APPEND EXTRA_QT_CMAKE_ARGS -DFEATURE_xlib=ON -DFEATURE_xcb=ON
          -DFEATURE_xcb_xlib=ON -DFEATURE_xkbcommon=ON)
-  elseif(MSVC)
-    list(APPEND EXTRA_QT_CMAKE_ARGS
-         -DCMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
   endif()
 endif()
 
@@ -60,6 +57,11 @@ if(CMAKE_FIND_ROOT_PATH)
   # emscripten is trying to prevent us from finding system libraries
   list(APPEND COMMON_EXTERNAL_PROJECT_CMAKE_ARGS
        -DCMAKE_FIND_ROOT_PATH=${CMAKE_CURRENT_BINARY_DIR})
+endif()
+if(MSVC)
+  # force MSVC to use the static linking runtime library
+  list(APPEND COMMON_EXTERNAL_PROJECT_CMAKE_ARGS
+       -DCMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
 endif()
 
 # Build fmt library
