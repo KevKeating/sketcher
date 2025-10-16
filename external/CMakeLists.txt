@@ -40,6 +40,9 @@ else()
   if(LINUX)
     list(APPEND EXTRA_QT_CMAKE_ARGS -DFEATURE_xlib=ON -DFEATURE_xcb=ON
          -DFEATURE_xcb_xlib=ON -DFEATURE_xkbcommon=ON)
+  elseif(MSVC)
+    list(APPEND EXTRA_QT_CMAKE_ARGS
+         -DCMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
   endif()
 endif()
 
