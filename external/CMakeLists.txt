@@ -61,7 +61,7 @@ endif()
 if(MSVC)
   # force MSVC to use the static linking runtime library
   list(APPEND COMMON_EXTERNAL_PROJECT_CMAKE_ARGS
-       -DCMAKE_MSVC_RUNTIME_LIBRARY="MultiThreaded$<$<CONFIG:Debug>:Debug>")
+       -DCMAKE_MSVC_RUNTIME_LIBRARY=MultiThreaded$<$<CONFIG:Debug>:Debug>)
 endif()
 
 # Build fmt library
