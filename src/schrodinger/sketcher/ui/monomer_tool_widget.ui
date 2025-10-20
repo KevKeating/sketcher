@@ -98,7 +98,7 @@
    <item>
     <widget class="QStackedWidget" name="amino_or_nucleic_stack">
      <property name="currentIndex">
-      <number>1</number>
+      <number>0</number>
      </property>
      <widget class="QWidget" name="nucleic_page">
       <layout class="QGridLayout" name="gridLayout_2">
@@ -218,7 +218,7 @@
         </widget>
        </item>
        <item row="4" column="1">
-        <widget class="QToolButton" name="rna_u_btn">
+        <widget class="QToolButton" name="na_u_btn">
          <property name="minimumSize">
           <size>
            <width>32</width>

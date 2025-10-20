@@ -83,23 +83,15 @@ MonomerToolWidget::MonomerToolWidget(QWidget* parent) :
             (ui->unk_btn, AminoAcid::UNK);
     m_button_nucleic_acid_bimap =
         boost::assign::list_of<ButtonNucleicAcidBimapType::relation>
-            (ui->rna_a_btn, NucleicAcid::A)
-            (ui->rna_u_btn, NucleicAcid::U)
-            (ui->rna_g_btn, NucleicAcid::G)
-            (ui->rna_c_btn, NucleicAcid::C)
-            (ui->rna_n_btn, NucleicAcid::N)
-            (ui->rna_r_btn, NucleicAcid::R)
-            (ui->rna_p_btn, NucleicAcid::P)
-            (ui->rna_r_p_btn, NucleicAcid::RP)
-            (ui->dna_a_btn, NucleicAcid::dA)
-            (ui->dna_t_btn, NucleicAcid::dT)
-            (ui->dna_g_btn, NucleicAcid::dG)
-            (ui->dna_c_btn, NucleicAcid::dC)
-            (ui->dna_n_btn, NucleicAcid::dN)
-            (ui->dna_r_btn, NucleicAcid::dR)
-            // the phosphate is the same for DNA or RNA
-            (ui->dna_p_btn, NucleicAcid::P)
-            (ui->dna_r_p_btn, NucleicAcid::dRP);
+            (ui->na_a_btn, NucleicAcid::A)
+            (ui->na_u_btn, NucleicAcid::U)
+            (ui->na_g_btn, NucleicAcid::G)
+            (ui->na_c_btn, NucleicAcid::C)
+            (ui->na_t_btn, NucleicAcid::T)
+            (ui->na_n_btn, NucleicAcid::N)
+            (ui->na_r_btn, NucleicAcid::R)
+            (ui->na_dr_btn, NucleicAcid::dR)
+            (ui->na_p_btn, NucleicAcid::P);
     // clang-format on
 
     connect(ui->amino_or_nucleic_group, &QButtonGroup::buttonClicked, this,

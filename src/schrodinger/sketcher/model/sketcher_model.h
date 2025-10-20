@@ -326,17 +326,11 @@ enum class NucleicAcid {
     U,
     G,
     C,
+    T,
     N,
     R,
     P,
-    RP,
-    dA,
-    dT,
-    dG,
-    dC,
-    dN,
     dR,
-    dRP,
 };
 
 /**
