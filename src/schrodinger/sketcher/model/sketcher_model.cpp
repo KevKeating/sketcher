@@ -40,6 +40,9 @@ std::vector<ModelKey> get_model_keys()
         ModelKey::MONOMER_TOOL_TYPE,
         ModelKey::AMINO_ACID,
         ModelKey::NUCLEIC_ACID,
+        ModelKey::RNA_NUCLEOTIDE_BASE,
+        ModelKey::DNA_NUCLEOTIDE_BASE,
+        ModelKey::CUSTOM_NUCLEOTIDE,
         ModelKey::ALLOWED_INTERFACE_TYPE,
         ModelKey::CURRENT_INTERFACE_TYPE,
     };
@@ -71,9 +74,14 @@ SketcherModel::SketcherModel(QObject* parent) : QObject(parent)
         {ModelKey::MONOMER_TOOL_TYPE, QVariant::fromValue(MonomerToolType::AMINO_ACID)},
         {ModelKey::AMINO_ACID, QVariant::fromValue(AminoAcid::ALA)},
         {ModelKey::NUCLEIC_ACID, QVariant::fromValue(NucleicAcid::A)},
+        // TODO: should these two be enums?
+        {ModelKey::RNA_NUCLEOTIDE_BASE, QString("A")},
+        {ModelKey::DNA_NUCLEOTIDE_BASE, QString("A")},
+        {ModelKey::CUSTOM_NUCLEOTIDE, QVariant::fromValue(std::tuple<QString, QString, QString>("R", "A", "P"))},
         {ModelKey::ALLOWED_INTERFACE_TYPE, QVariant::fromValue(InterfaceType::ATOMISTIC)},
         {ModelKey::CURRENT_INTERFACE_TYPE, QVariant::fromValue(InterfaceType::ATOMISTIC_OR_MONOMERIC)}
     };
+    // TODO: need RNA nucleotide base, DNA nucleotide base, and custom nucleotide base+sugar+phosphate
 
     connect(this, &SketcherModel::selectionChanged, this,
             &SketcherModel::onSelectionChanged);

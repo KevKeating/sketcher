@@ -286,16 +286,19 @@ enum class ModelKey {
     MONOMER_TOOL_TYPE,
     AMINO_ACID,
     NUCLEIC_ACID,
+    RNA_NUCLEOTIDE_BASE,
+    DNA_NUCLEOTIDE_BASE,
+    CUSTOM_NUCLEOTIDE,
     ALLOWED_INTERFACE_TYPE,
     CURRENT_INTERFACE_TYPE,
 };
 
+// TODO: remove Type from name?
 enum class MonomerToolType {
     AMINO_ACID,
     NUCLEIC_ACID,
 };
 
-// TODO: rename to StdAminoAcid
 enum class AminoAcid {
     ALA,
     ARG,
@@ -320,7 +323,6 @@ enum class AminoAcid {
     UNK,
 };
 
-// TODO: rename to StdNucleicAcid
 enum class NucleicAcid {
     A,
     U,
@@ -331,6 +333,9 @@ enum class NucleicAcid {
     R,
     P,
     dR,
+    RNA_NUCLEOTIDE,
+    DNA_NUCLEOTIDE,
+    CUSTOM_NUCLEOTIDE,
 };
 
 /**
