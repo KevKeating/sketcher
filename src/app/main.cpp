@@ -9,6 +9,7 @@
 #include <emscripten/bind.h>
 #endif
 
+#include <cstring>
 #include <iostream>
 
 #include <QApplication>
@@ -152,7 +153,7 @@ int main(int argc, char** argv)
     
     std::cout << "argc = " << argc << "\n";
     if (argc >= 2) std::cout << "argv[1] = " << argv[1] << "\n";
-    if (argc >= 2 && argv[1] == "--allow-monomeric") {
+    if (argc >= 2 && strcmp(argv[1], "--allow-monomeric") == 0) {
         std::cout << "Got --allow-monomeric\n";
         sk.setInterfaceType(schrodinger::sketcher::InterfaceType::ATOMISTIC_OR_MONOMERIC);
     }
