@@ -149,6 +149,14 @@ int main(int argc, char** argv)
 
     sk.show();
     std::cout << "Showed SketcherWidget\n";
+    
+    std::cout << "argc = " << argc << "\n";
+    if (argc >= 2) std::cout << "argv[1] = " << argv[1] << "\n";
+    if (argc >= 2 && argv[1] == "--allow-monomeric") {
+        std::cout << "Got --allow-monomeric\n";
+        sk.setInterfaceType(schrodinger::sketcher::InterfaceType::ATOMISTIC_OR_MONOMERIC);
+    }
+    
     auto retval = application.exec();
     std::cout << "retval = " << retval << "\n";
     return retval;
