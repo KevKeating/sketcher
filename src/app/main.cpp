@@ -132,7 +132,6 @@ int main(int argc, char** argv)
 #ifdef SKETCHER_STATIC_DEFINE
     Q_INIT_RESOURCE(sketcher);
 #endif
-    std::cout << "Instantiated application\n";
 
 #ifdef __EMSCRIPTEN__
     // Only apply this stylesheet for the WASM build
@@ -144,21 +143,13 @@ int main(int argc, char** argv)
 #else
     SketcherWidget sk;
 #endif
-    // TODO: enable monomeric Sketcher based on a command-line option or an
-    //       environment variable
-    std::cout << "Instantiated SketcherWidget\n";
-
     sk.show();
-    std::cout << "Showed SketcherWidget\n";
-    
-    std::cout << "argc = " << argc << "\n";
-    if (argc >= 2) std::cout << "argv[1] = " << argv[1] << "\n";
+    // check for the command line option to enable the monomeric tools
     if (argc >= 2 && strcmp(argv[1], "--allow-monomeric") == 0) {
-        std::cout << "Got --allow-monomeric\n";
-        sk.setInterfaceType(schrodinger::sketcher::InterfaceType::ATOMISTIC_OR_MONOMERIC);
+        sk.setInterfaceType(
+            schrodinger::sketcher::InterfaceType::ATOMISTIC_OR_MONOMERIC);
     }
-    
+
     auto retval = application.exec();
-    std::cout << "retval = " << retval << "\n";
     return retval;
 }
