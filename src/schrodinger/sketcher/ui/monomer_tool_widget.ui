@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>123</width>
+    <width>100</width>
     <height>236</height>
    </rect>
   </property>
@@ -36,8 +36,21 @@
      </property>
      <item>
       <widget class="QToolButton" name="amino_monomer_btn">
+       <property name="sizePolicy">
+        <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
+         <horstretch>0</horstretch>
+         <verstretch>0</verstretch>
+        </sizepolicy>
+       </property>
+       <property name="minimumSize">
+        <size>
+         <width>46</width>
+         <height>0</height>
+        </size>
+       </property>
        <property name="font">
         <font>
+         <pointsize>8</pointsize>
          <bold>true</bold>
         </font>
        </property>
@@ -57,8 +70,15 @@
      </item>
      <item>
       <widget class="QToolButton" name="nucleic_monomer_btn">
+       <property name="minimumSize">
+        <size>
+         <width>50</width>
+         <height>0</height>
+        </size>
+       </property>
        <property name="font">
         <font>
+         <pointsize>8</pointsize>
          <bold>true</bold>
         </font>
        </property>
@@ -97,8 +117,27 @@
        <property name="spacing">
         <number>0</number>
        </property>
-       <item row="1" column="0">
-        <widget class="QToolButton" name="rna_g_btn">
+       <item row="0" column="0" colspan="4">
+        <widget class="schrodinger::sketcher::ModularToolButton" name="na_rna_btn">
+         <property name="text">
+          <string/>
+         </property>
+         <property name="iconSize">
+          <size>
+           <width>90</width>
+           <height>32</height>
+          </size>
+         </property>
+         <property name="checkable">
+          <bool>true</bool>
+         </property>
+         <attribute name="buttonGroup">
+          <string notr="true">nucleic_monomer_group</string>
+         </attribute>
+        </widget>
+       </item>
+       <item row="4" column="0">
+        <widget class="QToolButton" name="na_g_btn">
          <property name="minimumSize">
           <size>
            <width>32</width>
@@ -134,247 +173,8 @@
          </attribute>
         </widget>
        </item>
-       <item row="0" column="1">
-        <widget class="QToolButton" name="rna_u_btn">
-         <property name="minimumSize">
-          <size>
-           <width>32</width>
-           <height>30</height>
-          </size>
-         </property>
-         <property name="maximumSize">
-          <size>
-           <width>32</width>
-           <height>32</height>
-          </size>
-         </property>
-         <property name="font">
-          <font>
-           <pointsize>14</pointsize>
-           <bold>true</bold>
-          </font>
-         </property>
-         <property name="text">
-          <string>U</string>
-         </property>
-         <property name="iconSize">
-          <size>
-           <width>30</width>
-           <height>32</height>
-          </size>
-         </property>
-         <property name="checkable">
-          <bool>true</bool>
-         </property>
-         <attribute name="buttonGroup">
-          <string notr="true">nucleic_monomer_group</string>
-         </attribute>
-        </widget>
-       </item>
-       <item row="9" column="1">
-        <widget class="QToolButton" name="dna_p_btn">
-         <property name="minimumSize">
-          <size>
-           <width>32</width>
-           <height>30</height>
-          </size>
-         </property>
-         <property name="maximumSize">
-          <size>
-           <width>32</width>
-           <height>32</height>
-          </size>
-         </property>
-         <property name="font">
-          <font>
-           <pointsize>14</pointsize>
-           <bold>true</bold>
-          </font>
-         </property>
-         <property name="text">
-          <string>P</string>
-         </property>
-         <property name="iconSize">
-          <size>
-           <width>30</width>
-           <height>32</height>
-          </size>
-         </property>
-         <property name="checkable">
-          <bool>true</bool>
-         </property>
-         <attribute name="buttonGroup">
-          <string notr="true">nucleic_monomer_group</string>
-         </attribute>
-        </widget>
-       </item>
-       <item row="6" column="1">
-        <widget class="QToolButton" name="dna_t_btn">
-         <property name="minimumSize">
-          <size>
-           <width>32</width>
-           <height>30</height>
-          </size>
-         </property>
-         <property name="maximumSize">
-          <size>
-           <width>32</width>
-           <height>32</height>
-          </size>
-         </property>
-         <property name="font">
-          <font>
-           <pointsize>14</pointsize>
-           <bold>true</bold>
-          </font>
-         </property>
-         <property name="text">
-          <string>dT</string>
-         </property>
-         <property name="iconSize">
-          <size>
-           <width>30</width>
-           <height>32</height>
-          </size>
-         </property>
-         <property name="checkable">
-          <bool>true</bool>
-         </property>
-         <attribute name="buttonGroup">
-          <string notr="true">nucleic_monomer_group</string>
-         </attribute>
-        </widget>
-       </item>
-       <item row="4" column="0">
-        <widget class="QToolButton" name="rna_r_btn">
-         <property name="minimumSize">
-          <size>
-           <width>32</width>
-           <height>30</height>
-          </size>
-         </property>
-         <property name="maximumSize">
-          <size>
-           <width>32</width>
-           <height>32</height>
-          </size>
-         </property>
-         <property name="font">
-          <font>
-           <pointsize>14</pointsize>
-           <bold>true</bold>
-          </font>
-         </property>
-         <property name="text">
-          <string>R</string>
-         </property>
-         <property name="iconSize">
-          <size>
-           <width>30</width>
-           <height>32</height>
-          </size>
-         </property>
-         <property name="checkable">
-          <bool>true</bool>
-         </property>
-         <attribute name="buttonGroup">
-          <string notr="true">nucleic_monomer_group</string>
-         </attribute>
-        </widget>
-       </item>
-       <item row="6" column="2" rowspan="2">
-        <widget class="QToolButton" name="dna_n_btn">
-         <property name="minimumSize">
-          <size>
-           <width>32</width>
-           <height>30</height>
-          </size>
-         </property>
-         <property name="maximumSize">
-          <size>
-           <width>32</width>
-           <height>32</height>
-          </size>
-         </property>
-         <property name="font">
-          <font>
-           <pointsize>14</pointsize>
-           <italic>true</italic>
-           <bold>true</bold>
-          </font>
-         </property>
-         <property name="text">
-          <string>dN</string>
-         </property>
-         <property name="iconSize">
-          <size>
-           <width>30</width>
-           <height>32</height>
-          </size>
-         </property>
-         <property name="checkable">
-          <bool>true</bool>
-         </property>
-         <attribute name="buttonGroup">
-          <string notr="true">nucleic_monomer_group</string>
-         </attribute>
-        </widget>
-       </item>
-       <item row="7" column="1">
-        <widget class="QToolButton" name="dna_c_btn">
-         <property name="minimumSize">
-          <size>
-           <width>32</width>
-           <height>30</height>
-          </size>
-         </property>
-         <property name="maximumSize">
-          <size>
-           <width>32</width>
-           <height>32</height>
-          </size>
-         </property>
-         <property name="font">
-          <font>
-           <pointsize>14</pointsize>
-           <bold>true</bold>
-          </font>
-         </property>
-         <property name="text">
-          <string>dC</string>
-         </property>
-         <property name="iconSize">
-          <size>
-           <width>30</width>
-           <height>32</height>
-          </size>
-         </property>
-         <property name="checkable">
-          <bool>true</bool>
-         </property>
-         <attribute name="buttonGroup">
-          <string notr="true">nucleic_monomer_group</string>
-         </attribute>
-        </widget>
-       </item>
-       <item row="8" column="0">
-        <spacer name="verticalSpacer_3">
-         <property name="orientation">
-          <enum>Qt::Vertical</enum>
-         </property>
-         <property name="sizeType">
-          <enum>QSizePolicy::Fixed</enum>
-         </property>
-         <property name="sizeHint" stdset="0">
-          <size>
-           <width>0</width>
-           <height>5</height>
-          </size>
-         </property>
-        </spacer>
-       </item>
-       <item row="0" column="2" rowspan="2">
-        <widget class="QToolButton" name="rna_n_btn">
+       <item row="4" column="2">
+        <widget class="QToolButton" name="na_n_btn">
          <property name="minimumSize">
           <size>
            <width>32</width>
@@ -411,21 +211,98 @@
          </attribute>
         </widget>
        </item>
-       <item row="5" column="0" colspan="3">
-        <widget class="Line" name="line">
+       <item row="4" column="1">
+        <widget class="QToolButton" name="rna_u_btn">
          <property name="minimumSize">
           <size>
-           <width>0</width>
-           <height>15</height>
+           <width>32</width>
+           <height>30</height>
           </size>
          </property>
-         <property name="orientation">
-          <enum>Qt::Horizontal</enum>
+         <property name="maximumSize">
+          <size>
+           <width>32</width>
+           <height>32</height>
+          </size>
          </property>
+         <property name="font">
+          <font>
+           <pointsize>14</pointsize>
+           <bold>true</bold>
+          </font>
+         </property>
+         <property name="text">
+          <string>U</string>
+         </property>
+         <property name="iconSize">
+          <size>
+           <width>30</width>
+           <height>32</height>
+          </size>
+         </property>
+         <property name="checkable">
+          <bool>true</bool>
+         </property>
+         <attribute name="buttonGroup">
+          <string notr="true">nucleic_monomer_group</string>
+         </attribute>
         </widget>
        </item>
-       <item row="9" column="0">
-        <widget class="QToolButton" name="dna_r_btn">
+       <item row="3" column="2">
+        <widget class="QToolButton" name="na_t_btn">
+         <property name="minimumSize">
+          <size>
+           <width>32</width>
+           <height>30</height>
+          </size>
+         </property>
+         <property name="maximumSize">
+          <size>
+           <width>32</width>
+           <height>32</height>
+          </size>
+         </property>
+         <property name="font">
+          <font>
+           <pointsize>14</pointsize>
+           <bold>true</bold>
+          </font>
+         </property>
+         <property name="text">
+          <string>T</string>
+         </property>
+         <property name="iconSize">
+          <size>
+           <width>30</width>
+           <height>32</height>
+          </size>
+         </property>
+         <property name="checkable">
+          <bool>true</bool>
+         </property>
+         <attribute name="buttonGroup">
+          <string notr="true">nucleic_monomer_group</string>
+         </attribute>
+        </widget>
+       </item>
+       <item row="6" column="0">
+        <spacer name="verticalSpacer_2">
+         <property name="orientation">
+          <enum>Qt::Vertical</enum>
+         </property>
+         <property name="sizeType">
+          <enum>QSizePolicy::Fixed</enum>
+         </property>
+         <property name="sizeHint" stdset="0">
+          <size>
+           <width>0</width>
+           <height>5</height>
+          </size>
+         </property>
+        </spacer>
+       </item>
+       <item row="7" column="1">
+        <widget class="QToolButton" name="na_dr_btn">
          <property name="minimumSize">
           <size>
            <width>32</width>
@@ -461,98 +338,8 @@
          </attribute>
         </widget>
        </item>
-       <item row="9" column="2">
-        <widget class="QToolButton" name="dna_r_p_btn">
-         <property name="minimumSize">
-          <size>
-           <width>32</width>
-           <height>30</height>
-          </size>
-         </property>
-         <property name="maximumSize">
-          <size>
-           <width>38</width>
-           <height>32</height>
-          </size>
-         </property>
-         <property name="font">
-          <font>
-           <pointsize>11</pointsize>
-           <bold>true</bold>
-          </font>
-         </property>
-         <property name="text">
-          <string>dR-P</string>
-         </property>
-         <property name="iconSize">
-          <size>
-           <width>30</width>
-           <height>32</height>
-          </size>
-         </property>
-         <property name="checkable">
-          <bool>true</bool>
-         </property>
-         <attribute name="buttonGroup">
-          <string notr="true">nucleic_monomer_group</string>
-         </attribute>
-        </widget>
-       </item>
-       <item row="6" column="0">
-        <widget class="QToolButton" name="dna_a_btn">
-         <property name="minimumSize">
-          <size>
-           <width>32</width>
-           <height>30</height>
-          </size>
-         </property>
-         <property name="maximumSize">
-          <size>
-           <width>32</width>
-           <height>32</height>
-          </size>
-         </property>
-         <property name="font">
-          <font>
-           <pointsize>14</pointsize>
-           <bold>true</bold>
-          </font>
-         </property>
-         <property name="text">
-          <string>dA</string>
-         </property>
-         <property name="iconSize">
-          <size>
-           <width>30</width>
-           <height>32</height>
-          </size>
-         </property>
-         <property name="checkable">
-          <bool>true</bool>
-         </property>
-         <attribute name="buttonGroup">
-          <string notr="true">nucleic_monomer_group</string>
-         </attribute>
-        </widget>
-       </item>
-       <item row="3" column="0">
-        <spacer name="verticalSpacer_2">
-         <property name="orientation">
-          <enum>Qt::Vertical</enum>
-         </property>
-         <property name="sizeType">
-          <enum>QSizePolicy::Fixed</enum>
-         </property>
-         <property name="sizeHint" stdset="0">
-          <size>
-           <width>0</width>
-           <height>5</height>
-          </size>
-         </property>
-        </spacer>
-       </item>
-       <item row="4" column="1">
-        <widget class="QToolButton" name="rna_p_btn">
+       <item row="7" column="2">
+        <widget class="QToolButton" name="na_p_btn">
          <property name="minimumSize">
           <size>
            <width>32</width>
@@ -588,8 +375,58 @@
          </attribute>
         </widget>
        </item>
-       <item row="0" column="0">
-        <widget class="QToolButton" name="rna_a_btn">
+       <item row="7" column="0">
+        <widget class="QToolButton" name="na_r_btn">
+         <property name="minimumSize">
+          <size>
+           <width>32</width>
+           <height>30</height>
+          </size>
+         </property>
+         <property name="maximumSize">
+          <size>
+           <width>32</width>
+           <height>32</height>
+          </size>
+         </property>
+         <property name="font">
+          <font>
+           <pointsize>14</pointsize>
+           <bold>true</bold>
+          </font>
+         </property>
+         <property name="text">
+          <string>R</string>
+         </property>
+         <property name="iconSize">
+          <size>
+           <width>30</width>
+           <height>32</height>
+          </size>
+         </property>
+         <property name="checkable">
+          <bool>true</bool>
+         </property>
+         <attribute name="buttonGroup">
+          <string notr="true">nucleic_monomer_group</string>
+         </attribute>
+        </widget>
+       </item>
+       <item row="2" column="0" colspan="3">
+        <widget class="Line" name="line">
+         <property name="minimumSize">
+          <size>
+           <width>0</width>
+           <height>15</height>
+          </size>
+         </property>
+         <property name="orientation">
+          <enum>Qt::Horizontal</enum>
+         </property>
+        </widget>
+       </item>
+       <item row="3" column="0">
+        <widget class="QToolButton" name="na_a_btn">
          <property name="minimumSize">
           <size>
            <width>32</width>
@@ -625,44 +462,20 @@
          </attribute>
         </widget>
        </item>
-       <item row="4" column="2">
-        <widget class="QToolButton" name="rna_r_p_btn">
-         <property name="minimumSize">
+       <item row="3" column="3">
+        <spacer name="horizontalSpacer_2">
+         <property name="orientation">
+          <enum>Qt::Horizontal</enum>
+         </property>
+         <property name="sizeHint" stdset="0">
           <size>
-           <width>32</width>
-           <height>30</height>
+           <width>0</width>
+           <height>0</height>
           </size>
          </property>
-         <property name="maximumSize">
-          <size>
-           <width>38</width>
-           <height>32</height>
-          </size>
-         </property>
-         <property name="font">
-          <font>
-           <pointsize>11</pointsize>
-           <bold>true</bold>
-          </font>
-         </property>
-         <property name="text">
-          <string>R-P</string>
-         </property>
-         <property name="iconSize">
-          <size>
-           <width>30</width>
-           <height>32</height>
-          </size>
-         </property>
-         <property name="checkable">
-          <bool>true</bool>
-         </property>
-         <attribute name="buttonGroup">
-          <string notr="true">nucleic_monomer_group</string>
-         </attribute>
-        </widget>
+        </spacer>
        </item>
-       <item row="10" column="0">
+       <item row="9" column="0">
         <spacer name="verticalSpacer_4">
          <property name="orientation">
           <enum>Qt::Vertical</enum>
@@ -675,45 +488,8 @@
          </property>
         </spacer>
        </item>
-       <item row="7" column="0">
-        <widget class="QToolButton" name="dna_g_btn">
-         <property name="minimumSize">
-          <size>
-           <width>32</width>
-           <height>30</height>
-          </size>
-         </property>
-         <property name="maximumSize">
-          <size>
-           <width>32</width>
-           <height>32</height>
-          </size>
-         </property>
-         <property name="font">
-          <font>
-           <pointsize>14</pointsize>
-           <bold>true</bold>
-          </font>
-         </property>
-         <property name="text">
-          <string>dG</string>
-         </property>
-         <property name="iconSize">
-          <size>
-           <width>30</width>
-           <height>32</height>
-          </size>
-         </property>
-         <property name="checkable">
-          <bool>true</bool>
-         </property>
-         <attribute name="buttonGroup">
-          <string notr="true">nucleic_monomer_group</string>
-         </attribute>
-        </widget>
-       </item>
-       <item row="1" column="1">
-        <widget class="QToolButton" name="rna_c_btn">
+       <item row="3" column="1">
+        <widget class="QToolButton" name="na_c_btn">
          <property name="minimumSize">
           <size>
            <width>32</width>
@@ -749,18 +525,24 @@
          </attribute>
         </widget>
        </item>
-       <item row="0" column="3">
-        <spacer name="horizontalSpacer_2">
-         <property name="orientation">
-          <enum>Qt::Horizontal</enum>
+       <item row="1" column="0" colspan="3">
+        <widget class="schrodinger::sketcher::ModularToolButton" name="na_dna_btn">
+         <property name="text">
+          <string/>
          </property>
-         <property name="sizeHint" stdset="0">
+         <property name="iconSize">
           <size>
-           <width>0</width>
-           <height>0</height>
+           <width>90</width>
+           <height>32</height>
           </size>
          </property>
-        </spacer>
+         <property name="checkable">
+          <bool>true</bool>
+         </property>
+         <attribute name="buttonGroup">
+          <string notr="true">nucleic_monomer_group</string>
+         </attribute>
+        </widget>
        </item>
       </layout>
      </widget>
@@ -1597,11 +1379,18 @@
    </item>
   </layout>
  </widget>
+ <customwidgets>
+  <customwidget>
+   <class>schrodinger::sketcher::ModularToolButton</class>
+   <extends>QToolButton</extends>
+   <header>schrodinger/sketcher/widget/modular_tool_button.h</header>
+  </customwidget>
+ </customwidgets>
  <resources/>
  <connections/>
  <buttongroups>
-  <buttongroup name="amino_or_nucleic_group"/>
   <buttongroup name="nucleic_monomer_group"/>
   <buttongroup name="amino_monomer_group"/>
+  <buttongroup name="amino_or_nucleic_group"/>
  </buttongroups>
 </ui>
