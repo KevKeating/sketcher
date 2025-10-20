@@ -74,8 +74,6 @@ SketcherModel::SketcherModel(QObject* parent) : QObject(parent)
         {ModelKey::ALLOWED_INTERFACE_TYPE, QVariant::fromValue(InterfaceType::ATOMISTIC)},
         {ModelKey::CURRENT_INTERFACE_TYPE, QVariant::fromValue(InterfaceType::ATOMISTIC_OR_MONOMERIC)}
     };
-    std::cerr << "In SketcherModel ctor: <" << m_model_map.contains(ModelKey::ELEMENT) << "<\n"; 
-    std::cerr << "In SketcherModel ctor: <" << m_model_map.contains(ModelKey::ALLOWED_INTERFACE_TYPE) << "<\n"; 
 
     connect(this, &SketcherModel::selectionChanged, this,
             &SketcherModel::onSelectionChanged);
@@ -85,7 +83,6 @@ SketcherModel::SketcherModel(QObject* parent) : QObject(parent)
 
 QVariant SketcherModel::getValue(ModelKey key) const
 {
-    std::cout << "getvalue for key " << static_cast<int>(key) << " contains: <" << m_model_map.contains(key) << ">\n";
     return m_model_map.at(key);
 }
 
@@ -177,16 +174,10 @@ QString SketcherModel::getValueString(ModelKey key) const
 void SketcherModel::setValues(
     const std::unordered_map<ModelKey, QVariant>& key_value_map)
 {
-    std::cerr << "In setValues\n";
-    std::cout << "In setValues\n";
     // Assign model values individually
     std::unordered_set<ModelKey> changed_keys;
     for (const auto& [key, value] : key_value_map) {
-        std::cerr << "In getValues loop with key " << static_cast<int>(key) << ":\n";
         auto current_value = getValue(key);
-        std::cout << "Got value\n";
-        // std::cerr << "\t" << current_value.typeId() << "\n";
-        // std::cerr << "\t" << value.typeId()<< "\n";
         // Outright forbid setting a value of a different type
         if (current_value.typeId() != value.typeId()) {
             throw std::runtime_error(std::string("ModelKey must be type ") +
@@ -197,19 +188,15 @@ void SketcherModel::setValues(
             changed_keys.insert(key);
         }
     }
-    std::cout << "In getValues, about to call updateAtomDisplaySettings\n";
     updateAtomDisplaySettings(changed_keys);
 
-    std::cout << "In getValues, about to emit valuePingedy\n";
     // Finally, emit necessary signals all at once
     for (const auto& [key, value] : key_value_map) {
         emit valuePinged(key, value);
     }
-    std::cout << "In getValues, about to emit valuessChanged\n";
     if (changed_keys.size() > 0) {
         emit valuesChanged(changed_keys);
     }
-    std::cout << "getValues finished\n";
 }
 
 /**
