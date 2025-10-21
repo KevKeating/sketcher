@@ -73,7 +73,7 @@ SketcherModel::SketcherModel(QObject* parent) : QObject(parent)
         {ModelKey::RESIDUE_TYPE, QString("")},
         {ModelKey::MONOMER_TOOL_TYPE, QVariant::fromValue(MonomerToolType::AMINO_ACID)},
         {ModelKey::AMINO_ACID_TOOL, QVariant::fromValue(AminoAcidTool::ALA)},
-        {ModelKey::NUCLEIC_ACID_TOOL, QVariant::fromValue(NucleicAcidTool::A)},
+        {ModelKey::NUCLEIC_ACID_TOOL, QVariant::fromValue(NucleicAcidTool::RNA_NUCLEOTIDE)},
         {ModelKey::RNA_NUCLEOBASE, QVariant::fromValue(StdNucleobase::A)},
         {ModelKey::DNA_NUCLEOBASE, QVariant::fromValue(StdNucleobase::A)},
         {ModelKey::CUSTOM_NUCLEOTIDE, QVariant::fromValue(std::tuple<QString, QString, QString>("R", "A", "P"))},

@@ -201,13 +201,18 @@ on_tool_clicked(SketcherModel* model, const ModelKey key,
 {
     auto tool = button_tool_bimap.left.at(button);
     auto tool_as_variant = QVariant::fromValue(tool);
+    ping_or_set_model_value(model, key, tool_as_variant);
+}
+
+static void ping_or_set_model_value(SketcherModel* model, const ModelKey key, const QVariant& value)
+{
     if (model->hasActiveSelection()) {
         // ping the model to indicate that we want to replace the selection
         // without changing the tool
-        model->pingValue(key, tool_as_variant);
+        model->pingValue(key, value);
     } else {
         // change the tool
-        model->setValue(key, tool_as_variant);
+        model->setValue(key, value);
     }
 }
 
@@ -221,9 +226,14 @@ void MonomerToolWidget::onAminoAcidClicked(QAbstractButton* button)
 
 void MonomerToolWidget::onNucleicAcidClicked(QAbstractButton* button)
 {
-    if (!m_updates_to_model_paused) {
-        on_tool_clicked<NucleicAcidTool>(getModel(), ModelKey::NUCLEIC_ACID_TOOL,
+    if (m_updates_to_model_paused) {
+        return;
+    }
+    on_tool_clicked<NucleicAcidTool>(getModel(), ModelKey::NUCLEIC_ACID_TOOL,
                                         m_button_nucleic_acid_bimap, button);
+    if (button == ui->na_rna_btn) {
+        auto base = static_cast<StdNucleobase>(ui->na_rna_btn->getEnumItem());
+        ping_or_set_model_value(getModel(), ModelKey::RNA_NUCLEOBASE, base);
     }
     // TODO: handle full nucleotide buttons
 }
