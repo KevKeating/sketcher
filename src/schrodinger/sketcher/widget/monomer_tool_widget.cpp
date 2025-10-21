@@ -7,7 +7,7 @@
 #include "schrodinger/sketcher/model/sketcher_model.h"
 #include "schrodinger/sketcher/sketcher_css_style.h"
 #include "schrodinger/sketcher/ui/ui_monomer_tool_widget.h"
-#include "schrodinger/sketcher/widget/modular_tool_button.h"
+#include "schrodinger/sketcher/widget/tool_button_with_popup.h"
 #include "schrodinger/sketcher/widget/nucleotide_popup.h"
 #include "schrodinger/sketcher/widget/widget_utils.h"
 
@@ -50,10 +50,10 @@ MonomerToolWidget::MonomerToolWidget(QWidget* parent) :
     for (auto* btn_group :
          {ui->amino_monomer_group, ui->nucleic_monomer_group}) {
         for (auto* btn : btn_group->buttons()) {
-            if (auto* modular_btn = dynamic_cast<ModularToolButton*>(btn)) {
+            if (auto* btn_with_popup = dynamic_cast<ToolButtonWithPopup*>(btn)) {
                 // make sure that we call the subclass's version of
                 // setStyleSheet, since it's overriden but not virtual
-                modular_btn->setStyleSheet(ATOM_ELEMENT_STYLE);
+                btn_with_popup->setStyleSheet(ATOM_ELEMENT_STYLE);
             } else {
                 btn->setStyleSheet(ATOM_ELEMENT_STYLE);
             }

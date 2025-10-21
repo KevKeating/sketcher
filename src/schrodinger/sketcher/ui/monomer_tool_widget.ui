@@ -122,7 +122,7 @@
          <property name="minimumSize">
           <size>
            <width>96</width>
-           <height>30</height>
+           <height>32</height>
           </size>
          </property>
          <property name="maximumSize">
@@ -304,8 +304,8 @@
         <widget class="schrodinger::sketcher::ModularToolButton" name="na_dna_btn">
          <property name="minimumSize">
           <size>
-           <width>96</width>
-           <height>30</height>
+           <width>90</width>
+           <height>32</height>
           </size>
          </property>
          <property name="maximumSize">
