@@ -7,6 +7,7 @@
 #include "schrodinger/sketcher/model/sketcher_model.h"
 #include "schrodinger/sketcher/sketcher_css_style.h"
 #include "schrodinger/sketcher/ui/ui_monomer_tool_widget.h"
+#include "schrodinger/sketcher/widget/nucleotide_popup.h"
 #include "schrodinger/sketcher/widget/widget_utils.h"
 
 namespace schrodinger
@@ -92,6 +93,8 @@ MonomerToolWidget::MonomerToolWidget(QWidget* parent) :
             (ui->na_r_btn, NucleicAcidTool::R)
             (ui->na_dr_btn, NucleicAcidTool::dR)
             (ui->na_p_btn, NucleicAcidTool::P);
+            (ui->na_rna_btn, NucleicAcidTool::RNA_NUCLEOTIDE);
+            (ui->na_dna_btn, NucleicAcidTool::DNA_NUCLEOTIDE);
     // clang-format on
 
     connect(ui->amino_or_nucleic_group, &QButtonGroup::buttonClicked, this,
@@ -100,6 +103,11 @@ MonomerToolWidget::MonomerToolWidget(QWidget* parent) :
             &MonomerToolWidget::onAminoAcidClicked);
     connect(ui->nucleic_monomer_group, &QButtonGroup::buttonClicked, this,
             &MonomerToolWidget::onNucleicAcidClicked);
+
+    m_rna_popup = new NucleotidePopup(NucleicAcidTool::RNA_NUCLEOTIDE, ModelKey::RNA_NUCLEOBASE, "R", "U", this);
+    m_dna_popup = new NucleotidePopup(NucleicAcidTool::DNA_NUCLEOTIDE, ModelKey::DNA_NUCLEOBASE, "dR", "T", this);
+    ui->na_rna_btn->setPopupWidget(m_rna_popup);
+    ui->na_dna_btn->setPopupWidget(m_dna_popup);
 }
 
 MonomerToolWidget::~MonomerToolWidget() = default;
@@ -107,6 +115,8 @@ MonomerToolWidget::~MonomerToolWidget() = default;
 void MonomerToolWidget::setModel(SketcherModel* model)
 {
     AbstractDrawToolWidget::setModel(model);
+    m_rna_popup->setModel(model);
+    m_dna_popup->setModel(model);
     updateCheckedButton();
 }
 

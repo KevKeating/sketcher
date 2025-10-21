@@ -442,7 +442,6 @@ QSet<const RDKit::Bond*> SketcherWidget::getSelectedBonds() const
 
 void SketcherWidget::setInterfaceType(InterfaceType interface_type)
 {
-    std::cout << "interface_type = " << static_cast<int>(interface_type) << "\n";
     m_sketcher_model->setValue(ModelKey::ALLOWED_INTERFACE_TYPE, interface_type);
 }
 

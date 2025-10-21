@@ -22,7 +22,13 @@ NucleotidePopup::NucleotidePopup(const NucleicAcidTool tool, const ModelKey mode
     ui->setupUi(this);
     setButtonGroup(ui->group);
     
-    // TODO: put correct text into u_or_t_btn
+    // add text to the buttons
+    QString btn_name_fmt("%1(%2)P");
+    ui->a_btn->setText(btn_name_fmt.arg(sugar, "A"));
+    ui->c_btn->setText(btn_name_fmt.arg(sugar, "C"));
+    ui->g_btn->setText(btn_name_fmt.arg(sugar, "G"));
+    ui->u_or_t_btn->setText(btn_name_fmt.arg(sugar, u_or_t));
+    ui->n_btn->setText(btn_name_fmt.arg(sugar, "N"));
 }
 
 NucleotidePopup::~NucleotidePopup()
