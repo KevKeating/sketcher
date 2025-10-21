@@ -92,8 +92,8 @@ MonomerToolWidget::MonomerToolWidget(QWidget* parent) :
             (ui->na_n_btn, NucleicAcidTool::N)
             (ui->na_r_btn, NucleicAcidTool::R)
             (ui->na_dr_btn, NucleicAcidTool::dR)
-            (ui->na_p_btn, NucleicAcidTool::P);
-            (ui->na_rna_btn, NucleicAcidTool::RNA_NUCLEOTIDE);
+            (ui->na_p_btn, NucleicAcidTool::P)
+            (ui->na_rna_btn, NucleicAcidTool::RNA_NUCLEOTIDE)
             (ui->na_dna_btn, NucleicAcidTool::DNA_NUCLEOTIDE);
     // clang-format on
 
@@ -185,27 +185,27 @@ void MonomerToolWidget::onAminoOrNucleicBtnClicked(QAbstractButton* button)
     updateCheckedButton();
 }
 
-template <typename T> void
-on_residue_clicked(SketcherModel* model, const ModelKey key,
-                   const boost::bimap<QAbstractButton*, T>& button_res_bimap,
+template <typename T> static void
+on_tool_clicked(SketcherModel* model, const ModelKey key,
+                   const boost::bimap<QAbstractButton*, T>& button_tool_bimap,
                    QAbstractButton* button)
 {
-    auto res = button_res_bimap.left.at(button);
-    auto res_as_variant = QVariant::fromValue(res);
+    auto tool = button_tool_bimap.left.at(button);
+    auto tool_as_variant = QVariant::fromValue(tool);
     if (model->hasActiveSelection()) {
         // ping the model to indicate that we want to replace the selection
         // without changing the tool
-        model->pingValue(key, res_as_variant);
+        model->pingValue(key, tool_as_variant);
     } else {
         // change the tool
-        model->setValue(key, res_as_variant);
+        model->setValue(key, tool_as_variant);
     }
 }
 
 void MonomerToolWidget::onAminoAcidClicked(QAbstractButton* button)
 {
     if (!m_updates_to_model_paused) {
-        on_residue_clicked<AminoAcidTool>(getModel(), ModelKey::AMINO_ACID_TOOL,
+        on_tool_clicked<AminoAcidTool>(getModel(), ModelKey::AMINO_ACID_TOOL,
                                       m_button_amino_acid_bimap, button);
     }
 }
@@ -213,7 +213,7 @@ void MonomerToolWidget::onAminoAcidClicked(QAbstractButton* button)
 void MonomerToolWidget::onNucleicAcidClicked(QAbstractButton* button)
 {
     if (!m_updates_to_model_paused) {
-        on_residue_clicked<NucleicAcidTool>(getModel(), ModelKey::NUCLEIC_ACID_TOOL,
+        on_tool_clicked<NucleicAcidTool>(getModel(), ModelKey::NUCLEIC_ACID_TOOL,
                                         m_button_nucleic_acid_bimap, button);
     }
     // TODO: handle full nucleotide buttons
