@@ -200,12 +200,13 @@ on_tool_clicked(SketcherModel* model, const ModelKey key,
                    QAbstractButton* button)
 {
     auto tool = button_tool_bimap.left.at(button);
-    auto tool_as_variant = QVariant::fromValue(tool);
-    ping_or_set_model_value(model, key, tool_as_variant);
+    ping_or_set_model_value(model, key, tool);
 }
 
-static void ping_or_set_model_value(SketcherModel* model, const ModelKey key, const QVariant& value)
+template <typename T> static void
+ping_or_set_model_value(SketcherModel* model, const ModelKey key, const T value)
 {
+    auto value_as_variant = QVariant::fromValue(value);
     if (model->hasActiveSelection()) {
         // ping the model to indicate that we want to replace the selection
         // without changing the tool
@@ -231,11 +232,15 @@ void MonomerToolWidget::onNucleicAcidClicked(QAbstractButton* button)
     }
     on_tool_clicked<NucleicAcidTool>(getModel(), ModelKey::NUCLEIC_ACID_TOOL,
                                         m_button_nucleic_acid_bimap, button);
+    // if one of the full nucleotide buttons was clicked, we also need to inform
+    // the model of the nucleotide type
     if (button == ui->na_rna_btn) {
         auto base = static_cast<StdNucleobase>(ui->na_rna_btn->getEnumItem());
         ping_or_set_model_value(getModel(), ModelKey::RNA_NUCLEOBASE, base);
+    } else if (button == ui->na_dna_btn) {
+        auto base = static_cast<StdNucleobase>(ui->na_dna_btn->getEnumItem());
+        ping_or_set_model_value(getModel(), ModelKey::DNA_NUCLEOBASE, base);
     }
-    // TODO: handle full nucleotide buttons
 }
 
 } // namespace sketcher
