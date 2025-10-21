@@ -2,8 +2,9 @@
 
 #include <QButtonGroup>
 
-#include "schrodinger/sketcher/widget/nucleotide_popup.h"
+#include "schrodinger/sketcher/sketcher_css_style.h"
 #include "schrodinger/sketcher/model/sketcher_model.h"
+#include "schrodinger/sketcher/widget/nucleotide_popup.h"
 
 namespace schrodinger
 {
@@ -21,6 +22,7 @@ NucleotidePopup::NucleotidePopup(const NucleicAcidTool tool, const ModelKey mode
     ui.reset(new Ui::NucleotidePopup());
     ui->setupUi(this);
     setButtonGroup(ui->group);
+    setStyleSheet(ATOM_ELEMENT_STYLE);
     
     // add text to the buttons
     QString btn_name_fmt("%1(%2)P");
