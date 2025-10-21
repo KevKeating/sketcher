@@ -298,7 +298,6 @@ enum class MonomerToolType {
     NUCLEIC_ACID,
 };
 
-// TODO: add Type to name?
 enum class AminoAcidTool {
     ALA,
     ARG,
@@ -345,14 +344,6 @@ enum class StdNucleobase {
     C,
     N,
 };
-
-// enum class StdDNANucleobases {
-//     A,
-//     T,
-//     G,
-//     C,
-//     N,
-// };
 
 /**
  * @return Every element of `ModelKey`.
@@ -402,8 +393,14 @@ class SKETCHER_API SketcherModel : public QObject
     NucleicAcidTool getNucleicAcidTool() const;
     StdNucleobase getRNANucleobase() const;
     StdNucleobase getDNANucleobase() const;
-    InterfaceType getAllowedInterfaceType() const;
+    
+    // TODO: this should return atomic, amino acid, or nucleic acid
+    // TODO: rename to getCurrentToolSet() or something like that?
+    // TODO: get rid of this until we need it?
     InterfaceType getCurrentInterfaceType() const;
+    
+    // TODO: get rid of the "Allowed" part of this name?
+    InterfaceType getAllowedInterfaceType() const;
 
     /**
      * Retrieve data from the model's state map.

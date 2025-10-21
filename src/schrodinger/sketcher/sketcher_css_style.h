@@ -46,7 +46,7 @@ const QString TEXT_LINK_STYLE{
     "QToolButton:hover { color: #5b8aa8; background-color: transparent; }"};
 
 /**
- * A text link that uses a larger font (12 pt instead of 10 pt) and a brighter
+ * A text link that uses a larger font (12 px instead of 10 px) and a brighter
  * blue
  */
 const QString BRIGHTER_TEXT_LINK_STYLE{

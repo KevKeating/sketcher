@@ -107,6 +107,10 @@ class SKETCHER_API SketcherWidget : public QWidget
      */
     bool isEmpty() const;
 
+    /**
+     * Set whether this Sketcher can be used to draw atomistic models (i.e.
+     * small molecules), monomeric models (i.e. HELM models), or both
+     */
     void setInterfaceType(const InterfaceType interface_type);
 
     /**

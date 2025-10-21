@@ -22,6 +22,10 @@ enum class SelectionTool {
     FRAGMENT,
 };
 
+/**
+ * Whether the Sketcher can be used to draw atomistic models (i.e. small
+ * molecules), monomeric models (i.e. HELM models), or both
+ */
 enum class InterfaceType {
     ATOMISTIC = 1 << 0,
     MONOMERIC = 1 << 1,

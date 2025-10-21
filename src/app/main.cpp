@@ -149,7 +149,5 @@ int main(int argc, char** argv)
         sk.setInterfaceType(
             schrodinger::sketcher::InterfaceType::ATOMISTIC_OR_MONOMERIC);
     }
-
-    auto retval = application.exec();
-    return retval;
+    return application.exec();
 }

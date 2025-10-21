@@ -162,7 +162,6 @@ StdNucleobase SketcherModel::getDNANucleobase() const
     return m_model_map.at(ModelKey::DNA_NUCLEOBASE).value<StdNucleobase>();
 }
 
-
 InterfaceType SketcherModel::getAllowedInterfaceType() const
 {
     return m_model_map.at(ModelKey::ALLOWED_INTERFACE_TYPE).value<InterfaceType>();

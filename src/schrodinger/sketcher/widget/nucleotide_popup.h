@@ -25,8 +25,6 @@ enum class StdNucleobase;
  */
 class SKETCHER_API NucleotidePopup : public ModularPopup
 {
-    Q_OBJECT
-
   public:
     NucleotidePopup(const NucleicAcidTool tool, const ModelKey model_key,
                     const QString& sugar, const QString& u_or_t,
