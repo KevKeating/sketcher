@@ -283,7 +283,7 @@ enum class ModelKey {
     ATOM_QUERY,
     RGROUP_NUMBER,
     RESIDUE_TYPE,
-    MONOMER_TYPE,
+    MONOMER_TOOL_TYPE,
     AMINO_ACID_TOOL,
     NUCLEIC_ACID_TOOL,
     RNA_NUCLEOBASE,
@@ -293,7 +293,7 @@ enum class ModelKey {
     CURRENT_INTERFACE_TYPE,
 };
 
-enum class MonomerType {
+enum class MonomerToolType {
     AMINO_ACID,
     NUCLEIC_ACID,
 };
@@ -397,7 +397,7 @@ class SKETCHER_API SketcherModel : public QObject
     EnumerationTool getEnumerationTool() const;
     Element getElement() const;
     AtomQuery getAtomQuery() const;
-    MonomerType getMonomerType() const;
+    MonomerToolType getMonomerToolType() const;
     AminoAcidTool getAminoAcidTool() const;
     NucleicAcidTool getNucleicAcidTool() const;
     StdNucleobase getRNANucleobase() const;

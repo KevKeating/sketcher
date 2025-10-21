@@ -21,8 +21,8 @@ namespace schrodinger
 namespace sketcher
 {
 
-enum class AminoAcid;
-enum class NucleicAcid;
+enum class AminoAcidTool;
+enum class NucleicAcidTool;
 class PauseUpdatesToModelRAII;
 
 /**
@@ -45,8 +45,8 @@ class SKETCHER_API MonomerToolWidget : public AbstractDrawToolWidget
 
   protected:
     std::unique_ptr<Ui::MonomerToolWidget> ui;
-    boost::bimap<QAbstractButton*, AminoAcid> m_button_amino_acid_bimap;
-    boost::bimap<QAbstractButton*, NucleicAcid> m_button_nucleic_acid_bimap;
+    boost::bimap<QAbstractButton*, AminoAcidTool> m_button_amino_acid_bimap;
+    boost::bimap<QAbstractButton*, NucleicAcidTool> m_button_nucleic_acid_bimap;
     bool m_updates_to_model_paused = false;
 
     void onAminoOrNucleicBtnClicked(QAbstractButton* button);

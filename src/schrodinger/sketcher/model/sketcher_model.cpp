@@ -37,7 +37,7 @@ std::vector<ModelKey> get_model_keys()
         ModelKey::ATOM_QUERY,
         ModelKey::RGROUP_NUMBER,
         ModelKey::RESIDUE_TYPE,
-        ModelKey::MONOMER_TYPE,
+        ModelKey::MONOMER_TOOL_TYPE,
         ModelKey::AMINO_ACID_TOOL,
         ModelKey::NUCLEIC_ACID_TOOL,
         ModelKey::RNA_NUCLEOBASE,
@@ -71,7 +71,7 @@ SketcherModel::SketcherModel(QObject* parent) : QObject(parent)
         {ModelKey::ATOM_QUERY, QVariant::fromValue(AtomQuery::A)},
         {ModelKey::RGROUP_NUMBER, 1u},
         {ModelKey::RESIDUE_TYPE, QString("")},
-        {ModelKey::MONOMER_TYPE, QVariant::fromValue(MonomerType::AMINO_ACID)},
+        {ModelKey::MONOMER_TOOL_TYPE, QVariant::fromValue(MonomerToolType::AMINO_ACID)},
         {ModelKey::AMINO_ACID_TOOL, QVariant::fromValue(AminoAcidTool::ALA)},
         {ModelKey::NUCLEIC_ACID_TOOL, QVariant::fromValue(NucleicAcidTool::A)},
         {ModelKey::RNA_NUCLEOBASE, QVariant::fromValue(StdNucleobase::A)},
@@ -137,9 +137,9 @@ AtomQuery SketcherModel::getAtomQuery() const
     return m_model_map.at(ModelKey::ATOM_QUERY).value<AtomQuery>();
 }
 
-MonomerType SketcherModel::getMonomerType() const
+MonomerToolType SketcherModel::getMonomerToolType() const
 {
-    return m_model_map.at(ModelKey::MONOMER_TYPE).value<MonomerType>();
+    return m_model_map.at(ModelKey::MONOMER_TOOL_TYPE).value<MonomerToolType>();
 }
 
 AminoAcidTool SketcherModel::getAminoAcidTool() const

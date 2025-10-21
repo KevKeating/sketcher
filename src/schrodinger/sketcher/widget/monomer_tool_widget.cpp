@@ -54,44 +54,44 @@ MonomerToolWidget::MonomerToolWidget(QWidget* parent) :
     ui->amino_monomer_btn->setStyleSheet(TEXT_LINK_STYLE);
     ui->nucleic_monomer_btn->setStyleSheet(TEXT_LINK_STYLE);
 
-    using ButtonAminoAcidBimapType = boost::bimap<QAbstractButton*, AminoAcid>;
+    using ButtonAminoAcidBimapType = boost::bimap<QAbstractButton*, AminoAcidTool>;
     using ButtonNucleicAcidBimapType =
-        boost::bimap<QAbstractButton*, NucleicAcid>;
+        boost::bimap<QAbstractButton*, NucleicAcidTool>;
     // clang-format off
     m_button_amino_acid_bimap =
         boost::assign::list_of<ButtonAminoAcidBimapType::relation>
-            (ui->ala_btn, AminoAcid::ALA)
-            (ui->arg_btn, AminoAcid::ARG)
-            (ui->asn_btn, AminoAcid::ASN)
-            (ui->asp_btn, AminoAcid::ASP)
-            (ui->cys_btn, AminoAcid::CYS)
-            (ui->gln_btn, AminoAcid::GLN)
-            (ui->glu_btn, AminoAcid::GLU)
-            (ui->gly_btn, AminoAcid::GLY)
-            (ui->his_btn, AminoAcid::HIS)
-            (ui->ile_btn, AminoAcid::ILE)
-            (ui->leu_btn, AminoAcid::LEU)
-            (ui->lys_btn, AminoAcid::LYS)
-            (ui->met_btn, AminoAcid::MET)
-            (ui->phe_btn, AminoAcid::PHE)
-            (ui->pro_btn, AminoAcid::PRO)
-            (ui->ser_btn, AminoAcid::SER)
-            (ui->thr_btn, AminoAcid::THR)
-            (ui->trp_btn, AminoAcid::TRP)
-            (ui->tyr_btn, AminoAcid::TYR)
-            (ui->val_btn, AminoAcid::VAL)
-            (ui->unk_btn, AminoAcid::UNK);
+            (ui->ala_btn, AminoAcidTool::ALA)
+            (ui->arg_btn, AminoAcidTool::ARG)
+            (ui->asn_btn, AminoAcidTool::ASN)
+            (ui->asp_btn, AminoAcidTool::ASP)
+            (ui->cys_btn, AminoAcidTool::CYS)
+            (ui->gln_btn, AminoAcidTool::GLN)
+            (ui->glu_btn, AminoAcidTool::GLU)
+            (ui->gly_btn, AminoAcidTool::GLY)
+            (ui->his_btn, AminoAcidTool::HIS)
+            (ui->ile_btn, AminoAcidTool::ILE)
+            (ui->leu_btn, AminoAcidTool::LEU)
+            (ui->lys_btn, AminoAcidTool::LYS)
+            (ui->met_btn, AminoAcidTool::MET)
+            (ui->phe_btn, AminoAcidTool::PHE)
+            (ui->pro_btn, AminoAcidTool::PRO)
+            (ui->ser_btn, AminoAcidTool::SER)
+            (ui->thr_btn, AminoAcidTool::THR)
+            (ui->trp_btn, AminoAcidTool::TRP)
+            (ui->tyr_btn, AminoAcidTool::TYR)
+            (ui->val_btn, AminoAcidTool::VAL)
+            (ui->unk_btn, AminoAcidTool::UNK);
     m_button_nucleic_acid_bimap =
         boost::assign::list_of<ButtonNucleicAcidBimapType::relation>
-            (ui->na_a_btn, NucleicAcid::A)
-            (ui->na_u_btn, NucleicAcid::U)
-            (ui->na_g_btn, NucleicAcid::G)
-            (ui->na_c_btn, NucleicAcid::C)
-            (ui->na_t_btn, NucleicAcid::T)
-            (ui->na_n_btn, NucleicAcid::N)
-            (ui->na_r_btn, NucleicAcid::R)
-            (ui->na_dr_btn, NucleicAcid::dR)
-            (ui->na_p_btn, NucleicAcid::P);
+            (ui->na_a_btn, NucleicAcidTool::A)
+            (ui->na_u_btn, NucleicAcidTool::U)
+            (ui->na_g_btn, NucleicAcidTool::G)
+            (ui->na_c_btn, NucleicAcidTool::C)
+            (ui->na_t_btn, NucleicAcidTool::T)
+            (ui->na_n_btn, NucleicAcidTool::N)
+            (ui->na_r_btn, NucleicAcidTool::R)
+            (ui->na_dr_btn, NucleicAcidTool::dR)
+            (ui->na_p_btn, NucleicAcidTool::P);
     // clang-format on
 
     connect(ui->amino_or_nucleic_group, &QButtonGroup::buttonClicked, this,
@@ -193,7 +193,7 @@ on_residue_clicked(SketcherModel* model, const ModelKey key,
 void MonomerToolWidget::onAminoAcidClicked(QAbstractButton* button)
 {
     if (!m_updates_to_model_paused) {
-        on_residue_clicked<AminoAcid>(getModel(), ModelKey::AMINO_ACID,
+        on_residue_clicked<AminoAcidTool>(getModel(), ModelKey::AMINO_ACID_TOOL,
                                       m_button_amino_acid_bimap, button);
     }
 }
@@ -201,7 +201,7 @@ void MonomerToolWidget::onAminoAcidClicked(QAbstractButton* button)
 void MonomerToolWidget::onNucleicAcidClicked(QAbstractButton* button)
 {
     if (!m_updates_to_model_paused) {
-        on_residue_clicked<NucleicAcid>(getModel(), ModelKey::NUCLEIC_ACID,
+        on_residue_clicked<NucleicAcidTool>(getModel(), ModelKey::NUCLEIC_ACID_TOOL,
                                         m_button_nucleic_acid_bimap, button);
     }
 }
