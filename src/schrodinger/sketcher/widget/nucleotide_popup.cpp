@@ -22,7 +22,7 @@ NucleotidePopup::NucleotidePopup(const NucleicAcidTool tool, const ModelKey mode
     ui.reset(new Ui::NucleotidePopup());
     ui->setupUi(this);
     setButtonGroup(ui->group);
-    setStyleSheet(ATOM_ELEMENT_STYLE);
+    setStyleSheet(ATOM_ELEMENT_OR_MONOMER_STYLE);
     
     // add text to the buttons
     QString btn_name_fmt("%1(%2)P");

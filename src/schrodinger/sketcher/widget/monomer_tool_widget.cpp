@@ -53,9 +53,11 @@ MonomerToolWidget::MonomerToolWidget(QWidget* parent) :
             if (auto* btn_with_popup = dynamic_cast<ToolButtonWithPopup*>(btn)) {
                 // make sure that we call the subclass's version of
                 // setStyleSheet, since it's overriden but not virtual
-                btn_with_popup->setStyleSheet(ATOM_ELEMENT_STYLE);
+                btn_with_popup->setStyleSheet(ATOM_ELEMENT_OR_MONOMER_STYLE);
+            } else if (btn->font().italic()) {
+                btn->setStyleSheet(UNKNOWN_MONOMER_STYLE);
             } else {
-                btn->setStyleSheet(ATOM_ELEMENT_STYLE);
+                btn->setStyleSheet(ATOM_ELEMENT_OR_MONOMER_STYLE);
             }
         }
     }

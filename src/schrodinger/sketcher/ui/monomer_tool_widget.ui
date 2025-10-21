@@ -98,7 +98,7 @@
    <item>
     <widget class="QStackedWidget" name="amino_or_nucleic_stack">
      <property name="currentIndex">
-      <number>0</number>
+      <number>1</number>
      </property>
      <widget class="QWidget" name="nucleic_page">
       <layout class="QGridLayout" name="gridLayout_2">
@@ -131,12 +131,6 @@
            <height>32</height>
           </size>
          </property>
-         <property name="font">
-          <font>
-           <pointsize>14</pointsize>
-           <bold>true</bold>
-          </font>
-         </property>
          <property name="text">
           <string/>
          </property>
@@ -164,12 +158,6 @@
            <width>32</width>
            <height>32</height>
           </size>
-         </property>
-         <property name="font">
-          <font>
-           <pointsize>14</pointsize>
-           <bold>true</bold>
-          </font>
          </property>
          <property name="text">
           <string>G</string>
@@ -204,9 +192,7 @@
          </property>
          <property name="font">
           <font>
-           <pointsize>14</pointsize>
            <italic>true</italic>
-           <bold>true</bold>
           </font>
          </property>
          <property name="text">
@@ -240,12 +226,6 @@
            <height>32</height>
           </size>
          </property>
-         <property name="font">
-          <font>
-           <pointsize>14</pointsize>
-           <bold>true</bold>
-          </font>
-         </property>
          <property name="text">
           <string>U</string>
          </property>
@@ -277,12 +257,6 @@
            <height>32</height>
           </size>
          </property>
-         <property name="font">
-          <font>
-           <pointsize>14</pointsize>
-           <bold>true</bold>
-          </font>
-         </property>
          <property name="text">
           <string>T</string>
          </property>
@@ -313,12 +287,6 @@
            <width>96</width>
            <height>32</height>
           </size>
-         </property>
-         <property name="font">
-          <font>
-           <pointsize>14</pointsize>
-           <bold>true</bold>
-          </font>
          </property>
          <property name="text">
           <string/>
@@ -367,12 +335,6 @@
            <height>32</height>
           </size>
          </property>
-         <property name="font">
-          <font>
-           <pointsize>14</pointsize>
-           <bold>true</bold>
-          </font>
-         </property>
          <property name="text">
           <string>dR</string>
          </property>
@@ -403,12 +365,6 @@
            <width>32</width>
            <height>32</height>
           </size>
-         </property>
-         <property name="font">
-          <font>
-           <pointsize>14</pointsize>
-           <bold>true</bold>
-          </font>
          </property>
          <property name="text">
           <string>P</string>
@@ -441,12 +397,6 @@
            <height>32</height>
           </size>
          </property>
-         <property name="font">
-          <font>
-           <pointsize>14</pointsize>
-           <bold>true</bold>
-          </font>
-         </property>
          <property name="text">
           <string>R</string>
          </property>
@@ -477,12 +427,6 @@
            <width>32</width>
            <height>32</height>
           </size>
-         </property>
-         <property name="font">
-          <font>
-           <pointsize>14</pointsize>
-           <bold>true</bold>
-          </font>
          </property>
          <property name="text">
           <string>A</string>
@@ -527,12 +471,6 @@
            <width>32</width>
            <height>32</height>
           </size>
-         </property>
-         <property name="font">
-          <font>
-           <pointsize>14</pointsize>
-           <bold>true</bold>
-          </font>
          </property>
          <property name="text">
           <string>C</string>
@@ -613,12 +551,6 @@
            <height>32</height>
           </size>
          </property>
-         <property name="font">
-          <font>
-           <pointsize>14</pointsize>
-           <bold>true</bold>
-          </font>
-         </property>
          <property name="text">
           <string>E</string>
          </property>
@@ -649,12 +581,6 @@
            <width>32</width>
            <height>32</height>
           </size>
-         </property>
-         <property name="font">
-          <font>
-           <pointsize>14</pointsize>
-           <bold>true</bold>
-          </font>
          </property>
          <property name="text">
           <string>T</string>
@@ -687,12 +613,6 @@
            <height>32</height>
           </size>
          </property>
-         <property name="font">
-          <font>
-           <pointsize>14</pointsize>
-           <bold>true</bold>
-          </font>
-         </property>
          <property name="text">
           <string>D</string>
          </property>
@@ -723,12 +643,6 @@
            <width>32</width>
            <height>32</height>
           </size>
-         </property>
-         <property name="font">
-          <font>
-           <pointsize>14</pointsize>
-           <bold>true</bold>
-          </font>
          </property>
          <property name="text">
           <string>W</string>
@@ -761,12 +675,6 @@
            <height>32</height>
           </size>
          </property>
-         <property name="font">
-          <font>
-           <pointsize>14</pointsize>
-           <bold>true</bold>
-          </font>
-         </property>
          <property name="text">
           <string>F</string>
          </property>
@@ -797,12 +705,6 @@
            <width>32</width>
            <height>32</height>
           </size>
-         </property>
-         <property name="font">
-          <font>
-           <pointsize>14</pointsize>
-           <bold>true</bold>
-          </font>
          </property>
          <property name="text">
           <string>K</string>
@@ -835,12 +737,6 @@
            <height>32</height>
           </size>
          </property>
-         <property name="font">
-          <font>
-           <pointsize>14</pointsize>
-           <bold>true</bold>
-          </font>
-         </property>
          <property name="text">
           <string>L</string>
          </property>
@@ -871,12 +767,6 @@
            <width>32</width>
            <height>32</height>
           </size>
-         </property>
-         <property name="font">
-          <font>
-           <pointsize>14</pointsize>
-           <bold>true</bold>
-          </font>
          </property>
          <property name="text">
           <string>G</string>
@@ -909,12 +799,6 @@
            <height>32</height>
           </size>
          </property>
-         <property name="font">
-          <font>
-           <pointsize>14</pointsize>
-           <bold>true</bold>
-          </font>
-         </property>
          <property name="text">
           <string>I</string>
          </property>
@@ -945,12 +829,6 @@
            <width>32</width>
            <height>32</height>
           </size>
-         </property>
-         <property name="font">
-          <font>
-           <pointsize>14</pointsize>
-           <bold>true</bold>
-          </font>
          </property>
          <property name="text">
           <string>H</string>
@@ -983,12 +861,6 @@
            <height>32</height>
           </size>
          </property>
-         <property name="font">
-          <font>
-           <pointsize>14</pointsize>
-           <bold>true</bold>
-          </font>
-         </property>
          <property name="text">
           <string>M</string>
          </property>
@@ -1019,12 +891,6 @@
            <width>32</width>
            <height>32</height>
           </size>
-         </property>
-         <property name="font">
-          <font>
-           <pointsize>14</pointsize>
-           <bold>true</bold>
-          </font>
          </property>
          <property name="text">
           <string>A</string>
@@ -1060,12 +926,6 @@
            <height>32</height>
           </size>
          </property>
-         <property name="font">
-          <font>
-           <pointsize>14</pointsize>
-           <bold>true</bold>
-          </font>
-         </property>
          <property name="text">
           <string>Y</string>
          </property>
@@ -1096,12 +956,6 @@
            <width>32</width>
            <height>32</height>
           </size>
-         </property>
-         <property name="font">
-          <font>
-           <pointsize>14</pointsize>
-           <bold>true</bold>
-          </font>
          </property>
          <property name="text">
           <string>R</string>
@@ -1134,12 +988,6 @@
            <height>32</height>
           </size>
          </property>
-         <property name="font">
-          <font>
-           <pointsize>14</pointsize>
-           <bold>true</bold>
-          </font>
-         </property>
          <property name="text">
           <string>Q</string>
          </property>
@@ -1171,12 +1019,6 @@
            <height>32</height>
           </size>
          </property>
-         <property name="font">
-          <font>
-           <pointsize>14</pointsize>
-           <bold>true</bold>
-          </font>
-         </property>
          <property name="text">
           <string>P</string>
          </property>
@@ -1207,12 +1049,6 @@
            <width>32</width>
            <height>32</height>
           </size>
-         </property>
-         <property name="font">
-          <font>
-           <pointsize>14</pointsize>
-           <bold>true</bold>
-          </font>
          </property>
          <property name="text">
           <string>S</string>
@@ -1247,9 +1083,7 @@
          </property>
          <property name="font">
           <font>
-           <pointsize>14</pointsize>
            <italic>true</italic>
-           <bold>true</bold>
           </font>
          </property>
          <property name="text">
@@ -1283,12 +1117,6 @@
            <height>32</height>
           </size>
          </property>
-         <property name="font">
-          <font>
-           <pointsize>14</pointsize>
-           <bold>true</bold>
-          </font>
-         </property>
          <property name="text">
           <string>C</string>
          </property>
@@ -1320,12 +1148,6 @@
            <height>32</height>
           </size>
          </property>
-         <property name="font">
-          <font>
-           <pointsize>14</pointsize>
-           <bold>true</bold>
-          </font>
-         </property>
          <property name="text">
           <string>V</string>
          </property>
@@ -1356,12 +1178,6 @@
            <width>32</width>
            <height>32</height>
           </size>
-         </property>
-         <property name="font">
-          <font>
-           <pointsize>14</pointsize>
-           <bold>true</bold>
-          </font>
          </property>
          <property name="text">
           <string>N</string>
