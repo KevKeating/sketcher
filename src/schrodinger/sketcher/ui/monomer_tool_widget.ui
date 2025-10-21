@@ -98,7 +98,7 @@
    <item>
     <widget class="QStackedWidget" name="amino_or_nucleic_stack">
      <property name="currentIndex">
-      <number>1</number>
+      <number>0</number>
      </property>
      <widget class="QWidget" name="nucleic_page">
       <layout class="QGridLayout" name="gridLayout_2">
@@ -130,6 +130,12 @@
            <width>96</width>
            <height>32</height>
           </size>
+         </property>
+         <property name="font">
+          <font>
+           <pointsize>14</pointsize>
+           <bold>true</bold>
+          </font>
          </property>
          <property name="text">
           <string/>
@@ -307,6 +313,12 @@
            <width>96</width>
            <height>32</height>
           </size>
+         </property>
+         <property name="font">
+          <font>
+           <pointsize>14</pointsize>
+           <bold>true</bold>
+          </font>
          </property>
          <property name="text">
           <string/>
@@ -1384,8 +1396,8 @@
  <resources/>
  <connections/>
  <buttongroups>
-  <buttongroup name="nucleic_monomer_group"/>
   <buttongroup name="amino_monomer_group"/>
   <buttongroup name="amino_or_nucleic_group"/>
+  <buttongroup name="nucleic_monomer_group"/>
  </buttongroups>
 </ui>

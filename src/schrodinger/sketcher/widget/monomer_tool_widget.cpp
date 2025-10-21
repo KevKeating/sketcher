@@ -160,6 +160,8 @@ void MonomerToolWidget::updateCheckedButton()
     }
     check_button_or_uncheck_group(amino_button, ui->amino_monomer_group);
     check_button_or_uncheck_group(nucleic_button, ui->nucleic_monomer_group);
+    ui->na_rna_btn->setEnumItem(static_cast<int>(model->getRNANucleobase()));
+    ui->na_dna_btn->setEnumItem(static_cast<int>(model->getDNANucleobase()));
 }
 
 void MonomerToolWidget::onAminoOrNucleicBtnClicked(QAbstractButton* button)
@@ -214,6 +216,7 @@ void MonomerToolWidget::onNucleicAcidClicked(QAbstractButton* button)
         on_residue_clicked<NucleicAcidTool>(getModel(), ModelKey::NUCLEIC_ACID_TOOL,
                                         m_button_nucleic_acid_bimap, button);
     }
+    // TODO: handle full nucleotide buttons
 }
 
 } // namespace sketcher

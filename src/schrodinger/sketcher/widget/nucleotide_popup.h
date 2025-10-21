@@ -18,6 +18,7 @@ namespace sketcher
 
 enum class NucleicAcidTool;
 enum class ModelKey;
+enum class StdNucleobase;
 
 // TODO: override set popup to trigger initial state of the button?
 
