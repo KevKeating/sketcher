@@ -194,6 +194,10 @@ void MonomerToolWidget::onAminoOrNucleicBtnClicked(QAbstractButton* button)
     updateCheckedButton();
 }
 
+/**
+ * When a tool button is clicked, update the model with the appropriate value
+ * for the button
+ */
 template <typename T> static void
 on_tool_clicked(SketcherModel* model, const ModelKey key,
                    const boost::bimap<QAbstractButton*, T>& button_tool_bimap,
@@ -203,6 +207,10 @@ on_tool_clicked(SketcherModel* model, const ModelKey key,
     ping_or_set_model_value(model, key, tool);
 }
 
+/**
+ * If the model has a selection, ping the specified key/value.  Otherwise, set
+ * the key to the value.
+ */
 template <typename T> static void
 ping_or_set_model_value(SketcherModel* model, const ModelKey key, const T value)
 {

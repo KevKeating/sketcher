@@ -31,8 +31,6 @@ class PauseUpdatesToModelRAII;
  */
 class SKETCHER_API MonomerToolWidget : public AbstractDrawToolWidget
 {
-    // Q_OBJECT
-
   public:
     MonomerToolWidget(QWidget* parent = nullptr);
     ~MonomerToolWidget();
@@ -40,9 +38,6 @@ class SKETCHER_API MonomerToolWidget : public AbstractDrawToolWidget
     void setModel(SketcherModel* model) override;
     void updateCheckedButton() override;
     std::unordered_set<QAbstractButton*> getCheckableButtons() override;
-
-//   signals:
-
 
   protected:
     std::unique_ptr<Ui::MonomerToolWidget> ui;
@@ -52,10 +47,21 @@ class SKETCHER_API MonomerToolWidget : public AbstractDrawToolWidget
     NucleotidePopup* m_rna_popup = nullptr;
     NucleotidePopup* m_dna_popup = nullptr;
 
+    /**
+     * Respond to the AMINO or NUCLEIC buttons being clicked, which toggles the
+     * tools to the appropriate type of monomer
+     */
     void onAminoOrNucleicBtnClicked(QAbstractButton* button);
+    
+    /**
+     * Respond to the user clicking on a specific amino acid
+     */
     void onAminoAcidClicked(QAbstractButton* button);
+
+    /**
+     * Respond to the user clicking on a specific nucleic acid
+     */
     void onNucleicAcidClicked(QAbstractButton* button);
-    void updateMonomerButtons();
 
   friend class PauseUpdatesToModelRAII;
 };

@@ -20,8 +20,6 @@ enum class NucleicAcidTool;
 enum class ModelKey;
 enum class StdNucleobase;
 
-// TODO: override set popup to trigger initial state of the button?
-
 /**
  * Popup used to provide functionality choices for a selection tool button.
  */
