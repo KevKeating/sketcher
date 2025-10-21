@@ -338,6 +338,22 @@ enum class NucleicAcid {
     CUSTOM_NUCLEOTIDE,
 };
 
+enum class StdNucleobases {
+    A,
+    U_OR_T,
+    G,
+    C,
+    N,
+};
+
+// enum class StdDNANucleobases {
+//     A,
+//     T,
+//     G,
+//     C,
+//     N,
+// };
+
 /**
  * @return Every element of `ModelKey`.
  */
