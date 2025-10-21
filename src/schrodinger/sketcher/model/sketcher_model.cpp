@@ -71,7 +71,7 @@ SketcherModel::SketcherModel(QObject* parent) : QObject(parent)
         {ModelKey::ATOM_QUERY, QVariant::fromValue(AtomQuery::A)},
         {ModelKey::RGROUP_NUMBER, 1u},
         {ModelKey::RESIDUE_TYPE, QString("")},
-        {ModelKey::MONOMER_TOOL_TYPE, QVariant::fromValue(MonomerToolType::AMINO_ACID)},
+        {ModelKey::MONOMER_TYPE, QVariant::fromValue(MonomerType::AMINO_ACID)},
         {ModelKey::AMINO_ACID, QVariant::fromValue(AminoAcid::ALA)},
         {ModelKey::NUCLEIC_ACID, QVariant::fromValue(NucleicAcid::A)},
         // TODO: should these two be enums?
@@ -139,20 +139,31 @@ AtomQuery SketcherModel::getAtomQuery() const
     return m_model_map.at(ModelKey::ATOM_QUERY).value<AtomQuery>();
 }
 
-MonomerToolType SketcherModel::getMonomerToolType() const
+MonomerType SketcherModel::getMonomerType() const
 {
-    return m_model_map.at(ModelKey::MONOMER_TOOL_TYPE).value<MonomerToolType>();
+    return m_model_map.at(ModelKey::MONOMER_TYPE).value<MonomerType>();
 }
 
-AminoAcid SketcherModel::getAminoAcidTool() const
+AminoAcidTool SketcherModel::getAminoAcidTool() const
 {
-    return m_model_map.at(ModelKey::AMINO_ACID).value<AminoAcid>();
+    return m_model_map.at(ModelKey::AMINO_ACID_TOOL).value<AminoAcidTool>();
 }
 
-NucleicAcid SketcherModel::getNucleicAcidTool() const
+NucleicAcidTool SketcherModel::getNucleicAcidTool() const
 {
-    return m_model_map.at(ModelKey::NUCLEIC_ACID).value<NucleicAcid>();
+    return m_model_map.at(ModelKey::NUCLEIC_ACID_TOOL).value<NucleicAcidTool>();
 }
+
+StdNucleobase SketcherModel::getRNANucleobase() const
+{
+    return m_model_map.at(ModelKey::RNA_NUCLEOBASE).value<StdNucleobase>();
+}
+
+StdNucleobase SketcherModel::getDNANucleobase() const
+{
+    return m_model_map.at(ModelKey::DNA_NUCLEOBASE).value<StdNucleobase>();
+}
+
 
 InterfaceType SketcherModel::getAllowedInterfaceType() const
 {

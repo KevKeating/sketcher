@@ -283,23 +283,23 @@ enum class ModelKey {
     ATOM_QUERY,
     RGROUP_NUMBER,
     RESIDUE_TYPE,
-    MONOMER_TOOL_TYPE,
-    AMINO_ACID,
-    NUCLEIC_ACID,
-    RNA_NUCLEOTIDE_BASE,
-    DNA_NUCLEOTIDE_BASE,
+    MONOMER_TYPE,
+    AMINO_ACID_TOOL,
+    NUCLEIC_ACID_TOOL,
+    RNA_NUCLEOBASE,
+    DNA_NUCLEOBASE,
     CUSTOM_NUCLEOTIDE,
     ALLOWED_INTERFACE_TYPE,
     CURRENT_INTERFACE_TYPE,
 };
 
-// TODO: remove Type from name?
-enum class MonomerToolType {
+enum class MonomerType {
     AMINO_ACID,
     NUCLEIC_ACID,
 };
 
-enum class AminoAcid {
+// TODO: add Type to name?
+enum class AminoAcidTool {
     ALA,
     ARG,
     ASN,
@@ -323,7 +323,7 @@ enum class AminoAcid {
     UNK,
 };
 
-enum class NucleicAcid {
+enum class NucleicAcidTool {
     A,
     U,
     G,
@@ -338,7 +338,7 @@ enum class NucleicAcid {
     CUSTOM_NUCLEOTIDE,
 };
 
-enum class StdNucleobases {
+enum class StdNucleobase {
     A,
     U_OR_T,
     G,
@@ -397,9 +397,11 @@ class SKETCHER_API SketcherModel : public QObject
     EnumerationTool getEnumerationTool() const;
     Element getElement() const;
     AtomQuery getAtomQuery() const;
-    MonomerToolType getMonomerToolType() const;
-    AminoAcid getAminoAcidTool() const;
-    NucleicAcid getNucleicAcidTool() const;
+    MonomerType getMonomerType() const;
+    AminoAcidTool getAminoAcidTool() const;
+    NucleicAcidTool getNucleicAcidTool() const;
+    StdNucleobase getRNANucleobase() const;
+    StdNucleobase getDNANucleobase() const;
     InterfaceType getAllowedInterfaceType() const;
     InterfaceType getCurrentInterfaceType() const;
 
