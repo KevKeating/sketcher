@@ -91,7 +91,8 @@ ModelObjsByType::ModelObjsByType(
 {
 }
 
-SketcherWidget::SketcherWidget(QWidget* parent, const InterfaceTypeType interface_type) :
+SketcherWidget::SketcherWidget(QWidget* parent,
+                               const InterfaceTypeType interface_type) :
     QWidget(parent),
     m_undo_stack(new QUndoStack(this)),
     m_mol_model(new MolModel(m_undo_stack))
@@ -157,8 +158,10 @@ SketcherWidget::SketcherWidget(QWidget* parent, const InterfaceTypeType interfac
 
     connect(m_mol_model, &MolModel::selectionChanged, this,
             &SketcherWidget::selectionChanged);
-    connect(m_mol_model, &MolModel::modelChanged, this, [this](auto what_changed) {
-        onMolModelChanged(what_changed & WhatChanged::MOLECULE);});
+    connect(m_mol_model, &MolModel::modelChanged, this,
+            [this](auto what_changed) {
+                onMolModelChanged(what_changed & WhatChanged::MOLECULE);
+            });
     connect(m_mol_model, &MolModel::coordinatesChanged, [this]() {
         if (!m_ui->view->isDuringPinchGesture() &&
             !m_scene->isDuringAtomDrag()) {
@@ -1115,7 +1118,7 @@ void SketcherWidget::onMolModelChanged(const bool molecule_changed)
     // molecule's coordinates have changed so we should clear our cached
     // copy of the molecule no matter what
     m_copy_of_mol_model_mol = nullptr;
-    
+
     if (molecule_changed) {
         // update CURRENT_MOLECULE_TYPE (i.e. is the Sketcher workspace empty,
         // atomistic, or monomeric) and CURRENT_TOOL_SET (i.e. does the side bar
@@ -1124,16 +1127,25 @@ void SketcherWidget::onMolModelChanged(const bool molecule_changed)
         // time; it must be one or the other (or empty).
         std::unordered_map<ModelKey, QVariant> vals_to_update;
         if (m_mol_model->hasMolecularObjects()) {
-            vals_to_update.emplace(ModelKey::CURRENT_MOLECULE_TYPE, QVariant::fromValue(MoleculeType::EMPTY));
+            vals_to_update.emplace(ModelKey::CURRENT_MOLECULE_TYPE,
+                                   QVariant::fromValue(MoleculeType::EMPTY));
         } else if (m_mol_model->isMonomeric()) {
-            vals_to_update.emplace(ModelKey::CURRENT_MOLECULE_TYPE, QVariant::fromValue(MoleculeType::MONOMERIC));
-            if (m_sketcher_model->getInterfaceType() & InterfaceType::MONOMERIC) {
-                vals_to_update.emplace(ModelKey::CURRENT_TOOL_SET, QVariant::fromValue(ToolSet::MONOMERIC));
+            vals_to_update.emplace(
+                ModelKey::CURRENT_MOLECULE_TYPE,
+                QVariant::fromValue(MoleculeType::MONOMERIC));
+            if (m_sketcher_model->getInterfaceType() &
+                InterfaceType::MONOMERIC) {
+                vals_to_update.emplace(ModelKey::CURRENT_TOOL_SET,
+                                       QVariant::fromValue(ToolSet::MONOMERIC));
             }
         } else {
-            vals_to_update.emplace(ModelKey::CURRENT_MOLECULE_TYPE, QVariant::fromValue(MoleculeType::ATOMISTIC));
-            if (m_sketcher_model->getInterfaceType() & InterfaceType::ATOMISTIC) {
-                vals_to_update.emplace(ModelKey::CURRENT_TOOL_SET, QVariant::fromValue(ToolSet::ATOMISTIC));
+            vals_to_update.emplace(
+                ModelKey::CURRENT_MOLECULE_TYPE,
+                QVariant::fromValue(MoleculeType::ATOMISTIC));
+            if (m_sketcher_model->getInterfaceType() &
+                InterfaceType::ATOMISTIC) {
+                vals_to_update.emplace(ModelKey::CURRENT_TOOL_SET,
+                                       QVariant::fromValue(ToolSet::ATOMISTIC));
             }
         }
         m_sketcher_model->setValues(vals_to_update);
