@@ -16,6 +16,22 @@ namespace schrodinger
 namespace sketcher
 {
 
+std::string std_nucleobase_to_string(StdNucleobase base, std::string u_or_t)
+{
+    switch (base) {
+        case StdNucleobase::A:
+            return "A";
+        case StdNucleobase::U_OR_T:
+            return u_or_t;
+        case StdNucleobase::G:
+            return "G";
+        case StdNucleobase::C:
+            return "C";
+        case StdNucleobase::N:
+            return "N";
+    }
+}
+
 std::vector<ModelKey> get_model_keys()
 {
     return {
@@ -43,8 +59,8 @@ std::vector<ModelKey> get_model_keys()
         ModelKey::RNA_NUCLEOBASE,
         ModelKey::DNA_NUCLEOBASE,
         ModelKey::CUSTOM_NUCLEOTIDE,
-        ModelKey::ALLOWED_INTERFACE_TYPE,
-        ModelKey::CURRENT_INTERFACE_TYPE,
+        ModelKey::INTERFACE_TYPE,
+        ModelKey::CURRENT_TOOL_SET,
     };
 }
 
@@ -77,8 +93,8 @@ SketcherModel::SketcherModel(QObject* parent) : QObject(parent)
         {ModelKey::RNA_NUCLEOBASE, QVariant::fromValue(StdNucleobase::A)},
         {ModelKey::DNA_NUCLEOBASE, QVariant::fromValue(StdNucleobase::A)},
         {ModelKey::CUSTOM_NUCLEOTIDE, QVariant::fromValue(std::tuple<QString, QString, QString>("R", "A", "P"))},
-        {ModelKey::ALLOWED_INTERFACE_TYPE, QVariant::fromValue(InterfaceType::ATOMISTIC)},
-        {ModelKey::CURRENT_INTERFACE_TYPE, QVariant::fromValue(InterfaceType::ATOMISTIC_OR_MONOMERIC)}
+        {ModelKey::INTERFACE_TYPE, QVariant::fromValue(InterfaceType::ATOMISTIC)},
+        {ModelKey::CURRENT_TOOL_SET, QVariant::fromValue(ToolSet::ATOMISTIC)}
     };
 
     connect(this, &SketcherModel::selectionChanged, this,
@@ -162,14 +178,31 @@ StdNucleobase SketcherModel::getDNANucleobase() const
     return m_model_map.at(ModelKey::DNA_NUCLEOBASE).value<StdNucleobase>();
 }
 
-InterfaceType SketcherModel::getAllowedInterfaceType() const
+std::optional<std::tuple<QString, QString, QString>> SketcherModel::getNucleotide() const
 {
-    return m_model_map.at(ModelKey::ALLOWED_INTERFACE_TYPE).value<InterfaceType>();
+    if (getCurrentToolSet() != ToolSet::NUCLEIC_ACID) {
+        return std::nullopt;
+    } else if (getNucleicAcidTool() == NucleicAcidTool::RNA_NUCLEOTIDE) {
+        auto base = std_nucleobase_to_string(getRNANucleobase(), "U");
+        return {"R", QString::fromStdString(base), "P"};
+    } else if (getNucleicAcidTool() == NucleicAcidTool::DNA_NUCLEOTIDE) {
+        auto base = std_nucleobase_to_string(getDNANucleobase(), "T");
+        return {"dR", QString::fromStdString(base), "P"};
+    } else if (getNucleicAcidTool() == NucleicAcidTool::CUSTOM_NUCLEOTIDE) {
+        return m_model_map.at(ModelKey::CUSTOM_NUCLEOTIDE).value<std::tuple>();
+    } else {
+        return std::nullopt;
+    }
 }
 
-InterfaceType SketcherModel::getCurrentInterfaceType() const
+InterfaceType SketcherModel::getInterfaceType() const
 {
-    return m_model_map.at(ModelKey::CURRENT_INTERFACE_TYPE).value<InterfaceType>();
+    return m_model_map.at(ModelKey::INTERFACE_TYPE).value<InterfaceType>();
+}
+
+ToolSet SketcherModel::getCurrentToolSet() const
+{
+    return m_model_map.at(ModelKey::CURRENT_TOOL_SET).value<ToolSet>();
 }
 
 bool SketcherModel::getValueBool(ModelKey key) const

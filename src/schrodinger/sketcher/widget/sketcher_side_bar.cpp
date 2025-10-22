@@ -63,8 +63,8 @@ void SketcherSideBar::updateWidgetsEnabled()
     std::string title = has_selection ? "EDIT ACTIONS" : "DRAW";
     ui->title_lbl->setText(QString::fromStdString(title));
 
-    auto allowed_mol_types = model->getAllowedInterfaceType();
-    auto current_mol_types = model->getCurrentInterfaceType();
+    auto allowed_mol_types = model->getInterfaceType();
+    auto current_mol_types = model->getCurrentToolSet();
     bool show_atom_mono_buttons =
         allowed_mol_types == InterfaceType::ATOMISTIC_OR_MONOMERIC;
     ui->atomistic_btn->setVisible(show_atom_mono_buttons);

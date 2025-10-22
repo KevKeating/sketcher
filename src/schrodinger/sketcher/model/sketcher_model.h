@@ -289,8 +289,14 @@ enum class ModelKey {
     RNA_NUCLEOBASE,
     DNA_NUCLEOBASE,
     CUSTOM_NUCLEOTIDE,
-    ALLOWED_INTERFACE_TYPE,
-    CURRENT_INTERFACE_TYPE,
+    INTERFACE_TYPE,
+    CURRENT_TOOL_SET,
+};
+
+enum class ToolSet {
+    ATOMISTIC,
+    AMINO_ACID,
+    NUCLEIC_ACID,
 };
 
 enum class MonomerToolType {
@@ -345,6 +351,8 @@ enum class StdNucleobase {
     N,
 };
 
+SKETCHER_API std::string std_nucleobase_to_string(StdNucleobase base, std::string u_or_t);
+
 /**
  * @return Every element of `ModelKey`.
  */
@@ -393,14 +401,15 @@ class SKETCHER_API SketcherModel : public QObject
     NucleicAcidTool getNucleicAcidTool() const;
     StdNucleobase getRNANucleobase() const;
     StdNucleobase getDNANucleobase() const;
+    std::optional<std::tuple<QString, QString, QString>> getNucleotide() const;
     
     // TODO: this should return atomic, amino acid, or nucleic acid
     // TODO: rename to getCurrentToolSet() or something like that?
     // TODO: get rid of this until we need it?
-    InterfaceType getCurrentInterfaceType() const;
+    ToolSet getCurrentToolSet() const;
     
     // TODO: get rid of the "Allowed" part of this name?
-    InterfaceType getAllowedInterfaceType() const;
+    InterfaceType getInterfaceType() const;
 
     /**
      * Retrieve data from the model's state map.
