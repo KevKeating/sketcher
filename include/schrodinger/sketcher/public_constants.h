@@ -26,7 +26,7 @@ enum class SelectionTool {
  * Whether the Sketcher can be used to draw atomistic models (i.e. small
  * molecules), monomeric models (i.e. HELM models), or both
  */
-typedef uint16_t InterfaceTypeType;
+typedef int InterfaceTypeType;
 namespace InterfaceType {
     enum InterfaceTypeType {
         ATOMISTIC = 1 << 0,

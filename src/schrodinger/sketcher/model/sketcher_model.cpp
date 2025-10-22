@@ -99,7 +99,7 @@ SketcherModel::SketcherModel(QObject* parent) : QObject(parent)
         {ModelKey::RNA_NUCLEOBASE, QVariant::fromValue(StdNucleobase::A)},
         {ModelKey::DNA_NUCLEOBASE, QVariant::fromValue(StdNucleobase::A)},
         {ModelKey::CUSTOM_NUCLEOTIDE, QVariant::fromValue(MonomericNucleotide("R", "A", "P"))},
-        {ModelKey::INTERFACE_TYPE, QVariant::fromValue(InterfaceType::ATOMISTIC)},
+        {ModelKey::INTERFACE_TYPE, InterfaceType::ATOMISTIC},
         {ModelKey::CURRENT_TOOL_SET, QVariant::fromValue(ToolSet::ATOMISTIC)}, 
         {ModelKey::CURRENT_MOLECULE_TYPE, QVariant::fromValue(MoleculeType::EMPTY)},
     };
