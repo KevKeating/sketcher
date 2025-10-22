@@ -22,6 +22,7 @@
 #include <emscripten/val.h>
 #endif
 
+#include "schrodinger/rdkit_extensions/helm.h"
 #include "schrodinger/sketcher/dialog/bracket_subgroup_dialog.h"
 #include "schrodinger/sketcher/dialog/edit_atom_properties.h"
 #include "schrodinger/sketcher/dialog/error_dialog.h"
@@ -36,6 +37,7 @@
 #include "schrodinger/sketcher/menu/bond_context_menu.h"
 #include "schrodinger/sketcher/menu/bracket_subgroup_context_menu.h"
 #include "schrodinger/sketcher/menu/selection_context_menu.h"
+#include "schrodinger/sketcher/model/mol_model.h"
 #include "schrodinger/sketcher/model/non_molecular_object.h"
 #include "schrodinger/sketcher/model/sketcher_model.h"
 #include "schrodinger/sketcher/molviewer/atom_item.h"
@@ -156,17 +158,7 @@ SketcherWidget::SketcherWidget(QWidget* parent, const InterfaceType interface_ty
 
     connect(m_mol_model, &MolModel::selectionChanged, this,
             &SketcherWidget::selectionChanged);
-    connect(m_mol_model, &MolModel::modelChanged, [this](auto what_changed) {
-        // even if what_changed doesn't contain MOLECULE, it's possible that the
-        // molecule's coordinates have changed so we should clear our cached
-        // copy of the molecule no matter what
-        m_copy_of_mol_model_mol = nullptr;
-        if (what_changed & WhatChanged::MOLECULE) {
-            emit moleculeChanged();
-        } else {
-            emit representationChanged();
-        }
-    });
+    connect(m_mol_model, &MolModel::modelChanged, this, &SketcherWidget::onMolModelChanged);
     connect(m_mol_model, &MolModel::coordinatesChanged, [this]() {
         if (!m_ui->view->isDuringPinchGesture() &&
             !m_scene->isDuringAtomDrag()) {
@@ -1114,6 +1106,28 @@ void SketcherWidget::onBondHovered(const RDKit::Bond* bond)
         bond = getRDKitMolecule()->getBondWithIdx(bond->getIdx());
     }
     emit bondHovered(bond);
+}
+
+void SketcherWidget::onMolModelChanged(const WhatChangedType what_changed)
+{
+    // even if what_changed doesn't contain MOLECULE, it's possible that the
+    // molecule's coordinates have changed so we should clear our cached
+    // copy of the molecule no matter what
+    m_copy_of_mol_model_mol = nullptr;
+    if (what_changed & WhatChanged::MOLECULE) {
+        emit moleculeChanged();
+    } else {
+        emit representationChanged();
+    }
+    
+    if (what_changed & WhatChanged::MOLECULE && m_sketcher_model->getInterfaceType() == InterfaceType::ATOMISTIC_OR_MONOMERIC) {
+        // we may need to enable/disable the atomistic or monomeric tools
+        if (m_mol_model->isEmpty()) {
+            m_sketcher_model->setValue(ModelKey::CURRENT_MOLECULE_TYPE, MoleculeType::EMPTY);
+        } else if (rdkit_extensions::isMonomeric(*getRDKitMolecule())) {
+            if ()
+        }
+    }
 }
 
 bool SketcherWidget::handleShortcutAction(const QKeySequence& key)

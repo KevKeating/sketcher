@@ -291,12 +291,18 @@ enum class ModelKey {
     CUSTOM_NUCLEOTIDE,
     INTERFACE_TYPE,
     CURRENT_TOOL_SET,
+    CURRENT_MOLECULE_TYPE,
+};
+
+enum class MoleculeType {
+    EMPTY,
+    ATOMISTIC,
+    MONOMERIC,
 };
 
 enum class ToolSet {
     ATOMISTIC,
-    AMINO_ACID,
-    NUCLEIC_ACID,
+    MONOMERIC,
 };
 
 enum class MonomerToolType {

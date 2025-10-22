@@ -56,6 +56,11 @@ class RenderingSettingsDialog;
 class ModelObjsByType;
 enum class MoleculeType;
 
+// namespace WhatChanged {
+//     enum WhatChangedType;
+// }
+
+
 /**
  * Sketcher widget meant for use in LiveDesign and Maestro.
  */
@@ -479,6 +484,8 @@ class SKETCHER_API SketcherWidget : public QWidget
      */
     void onAtomHovered(const RDKit::Atom* atom);
     void onBondHovered(const RDKit::Bond* bond);
+    
+    void onMolModelChanged(const WhatChangedType what_changed);
 };
 
 } // namespace sketcher

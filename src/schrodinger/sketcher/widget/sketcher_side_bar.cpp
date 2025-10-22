@@ -63,25 +63,21 @@ void SketcherSideBar::updateWidgetsEnabled()
     std::string title = has_selection ? "EDIT ACTIONS" : "DRAW";
     ui->title_lbl->setText(QString::fromStdString(title));
 
-    auto allowed_mol_types = model->getInterfaceType();
-    auto current_mol_types = model->getCurrentToolSet();
+    auto interface_type = model->getInterfaceType();
     bool show_atom_mono_buttons =
-        allowed_mol_types == InterfaceType::ATOMISTIC_OR_MONOMERIC;
+        interface_type == InterfaceType::ATOMISTIC_OR_MONOMERIC;
     ui->atomistic_btn->setVisible(show_atom_mono_buttons);
     ui->monomer_btn->setVisible(show_atom_mono_buttons);
     if (!show_atom_mono_buttons) {
-        if (allowed_mol_types == InterfaceType::ATOMISTIC) {
+        // only one type of interface is enabled, so switch to that one
+        if (interface_type == InterfaceType::ATOMISTIC) {
             ui->atomistic_or_monomer_stack->setCurrentWidget(ui->atomistic_page);
         } else {
             ui->atomistic_or_monomer_stack->setCurrentWidget(ui->monomer_page);
         }
     } else {
-        ui->atomistic_btn->setEnabled(
-            current_mol_types == InterfaceType::ATOMISTIC ||
-            current_mol_types == InterfaceType::ATOMISTIC_OR_MONOMERIC);
-        ui->monomer_btn->setEnabled(
-            current_mol_types == InterfaceType::MONOMERIC ||
-            current_mol_types == InterfaceType::ATOMISTIC_OR_MONOMERIC);
+        // TODO: disable atomistic_btn and monomer_btn if there's already a
+        // molecule of the other type
     }
 }
 
