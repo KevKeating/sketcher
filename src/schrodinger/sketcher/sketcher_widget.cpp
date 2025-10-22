@@ -157,7 +157,8 @@ SketcherWidget::SketcherWidget(QWidget* parent, const InterfaceType interface_ty
 
     connect(m_mol_model, &MolModel::selectionChanged, this,
             &SketcherWidget::selectionChanged);
-    connect(m_mol_model, &MolModel::modelChanged, this, &SketcherWidget::onMolModelChanged);
+    connect(m_mol_model, &MolModel::modelChanged, this, [this](auto what_changed) {
+        onMolModelChanged(what_changed & WhatChanged::MOLECULE));
     connect(m_mol_model, &MolModel::coordinatesChanged, [this]() {
         if (!m_ui->view->isDuringPinchGesture() &&
             !m_scene->isDuringAtomDrag()) {
@@ -1107,9 +1108,15 @@ void SketcherWidget::onBondHovered(const RDKit::Bond* bond)
     emit bondHovered(bond);
 }
 
-void SketcherWidget::onMolModelChanged(const WhatChangedType what_changed)
+void SketcherWidget::onMolModelChanged(const bool molecule_changed)
 {
-    if (what_changed & WhatChanged::MOLECULE && m_sketcher_model->getInterfaceType() == InterfaceType::ATOMISTIC_OR_MONOMERIC) {
+    // even if what_changed doesn't contain MOLECULE, it's possible that the
+    // molecule's coordinates have changed so we should clear our cached
+    // copy of the molecule no matter what
+    m_copy_of_mol_model_mol = nullptr;
+    
+    // TODO: should update CURRENT_MOLECULE_TYPE, but not CURRENT_TOOL_SET, even if the interface doesn't allow both atomistic and monomeric
+    if (molecule_changed && m_sketcher_model->getInterfaceType() == InterfaceType::ATOMISTIC_OR_MONOMERIC) {
         // we may need to enable/disable the atomistic or monomeric tools
         if (m_mol_model->hasMolecularObjects()) {
             m_sketcher_model->setValue(ModelKey::CURRENT_MOLECULE_TYPE, MoleculeType::EMPTY);
@@ -1124,11 +1131,7 @@ void SketcherWidget::onMolModelChanged(const WhatChangedType what_changed)
         }
     }
 
-    // even if what_changed doesn't contain MOLECULE, it's possible that the
-    // molecule's coordinates have changed so we should clear our cached
-    // copy of the molecule no matter what
-    m_copy_of_mol_model_mol = nullptr;
-    if (what_changed & WhatChanged::MOLECULE) {
+    if (molecule_changed) {
         emit moleculeChanged();
     } else {
         emit representationChanged();

@@ -98,7 +98,8 @@ SketcherModel::SketcherModel(QObject* parent) : QObject(parent)
         {ModelKey::DNA_NUCLEOBASE, QVariant::fromValue(StdNucleobase::A)},
         {ModelKey::CUSTOM_NUCLEOTIDE, QVariant::fromValue(MonomericNucleotide("R", "A", "P"))},
         {ModelKey::INTERFACE_TYPE, QVariant::fromValue(InterfaceType::ATOMISTIC)},
-        {ModelKey::CURRENT_TOOL_SET, QVariant::fromValue(ToolSet::ATOMISTIC)},
+        // TODO: need something that's atomistic or monomeric (but not both), then current tool set can be derived from that
+        {ModelKey::CURRENT_TOOL_SET, QVariant::fromValue(ToolSet::ATOMISTIC)}, 
         {ModelKey::CURRENT_MOLECULE_TYPE, QVariant::fromValue(MoleculeType::EMPTY)},
     };
 
