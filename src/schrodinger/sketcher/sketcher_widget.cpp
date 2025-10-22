@@ -1128,20 +1128,20 @@ void SketcherWidget::onMolModelChanged(const bool molecule_changed)
         std::unordered_map<ModelKey, QVariant> kv_pairs;
         auto interface = m_sketcher_model->getInterfaceType();
         if (m_mol_model->hasMolecularObjects()) {
-            kv_pairs.emplace(ModelKey::CURRENT_MOLECULE_TYPE,
+            kv_pairs.emplace(ModelKey::MOLECULE_TYPE,
                              QVariant::fromValue(MoleculeType::EMPTY));
         } else if (m_mol_model->isMonomeric()) {
-            kv_pairs.emplace(ModelKey::CURRENT_MOLECULE_TYPE,
+            kv_pairs.emplace(ModelKey::MOLECULE_TYPE,
                              QVariant::fromValue(MoleculeType::MONOMERIC));
             if (interface & InterfaceType::MONOMERIC) {
-                kv_pairs.emplace(ModelKey::CURRENT_TOOL_SET,
+                kv_pairs.emplace(ModelKey::TOOL_SET,
                                  QVariant::fromValue(ToolSet::MONOMERIC));
             }
         } else {
-            kv_pairs.emplace(ModelKey::CURRENT_MOLECULE_TYPE,
+            kv_pairs.emplace(ModelKey::MOLECULE_TYPE,
                              QVariant::fromValue(MoleculeType::ATOMISTIC));
             if (interface & InterfaceType::ATOMISTIC) {
-                kv_pairs.emplace(ModelKey::CURRENT_TOOL_SET,
+                kv_pairs.emplace(ModelKey::TOOL_SET,
                                  QVariant::fromValue(ToolSet::ATOMISTIC));
             }
         }

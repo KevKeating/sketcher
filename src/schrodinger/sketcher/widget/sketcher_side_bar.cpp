@@ -68,7 +68,7 @@ void SketcherSideBar::updateWidgetsEnabled()
     } else {
         // disable the atomistic or monomer buttons if there's already a
         // molecule of the other type
-        auto mol_type = model->getCurrentMoleculeType();
+        auto mol_type = model->getMoleculeType();
         ui->atomistic_btn->setEnabled(mol_type != MoleculeType::MONOMERIC);
         ui->monomeric_btn->setEnabled(mol_type != MoleculeType::ATOMISTIC);
     }
@@ -78,7 +78,7 @@ void SketcherSideBar::onAtomisticOrMonomerButtonClicked(QAbstractButton* button)
 {
     ToolSet tool_set = button == ui->atomistic_btn ? ToolSet::ATOMISTIC : ToolSet::MONOMERIC;
     // this setValue() call will trigger a call to updateCheckState
-    getModel()->setValue(ModelKey::CURRENT_TOOL_SET, tool_set);
+    getModel()->setValue(ModelKey::TOOL_SET, tool_set);
 }      
 
 void SketcherSideBar::updateCheckState()
@@ -91,7 +91,7 @@ void SketcherSideBar::updateCheckState()
     std::optional<DrawTool> new_draw_tool = std::nullopt;
     auto model = getModel();
     auto cur_draw_tool = model->getDrawTool();
-    auto tool_set = model->getCurrentToolSet();
+    auto tool_set = model->getToolSet();
     if (tool_set == ToolSet::ATOMISTIC) {
         page = ui->atomistic_page;
         if (!ATOMISTIC_TOOLS.contains(cur_draw_tool)) {

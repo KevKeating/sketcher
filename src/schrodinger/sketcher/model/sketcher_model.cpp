@@ -66,7 +66,7 @@ std::vector<ModelKey> get_model_keys()
         ModelKey::DNA_NUCLEOBASE,
         ModelKey::CUSTOM_NUCLEOTIDE,
         ModelKey::INTERFACE_TYPE,
-        ModelKey::CURRENT_TOOL_SET,
+        ModelKey::TOOL_SET,
     };
 }
 
@@ -100,8 +100,8 @@ SketcherModel::SketcherModel(QObject* parent) : QObject(parent)
         {ModelKey::DNA_NUCLEOBASE, QVariant::fromValue(StdNucleobase::A)},
         {ModelKey::CUSTOM_NUCLEOTIDE, QVariant::fromValue(MonomericNucleotide("R", "A", "P"))},
         {ModelKey::INTERFACE_TYPE, InterfaceType::ATOMISTIC},
-        {ModelKey::CURRENT_TOOL_SET, QVariant::fromValue(ToolSet::ATOMISTIC)}, 
-        {ModelKey::CURRENT_MOLECULE_TYPE, QVariant::fromValue(MoleculeType::EMPTY)},
+        {ModelKey::TOOL_SET, QVariant::fromValue(ToolSet::ATOMISTIC)}, 
+        {ModelKey::MOLECULE_TYPE, QVariant::fromValue(MoleculeType::EMPTY)},
     };
 
     connect(this, &SketcherModel::selectionChanged, this,
@@ -187,7 +187,7 @@ StdNucleobase SketcherModel::getDNANucleobase() const
 
 std::optional<std::tuple<std::string, std::string, std::string>> SketcherModel::getNucleotide() const
 {
-    if (getCurrentToolSet() != ToolSet::MONOMERIC || getMonomerToolType() != MonomerToolType::NUCLEIC_ACID) {
+    if (getToolSet() != ToolSet::MONOMERIC || getMonomerToolType() != MonomerToolType::NUCLEIC_ACID) {
         return std::nullopt;
     } else if (getNucleicAcidTool() == NucleicAcidTool::RNA_NUCLEOTIDE) {
         auto base = std_nucleobase_to_string(getRNANucleobase(), "U");
@@ -207,14 +207,14 @@ InterfaceTypeType SketcherModel::getInterfaceType() const
     return m_model_map.at(ModelKey::INTERFACE_TYPE).value<InterfaceTypeType>();
 }
 
-ToolSet SketcherModel::getCurrentToolSet() const
+ToolSet SketcherModel::getToolSet() const
 {
-    return m_model_map.at(ModelKey::CURRENT_TOOL_SET).value<ToolSet>();
+    return m_model_map.at(ModelKey::TOOL_SET).value<ToolSet>();
 }
 
-MoleculeType SketcherModel::getCurrentMoleculeType() const
+MoleculeType SketcherModel::getMoleculeType() const
 {
-    return m_model_map.at(ModelKey::CURRENT_MOLECULE_TYPE).value<MoleculeType>();
+    return m_model_map.at(ModelKey::MOLECULE_TYPE).value<MoleculeType>();
 }
 
 bool SketcherModel::getValueBool(ModelKey key) const
