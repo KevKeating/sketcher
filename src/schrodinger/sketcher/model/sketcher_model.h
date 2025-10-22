@@ -401,7 +401,7 @@ class SKETCHER_API SketcherModel : public QObject
     NucleicAcidTool getNucleicAcidTool() const;
     StdNucleobase getRNANucleobase() const;
     StdNucleobase getDNANucleobase() const;
-    std::optional<std::tuple<QString, QString, QString>> getNucleotide() const;
+    std::optional<std::tuple<std::string, std::string, std::string>> getNucleotide() const;
     
     // TODO: this should return atomic, amino acid, or nucleic acid
     // TODO: rename to getCurrentToolSet() or something like that?
