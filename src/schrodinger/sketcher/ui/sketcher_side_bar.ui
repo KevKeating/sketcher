@@ -89,12 +89,12 @@
           <bool>true</bool>
          </property>
          <attribute name="buttonGroup">
-          <string notr="true">atomistic_or_monomer_group</string>
+          <string notr="true">atomistic_or_monomeric_group</string>
          </attribute>
         </widget>
        </item>
        <item>
-        <widget class="QToolButton" name="monomer_btn">
+        <widget class="QToolButton" name="monomeric_btn">
          <property name="font">
           <font>
            <bold>true</bold>
@@ -107,7 +107,7 @@
           <bool>true</bool>
          </property>
          <attribute name="buttonGroup">
-          <string notr="true">atomistic_or_monomer_group</string>
+          <string notr="true">atomistic_or_monomeric_group</string>
          </attribute>
         </widget>
        </item>
@@ -157,7 +157,7 @@
          </item>
         </layout>
        </widget>
-       <widget class="QWidget" name="monomer_page">
+       <widget class="QWidget" name="monomeric_page">
         <layout class="QVBoxLayout" name="verticalLayout_4">
          <property name="spacing">
           <number>2</number>
@@ -175,7 +175,7 @@
           <number>0</number>
          </property>
          <item>
-          <widget class="schrodinger::sketcher::MonomerToolWidget" name="monomer_wdg" native="true"/>
+          <widget class="schrodinger::sketcher::MonomerToolWidget" name="monomeric_wdg" native="true"/>
          </item>
         </layout>
        </widget>
@@ -235,6 +235,6 @@
  </resources>
  <connections/>
  <buttongroups>
-  <buttongroup name="atomistic_or_monomer_group"/>
+  <buttongroup name="atomistic_or_monomeric_group"/>
  </buttongroups>
 </ui>

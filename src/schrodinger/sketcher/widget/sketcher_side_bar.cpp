@@ -31,7 +31,7 @@ SketcherSideBar::SketcherSideBar(QWidget* parent) : SketcherView(parent)
     connect(ui->select_options_wdg,
             &SelectOptionsWidget::invertSelectionRequested, this,
             &SketcherSideBar::invertSelectionRequested);
-    connect(ui->atomistic_or_monomer_group, &QButtonGroup::buttonClicked, this,
+    connect(ui->atomistic_or_monomeric_group, &QButtonGroup::buttonClicked, this,
             &SketcherSideBar::onAtomisticOrMonomerButtonClicked);
 }
 
@@ -44,7 +44,7 @@ void SketcherSideBar::setModel(SketcherModel* model)
     ui->draw_tools_wdg->setModel(model);
     ui->ring_tool_wdg->setModel(model);
     ui->enumeration_tool_wdg->setModel(model);
-    ui->monomer_wdg->setModel(model);
+    ui->monomeric_wdg->setModel(model);
 }
 
 void SketcherSideBar::updateWidgetsEnabled()
@@ -58,13 +58,13 @@ void SketcherSideBar::updateWidgetsEnabled()
     bool show_atom_mono_buttons =
         interface_type == InterfaceType::ATOMISTIC_OR_MONOMERIC;
     ui->atomistic_btn->setVisible(show_atom_mono_buttons);
-    ui->monomer_btn->setVisible(show_atom_mono_buttons);
+    ui->monomeric_btn->setVisible(show_atom_mono_buttons);
     if (!show_atom_mono_buttons) {
         // only one type of interface is enabled, so switch to that one
         if (interface_type == InterfaceType::ATOMISTIC) {
-            ui->atomistic_or_monomer_stack->setCurrentWidget(ui->atomistic_page);
+            ui->atomistic_or_monomeric_stack->setCurrentWidget(ui->atomistic_page);
         } else {
-            ui->atomistic_or_monomer_stack->setCurrentWidget(ui->monomer_page);
+            ui->atomistic_or_monomeric_stack->setCurrentWidget(ui->monomeric_page);
         }
     } else {
         // disable the atomistic or monomer buttons if there's already a
@@ -88,9 +88,9 @@ void SketcherSideBar::updateCheckState()
         DrawTool::RING, DrawTool::ENUMERATION, DrawTool::EXPLICIT_H,
     };
     QWidget* page;
-    auto cur_draw_tool = model->getDrawTool();
     std::optional<DrawTool> new_draw_tool = std::nullopt;
     auto model = getModel();
+    auto cur_draw_tool = model->getDrawTool();
     auto tool_set = model->getCurrentToolSet();
     if (tool_set == ToolSet::ATOMISTIC) {
         page = ui->atomistic_page;
@@ -98,12 +98,12 @@ void SketcherSideBar::updateCheckState()
             new_draw_tool = DrawTool::ATOM;
         }
     } else {
-        page = ui->monomer_page;
+        page = ui->monomeric_page;
         if (cur_draw_tool != DrawTool::MONOMER) {
             new_draw_tool = DrawTool::MONOMER;
         }
     }
-    ui->atomistic_or_monomer_stack->setCurrentWidget(page);
+    ui->atomistic_or_monomeric_stack->setCurrentWidget(page);
     if (new_draw_tool.has_value() && !(model->hasActiveSelection())) {
         model->setValue(ModelKey::DRAW_TOOL, *new_draw_tool);
     }
