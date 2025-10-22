@@ -290,6 +290,7 @@ enum class ModelKey {
     DNA_NUCLEOBASE,
     CUSTOM_NUCLEOTIDE,
     INTERFACE_TYPE,
+    // TODO: remove current from name
     CURRENT_TOOL_SET,
     CURRENT_MOLECULE_TYPE,
 };
@@ -409,6 +410,7 @@ class SKETCHER_API SketcherModel : public QObject
     StdNucleobase getDNANucleobase() const;
     std::optional<std::tuple<std::string, std::string, std::string>> getNucleotide() const;
     
+    // TODO: remove current from name
     ToolSet getCurrentToolSet() const;
     MoleculeType getCurrentMoleculeType() const;
     
