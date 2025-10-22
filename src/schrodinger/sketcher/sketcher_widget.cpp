@@ -91,7 +91,7 @@ ModelObjsByType::ModelObjsByType(
 {
 }
 
-SketcherWidget::SketcherWidget(QWidget* parent, const InterfaceType interface_type) :
+SketcherWidget::SketcherWidget(QWidget* parent, const InterfaceTypeType interface_type) :
     QWidget(parent),
     m_undo_stack(new QUndoStack(this)),
     m_mol_model(new MolModel(m_undo_stack))
@@ -158,7 +158,7 @@ SketcherWidget::SketcherWidget(QWidget* parent, const InterfaceType interface_ty
     connect(m_mol_model, &MolModel::selectionChanged, this,
             &SketcherWidget::selectionChanged);
     connect(m_mol_model, &MolModel::modelChanged, this, [this](auto what_changed) {
-        onMolModelChanged(what_changed & WhatChanged::MOLECULE));
+        onMolModelChanged(what_changed & WhatChanged::MOLECULE);});
     connect(m_mol_model, &MolModel::coordinatesChanged, [this]() {
         if (!m_ui->view->isDuringPinchGesture() &&
             !m_scene->isDuringAtomDrag()) {
@@ -432,7 +432,7 @@ QSet<const RDKit::Bond*> SketcherWidget::getSelectedBonds() const
     return QSet(bonds_from_copy.begin(), bonds_from_copy.end());
 }
 
-void SketcherWidget::setInterfaceType(InterfaceType interface_type)
+void SketcherWidget::setInterfaceType(InterfaceTypeType interface_type)
 {
     m_sketcher_model->setValue(ModelKey::INTERFACE_TYPE, interface_type);
 }
@@ -893,6 +893,7 @@ void SketcherWidget::keyPressEvent(QKeyEvent* event)
 
     bool handled = handleCommonKeyboardShortcuts(event, cursor_pos, targets);
     if (!handled) {
+        // TODO: handle amino acid and nucleic acid shortcuts
         handleAtomisticKeyboardShortcuts(event, cursor_pos, targets);
     }
 }
@@ -1115,20 +1116,27 @@ void SketcherWidget::onMolModelChanged(const bool molecule_changed)
     // copy of the molecule no matter what
     m_copy_of_mol_model_mol = nullptr;
     
-    // TODO: should update CURRENT_MOLECULE_TYPE, but not CURRENT_TOOL_SET, even if the interface doesn't allow both atomistic and monomeric
-    if (molecule_changed && m_sketcher_model->getInterfaceType() == InterfaceType::ATOMISTIC_OR_MONOMERIC) {
-        // we may need to enable/disable the atomistic or monomeric tools
+    if (molecule_changed) {
+        // update CURRENT_MOLECULE_TYPE (i.e. is the Sketcher workspace empty,
+        // atomistic, or monomeric) and CURRENT_TOOL_SET (i.e. does the side bar
+        // display atomistic or monomeric tools). Note that we don't allow the
+        // workspace to contain both atomistic and monomeric models at the same
+        // time; it must be one or the other (or empty).
+        std::unordered_map<ModelKey, QVariant> vals_to_update;
         if (m_mol_model->hasMolecularObjects()) {
-            m_sketcher_model->setValue(ModelKey::CURRENT_MOLECULE_TYPE, MoleculeType::EMPTY);
+            vals_to_update.emplace(ModelKey::CURRENT_MOLECULE_TYPE, QVariant::fromValue(MoleculeType::EMPTY));
         } else if (m_mol_model->isMonomeric()) {
-            m_sketcher_model->setValues({
-                {ModelKey::CURRENT_MOLECULE_TYPE, QVariant::fromValue(MoleculeType::MONOMERIC)},
-                {ModelKey::CURRENT_TOOL_SET, QVariant::fromValue(ToolSet::MONOMERIC)}});
+            vals_to_update.emplace(ModelKey::CURRENT_MOLECULE_TYPE, QVariant::fromValue(MoleculeType::MONOMERIC));
+            if (m_sketcher_model->getInterfaceType() & InterfaceType::MONOMERIC) {
+                vals_to_update.emplace(ModelKey::CURRENT_TOOL_SET, QVariant::fromValue(ToolSet::MONOMERIC));
+            }
         } else {
-            m_sketcher_model->setValues({
-                {ModelKey::CURRENT_MOLECULE_TYPE, QVariant::fromValue(MoleculeType::ATOMISTIC)},
-                {ModelKey::CURRENT_TOOL_SET, QVariant::fromValue(ToolSet::ATOMISTIC)}});
+            vals_to_update.emplace(ModelKey::CURRENT_MOLECULE_TYPE, QVariant::fromValue(MoleculeType::ATOMISTIC));
+            if (m_sketcher_model->getInterfaceType() & InterfaceType::ATOMISTIC) {
+                vals_to_update.emplace(ModelKey::CURRENT_TOOL_SET, QVariant::fromValue(ToolSet::ATOMISTIC));
+            }
         }
+        m_sketcher_model->setValues(vals_to_update);
     }
 
     if (molecule_changed) {

@@ -409,13 +409,9 @@ class SKETCHER_API SketcherModel : public QObject
     StdNucleobase getDNANucleobase() const;
     std::optional<std::tuple<std::string, std::string, std::string>> getNucleotide() const;
     
-    // TODO: this should return atomic, amino acid, or nucleic acid
-    // TODO: rename to getCurrentToolSet() or something like that?
-    // TODO: get rid of this until we need it?
     ToolSet getCurrentToolSet() const;
     
-    // TODO: get rid of the "Allowed" part of this name?
-    InterfaceType getInterfaceType() const;
+    InterfaceTypeType getInterfaceType() const;
 
     /**
      * Retrieve data from the model's state map.

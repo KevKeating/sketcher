@@ -64,7 +64,7 @@ class SKETCHER_API SketcherWidget : public QWidget
     Q_OBJECT
 
   public:
-    SketcherWidget(QWidget* parent = nullptr, const InterfaceType interface_type = InterfaceType::ATOMISTIC);
+    SketcherWidget(QWidget* parent = nullptr, const InterfaceTypeType interface_type = InterfaceType::ATOMISTIC);
     ~SketcherWidget();
 
     /**
@@ -111,7 +111,7 @@ class SKETCHER_API SketcherWidget : public QWidget
      * Set whether this Sketcher can be used to draw atomistic models (i.e.
      * small molecules), monomeric models (i.e. HELM models), or both
      */
-    void setInterfaceType(const InterfaceType interface_type);
+    void setInterfaceType(const InterfaceTypeType interface_type);
 
     /**
      * Enable select-only mode, which removes the toolbars and limits user

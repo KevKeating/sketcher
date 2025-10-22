@@ -33,6 +33,8 @@ std::string std_nucleobase_to_string(StdNucleobase base, std::string u_or_t)
             return "C";
         case StdNucleobase::N:
             return "N";
+        default:
+            return "";
     }
 }
 
@@ -98,7 +100,6 @@ SketcherModel::SketcherModel(QObject* parent) : QObject(parent)
         {ModelKey::DNA_NUCLEOBASE, QVariant::fromValue(StdNucleobase::A)},
         {ModelKey::CUSTOM_NUCLEOTIDE, QVariant::fromValue(MonomericNucleotide("R", "A", "P"))},
         {ModelKey::INTERFACE_TYPE, QVariant::fromValue(InterfaceType::ATOMISTIC)},
-        // TODO: need something that's atomistic or monomeric (but not both), then current tool set can be derived from that
         {ModelKey::CURRENT_TOOL_SET, QVariant::fromValue(ToolSet::ATOMISTIC)}, 
         {ModelKey::CURRENT_MOLECULE_TYPE, QVariant::fromValue(MoleculeType::EMPTY)},
     };
@@ -186,7 +187,7 @@ StdNucleobase SketcherModel::getDNANucleobase() const
 
 std::optional<std::tuple<std::string, std::string, std::string>> SketcherModel::getNucleotide() const
 {
-    if (getCurrentToolSet() != ToolSet::NUCLEIC_ACID) {
+    if (getCurrentToolSet() != ToolSet::MONOMERIC || getMonomerToolType() != MonomerToolType::NUCLEIC_ACID) {
         return std::nullopt;
     } else if (getNucleicAcidTool() == NucleicAcidTool::RNA_NUCLEOTIDE) {
         auto base = std_nucleobase_to_string(getRNANucleobase(), "U");
@@ -201,9 +202,9 @@ std::optional<std::tuple<std::string, std::string, std::string>> SketcherModel::
     }
 }
 
-InterfaceType SketcherModel::getInterfaceType() const
+InterfaceTypeType SketcherModel::getInterfaceType() const
 {
-    return m_model_map.at(ModelKey::INTERFACE_TYPE).value<InterfaceType>();
+    return m_model_map.at(ModelKey::INTERFACE_TYPE).value<InterfaceTypeType>();
 }
 
 ToolSet SketcherModel::getCurrentToolSet() const
