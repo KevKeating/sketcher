@@ -8,6 +8,7 @@
 #include "schrodinger/sketcher/sketcher_css_style.h"
 #include "schrodinger/sketcher/ui/ui_monomer_tool_widget.h"
 #include "schrodinger/sketcher/widget/tool_button_with_popup.h"
+#include "schrodinger/sketcher/widget/modular_tool_button.h"
 #include "schrodinger/sketcher/widget/nucleotide_popup.h"
 #include "schrodinger/sketcher/widget/widget_utils.h"
 
@@ -242,12 +243,11 @@ void MonomerToolWidget::onNucleicAcidClicked(QAbstractButton* button)
                                         m_button_nucleic_acid_bimap, button);
     // if one of the full nucleotide buttons was clicked, we also need to inform
     // the model of the nucleotide type
-    if (button == ui->na_rna_btn) {
-        auto base = static_cast<StdNucleobase>(ui->na_rna_btn->getEnumItem());
-        ping_or_set_model_value(getModel(), ModelKey::RNA_NUCLEOBASE, base);
-    } else if (button == ui->na_dna_btn) {
-        auto base = static_cast<StdNucleobase>(ui->na_dna_btn->getEnumItem());
-        ping_or_set_model_value(getModel(), ModelKey::DNA_NUCLEOBASE, base);
+    if (button == ui->na_rna_btn || button == ui->na_dna_btn) {
+        auto* modular_button = static_cast<ModularToolButton*>(button);
+        auto base = static_cast<StdNucleobase>(modular_button->getEnumItem());
+        auto key = button == ui->na_rna_btn ? ModelKey::RNA_NUCLEOBASE : ModelKey::DNA_NUCLEOBASE;
+        ping_or_set_model_value(getModel(), key, base);
     }
 }
 

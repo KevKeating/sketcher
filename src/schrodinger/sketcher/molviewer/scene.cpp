@@ -680,9 +680,11 @@ std::shared_ptr<AbstractSceneTool> Scene::getNewSceneTool()
     } else if (draw_tool == DrawTool::MONOMER) {
         auto monomer_tool_type = m_sketcher_model->getMonomerToolType();
         if (monomer_tool_type == MonomerToolType::AMINO_ACID) {
-            auto res = m_sketcher_model->getAminoAcidTool();
+            // TODO: make amino acid scene tool
+            // auto tool = m_sketcher_model->getAminoAcidTool();
         } else {
-            auto res = m_sketcher_model->getNucleicAcidTool();
+            // TODO: make nucleic acid scene tool
+            // auto tool = m_sketcher_model->getNucleicAcidTool();
         }
     }
     // tool not yet implemented

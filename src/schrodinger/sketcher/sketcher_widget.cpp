@@ -896,8 +896,13 @@ void SketcherWidget::keyPressEvent(QKeyEvent* event)
 
     bool handled = handleCommonKeyboardShortcuts(event, cursor_pos, targets);
     if (!handled) {
-        // TODO: handle amino acid and nucleic acid shortcuts
-        handleAtomisticKeyboardShortcuts(event, cursor_pos, targets);
+        if (m_sketcher_model->getToolSet() == ToolSet::ATOMISTIC) {
+            handleAtomisticKeyboardShortcuts(event, cursor_pos, targets);
+        } else if (m_sketcher_model->getMonomerToolType() == MonomerToolType::AMINO_ACID) {
+            // TODO: handle amino acid keyboard shortcuts
+        } else {
+            // TODO: handle nucleic acid keyboard shortcuts
+        }
     }
 }
 
@@ -1120,11 +1125,11 @@ void SketcherWidget::onMolModelChanged(const bool molecule_changed)
     m_copy_of_mol_model_mol = nullptr;
 
     if (molecule_changed) {
-        // update CURRENT_MOLECULE_TYPE (i.e. is the Sketcher workspace empty,
-        // atomistic, or monomeric) and CURRENT_TOOL_SET (i.e. does the side bar
-        // display atomistic or monomeric tools). Note that we don't allow the
-        // workspace to contain both atomistic and monomeric models at the same
-        // time; it must be one or the other (or empty).
+        // update MOLECULE_TYPE (i.e. is the Sketcher workspace empty,
+        // atomistic, or monomeric) and TOOL_SET (i.e. does the side bar
+        // currently display atomistic or monomeric tools). Note that we don't
+        // allow the workspace to contain both atomistic and monomeric models at
+        // the same time; it must be one or the other (or empty).
         std::unordered_map<ModelKey, QVariant> kv_pairs;
         auto interface = m_sketcher_model->getInterfaceType();
         if (m_mol_model->hasMolecularObjects()) {

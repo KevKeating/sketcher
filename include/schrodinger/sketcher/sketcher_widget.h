@@ -54,7 +54,6 @@ class FileExportDialog;
 class FileSaveImageDialog;
 class RenderingSettingsDialog;
 class ModelObjsByType;
-enum class MoleculeType;
 
 /**
  * Sketcher widget meant for use in LiveDesign and Maestro.
