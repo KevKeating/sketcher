@@ -407,12 +407,9 @@ class SKETCHER_API SketcherModel : public QObject
     NucleicAcidTool getNucleicAcidTool() const;
     StdNucleobase getRNANucleobase() const;
     StdNucleobase getDNANucleobase() const;
-    std::optional<std::tuple<std::string, std::string, std::string>> getNucleotide() const;
-    
+    InterfaceTypeType getInterfaceType() const;
     ToolSet getToolSet() const;
     MoleculeType getMoleculeType() const;
-    
-    InterfaceTypeType getInterfaceType() const;
 
     /**
      * Retrieve data from the model's state map.
@@ -446,6 +443,12 @@ class SKETCHER_API SketcherModel : public QObject
      * @param key_value_map (key, value) pairs to assign to the model
      */
     void setValues(const std::unordered_map<ModelKey, QVariant>& key_value_map);
+
+    /**
+     * If the current tool is a monomeric nucleotide, return the nucleotide as a
+     * tuple of (sugar, base, phosphate). If not, return std::nullopt.
+     */
+    std::optional<std::tuple<std::string, std::string, std::string>> getNucleotide() const;
 
     /**
      * @return whether a reaction is present
