@@ -4,7 +4,6 @@
 #include <QToolButton>
 
 #include "schrodinger/sketcher/sketcher_css_style.h"
-#include "schrodinger/sketcher/model/sketcher_model.h"
 #include "schrodinger/sketcher/ui/ui_sketcher_side_bar.h"
 
 namespace schrodinger
@@ -96,12 +95,17 @@ void SketcherSideBar::updateCheckState()
     if (tool_set == ToolSet::ATOMISTIC) {
         page = ui->atomistic_page;
         if (!ATOMISTIC_TOOLS.contains(cur_draw_tool)) {
-            new_draw_tool = DrawTool::ATOM;
+            new_draw_tool = m_last_seen_atomistic_draw_tool;
         }
     } else {
         page = ui->monomeric_page;
         if (cur_draw_tool != DrawTool::MONOMER) {
             new_draw_tool = DrawTool::MONOMER;
+        }
+        if (ATOMISTIC_TOOLS.contains(cur_draw_tool)) {
+            // remember what atomistic draw tool we switched away from so that
+            // we can switch back to it later
+            m_last_seen_atomistic_draw_tool = cur_draw_tool;
         }
     }
     ui->atomistic_or_monomeric_stack->setCurrentWidget(page);
