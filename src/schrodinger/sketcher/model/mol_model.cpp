@@ -319,6 +319,13 @@ bool MolModel::isEmpty() const
     return !m_mol.getNumAtoms() && m_pluses.empty() && !m_arrow.has_value();
 }
 
+
+
+bool MolModel::hasMolecularObjects() const
+{
+    return !m_mol.getNumAtoms();
+}
+
 bool MolModel::hasSelectedBonds() const
 {
     return !m_selected_bond_tags.empty();

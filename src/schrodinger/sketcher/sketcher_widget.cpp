@@ -1125,7 +1125,9 @@ void SketcherWidget::onMolModelChanged(const WhatChangedType what_changed)
         if (m_mol_model->isEmpty()) {
             m_sketcher_model->setValue(ModelKey::CURRENT_MOLECULE_TYPE, MoleculeType::EMPTY);
         } else if (rdkit_extensions::isMonomeric(*getRDKitMolecule())) {
-            if ()
+            m_sketcher_model->setValues({
+                {ModelKey::CURRENT_MOLECULE_TYPE, QVariant::fromValue(MoleculeType::MONOMERIC)},
+                {ModelKey::CURRENT_TOOL_SET, QVariant::fromValue(ToolSet::MONOMERIC)}});
         }
     }
 }
