@@ -319,7 +319,10 @@ bool MolModel::isEmpty() const
     return !m_mol.getNumAtoms() && m_pluses.empty() && !m_arrow.has_value();
 }
 
-
+bool MolModel::isMonomeric() const
+{
+    return rdkit_extensions::isMonomeric(m_mol);
+}
 
 bool MolModel::hasMolecularObjects() const
 {

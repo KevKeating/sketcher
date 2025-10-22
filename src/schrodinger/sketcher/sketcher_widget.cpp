@@ -22,7 +22,6 @@
 #include <emscripten/val.h>
 #endif
 
-#include "schrodinger/rdkit_extensions/helm.h"
 #include "schrodinger/sketcher/dialog/bracket_subgroup_dialog.h"
 #include "schrodinger/sketcher/dialog/edit_atom_properties.h"
 #include "schrodinger/sketcher/dialog/error_dialog.h"
@@ -1110,6 +1109,21 @@ void SketcherWidget::onBondHovered(const RDKit::Bond* bond)
 
 void SketcherWidget::onMolModelChanged(const WhatChangedType what_changed)
 {
+    if (what_changed & WhatChanged::MOLECULE && m_sketcher_model->getInterfaceType() == InterfaceType::ATOMISTIC_OR_MONOMERIC) {
+        // we may need to enable/disable the atomistic or monomeric tools
+        if (m_mol_model->hasMolecularObjects()) {
+            m_sketcher_model->setValue(ModelKey::CURRENT_MOLECULE_TYPE, MoleculeType::EMPTY);
+        } else if (m_mol_model->isMonomeric()) {
+            m_sketcher_model->setValues({
+                {ModelKey::CURRENT_MOLECULE_TYPE, QVariant::fromValue(MoleculeType::MONOMERIC)},
+                {ModelKey::CURRENT_TOOL_SET, QVariant::fromValue(ToolSet::MONOMERIC)}});
+        } else {
+            m_sketcher_model->setValues({
+                {ModelKey::CURRENT_MOLECULE_TYPE, QVariant::fromValue(MoleculeType::ATOMISTIC)},
+                {ModelKey::CURRENT_TOOL_SET, QVariant::fromValue(ToolSet::ATOMISTIC)}});
+        }
+    }
+
     // even if what_changed doesn't contain MOLECULE, it's possible that the
     // molecule's coordinates have changed so we should clear our cached
     // copy of the molecule no matter what
@@ -1118,17 +1132,6 @@ void SketcherWidget::onMolModelChanged(const WhatChangedType what_changed)
         emit moleculeChanged();
     } else {
         emit representationChanged();
-    }
-    
-    if (what_changed & WhatChanged::MOLECULE && m_sketcher_model->getInterfaceType() == InterfaceType::ATOMISTIC_OR_MONOMERIC) {
-        // we may need to enable/disable the atomistic or monomeric tools
-        if (m_mol_model->isEmpty()) {
-            m_sketcher_model->setValue(ModelKey::CURRENT_MOLECULE_TYPE, MoleculeType::EMPTY);
-        } else if (rdkit_extensions::isMonomeric(*getRDKitMolecule())) {
-            m_sketcher_model->setValues({
-                {ModelKey::CURRENT_MOLECULE_TYPE, QVariant::fromValue(MoleculeType::MONOMERIC)},
-                {ModelKey::CURRENT_TOOL_SET, QVariant::fromValue(ToolSet::MONOMERIC)}});
-        }
     }
 }
 

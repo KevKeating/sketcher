@@ -198,6 +198,10 @@ class SKETCHER_API MolModel : public AbstractUndoableModel
      * non-molecular objects
      */
     bool isEmpty() const;
+    
+    bool isMonomeric() const;
+    
+    bool hasMolecularObjects() const;
 
     /**
      * @return whether anything (atoms, bonds, or non-molecular objects) is
