@@ -78,6 +78,7 @@ void SketcherSideBar::updateWidgetsEnabled()
 void SketcherSideBar::onAtomisticOrMonomerButtonClicked(QAbstractButton* button)
 {
     ToolSet tool_set = button == ui->atomistic_btn ? ToolSet::ATOMISTIC : ToolSet::MONOMERIC;
+    // this setValue() call will trigger a call to updateCheckState
     getModel()->setValue(ModelKey::CURRENT_TOOL_SET, tool_set);
 }      
 
