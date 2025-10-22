@@ -410,6 +410,7 @@ class SKETCHER_API SketcherModel : public QObject
     std::optional<std::tuple<std::string, std::string, std::string>> getNucleotide() const;
     
     ToolSet getCurrentToolSet() const;
+    MoleculeType getCurrentMoleculeType() const;
     
     InterfaceTypeType getInterfaceType() const;
 

@@ -31,6 +31,7 @@ class SKETCHER_API SketcherSideBar : public SketcherView
 
     void setModel(SketcherModel* model) override;
     void updateWidgetsEnabled() override;
+    void updateCheckState() override;
 
   signals:
     void selectAllRequested();

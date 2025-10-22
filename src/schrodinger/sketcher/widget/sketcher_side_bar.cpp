@@ -31,13 +31,8 @@ SketcherSideBar::SketcherSideBar(QWidget* parent) : SketcherView(parent)
     connect(ui->select_options_wdg,
             &SelectOptionsWidget::invertSelectionRequested, this,
             &SketcherSideBar::invertSelectionRequested);
-    // TODO: these buttons should also activate the most recently used atom or
-    // monomer tool
     connect(ui->atomistic_or_monomer_group, &QButtonGroup::buttonClicked, this,
             &SketcherSideBar::onAtomisticOrMonomerButtonClicked);
-    // TODO: make sure that programatically switching the stack contents changes
-    //       the checked button
-    // TODO: option to set to atomistic-only or monomer-only
 }
 
 SketcherSideBar::~SketcherSideBar() = default;
@@ -51,10 +46,6 @@ void SketcherSideBar::setModel(SketcherModel* model)
     ui->enumeration_tool_wdg->setModel(model);
     ui->monomer_wdg->setModel(model);
 }
-
-// TODO: make sure that we switch atomistic versus monomeric if tool gets
-//       switched in SketcherModel (otherwise keyboard shortcuts won't update
-//       the side bar)
 
 void SketcherSideBar::updateWidgetsEnabled()
 {
@@ -76,29 +67,41 @@ void SketcherSideBar::updateWidgetsEnabled()
             ui->atomistic_or_monomer_stack->setCurrentWidget(ui->monomer_page);
         }
     } else {
-        // TODO: disable atomistic_btn and monomer_btn if there's already a
+        // disable the atomistic or monomer buttons if there's already a
         // molecule of the other type
+        auto mol_type = model->getCurrentMoleculeType();
+        ui->atomistic_btn->setEnabled(mol_type != MoleculeType::MONOMERIC);
+        ui->monomeric_btn->setEnabled(mol_type != MoleculeType::ATOMISTIC);
     }
 }
 
 void SketcherSideBar::onAtomisticOrMonomerButtonClicked(QAbstractButton* button)
 {
-    const std::unordered_set<DrawTool> atomistic_tools = {
+    ToolSet tool_set = button == ui->atomistic_btn ? ToolSet::ATOMISTIC : ToolSet::MONOMERIC;
+    getModel()->setValue(ModelKey::CURRENT_TOOL_SET, tool_set);
+}      
+
+void SketcherSideBar::updateCheckState()
+{
+    static const std::unordered_set<DrawTool> ATOMISTIC_TOOLS = {
         DrawTool::ATOM, DrawTool::BOND,        DrawTool::CHARGE,
         DrawTool::RING, DrawTool::ENUMERATION, DrawTool::EXPLICIT_H,
     };
     QWidget* page;
+    auto cur_draw_tool = model->getDrawTool();
     std::optional<DrawTool> new_draw_tool = std::nullopt;
     auto model = getModel();
-    if (button == ui->atomistic_btn) {
+    auto tool_set = model->getCurrentToolSet();
+    if (tool_set == ToolSet::ATOMISTIC) {
         page = ui->atomistic_page;
-        auto cur_draw_tool = model->getDrawTool();
-        if (!atomistic_tools.contains(cur_draw_tool)) {
+        if (!ATOMISTIC_TOOLS.contains(cur_draw_tool)) {
             new_draw_tool = DrawTool::ATOM;
         }
     } else {
         page = ui->monomer_page;
-        new_draw_tool = DrawTool::MONOMER;
+        if (cur_draw_tool != DrawTool::MONOMER) {
+            new_draw_tool = DrawTool::MONOMER;
+        }
     }
     ui->atomistic_or_monomer_stack->setCurrentWidget(page);
     if (new_draw_tool.has_value() && !(model->hasActiveSelection())) {

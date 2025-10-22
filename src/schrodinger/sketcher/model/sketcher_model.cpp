@@ -212,6 +212,11 @@ ToolSet SketcherModel::getCurrentToolSet() const
     return m_model_map.at(ModelKey::CURRENT_TOOL_SET).value<ToolSet>();
 }
 
+MoleculeType SketcherModel::getCurrentMoleculeType() const
+{
+    return m_model_map.at(ModelKey::CURRENT_MOLECULE_TYPE).value<MoleculeType>();
+}
+
 bool SketcherModel::getValueBool(ModelKey key) const
 {
     return m_model_map.at(key).value<bool>();
