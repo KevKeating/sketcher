@@ -120,7 +120,10 @@ EMSCRIPTEN_BINDINGS(sketcher)
 void apply_stylesheet(QApplication& app)
 {
     QFile styleFile(":resources/schrodinger_livedesign.qss");
-    styleFile.open(QFile::ReadOnly);
+    bool success = styleFile.open(QFile::ReadOnly);
+    if (!success) {
+        throw std::runtime_error("Could not open style sheet file");
+    }
     QString style(styleFile.readAll());
     app.setStyleSheet(style);
 }
@@ -136,6 +139,10 @@ int main(int argc, char** argv)
     // Only apply this stylesheet for the WASM build
     apply_stylesheet(application);
     auto& sk = get_sketcher_instance();
+    // Qt::WA_AlwaysShowToolTips works around QTBUG-94583
+    // (https://bugreports.qt.io/browse/QTBUG-94583), which would otherwise
+    // prevent tooltips from showing up. (See SKETCH-2565.)
+    sk.setAttribute(Qt::WA_AlwaysShowToolTips);
     QObject::connect(&sk, &SketcherWidget::moleculeChanged, &sketcher_changed);
     QObject::connect(&sk, &SketcherWidget::representationChanged,
                      &sketcher_changed);
