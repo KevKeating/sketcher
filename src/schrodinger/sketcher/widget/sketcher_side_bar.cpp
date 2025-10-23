@@ -93,7 +93,7 @@ void SketcherSideBar::updateCheckState()
     };
     static const std::unordered_set<DrawTool> MONOMERIC_TOOLS = {
         DrawTool::MONOMER,
-        // TODO: add connector tool
+        // TODO: add monomeric connector tool
     };
     QWidget* page;
     std::optional<DrawTool> new_draw_tool = std::nullopt;
@@ -105,20 +105,25 @@ void SketcherSideBar::updateCheckState()
         // if there's a monomeric tool selected, switch to an atomistic tool
         if (MONOMERIC_TOOLS.contains(cur_draw_tool)) {
             new_draw_tool = m_previous_atomistic_draw_tool;
-            // TODO: once we have more than one monomeric tool, store
-            //       cur_draw_tool
         }
     } else {
         page = ui->monomeric_page;
         // if there's an atomistic tool selected, switch to a monomeric tool
         if (ATOMISTIC_TOOLS.contains(cur_draw_tool)) {
             new_draw_tool = DrawTool::MONOMER;
-            // remember what atomistic draw tool we switched away from so
-            // that we can switch back to it later
-            m_previous_atomistic_draw_tool = cur_draw_tool;
         }
     }
     ui->atomistic_or_monomeric_stack->setCurrentWidget(page);
+
+    // remember the last atomistic draw tool that we've seen so that we know
+    // what to switch to if the user clicks the ATOM button with a monomeric
+    // draw tool selected
+    // TODO: once we have more than one monomeric tool, do the same with those
+    if (ATOMISTIC_TOOLS.contains(cur_draw_tool)) {
+        m_previous_atomistic_draw_tool = cur_draw_tool;
+    }
+
+    // update the model if we need to
     if (new_draw_tool.has_value() && !(model->hasActiveSelection())) {
         model->setValue(ModelKey::DRAW_TOOL, *new_draw_tool);
     }
