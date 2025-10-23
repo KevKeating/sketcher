@@ -293,10 +293,11 @@ enum class ModelKey {
                        ///   CUSTOM_NUCLEOTIDE tool
     INTERFACE_TYPE,    /// whether the Sketcher is intended for use with
                        ///   atomistic models, monomeric models, or both
-    TOOL_SET,          /// whether the side bar shows the atomistic tools, the
-                       ///   amino acid tools, or the nucleic acid tools, which
-                       ///   controls the keyboard shortcuts (i.e. should "C"
-                       ///   activate carbon, cytosine, or deoxycytosine)
+    TOOL_SET,          /// whether the side bar shows the atomistic tools or
+                       ///   monomeric tools, which (along with
+                       ///   MONOMER_TOOL_TYPE) controls the keyboard shortcuts
+                       ///   (i.e. should "C" activate carbon, cysteine, or
+                       ///   cytosine)
     MOLECULE_TYPE,     /// whether the Sketcher workspace contains an atomistic
                        ///   model, monomeric model, or is empty
 };
