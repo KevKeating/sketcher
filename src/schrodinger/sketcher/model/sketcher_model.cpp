@@ -67,6 +67,7 @@ std::vector<ModelKey> get_model_keys()
         ModelKey::CUSTOM_NUCLEOTIDE,
         ModelKey::INTERFACE_TYPE,
         ModelKey::TOOL_SET,
+        ModelKey::MOLECULE_TYPE,
     };
 }
 

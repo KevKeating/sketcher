@@ -299,7 +299,7 @@ enum class ModelKey {
                        ///   (i.e. should "C" activate carbon, cysteine, or
                        ///   cytosine)
     MOLECULE_TYPE,     /// whether the Sketcher workspace contains an atomistic
-                       ///   model, monomeric model, or is empty
+                       ///   model, a monomeric model, or is empty
 };
 
 enum class MoleculeType {
