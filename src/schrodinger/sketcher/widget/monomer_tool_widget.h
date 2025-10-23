@@ -24,7 +24,6 @@ namespace sketcher
 enum class AminoAcidTool;
 enum class NucleicAcidTool;
 class NucleotidePopup;
-class PauseUpdatesToModelRAII;
 
 /**
  * Side bar tool for selecting monomers
@@ -43,7 +42,6 @@ class SKETCHER_API MonomerToolWidget : public AbstractDrawToolWidget
     std::unique_ptr<Ui::MonomerToolWidget> ui;
     boost::bimap<QAbstractButton*, AminoAcidTool> m_button_amino_acid_bimap;
     boost::bimap<QAbstractButton*, NucleicAcidTool> m_button_nucleic_acid_bimap;
-    bool m_updates_to_model_paused = false;
     NucleotidePopup* m_rna_popup = nullptr;
     NucleotidePopup* m_dna_popup = nullptr;
 
@@ -62,8 +60,6 @@ class SKETCHER_API MonomerToolWidget : public AbstractDrawToolWidget
      * Respond to the user clicking on a specific nucleic acid
      */
     void onNucleicAcidClicked(QAbstractButton* button);
-
-  friend class PauseUpdatesToModelRAII;
 };
 
 } // namespace sketcher

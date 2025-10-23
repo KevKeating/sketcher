@@ -99,6 +99,7 @@ void SketcherSideBar::updateCheckState()
     auto tool_set = model->getToolSet();
     if (tool_set == ToolSet::ATOMISTIC) {
         page = ui->atomistic_page;
+        // if there's a monomeric tool selected, switch to an atomistic tool
         if (MONOMERIC_TOOLS.contains(cur_draw_tool)) {
             new_draw_tool = m_previous_atomistic_draw_tool;
             // TODO: once we have more than one monomeric tool, store
@@ -106,6 +107,7 @@ void SketcherSideBar::updateCheckState()
         }
     } else {
         page = ui->monomeric_page;
+        // if there's an atomistic tool selected, switch to a monomeric tool
         if (ATOMISTIC_TOOLS.contains(cur_draw_tool)) {
             new_draw_tool = DrawTool::MONOMER;
             // remember what atomistic draw tool we switched away from so

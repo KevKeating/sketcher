@@ -17,31 +17,6 @@ namespace schrodinger
 namespace sketcher
 {
 
-// TODO: confirm that I actually need this
-class PauseUpdatesToModelRAII
-{
-  public:
-    PauseUpdatesToModelRAII(MonomerToolWidget* monomer_tool_widget);
-    ~PauseUpdatesToModelRAII();
-
-  protected:
-    MonomerToolWidget* m_monomer_tool_widget = nullptr;
-    bool m_prev_value = false;
-};
-
-PauseUpdatesToModelRAII::PauseUpdatesToModelRAII(
-    MonomerToolWidget* monomer_tool_widget) :
-    m_monomer_tool_widget(monomer_tool_widget),
-    m_prev_value(monomer_tool_widget->m_updates_to_model_paused)
-{
-    m_monomer_tool_widget->m_updates_to_model_paused = true;
-}
-
-PauseUpdatesToModelRAII::~PauseUpdatesToModelRAII()
-{
-    m_monomer_tool_widget->m_updates_to_model_paused = m_prev_value;
-}
-
 MonomerToolWidget::MonomerToolWidget(QWidget* parent) :
     AbstractDrawToolWidget(parent)
 {
@@ -148,7 +123,6 @@ void MonomerToolWidget::updateCheckedButton()
     if (model == nullptr) {
         return;
     }
-    PauseUpdatesToModelRAII update_pauser(this);
     QAbstractButton* amino_button = nullptr;
     QAbstractButton* nucleic_button = nullptr;
     bool has_sel = model->hasActiveSelection();
@@ -177,9 +151,6 @@ void MonomerToolWidget::updateCheckedButton()
 
 void MonomerToolWidget::onAminoOrNucleicBtnClicked(QAbstractButton* button)
 {
-    if (m_updates_to_model_paused) {
-        return;
-    }
     QWidget* page = nullptr;
     MonomerToolType tool_type;
     if (button == ui->amino_monomer_btn) {
@@ -229,17 +200,12 @@ ping_or_set_model_value(SketcherModel* model, const ModelKey key, const T value)
 
 void MonomerToolWidget::onAminoAcidClicked(QAbstractButton* button)
 {
-    if (!m_updates_to_model_paused) {
-        on_tool_clicked<AminoAcidTool>(getModel(), ModelKey::AMINO_ACID_TOOL,
-                                      m_button_amino_acid_bimap, button);
-    }
+    on_tool_clicked<AminoAcidTool>(getModel(), ModelKey::AMINO_ACID_TOOL,
+                                    m_button_amino_acid_bimap, button);
 }
 
 void MonomerToolWidget::onNucleicAcidClicked(QAbstractButton* button)
 {
-    if (m_updates_to_model_paused) {
-        return;
-    }
     on_tool_clicked<NucleicAcidTool>(getModel(), ModelKey::NUCLEIC_ACID_TOOL,
                                         m_button_nucleic_acid_bimap, button);
     // if one of the full nucleotide buttons was clicked, we also need to inform
