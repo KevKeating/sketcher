@@ -143,6 +143,7 @@ std::unordered_set<QAbstractButton*> MonomerToolWidget::getCheckableButtons()
 
 void MonomerToolWidget::updateCheckedButton()
 {
+    return;
     auto model = getModel();
     if (model == nullptr) {
         return;

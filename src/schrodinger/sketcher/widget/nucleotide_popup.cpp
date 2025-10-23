@@ -33,9 +33,7 @@ NucleotidePopup::NucleotidePopup(const NucleicAcidTool tool, const ModelKey mode
     ui->n_btn->setText(btn_name_fmt.arg(sugar, "N"));
 }
 
-NucleotidePopup::~NucleotidePopup()
-{
-}
+NucleotidePopup::~NucleotidePopup() = default;
 
 int NucleotidePopup::getButtonIDToCheck()
 {

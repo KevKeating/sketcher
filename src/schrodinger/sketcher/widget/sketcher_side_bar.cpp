@@ -66,7 +66,7 @@ void SketcherSideBar::updateWidgetsEnabled()
             ui->atomistic_or_monomeric_stack->setCurrentWidget(ui->monomeric_page);
         }
     } else {
-        // both types of interface are allowed, but we cant' have both in the
+        // both types of interface are allowed, but we can't have both in the
         // workspace at the same time, so disable the atomistic or monomer
         // buttons if there's already a molecule of the other type
         auto mol_type = model->getMoleculeType();
@@ -88,6 +88,10 @@ void SketcherSideBar::updateCheckState()
         DrawTool::ATOM, DrawTool::BOND,        DrawTool::CHARGE,
         DrawTool::RING, DrawTool::ENUMERATION, DrawTool::EXPLICIT_H,
     };
+    static const std::unordered_set<DrawTool> MONOMERIC_TOOLS = {
+        DrawTool::MONOMER,
+        // TODO: add connector tool
+    };
     QWidget* page;
     std::optional<DrawTool> new_draw_tool = std::nullopt;
     auto model = getModel();
@@ -95,18 +99,18 @@ void SketcherSideBar::updateCheckState()
     auto tool_set = model->getToolSet();
     if (tool_set == ToolSet::ATOMISTIC) {
         page = ui->atomistic_page;
-        if (!ATOMISTIC_TOOLS.contains(cur_draw_tool)) {
+        if (MONOMERIC_TOOLS.contains(cur_draw_tool)) {
             new_draw_tool = m_previous_atomistic_draw_tool;
+            // TODO: once we have more than one monomeric tool, store
+            //       cur_draw_tool
         }
     } else {
         page = ui->monomeric_page;
-        if (cur_draw_tool != DrawTool::MONOMER) {
+        if (ATOMISTIC_TOOLS.contains(cur_draw_tool)) {
             new_draw_tool = DrawTool::MONOMER;
-            if (ATOMISTIC_TOOLS.contains(cur_draw_tool)) {
-                // remember what atomistic draw tool we switched away from so
-                // that we can switch back to it later
-                m_previous_atomistic_draw_tool = cur_draw_tool;
-            }
+            // remember what atomistic draw tool we switched away from so
+            // that we can switch back to it later
+            m_previous_atomistic_draw_tool = cur_draw_tool;
         }
     }
     ui->atomistic_or_monomeric_stack->setCurrentWidget(page);
