@@ -93,7 +93,7 @@ void SketcherSideBar::updateCheckState()
     };
     static const std::unordered_set<DrawTool> MONOMERIC_TOOLS = {
         DrawTool::MONOMER,
-        // TODO: add monomeric connector tool
+        // TODO: add monomeric connector tool in SKETCH-2483
     };
     QWidget* page;
     std::optional<DrawTool> new_draw_tool = std::nullopt;
@@ -118,7 +118,8 @@ void SketcherSideBar::updateCheckState()
     // remember the last atomistic draw tool that we've seen so that we know
     // what to switch to if the user clicks the ATOM button with a monomeric
     // draw tool selected
-    // TODO: once we have more than one monomeric tool, do the same with those
+    // TODO: once we have more than one monomeric tool (SKETCH-2483), do the
+    //       same with those
     if (ATOMISTIC_TOOLS.contains(cur_draw_tool)) {
         m_previous_atomistic_draw_tool = cur_draw_tool;
     }
