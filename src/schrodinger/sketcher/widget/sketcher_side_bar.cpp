@@ -30,8 +30,8 @@ SketcherSideBar::SketcherSideBar(QWidget* parent) : SketcherView(parent)
     connect(ui->select_options_wdg,
             &SelectOptionsWidget::invertSelectionRequested, this,
             &SketcherSideBar::invertSelectionRequested);
-    connect(ui->atomistic_or_monomeric_group, &QButtonGroup::buttonClicked, this,
-            &SketcherSideBar::onAtomisticOrMonomerButtonClicked);
+    connect(ui->atomistic_or_monomeric_group, &QButtonGroup::buttonClicked,
+            this, &SketcherSideBar::onAtomisticOrMonomerButtonClicked);
 }
 
 SketcherSideBar::~SketcherSideBar() = default;
@@ -61,9 +61,11 @@ void SketcherSideBar::updateWidgetsEnabled()
     if (!show_atom_mono_buttons) {
         // only one type of interface is allowed, so switch to that one
         if (interface_type == InterfaceType::ATOMISTIC) {
-            ui->atomistic_or_monomeric_stack->setCurrentWidget(ui->atomistic_page);
+            ui->atomistic_or_monomeric_stack->setCurrentWidget(
+                ui->atomistic_page);
         } else {
-            ui->atomistic_or_monomeric_stack->setCurrentWidget(ui->monomeric_page);
+            ui->atomistic_or_monomeric_stack->setCurrentWidget(
+                ui->monomeric_page);
         }
     } else {
         // both types of interface are allowed, but we can't have both in the
@@ -77,10 +79,11 @@ void SketcherSideBar::updateWidgetsEnabled()
 
 void SketcherSideBar::onAtomisticOrMonomerButtonClicked(QAbstractButton* button)
 {
-    ToolSet tool_set = button == ui->atomistic_btn ? ToolSet::ATOMISTIC : ToolSet::MONOMERIC;
+    ToolSet tool_set =
+        button == ui->atomistic_btn ? ToolSet::ATOMISTIC : ToolSet::MONOMERIC;
     // this setValue() call will trigger a call to updateCheckState
     getModel()->setValue(ModelKey::TOOL_SET, tool_set);
-}      
+}
 
 void SketcherSideBar::updateCheckState()
 {

@@ -898,7 +898,8 @@ void SketcherWidget::keyPressEvent(QKeyEvent* event)
     if (!handled) {
         if (m_sketcher_model->getToolSet() == ToolSet::ATOMISTIC) {
             handleAtomisticKeyboardShortcuts(event, cursor_pos, targets);
-        } else if (m_sketcher_model->getMonomerToolType() == MonomerToolType::AMINO_ACID) {
+        } else if (m_sketcher_model->getMonomerToolType() ==
+                   MonomerToolType::AMINO_ACID) {
             // TODO: handle amino acid keyboard shortcuts
         } else {
             // TODO: handle nucleic acid keyboard shortcuts

@@ -26,7 +26,8 @@ MonomerToolWidget::MonomerToolWidget(QWidget* parent) :
     for (auto* btn_group :
          {ui->amino_monomer_group, ui->nucleic_monomer_group}) {
         for (auto* btn : btn_group->buttons()) {
-            if (auto* btn_with_popup = dynamic_cast<ToolButtonWithPopup*>(btn)) {
+            if (auto* btn_with_popup =
+                    dynamic_cast<ToolButtonWithPopup*>(btn)) {
                 // make sure that we call the subclass's version of
                 // setStyleSheet, since it's overriden but not virtual
                 btn_with_popup->setStyleSheet(ATOM_ELEMENT_OR_MONOMER_STYLE);
@@ -40,7 +41,8 @@ MonomerToolWidget::MonomerToolWidget(QWidget* parent) :
     ui->amino_monomer_btn->setStyleSheet(TEXT_LINK_STYLE);
     ui->nucleic_monomer_btn->setStyleSheet(TEXT_LINK_STYLE);
 
-    using ButtonAminoAcidBimapType = boost::bimap<QAbstractButton*, AminoAcidTool>;
+    using ButtonAminoAcidBimapType =
+        boost::bimap<QAbstractButton*, AminoAcidTool>;
     using ButtonNucleicAcidBimapType =
         boost::bimap<QAbstractButton*, NucleicAcidTool>;
     // clang-format off
@@ -89,8 +91,11 @@ MonomerToolWidget::MonomerToolWidget(QWidget* parent) :
     connect(ui->nucleic_monomer_group, &QButtonGroup::buttonClicked, this,
             &MonomerToolWidget::onNucleicAcidClicked);
 
-    m_rna_popup = new NucleotidePopup(NucleicAcidTool::RNA_NUCLEOTIDE, ModelKey::RNA_NUCLEOBASE, "R", "U", this);
-    m_dna_popup = new NucleotidePopup(NucleicAcidTool::DNA_NUCLEOTIDE, ModelKey::DNA_NUCLEOBASE, "dR", "T", this);
+    m_rna_popup = new NucleotidePopup(NucleicAcidTool::RNA_NUCLEOTIDE,
+                                      ModelKey::RNA_NUCLEOBASE, "R", "U", this);
+    m_dna_popup =
+        new NucleotidePopup(NucleicAcidTool::DNA_NUCLEOTIDE,
+                            ModelKey::DNA_NUCLEOBASE, "dR", "T", this);
     ui->na_rna_btn->setPopupWidget(m_rna_popup);
     ui->na_dna_btn->setPopupWidget(m_dna_popup);
 }
@@ -138,7 +143,8 @@ void MonomerToolWidget::updateCheckedButton()
             ui->amino_or_nucleic_stack->setCurrentWidget(ui->nucleic_page);
             if (!has_sel) {
                 auto nucleic_acid = model->getNucleicAcidTool();
-                nucleic_button = m_button_nucleic_acid_bimap.right.at(nucleic_acid);
+                nucleic_button =
+                    m_button_nucleic_acid_bimap.right.at(nucleic_acid);
             }
         }
     }
@@ -172,8 +178,8 @@ void MonomerToolWidget::onAminoOrNucleicBtnClicked(QAbstractButton* button)
  */
 template <typename T> static void
 on_tool_clicked(SketcherModel* model, const ModelKey key,
-                   const boost::bimap<QAbstractButton*, T>& button_tool_bimap,
-                   QAbstractButton* button)
+                const boost::bimap<QAbstractButton*, T>& button_tool_bimap,
+                QAbstractButton* button)
 {
     auto tool = button_tool_bimap.left.at(button);
     ping_or_set_model_value(model, key, tool);
@@ -200,19 +206,20 @@ ping_or_set_model_value(SketcherModel* model, const ModelKey key, const T value)
 void MonomerToolWidget::onAminoAcidClicked(QAbstractButton* button)
 {
     on_tool_clicked<AminoAcidTool>(getModel(), ModelKey::AMINO_ACID_TOOL,
-                                    m_button_amino_acid_bimap, button);
+                                   m_button_amino_acid_bimap, button);
 }
 
 void MonomerToolWidget::onNucleicAcidClicked(QAbstractButton* button)
 {
     on_tool_clicked<NucleicAcidTool>(getModel(), ModelKey::NUCLEIC_ACID_TOOL,
-                                        m_button_nucleic_acid_bimap, button);
+                                     m_button_nucleic_acid_bimap, button);
     // if one of the full nucleotide buttons was clicked, we also need to inform
     // the model of the nucleotide type
     if (button == ui->na_rna_btn || button == ui->na_dna_btn) {
         auto* modular_button = static_cast<ModularToolButton*>(button);
         auto base = static_cast<StdNucleobase>(modular_button->getEnumItem());
-        auto key = button == ui->na_rna_btn ? ModelKey::RNA_NUCLEOBASE : ModelKey::DNA_NUCLEOBASE;
+        auto key = button == ui->na_rna_btn ? ModelKey::RNA_NUCLEOBASE
+                                            : ModelKey::DNA_NUCLEOBASE;
         ping_or_set_model_value(getModel(), key, base);
     }
 }

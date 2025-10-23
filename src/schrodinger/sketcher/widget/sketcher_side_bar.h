@@ -41,9 +41,9 @@ class SKETCHER_API SketcherSideBar : public SketcherView
 
   protected:
     std::unique_ptr<Ui::SketcherSideBar> ui;
-    
+
     void onAtomisticOrMonomerButtonClicked(QAbstractButton* button);
-    
+
     DrawTool m_previous_atomistic_draw_tool = DrawTool::ATOM;
 };
 

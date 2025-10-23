@@ -27,12 +27,13 @@ enum class SelectionTool {
  * molecules), monomeric models (i.e. HELM models), or both
  */
 typedef int InterfaceTypeType;
-namespace InterfaceType {
-    enum InterfaceTypeType {
-        ATOMISTIC = 1 << 0,
-        MONOMERIC = 1 << 1,
-        ATOMISTIC_OR_MONOMERIC = ATOMISTIC | MONOMERIC,
-    };
+namespace InterfaceType
+{
+enum InterfaceTypeType {
+    ATOMISTIC = 1 << 0,
+    MONOMERIC = 1 << 1,
+    ATOMISTIC_OR_MONOMERIC = ATOMISTIC | MONOMERIC,
+};
 }
 
 } // namespace sketcher

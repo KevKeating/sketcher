@@ -50,7 +50,7 @@ class SKETCHER_API MonomerToolWidget : public AbstractDrawToolWidget
      * tools to the appropriate type of monomer
      */
     void onAminoOrNucleicBtnClicked(QAbstractButton* button);
-    
+
     /**
      * Respond to the user clicking on a specific amino acid
      */

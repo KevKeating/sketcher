@@ -11,8 +11,9 @@ namespace schrodinger
 namespace sketcher
 {
 
-NucleotidePopup::NucleotidePopup(const NucleicAcidTool tool, const ModelKey model_key, const QString& sugar, const QString& u_or_t,
-                                 QWidget* parent) :
+NucleotidePopup::NucleotidePopup(const NucleicAcidTool tool,
+                                 const ModelKey model_key, const QString& sugar,
+                                 const QString& u_or_t, QWidget* parent) :
     m_tool(tool),
     m_model_key(model_key),
     m_sugar(sugar),
@@ -23,7 +24,7 @@ NucleotidePopup::NucleotidePopup(const NucleicAcidTool tool, const ModelKey mode
     ui->setupUi(this);
     setButtonGroup(ui->group);
     setStyleSheet(ATOM_ELEMENT_OR_MONOMER_STYLE);
-    
+
     // add text to the buttons
     QString btn_name_fmt("%1(%2)P");
     ui->a_btn->setText(btn_name_fmt.arg(sugar, "A"));
@@ -46,7 +47,8 @@ int NucleotidePopup::getButtonIDToCheck()
     if (model->getDrawTool() == DrawTool::MONOMER &&
         model->getMonomerToolType() == MonomerToolType::NUCLEIC_ACID &&
         model->getNucleicAcidTool() == m_tool) {
-        StdNucleobase base = model->getValue(m_model_key).value<StdNucleobase>();
+        StdNucleobase base =
+            model->getValue(m_model_key).value<StdNucleobase>();
         switch (base) {
             case StdNucleobase::A:
                 button_id = m_group->id(ui->a_btn);
