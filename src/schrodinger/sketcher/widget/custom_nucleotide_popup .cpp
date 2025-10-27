@@ -1,6 +1,7 @@
 #include "schrodinger/sketcher/widget/custom_nucleotide_popup.h"
 
 #include <QLineEdit>
+#include <QRegularExpression>
 #include <QRegularExpressionValidator>
 
 #include "schrodinger/sketcher/sketcher_css_style.h"
@@ -19,7 +20,8 @@ CustomNucleotidePopup::CustomNucleotidePopup(QWidget* parent) :
     ui->setupUi(this);
     setStyleSheet(CUSTOM_NUCLEOTIDE_STYLE);
 
-    auto* alphanumeric_validator = new QRegularExpressionValidator("\\w+", this);
+    auto alphanumeric_re = QRegularExpression("\\w+");
+    auto* alphanumeric_validator = new QRegularExpressionValidator(alphanumeric_re, this);
     for (auto le : {ui->sugar_le, ui->base_le, ui->phosphate_le}) {
         le->setValidator(alphanumeric_validator);
         connect(le, &QLineEdit::textEdited, this, &CustomNucleotidePopup::onTextEdited);
@@ -33,17 +35,22 @@ void CustomNucleotidePopup::onTextEdited()
 {
     // make sure that the inputs are valid (i.e. non-empty)
     for (auto le : {ui->sugar_le, ui->base_le, ui->phosphate_le}) {
-        if (le->validator->validate(le->text()) != QValidator::State::Acceptable) {
+        auto le_contents = le->text();
+        int pos = 0;
+        if (le->validator()->validate(le_contents, pos) != QValidator::State::Acceptable) {
             return;
         }
     }
-    std::tuple<std::string, std::string, std::string> nt({
+    std::tuple<std::string, std::string, std::string> nt = {
         ui->sugar_le->text().toStdString(),
         ui->base_le->text().toStdString(),
         ui->phosphate_le->text().toStdString()
     };
-    model()->setValue(ModelKey::CUSTOM_NUCLEOTIDE, nt);
+    getModel()->setValue(ModelKey::CUSTOM_NUCLEOTIDE, nt);
 }
 
 
 CustomNucleotidePopup::~CustomNucleotidePopup() = default;
+
+} // namespace sketcher
+} // namespace schrodinger
