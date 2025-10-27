@@ -98,5 +98,8 @@ const QString ENUMERATION_STYLE{
     "QToolButton { font: bold 14px; color: #444444; }"
     "QToolButton:disabled { color: #E4E4E4; }"};
 
+const QString CUSTOM_NUCLEOTIDE_STYLE{
+    "QLabel { font: 9px; color: #666666; }"};
+
 } // namespace sketcher
 } // namespace schrodinger
