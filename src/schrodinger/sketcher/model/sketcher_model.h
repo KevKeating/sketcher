@@ -422,6 +422,7 @@ class SKETCHER_API SketcherModel : public QObject
     NucleicAcidTool getNucleicAcidTool() const;
     StdNucleobase getRNANucleobase() const;
     StdNucleobase getDNANucleobase() const;
+    std::tuple<std::string, std::string, std::string> getCustomNucleotide() const;
     InterfaceTypeType getInterfaceType() const;
     ToolSet getToolSet() const;
     MoleculeType getMoleculeType() const;

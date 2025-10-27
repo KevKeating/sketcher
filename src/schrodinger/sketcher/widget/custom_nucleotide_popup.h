@@ -24,11 +24,14 @@ class SKETCHER_API CustomNucleotidePopup : public SketcherView
   public:
     CustomNucleotidePopup(QWidget* parent = nullptr);
     ~CustomNucleotidePopup();
+    
+    void setModel(SketcherModel* model) override;
 
   protected:
     std::unique_ptr<Ui::CustomNucleotidePopup> ui;
     
     void onTextEdited();
+    void updateFromModel();
 };
 
 } // namespace sketcher

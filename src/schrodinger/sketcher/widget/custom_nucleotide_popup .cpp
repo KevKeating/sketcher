@@ -16,6 +16,7 @@ namespace sketcher
 CustomNucleotidePopup::CustomNucleotidePopup(QWidget* parent) :
     SketcherView(parent)
 {
+    setWindowFlags(Qt::Popup);
     ui.reset(new Ui::CustomNucleotidePopup());
     ui->setupUi(this);
     setStyleSheet(CUSTOM_NUCLEOTIDE_STYLE);
@@ -30,6 +31,10 @@ CustomNucleotidePopup::CustomNucleotidePopup(QWidget* parent) :
     // ui->base_le->setValidator(alphanumeric_validator);
     // ui->phosphate_le->setValidator(alphanumeric_validator);
 }
+
+CustomNucleotidePopup::~CustomNucleotidePopup() = default;
+
+// TODO: copy paintEvent from ModularPopup?
 
 void CustomNucleotidePopup::onTextEdited()
 {
@@ -49,8 +54,20 @@ void CustomNucleotidePopup::onTextEdited()
     getModel()->setValue(ModelKey::CUSTOM_NUCLEOTIDE, nt);
 }
 
+void CustomNucleotidePopup::setModel(SketcherModel* model)
+{
+    SketcherView::setModel(model);
+    // TODO: connect model changes to a method that updates the line edits
+    updateFromModel();
+}
 
-CustomNucleotidePopup::~CustomNucleotidePopup() = default;
+void CustomNucleotidePopup::updateFromModel()
+{
+    auto [sugar, base, phosphate] = getModel()->getCustomNucleotide();
+    ui->sugar_le->setText(QString::fromStdString(sugar));
+    ui->base_le->setText(QString::fromStdString(base));
+    ui->phosphate_le->setText(QString::fromStdString(phosphate));
+}
 
 } // namespace sketcher
 } // namespace schrodinger

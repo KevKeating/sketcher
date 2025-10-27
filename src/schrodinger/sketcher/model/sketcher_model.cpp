@@ -189,6 +189,11 @@ StdNucleobase SketcherModel::getDNANucleobase() const
     return m_model_map.at(ModelKey::DNA_NUCLEOBASE).value<StdNucleobase>();
 }
 
+std::tuple<std::string, std::string, std::string> SketcherModel::getCustomNucleotide() const
+{
+    return m_model_map.at(ModelKey::DNA_NUCLEOBASE).value<MonomericNucleotide>();
+}
+
 std::optional<std::tuple<std::string, std::string, std::string>>
 SketcherModel::getNucleotide() const
 {
@@ -202,8 +207,7 @@ SketcherModel::getNucleotide() const
         auto base = std_nucleobase_to_string(getDNANucleobase(), "T");
         return {{"dR", base, "P"}};
     } else if (getNucleicAcidTool() == NucleicAcidTool::CUSTOM_NUCLEOTIDE) {
-        return {m_model_map.at(ModelKey::CUSTOM_NUCLEOTIDE)
-                    .value<MonomericNucleotide>()};
+        return getCustomNucleotide();
     } else {
         return std::nullopt;
     }
