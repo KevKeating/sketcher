@@ -13,6 +13,8 @@
 #include "schrodinger/sketcher/widget/nucleotide_popup.h"
 #include "schrodinger/sketcher/widget/widget_utils.h"
 
+#include <QDebug>
+
 namespace schrodinger
 {
 namespace sketcher
@@ -162,6 +164,7 @@ void MonomerToolWidget::updateCheckedButton()
     ui->na_dna_btn->setEnumItem(static_cast<int>(model->getDNANucleobase()));
     
     auto [sugar, base, phosphate] = model->getCustomNucleotide();
+    std::cout << "Updating custom NT name " << sugar << " " << base << " " << phosphate << "\n";
     const QString custom_nt_name_fmt("%1(%2)%3");
     auto custom_nt_name = custom_nt_name_fmt.arg(QString::fromStdString(sugar), QString::fromStdString(base), QString::fromStdString(phosphate));
     ui->na_custom_nt_btn->setText(custom_nt_name);

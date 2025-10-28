@@ -29,7 +29,8 @@ class SKETCHER_API CustomNucleotidePopup : public SketcherViewWithWhiteBackgroun
 
   protected:
     std::unique_ptr<Ui::CustomNucleotidePopup> ui;
-    
+    bool m_updating_model = false;
+
     void onModelValuesChanged(const std::unordered_set<ModelKey>& keys) override;
     void onTextEdited();
     void updateFromModel();

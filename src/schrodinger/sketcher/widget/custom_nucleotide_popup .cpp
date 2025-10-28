@@ -43,7 +43,7 @@ void CustomNucleotidePopup::setModel(SketcherModel* model)
 void CustomNucleotidePopup::onModelValuesChanged(const std::unordered_set<ModelKey>& keys)
 {
     SketcherView::onModelValuesChanged(keys);
-    if (keys.contains(ModelKey::CUSTOM_NUCLEOTIDE)) {
+    if (!m_updating_model && keys.contains(ModelKey::CUSTOM_NUCLEOTIDE)) {
         updateFromModel();
     }
 }
@@ -63,13 +63,16 @@ void CustomNucleotidePopup::onTextEdited()
         ui->base_le->text().toStdString(),
         ui->phosphate_le->text().toStdString()
     };
-    std::cout << "Updating model\n";
+    std::cout << "Updating model from popup\n";
+    m_updating_model = true;
     getModel()->setValue(ModelKey::CUSTOM_NUCLEOTIDE, nt);
+    m_updating_model = false;
 }
 
 void CustomNucleotidePopup::updateFromModel()
 {
     auto [sugar, base, phosphate] = getModel()->getCustomNucleotide();
+    std::cout << "Updating popup from model " << sugar << " " << base << " " << phosphate << "\n";
     ui->sugar_le->setText(QString::fromStdString(sugar));
     ui->base_le->setText(QString::fromStdString(base));
     ui->phosphate_le->setText(QString::fromStdString(phosphate));
