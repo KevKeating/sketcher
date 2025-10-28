@@ -164,9 +164,9 @@ void MonomerToolWidget::updateCheckedButton()
     ui->na_dna_btn->setEnumItem(static_cast<int>(model->getDNANucleobase()));
     
     auto [sugar, base, phosphate] = model->getCustomNucleotide();
-    std::cout << "Updating custom NT name " << sugar << " " << base << " " << phosphate << "\n";
+    qDebug() << "Updating custom NT name " << sugar << " " << base << " " << phosphate << "\n";
     const QString custom_nt_name_fmt("%1(%2)%3");
-    auto custom_nt_name = custom_nt_name_fmt.arg(QString::fromStdString(sugar), QString::fromStdString(base), QString::fromStdString(phosphate));
+    auto custom_nt_name = custom_nt_name_fmt.arg(sugar, base, phosphate);
     ui->na_custom_nt_btn->setText(custom_nt_name);
 }
 

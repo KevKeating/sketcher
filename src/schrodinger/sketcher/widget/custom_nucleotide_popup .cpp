@@ -55,10 +55,10 @@ void CustomNucleotidePopup::onTextEdited()
             return;
         }
     }
-    std::tuple<std::string, std::string, std::string> nt = {
-        ui->sugar_le->text().toStdString(),
-        ui->base_le->text().toStdString(),
-        ui->phosphate_le->text().toStdString()
+    std::tuple<QString, QString, QString> nt = {
+        ui->sugar_le->text(),
+        ui->base_le->text(),
+        ui->phosphate_le->text()
     };
     std::cout << "Updating model from popup\n";
     m_updating_model = true;
@@ -69,10 +69,10 @@ void CustomNucleotidePopup::onTextEdited()
 void CustomNucleotidePopup::updateFromModel()
 {
     auto [sugar, base, phosphate] = getModel()->getCustomNucleotide();
-    std::cout << "Updating popup from model " << sugar << " " << base << " " << phosphate << "\n";
-    ui->sugar_le->setText(QString::fromStdString(sugar));
-    ui->base_le->setText(QString::fromStdString(base));
-    ui->phosphate_le->setText(QString::fromStdString(phosphate));
+    qDebug() << "Updating popup from model " << sugar << " " << base << " " << phosphate << "\n";
+    ui->sugar_le->setText(sugar);
+    ui->base_le->setText(base);
+    ui->phosphate_le->setText(phosphate);
 }
 
 } // namespace sketcher

@@ -12,7 +12,7 @@
 #include "schrodinger/sketcher/molviewer/bond_item.h"
 #include "schrodinger/sketcher/molviewer/non_molecular_item.h"
 
-using MonomericNucleotide = std::tuple<std::string, std::string, std::string>;
+using MonomericNucleotide = std::tuple<QString, QString, QString>;
 Q_DECLARE_METATYPE(MonomericNucleotide);
 
 namespace schrodinger
@@ -20,7 +20,7 @@ namespace schrodinger
 namespace sketcher
 {
 
-std::string std_nucleobase_to_string(StdNucleobase base, std::string u_or_t)
+QString std_nucleobase_to_string(StdNucleobase base, QString u_or_t)
 {
     switch (base) {
         case StdNucleobase::A:
@@ -108,6 +108,8 @@ SketcherModel::SketcherModel(QObject* parent) : QObject(parent)
         {ModelKey::TOOL_SET, QVariant::fromValue(ToolSet::ATOMISTIC)},
         {ModelKey::MOLECULE_TYPE, QVariant::fromValue(MoleculeType::EMPTY)},
     };
+    auto [sugar, base, phosphate] = getCustomNucleotide();
+    qDebug() << "Custom nucleotide initialized to <" << sugar << "> <" << base << "> <" << phosphate << ">\n";
 
     connect(this, &SketcherModel::selectionChanged, this,
             &SketcherModel::onSelectionChanged);
@@ -190,12 +192,12 @@ StdNucleobase SketcherModel::getDNANucleobase() const
     return m_model_map.at(ModelKey::DNA_NUCLEOBASE).value<StdNucleobase>();
 }
 
-std::tuple<std::string, std::string, std::string> SketcherModel::getCustomNucleotide() const
+std::tuple<QString, QString, QString> SketcherModel::getCustomNucleotide() const
 {
-    return m_model_map.at(ModelKey::DNA_NUCLEOBASE).value<MonomericNucleotide>();
+    return m_model_map.at(ModelKey::CUSTOM_NUCLEOTIDE).value<MonomericNucleotide>();
 }
 
-std::optional<std::tuple<std::string, std::string, std::string>>
+std::optional<std::tuple<QString, QString, QString>>
 SketcherModel::getNucleotide() const
 {
     if (getToolSet() != ToolSet::MONOMERIC ||
