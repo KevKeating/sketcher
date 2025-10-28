@@ -371,7 +371,7 @@ enum class StdNucleobase {
  * @param base The base to convert
  * @param u_or_t The string to use for U_OR_T. Should be either "U" or "T".
  */
-SKETCHER_API QString std_nucleobase_to_string(StdNucleobase base,
+SKETCHER_API QString std_nucleobase_to_qstring(StdNucleobase base,
                                                   QString u_or_t);
 
 /**

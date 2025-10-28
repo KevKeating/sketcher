@@ -60,7 +60,6 @@ void CustomNucleotidePopup::onTextEdited()
         ui->base_le->text(),
         ui->phosphate_le->text()
     };
-    std::cout << "Updating model from popup\n";
     m_updating_model = true;
     getModel()->setValue(ModelKey::CUSTOM_NUCLEOTIDE, nt);
     m_updating_model = false;
@@ -69,7 +68,6 @@ void CustomNucleotidePopup::onTextEdited()
 void CustomNucleotidePopup::updateFromModel()
 {
     auto [sugar, base, phosphate] = getModel()->getCustomNucleotide();
-    qDebug() << "Updating popup from model " << sugar << " " << base << " " << phosphate << "\n";
     ui->sugar_le->setText(sugar);
     ui->base_le->setText(base);
     ui->phosphate_le->setText(phosphate);

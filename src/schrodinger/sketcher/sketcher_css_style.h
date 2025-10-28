@@ -99,6 +99,7 @@ const QString ENUMERATION_STYLE{
     "QToolButton:disabled { color: #E4E4E4; }"};
 
 const QString CUSTOM_NUCLEOTIDE_STYLE{
+    "#CustomNucleotidePopup { background-color:white }"
     "QLabel { font: 9px; color: #666666; }"};
 
 } // namespace sketcher
