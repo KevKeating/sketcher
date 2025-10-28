@@ -66,14 +66,6 @@ find_package(SQLite3 ${SQLITE_VERSION} REQUIRED)
 find_package(ZLIB ${ZLIB_VERSION} REQUIRED)
 find_package(zstd ${ZSTD_VERSION} REQUIRED)
 
-include(FetchContent)
-FetchContent_Declare(
-  cpptrace
-  GIT_REPOSITORY https://github.com/jeremy-rifkin/cpptrace.git
-  GIT_TAG        v1.0.4 # <HASH or TAG>
-)
-FetchContent_MakeAvailable(cpptrace)
-
 # Common library/executable configuration
 function(setup_target TARGET)
   # Visibility settings for dynamic vs static builds
@@ -212,9 +204,7 @@ target_link_libraries(
                         Boost::filesystem
                         Qt6::Widgets
                         ${SKETCHER_TARGET}
-                        ${EXTRA_SKETCHER_APP_LINK_FLAGS}
-                        cpptrace::cpptrace)
-# target_compile_options(${APP_TARGET} PRIVATE -DCPPTRACE_STATIC_DEFINE)
+                        ${EXTRA_SKETCHER_APP_LINK_FLAGS})
 
 # Tests
 if(ENABLE_TESTING)

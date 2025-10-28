@@ -9,11 +9,6 @@
 #include <emscripten/bind.h>
 #endif
 
-#include <iostream>
-#include <signal.h>
-#include <stdexcept>
-#include <cpptrace/cpptrace.hpp>
-
 #include <cstring>
 
 #include <QApplication>
@@ -133,18 +128,8 @@ void apply_stylesheet(QApplication& app)
     app.setStyleSheet(style);
 }
 
-void signal_handler(int signum)
-{
-    if (signum == SIGSEGV) {
-        std::cerr << "Segmentation fault\n";
-        cpptrace::generate_trace().print();
-        exit(signum); // Terminate the program after printing the stack trace
-    }
-}
-
 int main(int argc, char** argv)
 {
-    signal(SIGSEGV, signal_handler);
     QApplication application(argc, argv);
 #ifdef SKETCHER_STATIC_DEFINE
     Q_INIT_RESOURCE(sketcher);
@@ -171,14 +156,5 @@ int main(int argc, char** argv)
         sk.setInterfaceType(
             schrodinger::sketcher::InterfaceType::ATOMISTIC_OR_MONOMERIC);
     }
-
-    int retval = -1;
-    try {
-        retval = application.exec();
-    } catch (const std::exception& e) {
-        std::cerr << "Caught standard exception: " << e.what() << "\n";
-    } catch (...) {
-        std::cerr << "Caught unknown exception\n";
-    }
-    return retval;
+    return application.exec();
 }
