@@ -9,11 +9,11 @@ namespace schrodinger
 namespace sketcher
 {
 
-class SKETCHER_API SketcherViewWithCustomPaint : public SketcherView
+class SKETCHER_API SketcherViewWithWhiteBackground : public SketcherView
 {
   public:
-    SketcherViewWithCustomPaint(QWidget* parent = nullptr);
-    ~SketcherViewWithCustomPaint();
+    SketcherViewWithWhiteBackground(QWidget* parent = nullptr);
+    ~SketcherViewWithWhiteBackground();
     void paintEvent(QPaintEvent*) override;
 };
 

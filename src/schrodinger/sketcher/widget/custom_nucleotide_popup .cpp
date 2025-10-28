@@ -14,7 +14,7 @@ namespace sketcher
 {
 
 CustomNucleotidePopup::CustomNucleotidePopup(QWidget* parent) :
-    SketcherView(parent)
+    SketcherViewWithWhiteBackground(parent)
 {
     setWindowFlags(Qt::Popup);
     ui.reset(new Ui::CustomNucleotidePopup());

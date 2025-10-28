@@ -1,4 +1,4 @@
-#include "schrodinger/sketcher/widget/sketcher_view_with_custom_paint.h"
+#include "schrodinger/sketcher/widget/sketcher_view_with_white_background.h"
 
 #include <QPainter>
 #include <QPaintEvent>
@@ -9,14 +9,14 @@ namespace schrodinger
 namespace sketcher
 {
 
-SketcherVeiwWithCustomPaint::SketcherVeiwWithCustomPaint(QWidget* parent) :
+SketcherViewWithWhiteBackground::SketcherViewWithWhiteBackground(QWidget* parent) :
     SketcherView(parent)
 {
 }
 
-SketcherVeiwWithCustomPaint::~SketcherVeiwWithCustomPaint() = default;
+SketcherViewWithWhiteBackground::~SketcherViewWithWhiteBackground() = default;
 
-void SketcherVeiwWithCustomPaint::paintEvent(QPaintEvent*)
+void SketcherViewWithWhiteBackground::paintEvent(QPaintEvent*)
 {
     QStyleOption opt;
     opt.initFrom(this);

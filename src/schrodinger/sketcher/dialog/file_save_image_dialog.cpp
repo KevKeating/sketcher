@@ -15,7 +15,7 @@ namespace sketcher
 {
 
 FileSaveImagePopup::FileSaveImagePopup(QWidget* parent, SketcherModel* model) :
-    SketcherView(parent)
+    SketcherViewWithWhiteBackground(parent)
 {
     m_ui.reset(new Ui::FileSaveImagePopup());
     m_ui->setupUi(this);

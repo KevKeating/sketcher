@@ -2,7 +2,7 @@
 #include <memory>
 
 #include "schrodinger/sketcher/definitions.h"
-#include "schrodinger/sketcher/widget/sketcher_view.h"
+#include "schrodinger/sketcher/widget/sketcher_view_with_white_background.h"
 
 // class QString;
 
@@ -19,7 +19,7 @@ namespace sketcher
 /**
  * Popup used to provide base choices for the nucleotide buttons
  */
-class SKETCHER_API CustomNucleotidePopup : public SketcherView
+class SKETCHER_API CustomNucleotidePopup : public SketcherViewWithWhiteBackground
 {
   public:
     CustomNucleotidePopup(QWidget* parent = nullptr);
