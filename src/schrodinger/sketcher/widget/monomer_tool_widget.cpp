@@ -82,7 +82,8 @@ MonomerToolWidget::MonomerToolWidget(QWidget* parent) :
             (ui->na_dr_btn, NucleicAcidTool::dR)
             (ui->na_p_btn, NucleicAcidTool::P)
             (ui->na_rna_btn, NucleicAcidTool::RNA_NUCLEOTIDE)
-            (ui->na_dna_btn, NucleicAcidTool::DNA_NUCLEOTIDE);
+            (ui->na_dna_btn, NucleicAcidTool::DNA_NUCLEOTIDE)
+            (ui->na_custom_nt_btn, NucleicAcidTool::CUSTOM_NUCLEOTIDE);
     // clang-format on
 
     connect(ui->amino_or_nucleic_group, &QButtonGroup::buttonClicked, this,
