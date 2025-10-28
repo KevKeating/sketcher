@@ -49,15 +49,6 @@ RenderOptions FileSaveImagePopup::getRenderOptions() const
     return opts;
 }
 
-void FileSaveImagePopup::paintEvent(QPaintEvent*)
-{
-    // NOTE: Duplicated code; see ModularPopup and PeriodicTableWidget
-    QStyleOption opt;
-    opt.initFrom(this);
-    QPainter p(this);
-    style()->drawPrimitive(QStyle::PE_Widget, &opt, &p, this);
-}
-
 FileSaveImageDialog::FileSaveImageDialog(SketcherModel* model, QWidget* parent,
                                          bool is_svg_enabled) :
     FileExportDialog(model, parent)

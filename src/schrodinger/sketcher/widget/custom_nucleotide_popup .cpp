@@ -36,6 +36,20 @@ CustomNucleotidePopup::~CustomNucleotidePopup() = default;
 
 // TODO: copy paintEvent from ModularPopup?
 
+void CustomNucleotidePopup::setModel(SketcherModel* model)
+{
+    SketcherView::setModel(model);
+    updateFromModel();
+}
+
+void CustomNucleotidePopup::onModelValuesChanged(const std::unordered_set<ModelKey>& keys)
+{
+    SketcherView::onModelValuesChanged(keys);
+    if (keys.contains(ModelKey::CUSTOM_NUCLEOTIDE)) {
+        updateFromModel();
+    }
+}
+
 void CustomNucleotidePopup::onTextEdited()
 {
     // make sure that the inputs are valid (i.e. non-empty)
@@ -52,13 +66,6 @@ void CustomNucleotidePopup::onTextEdited()
         ui->phosphate_le->text().toStdString()
     };
     getModel()->setValue(ModelKey::CUSTOM_NUCLEOTIDE, nt);
-}
-
-void CustomNucleotidePopup::setModel(SketcherModel* model)
-{
-    SketcherView::setModel(model);
-    // TODO: connect model changes to a method that updates the line edits
-    updateFromModel();
 }
 
 void CustomNucleotidePopup::updateFromModel()

@@ -30,8 +30,10 @@ class SKETCHER_API CustomNucleotidePopup : public SketcherView
   protected:
     std::unique_ptr<Ui::CustomNucleotidePopup> ui;
     
+    void onModelValuesChanged(const std::unordered_set<ModelKey>& keys) override;
     void onTextEdited();
     void updateFromModel();
+    
 };
 
 } // namespace sketcher
