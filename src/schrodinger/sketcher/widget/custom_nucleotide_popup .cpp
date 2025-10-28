@@ -34,8 +34,6 @@ CustomNucleotidePopup::CustomNucleotidePopup(QWidget* parent) :
 
 CustomNucleotidePopup::~CustomNucleotidePopup() = default;
 
-// TODO: copy paintEvent from ModularPopup?
-
 void CustomNucleotidePopup::setModel(SketcherModel* model)
 {
     SketcherView::setModel(model);
@@ -65,6 +63,7 @@ void CustomNucleotidePopup::onTextEdited()
         ui->base_le->text().toStdString(),
         ui->phosphate_le->text().toStdString()
     };
+    std::cout << "Updating model\n";
     getModel()->setValue(ModelKey::CUSTOM_NUCLEOTIDE, nt);
 }
 
