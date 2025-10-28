@@ -27,9 +27,6 @@ CustomNucleotidePopup::CustomNucleotidePopup(QWidget* parent) :
         le->setValidator(alphanumeric_validator);
         connect(le, &QLineEdit::textEdited, this, &CustomNucleotidePopup::onTextEdited);
     }
-    // ui->sugar_le->setValidator(alphanumeric_validator);
-    // ui->base_le->setValidator(alphanumeric_validator);
-    // ui->phosphate_le->setValidator(alphanumeric_validator);
 }
 
 CustomNucleotidePopup::~CustomNucleotidePopup() = default;
