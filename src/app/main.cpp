@@ -134,12 +134,12 @@ void apply_stylesheet(QApplication& app)
 }
 
 void signal_handler(int signum) {
-        if (signum == SIGSEGV) {
-            std::cerr << "Segmentation fault\n";
-            cpptrace::generate_trace().print();
-            exit(signum); // Terminate the program after printing the stack trace
-        }
+    if (signum == SIGSEGV) {
+        std::cerr << "Segmentation fault\n";
+        cpptrace::generate_trace().print();
+        exit(signum); // Terminate the program after printing the stack trace
     }
+}
 
 int main(int argc, char** argv)
 {
