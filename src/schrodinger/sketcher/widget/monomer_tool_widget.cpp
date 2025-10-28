@@ -101,10 +101,9 @@ MonomerToolWidget::MonomerToolWidget(QWidget* parent) :
         new NucleotidePopup(NucleicAcidTool::DNA_NUCLEOTIDE,
                             ModelKey::DNA_NUCLEOBASE, "dR", "T", this);
     ui->na_dna_btn->setPopupWidget(m_dna_popup);
-    
+
     m_custom_nt_popup = new CustomNucleotidePopup(this);
     ui->na_custom_nt_btn->setPopupWidget(m_custom_nt_popup);
-    
 }
 
 MonomerToolWidget::~MonomerToolWidget() = default;
@@ -160,7 +159,7 @@ void MonomerToolWidget::updateCheckedButton()
     check_button_or_uncheck_group(nucleic_button, ui->nucleic_monomer_group);
     ui->na_rna_btn->setEnumItem(static_cast<int>(model->getRNANucleobase()));
     ui->na_dna_btn->setEnumItem(static_cast<int>(model->getDNANucleobase()));
-    
+
     // update the text displayed on the custom nucleotide button
     auto [sugar, base, phosphate] = model->getCustomNucleotide();
     const QString custom_nt_name_fmt("%1(%2)%3");

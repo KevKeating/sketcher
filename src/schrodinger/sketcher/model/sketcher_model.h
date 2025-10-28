@@ -372,7 +372,7 @@ enum class StdNucleobase {
  * @param u_or_t The string to use for U_OR_T. Should be either "U" or "T".
  */
 SKETCHER_API QString std_nucleobase_to_qstring(StdNucleobase base,
-                                                  QString u_or_t);
+                                               QString u_or_t);
 
 /**
  * @return Every element of `ModelKey`.
@@ -464,8 +464,7 @@ class SKETCHER_API SketcherModel : public QObject
      * If the current tool is a monomeric nucleotide, return the nucleotide as a
      * tuple of (sugar, base, phosphate). If not, return std::nullopt.
      */
-    std::optional<std::tuple<QString, QString, QString>>
-    getNucleotide() const;
+    std::optional<std::tuple<QString, QString, QString>> getNucleotide() const;
 
     /**
      * @return whether a reaction is present

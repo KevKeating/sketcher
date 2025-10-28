@@ -3,13 +3,12 @@
 #include "schrodinger/sketcher/definitions.h"
 #include "schrodinger/sketcher/widget/sketcher_view.h"
 
-
 namespace schrodinger
 {
 namespace sketcher
 {
 
-/** 
+/**
  * A SketcherView that uses a custom paintEvent method to allow for a white
  * background when one is specified in the style sheet
  */

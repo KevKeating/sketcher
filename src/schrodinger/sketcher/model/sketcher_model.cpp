@@ -191,7 +191,8 @@ StdNucleobase SketcherModel::getDNANucleobase() const
 
 std::tuple<QString, QString, QString> SketcherModel::getCustomNucleotide() const
 {
-    return m_model_map.at(ModelKey::CUSTOM_NUCLEOTIDE).value<MonomericNucleotide>();
+    return m_model_map.at(ModelKey::CUSTOM_NUCLEOTIDE)
+        .value<MonomericNucleotide>();
 }
 
 std::optional<std::tuple<QString, QString, QString>>

@@ -9,7 +9,8 @@ namespace schrodinger
 namespace sketcher
 {
 
-SketcherViewWithWhiteBackground::SketcherViewWithWhiteBackground(QWidget* parent) :
+SketcherViewWithWhiteBackground::SketcherViewWithWhiteBackground(
+    QWidget* parent) :
     SketcherView(parent)
 {
 }

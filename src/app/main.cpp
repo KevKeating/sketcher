@@ -133,7 +133,8 @@ void apply_stylesheet(QApplication& app)
     app.setStyleSheet(style);
 }
 
-void signal_handler(int signum) {
+void signal_handler(int signum)
+{
     if (signum == SIGSEGV) {
         std::cerr << "Segmentation fault\n";
         cpptrace::generate_trace().print();
@@ -170,7 +171,7 @@ int main(int argc, char** argv)
         sk.setInterfaceType(
             schrodinger::sketcher::InterfaceType::ATOMISTIC_OR_MONOMERIC);
     }
-    
+
     int retval = -1;
     try {
         retval = application.exec();
