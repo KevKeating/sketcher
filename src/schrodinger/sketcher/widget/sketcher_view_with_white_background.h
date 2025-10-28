@@ -9,6 +9,10 @@ namespace schrodinger
 namespace sketcher
 {
 
+/** 
+ * A SketcherView that uses a custom paintEvent method to allow for a white
+ * background when one is specified in the style sheet
+ */
 class SKETCHER_API SketcherViewWithWhiteBackground : public SketcherView
 {
   public:

@@ -13,8 +13,6 @@
 #include "schrodinger/sketcher/widget/nucleotide_popup.h"
 #include "schrodinger/sketcher/widget/widget_utils.h"
 
-#include <QDebug>
-
 namespace schrodinger
 {
 namespace sketcher
