@@ -105,10 +105,10 @@ SketcherWidget::SketcherWidget(QWidget* parent) :
     m_ui->setupUi(this);
 
     // Load fonts BEFORE creating objects that use them
-    for (const auto& font_path : {":resources/fonts/Arimo-Regular.ttf",
-                                  ":resources/fonts/Arimo-Bold.ttf",
-                                  ":resources/fonts/Arimo-Italic.ttf",
-                                  ":resources/fonts/Arimo-BoldItalic.ttf"}) {
+    for (const auto& font_path : {":/resources/fonts/Arimo-Regular.ttf",
+                                  ":/resources/fonts/Arimo-Bold.ttf",
+                                  ":/resources/fonts/Arimo-Italic.ttf",
+                                  ":/resources/fonts/Arimo-BoldItalic.ttf"}) {
         if (QFontDatabase::addApplicationFont(font_path) == -1) {
             throw std::runtime_error(
                 fmt::format("Failed to load font: {}", font_path));
@@ -442,6 +442,11 @@ QSet<const RDKit::Bond*> SketcherWidget::getSelectedBonds() const
     auto bonds_from_copy =
         get_corresponding_bonds_from_different_mol(bonds, mol.get());
     return QSet(bonds_from_copy.begin(), bonds_from_copy.end());
+}
+
+void SketcherWidget::fitToScreen(bool selection_only)
+{
+    m_ui->view->fitToScreen(selection_only);
 }
 
 std::string SketcherWidget::getClipboardContents() const
@@ -880,6 +885,8 @@ void SketcherWidget::setToolbarsVisible(const bool visible)
 {
     m_ui->side_bar_wdg->setVisible(visible);
     m_ui->top_bar_wdg->setVisible(visible);
+    // also hide the line that's between the workspace and the top toolbar
+    m_ui->line->setVisible(visible);
 }
 
 void SketcherWidget::keyPressEvent(QKeyEvent* event)
