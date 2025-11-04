@@ -1054,7 +1054,8 @@ void SketcherWidget::handleAtomisticKeyboardShortcuts(
 void SketcherWidget::handleAminoAcidKeyboardShortcuts(
     QKeyEvent* event, const QPointF& cursor_pos, const ModelObjsByType& targets)
 {
-    static const std::unordered_map<Qt::Key, AminoAcidTool> KEY_TO_AMINO_ACID {
+    static const std::unordered_map<Qt::Key, AminoAcidTool> KEY_TO_AMINO_ACID{
+        // clang-format off
         {Qt::Key_A, AminoAcidTool::ALA},
         {Qt::Key_R, AminoAcidTool::ARG},
         {Qt::Key_N, AminoAcidTool::ASN},
@@ -1076,25 +1077,48 @@ void SketcherWidget::handleAminoAcidKeyboardShortcuts(
         {Qt::Key_Y, AminoAcidTool::TYR},
         {Qt::Key_V, AminoAcidTool::VAL},
         {Qt::Key_X, AminoAcidTool::UNK},
-    };
+    }; // clang-format on
     auto key = Qt::Key(event->key());
     if (KEY_TO_AMINO_ACID.contains(key)) {
         auto amino_acid_tool = KEY_TO_AMINO_ACID.at(key);
         bool has_targets = !targets.atoms.empty();
-        std::pair<ModelKey, QVariant> kv_pair= {ModelKey::AMINO_ACID_TOOL, QVariant::fromValue(amino_acid_tool)};
+        std::pair<ModelKey, QVariant> kv_pair = {
+            ModelKey::AMINO_ACID_TOOL, QVariant::fromValue(amino_acid_tool)};
         std::unordered_map<ModelKey, QVariant> kv_pairs = {
             {ModelKey::DRAW_TOOL, QVariant::fromValue(DrawTool::MONOMER)},
-            {ModelKey::MONOMER_TOOL_TYPE, QVariant::fromValue(MonomerToolType::AMINO_ACID)},
-            };
-        updateModelForKeyboardShortcut(has_targets, kv_pair, kv_pairs,
-                                        targets);
+            {ModelKey::MONOMER_TOOL_TYPE,
+             QVariant::fromValue(MonomerToolType::AMINO_ACID)},
+        };
+        updateModelForKeyboardShortcut(has_targets, kv_pair, kv_pairs, targets);
     }
 }
 
 void SketcherWidget::handleNucleicAcidKeyboardShortcuts(
     QKeyEvent* event, const QPointF& cursor_pos, const ModelObjsByType& targets)
 {
-    
+    static const std::unordered_map<Qt::Key, StdNucleobase> KEY_TO_BASE{
+        // clang-format off
+        {Qt::Key_A, StdNucleobase::A},
+        {Qt::Key_C, StdNucleobase::C},
+        {Qt::Key_G, StdNucleobase::G},
+        {Qt::Key_U, StdNucleobase::U_OR_T},
+        {Qt::Key_T, StdNucleobase::U_OR_T},
+        {Qt::Key_N, StdNucleobase::N},
+    }; // clang-format on
+    auto key = Qt::Key(event->key());
+    // TODO: if we're in a nucleotide tool, change the base type of that tool
+    if (KEY_TO_BASE.contains(key)) {
+        auto base = KEY_TO_BASE.at(key);
+        bool has_targets = !targets.atoms.empty();
+        std::pair<ModelKey, QVariant> kv_pair = {
+            ModelKey::AMINO_ACID_TOOL, QVariant::fromValue(base)};
+        std::unordered_map<ModelKey, QVariant> kv_pairs = {
+            {ModelKey::DRAW_TOOL, QVariant::fromValue(DrawTool::MONOMER)},
+            {ModelKey::MONOMER_TOOL_TYPE,
+             QVariant::fromValue(MonomerToolType::NUCLEIC_ACID)},
+        };
+        updateModelForKeyboardShortcut(has_targets, kv_pair, kv_pairs, targets);
+    }
 }
 
 void SketcherWidget::onBackgroundColorChanged(const QColor& color)
