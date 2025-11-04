@@ -1096,42 +1096,35 @@ void SketcherWidget::handleAminoAcidKeyboardShortcuts(
 void SketcherWidget::handleNucleicAcidKeyboardShortcuts(
     QKeyEvent* event, const QPointF& cursor_pos, const ModelObjsByType& targets)
 {
-    static const std::unordered_map<Qt::Key, NucleicAcidTool> KEY_TO_TOOL{
+    static const std::unordered_map<Qt::Key, std::tuple<std::string, StdNucleobase, NucleicAcidTool>> KEY_MAP{
         // clang-format off
-        {Qt::Key_A, NucleicAcidTool::A},
-        {Qt::Key_C, NucleicAcidTool::C},
-        {Qt::Key_G, NucleicAcidTool::G},
-        {Qt::Key_U, NucleicAcidTool::U},
-        {Qt::Key_T, NucleicAcidTool::T},
-        {Qt::Key_N, NucleicAcidTool::N},
-    }; // clang-format on
-    static const std::unordered_map<Qt::Key, StdNucleobase> KEY_TO_BASE{
-        // clang-format off
-        {Qt::Key_A, StdNucleobase::A},
-        {Qt::Key_C, StdNucleobase::C},
-        {Qt::Key_G, StdNucleobase::G},
-        {Qt::Key_U, StdNucleobase::U_OR_T},
-        {Qt::Key_T, StdNucleobase::U_OR_T},
-        {Qt::Key_N, StdNucleobase::N},
+        {Qt::Key_A, {"A", StdNucleobase::A, NucleicAcidTool::A}},
+        {Qt::Key_C, {"C", StdNucleobase::C, NucleicAcidTool::C}},
+        {Qt::Key_G, {"G", StdNucleobase::G, NucleicAcidTool::G}},
+        {Qt::Key_U, {"U", StdNucleobase::U_OR_T, NucleicAcidTool::U}},
+        {Qt::Key_T, {"T", StdNucleobase::U_OR_T, NucleicAcidTool::T}},
+        {Qt::Key_N, {"N", StdNucleobase::N, NucleicAcidTool::N}},
     }; // clang-format on
     auto key = Qt::Key(event->key());
     // TODO: if we're in a nucleotide tool, change the base type of that tool
-    if (KEY_TO_TOOL.contains(key)) {
-        auto tool = QVariant::fromValue(KEY_TO_TOOL.at(key));
-        auto base = QVariant::fromValue(KEY_TO_BASE.at(key));
+    if (KEY_MAP.contains(key)) {
+        auto [base_name, base, tool] = KEY_MAP.at(key);
+        // auto tool = QVariant::fromValue(base);
+        // auto base = QVariant::fromValue(KEY_TO_BASE.at(key));
         bool has_targets = !targets.atoms.empty();
         
         std::pair<ModelKey, QVariant> kv_pair;
         switch (m_sketcher_model->getNucleicAcidTool()) {
             case NucleicAcidTool::RNA_NUCLEOTIDE:
-                kv_pair = {ModelKey::RNA_NUCLEOBASE, base};
+                kv_pair = {ModelKey::RNA_NUCLEOBASE, QVariant::fromValue(base)};
                 break;
             case NucleicAcidTool::DNA_NUCLEOTIDE:
-                kv_pair = {ModelKey::DNA_NUCLEOBASE, base};
-            case NucleicAcidTool::CUSTOM_NUCLEOTIDE:
-                
+                kv_pair = {ModelKey::DNA_NUCLEOBASE, QVariant::fromValue(base)};
+            case NucleicAcidTool::CUSTOM_NUCLEOTIDE: {
+                auto current_nt = m_sketcher_model->getCustomNucleotide();
+            }
             default:
-                kv_pair = {ModelKey::NUCLEIC_ACID_TOOL, tool};
+                kv_pair = {ModelKey::NUCLEIC_ACID_TOOL, QVariant::fromValue(tool)};
         }
         
         std::unordered_map<ModelKey, QVariant> kv_pairs = {
