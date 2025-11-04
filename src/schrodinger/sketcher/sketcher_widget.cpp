@@ -1110,8 +1110,17 @@ void SketcherWidget::handleNucleicAcidKeyboardShortcuts(
     if (KEY_TO_BASE.contains(key)) {
         auto base = KEY_TO_BASE.at(key);
         bool has_targets = !targets.atoms.empty();
+        
+        auto current_tool = m_sketcher_model->getNucleicAcidTool();
+        std::pair<ModelKey, QVariant> kv_pair;
+        if (current_tool == NucleicAcidTool::RNA_NUCLEOTIDE) {
+            kv_pair = {ModelKey::RNA_NUCLEOBASE, QVariant::fromValue(base)};
+        } else if (current_tool == NucleicAcidTool::DNA_NUCLEOTIDE) {
+            kv_pair = {ModelKey::DNA_NUCLEOBASE, QVariant::fromValue(base)};
+        }
+        
         std::pair<ModelKey, QVariant> kv_pair = {
-            ModelKey::AMINO_ACID_TOOL, QVariant::fromValue(base)};
+            ModelKey::NUCLEIC_ACID_TOOL, QVariant::fromValue(base)};
         std::unordered_map<ModelKey, QVariant> kv_pairs = {
             {ModelKey::DRAW_TOOL, QVariant::fromValue(DrawTool::MONOMER)},
             {ModelKey::MONOMER_TOOL_TYPE,
