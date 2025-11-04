@@ -912,8 +912,10 @@ void SketcherWidget::keyPressEvent(QKeyEvent* event)
             handleAtomisticKeyboardShortcuts(event, cursor_pos, targets);
         } else if (m_sketcher_model->getMonomerToolType() ==
                    MonomerToolType::AMINO_ACID) {
+            handleAminoAcidKeyboardShortcuts(event, cursor_pos, targets);
             // TODO: handle amino acid keyboard shortcuts
         } else {
+            handleNucleicAcidKeyboardShortcuts(event, cursor_pos, targets);
             // TODO: handle nucleic acid keyboard shortcuts
         }
     }
@@ -1047,6 +1049,52 @@ void SketcherWidget::handleAtomisticKeyboardShortcuts(
             return;
         }
     }
+}
+
+void SketcherWidget::handleAminoAcidKeyboardShortcuts(
+    QKeyEvent* event, const QPointF& cursor_pos, const ModelObjsByType& targets)
+{
+    static const std::unordered_map<Qt::Key, AminoAcidTool> KEY_TO_AMINO_ACID {
+        {Qt::Key_A, AminoAcidTool::ALA},
+        {Qt::Key_R, AminoAcidTool::ARG},
+        {Qt::Key_N, AminoAcidTool::ASN},
+        {Qt::Key_D, AminoAcidTool::ASP},
+        {Qt::Key_C, AminoAcidTool::CYS},
+        {Qt::Key_Q, AminoAcidTool::GLN},
+        {Qt::Key_E, AminoAcidTool::GLU},
+        {Qt::Key_G, AminoAcidTool::GLY},
+        {Qt::Key_H, AminoAcidTool::HIS},
+        {Qt::Key_I, AminoAcidTool::ILE},
+        {Qt::Key_L, AminoAcidTool::LEU},
+        {Qt::Key_K, AminoAcidTool::LYS},
+        {Qt::Key_M, AminoAcidTool::MET},
+        {Qt::Key_F, AminoAcidTool::PHE},
+        {Qt::Key_P, AminoAcidTool::PRO},
+        {Qt::Key_S, AminoAcidTool::SER},
+        {Qt::Key_T, AminoAcidTool::THR},
+        {Qt::Key_W, AminoAcidTool::TRP},
+        {Qt::Key_Y, AminoAcidTool::TYR},
+        {Qt::Key_V, AminoAcidTool::VAL},
+        {Qt::Key_X, AminoAcidTool::UNK},
+    };
+    auto key = Qt::Key(event->key());
+    if (KEY_TO_AMINO_ACID.contains(key)) {
+        auto amino_acid_tool = KEY_TO_AMINO_ACID.at(key);
+        bool has_targets = !targets.atoms.empty();
+        std::pair<ModelKey, QVariant> kv_pair= {ModelKey::AMINO_ACID_TOOL, QVariant::fromValue(amino_acid_tool)};
+        std::unordered_map<ModelKey, QVariant> kv_pairs = {
+            {ModelKey::DRAW_TOOL, QVariant::fromValue(DrawTool::MONOMER)},
+            {ModelKey::MONOMER_TOOL_TYPE, QVariant::fromValue(MonomerToolType::AMINO_ACID)},
+            };
+        updateModelForKeyboardShortcut(has_targets, kv_pair, kv_pairs,
+                                        targets);
+    }
+}
+
+void SketcherWidget::handleNucleicAcidKeyboardShortcuts(
+    QKeyEvent* event, const QPointF& cursor_pos, const ModelObjsByType& targets)
+{
+    
 }
 
 void SketcherWidget::onBackgroundColorChanged(const QColor& color)

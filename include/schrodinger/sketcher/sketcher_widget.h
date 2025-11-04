@@ -442,6 +442,23 @@ class SKETCHER_API SketcherWidget : public QWidget
     void handleAtomisticKeyboardShortcuts(QKeyEvent* event,
                                           const QPointF& cursor_pos,
                                           const ModelObjsByType& targets);
+    /**
+     * Process keyboard shortcuts when the monomeric amino acid tools are active
+     *
+     * @note see handleCommonKeyboardShortcuts for param documentation
+     */
+    void handleAminoAcidKeyboardShortcuts(QKeyEvent* event,
+                                          const QPointF& cursor_pos,
+                                          const ModelObjsByType& targets);
+    /**
+     * Process keyboard shortcuts when the monomeric nucleic acid tools are
+     * active
+     *
+     * @note see handleCommonKeyboardShortcuts for param documentation
+     */
+    void handleNucleicAcidKeyboardShortcuts(QKeyEvent* event,
+                                            const QPointF& cursor_pos,
+                                            const ModelObjsByType& targets);
 
     /**
      * Respond to the user clicking on a toolbar button when there is a
