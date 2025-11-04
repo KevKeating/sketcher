@@ -20,13 +20,13 @@ namespace schrodinger
 namespace sketcher
 {
 
-QString std_nucleobase_to_qstring(StdNucleobase base, QString u_or_t)
+QString std_nucleobase_to_qstring(StdNucleobase base, QString U_or_T)
 {
     switch (base) {
         case StdNucleobase::A:
             return "A";
         case StdNucleobase::U_OR_T:
-            return u_or_t;
+            return U_or_T;
         case StdNucleobase::G:
             return "G";
         case StdNucleobase::C:
