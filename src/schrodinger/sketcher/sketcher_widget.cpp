@@ -1096,6 +1096,15 @@ void SketcherWidget::handleAminoAcidKeyboardShortcuts(
 void SketcherWidget::handleNucleicAcidKeyboardShortcuts(
     QKeyEvent* event, const QPointF& cursor_pos, const ModelObjsByType& targets)
 {
+    static const std::unordered_map<Qt::Key, NucleicAcidTool> KEY_TO_TOOL{
+        // clang-format off
+        {Qt::Key_A, NucleicAcidTool::A},
+        {Qt::Key_C, NucleicAcidTool::C},
+        {Qt::Key_G, NucleicAcidTool::G},
+        {Qt::Key_U, NucleicAcidTool::U},
+        {Qt::Key_T, NucleicAcidTool::T},
+        {Qt::Key_N, NucleicAcidTool::N},
+    }; // clang-format on
     static const std::unordered_map<Qt::Key, StdNucleobase> KEY_TO_BASE{
         // clang-format off
         {Qt::Key_A, StdNucleobase::A},
@@ -1107,20 +1116,24 @@ void SketcherWidget::handleNucleicAcidKeyboardShortcuts(
     }; // clang-format on
     auto key = Qt::Key(event->key());
     // TODO: if we're in a nucleotide tool, change the base type of that tool
-    if (KEY_TO_BASE.contains(key)) {
-        auto base = KEY_TO_BASE.at(key);
+    if (KEY_TO_TOOL.contains(key)) {
+        auto tool = QVariant::fromValue(KEY_TO_TOOL.at(key));
+        auto base = QVariant::fromValue(KEY_TO_BASE.at(key));
         bool has_targets = !targets.atoms.empty();
         
-        auto current_tool = m_sketcher_model->getNucleicAcidTool();
         std::pair<ModelKey, QVariant> kv_pair;
-        if (current_tool == NucleicAcidTool::RNA_NUCLEOTIDE) {
-            kv_pair = {ModelKey::RNA_NUCLEOBASE, QVariant::fromValue(base)};
-        } else if (current_tool == NucleicAcidTool::DNA_NUCLEOTIDE) {
-            kv_pair = {ModelKey::DNA_NUCLEOBASE, QVariant::fromValue(base)};
+        switch (m_sketcher_model->getNucleicAcidTool()) {
+            case NucleicAcidTool::RNA_NUCLEOTIDE:
+                kv_pair = {ModelKey::RNA_NUCLEOBASE, base};
+                break;
+            case NucleicAcidTool::DNA_NUCLEOTIDE:
+                kv_pair = {ModelKey::DNA_NUCLEOBASE, base};
+            case NucleicAcidTool::CUSTOM_NUCLEOTIDE:
+                
+            default:
+                kv_pair = {ModelKey::NUCLEIC_ACID_TOOL, tool};
         }
         
-        std::pair<ModelKey, QVariant> kv_pair = {
-            ModelKey::NUCLEIC_ACID_TOOL, QVariant::fromValue(base)};
         std::unordered_map<ModelKey, QVariant> kv_pairs = {
             {ModelKey::DRAW_TOOL, QVariant::fromValue(DrawTool::MONOMER)},
             {ModelKey::MONOMER_TOOL_TYPE,
