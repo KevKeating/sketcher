@@ -119,7 +119,6 @@ ExternalProject_Add(
     -DCMAKE_INSTALL_PREFIX=${CMAKE_CURRENT_BINARY_DIR}/eigen-${EIGEN_VERSION})
 
 # Build SQLite library
-# TODO: add the CMake files to this repo
 generate_sqlite_urls(SQLITE_URLS)
 ExternalProject_Add(
   sqlite
