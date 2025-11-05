@@ -22,8 +22,7 @@ ButtonPacket::ButtonPacket(QToolButton* button, int enum_int) :
 {
 }
 
-ModularPopup::ModularPopup(QWidget* parent) :
-    SketcherViewWithWhiteBackground(parent)
+ModularPopup::ModularPopup(QWidget* parent) : SketcherView(parent)
 {
     // Show as a pop-up top-level window
     setWindowFlags(Qt::Popup);
