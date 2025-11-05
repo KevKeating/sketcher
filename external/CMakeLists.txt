@@ -26,6 +26,15 @@ function(set_cmake_arg VAR_NAME)
       PARENT_SCOPE)
 endfunction()
 
+function(generate_sqlite_urls)
+    # pull out the digits from the SQLite version
+    string(REGEX REPLACE "[^0-9]" "" SQLITE_VERS_DIGITS "${SQLITE_VERS}")
+    # the file name is padded with zeroes to seven digits
+    string(LENGTH "{SQLITE_VERS_DIGITS}" SQLITE_VERS_NUM_DIGITS)
+    math(EXPR num_zeros "7 - ${SQLITE_VERS_NUM_DIGITS}")
+    string(REPEAT "0" ${num_zeros} TRAILING_ZEROS)
+    
+
 if(EMSCRIPTEN)
   set(EXTRA_BOOST_CMAKE_ARGS
       -DCMAKE_CXX_FLAGS=-fdeclspec\ -pthread\ -fexceptions\ -sDISABLE_EXCEPTION_CATCHING=0
