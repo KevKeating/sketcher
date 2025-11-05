@@ -30,7 +30,7 @@ function(generate_sqlite_urls VAR_NAME)
     # pull out the digits from the SQLite version
     string(REGEX REPLACE "[^0-9]" "" SQLITE_VERS_DIGITS "${SQLITE_VERS}")
     # the file name is padded with zeroes to seven digits
-    string(LENGTH "{SQLITE_VERS_DIGITS}" SQLITE_VERS_NUM_DIGITS)
+    string(LENGTH "${SQLITE_VERS_DIGITS}" SQLITE_VERS_NUM_DIGITS)
     math(EXPR NUM_ZEROS "7 - ${SQLITE_VERS_NUM_DIGITS}")
     string(REPEAT "0" ${NUM_ZEROS} TRAILING_ZEROS)
     foreach(YEAR RANGE 2023 2035)
