@@ -33,7 +33,7 @@ function(generate_sqlite_urls VAR_NAME)
     string(LENGTH "${SQLITE_VERS_DIGITS}" SQLITE_VERS_NUM_DIGITS)
     math(EXPR NUM_ZEROS "7 - ${SQLITE_VERS_NUM_DIGITS}")
     string(REPEAT "0" ${NUM_ZEROS} TRAILING_ZEROS)
-    foreach(YEAR RANGE 2023 2035)
+    foreach(YEAR RANGE "2023" "2035")
         list(APPEND ${VAR_NAME} "https://www.sqlite.org/${YEAR}/sqlite-amalgamation-${SQLITE_VERS_DIGITS}${TRAILING_ZEROS}.zip")
     endforeach(YEAR)
 endfunction()
@@ -123,7 +123,7 @@ generate_sqlite_urls(SQLITE_URLS)
 ExternalProject_Add(
   sqlite
   URL ${SQLITE_URLS}
-  PATCH_COMMAND cp ${CMAKE_CURRENT_SOURCE_DIR}/sqlite_cmake/* ${SOURCE_DIR}
+  PATCH_COMMAND ${CMAKE_COMMAND} -e copy_directory ${CMAKE_CURRENT_SOURCE_DIR}/sqlite_cmake/* <SOURCE_DIR>}
   CMAKE_ARGS
     ${COMMON_EXTERNAL_PROJECT_CMAKE_ARGS}
     -DCMAKE_INSTALL_PREFIX=${CMAKE_CURRENT_BINARY_DIR}/sqlite-${SQLITE_VERSION}
