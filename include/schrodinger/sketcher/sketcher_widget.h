@@ -452,7 +452,9 @@ class SKETCHER_API SketcherWidget : public QWidget
                                           const ModelObjsByType& targets);
     /**
      * Process keyboard shortcuts when the monomeric nucleic acid tools are
-     * active
+     * active.  If a full nucleotide tool is active, the keyboard shortcuts will
+     * update the base of that tool.  If a monomer tool is active, the keyboard
+     * shortcuts will switch to the monomer tool of the requested base.
      *
      * @note see handleCommonKeyboardShortcuts for param documentation
      */

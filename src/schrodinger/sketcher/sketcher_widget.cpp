@@ -1114,17 +1114,23 @@ void SketcherWidget::handleNucleicAcidKeyboardShortcuts(
         std::pair<ModelKey, QVariant> kv_pair;
         switch (m_sketcher_model->getNucleicAcidTool()) {
             case NucleicAcidTool::RNA_NUCLEOTIDE:
+                // update the base of the RNA full nucleotide tool
                 kv_pair = {ModelKey::RNA_NUCLEOBASE, QVariant::fromValue(base)};
                 break;
             case NucleicAcidTool::DNA_NUCLEOTIDE:
+                // update the base of the DNA full nucleotide tool
                 kv_pair = {ModelKey::DNA_NUCLEOBASE, QVariant::fromValue(base)};
             case NucleicAcidTool::CUSTOM_NUCLEOTIDE: {
+                // update the base of the custom full nucleotide tool, but keep
+                // the sugar and phosphate the same
                 auto nt = m_sketcher_model->getCustomNucleotide();
                 std::get<1>(nt) = base_name;
                 kv_pair = {ModelKey::CUSTOM_NUCLEOTIDE,
                            QVariant::fromValue(nt)};
             }
             default:
+                // a monomer tool is active, so switch to the monomer tool of
+                // the specified base
                 kv_pair = {ModelKey::NUCLEIC_ACID_TOOL,
                            QVariant::fromValue(tool)};
         }
