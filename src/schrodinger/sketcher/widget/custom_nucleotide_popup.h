@@ -18,8 +18,7 @@ namespace sketcher
  * Popup used to provide sugar, base, and phosphate entry for the custom
  * nucleotide
  */
-class SKETCHER_API CustomNucleotidePopup
-    : public SketcherView
+class SKETCHER_API CustomNucleotidePopup : public SketcherView
 {
   public:
     CustomNucleotidePopup(QWidget* parent = nullptr);
