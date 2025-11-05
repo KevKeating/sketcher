@@ -913,10 +913,8 @@ void SketcherWidget::keyPressEvent(QKeyEvent* event)
         } else if (m_sketcher_model->getMonomerToolType() ==
                    MonomerToolType::AMINO_ACID) {
             handleAminoAcidKeyboardShortcuts(event, cursor_pos, targets);
-            // TODO: handle amino acid keyboard shortcuts
         } else {
             handleNucleicAcidKeyboardShortcuts(event, cursor_pos, targets);
-            // TODO: handle nucleic acid keyboard shortcuts
         }
     }
 }
@@ -1108,10 +1106,10 @@ void SketcherWidget::handleNucleicAcidKeyboardShortcuts(
             {Qt::Key_N, {"N", StdNucleobase::N, NucleicAcidTool::N}},
     }; // clang-format on
     auto key = Qt::Key(event->key());
+    std::pair<ModelKey, QVariant> kv_pair;
     if (KEY_MAP.contains(key)) {
         auto [base_name, base, tool] = KEY_MAP.at(key);
 
-        std::pair<ModelKey, QVariant> kv_pair;
         switch (m_sketcher_model->getNucleicAcidTool()) {
             case NucleicAcidTool::RNA_NUCLEOTIDE:
                 // update the base of the RNA full nucleotide tool
@@ -1134,15 +1132,21 @@ void SketcherWidget::handleNucleicAcidKeyboardShortcuts(
                 kv_pair = {ModelKey::NUCLEIC_ACID_TOOL,
                            QVariant::fromValue(tool)};
         }
-
-        std::unordered_map<ModelKey, QVariant> kv_pairs = {
-            {ModelKey::DRAW_TOOL, QVariant::fromValue(DrawTool::MONOMER)},
-            {ModelKey::MONOMER_TOOL_TYPE,
-             QVariant::fromValue(MonomerToolType::NUCLEIC_ACID)},
-        };
-        bool has_targets = !targets.atoms.empty();
-        updateModelForKeyboardShortcut(has_targets, kv_pair, kv_pairs, targets);
+    } else if (key == Qt::Key_P) {
+        kv_pair = {ModelKey::NUCLEIC_ACID_TOOL,
+                    QVariant::fromValue(NucleicAcidTool::P)};
+    } else {
+        // there's no nucleic acid shortcut for this key
+        return;
     }
+
+    std::unordered_map<ModelKey, QVariant> kv_pairs = {
+        {ModelKey::DRAW_TOOL, QVariant::fromValue(DrawTool::MONOMER)},
+        {ModelKey::MONOMER_TOOL_TYPE,
+            QVariant::fromValue(MonomerToolType::NUCLEIC_ACID)},
+    };
+    bool has_targets = !targets.atoms.empty();
+    updateModelForKeyboardShortcut(has_targets, kv_pair, kv_pairs, targets);
 }
 
 void SketcherWidget::onBackgroundColorChanged(const QColor& color)
