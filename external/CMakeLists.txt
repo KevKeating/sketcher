@@ -122,7 +122,7 @@ ExternalProject_Add(
 generate_sqlite_urls(SQLITE_URLS)
 ExternalProject_Add(
   sqlite
-  URLS ${SQLITE_URLS}
+  URL ${SQLITE_URLS}
   PATCH_COMMAND cp ${CMAKE_CURRENT_SOURCE_DIR}/sqlite_cmake/* ${SOURCE_DIR}
   CMAKE_ARGS
     ${COMMON_EXTERNAL_PROJECT_CMAKE_ARGS}
