@@ -1096,7 +1096,7 @@ void SketcherWidget::handleNucleicAcidKeyboardShortcuts(
 {
     static const std::unordered_map<
         Qt::Key, std::tuple<QString, StdNucleobase, NucleicAcidTool>>
-        KEY_MAP{
+        BASE_KEYS{
             // clang-format off
             {Qt::Key_A, {"A", StdNucleobase::A, NucleicAcidTool::A}},
             {Qt::Key_C, {"C", StdNucleobase::C, NucleicAcidTool::C}},
@@ -1105,50 +1105,71 @@ void SketcherWidget::handleNucleicAcidKeyboardShortcuts(
             {Qt::Key_T, {"T", StdNucleobase::U_OR_T, NucleicAcidTool::T}},
             {Qt::Key_N, {"N", StdNucleobase::N, NucleicAcidTool::N}},
     }; // clang-format on
+    static const std::unordered_map<
+        Qt::Key, std::tuple<QString, NucleicAcidTool>>
+        SUGAR_KEYS{
+            // clang-format off
+            {Qt::Key_R, {"R", NucleicAcidTool::RNA_NUCLEOTIDE}},
+            {Qt::Key_D, {"dR", NucleicAcidTool::DNA_NUCLEOTIDE}},
+    }; // clang-format on
     auto key = Qt::Key(event->key());
-    std::pair<ModelKey, QVariant> kv_pair;
-    if (KEY_MAP.contains(key)) {
-        auto [base_name, base, tool] = KEY_MAP.at(key);
-
-        switch (m_sketcher_model->getNucleicAcidTool()) {
-            case NucleicAcidTool::RNA_NUCLEOTIDE:
-                // update the base of the RNA full nucleotide tool
-                kv_pair = {ModelKey::RNA_NUCLEOBASE, QVariant::fromValue(base)};
-                break;
-            case NucleicAcidTool::DNA_NUCLEOTIDE:
-                // update the base of the DNA full nucleotide tool
-                kv_pair = {ModelKey::DNA_NUCLEOBASE, QVariant::fromValue(base)};
-                break;
-            case NucleicAcidTool::CUSTOM_NUCLEOTIDE: {
-                // update the base of the custom full nucleotide tool, but keep
-                // the sugar and phosphate the same
-                auto nt = m_sketcher_model->getCustomNucleotide();
-                std::get<1>(nt) = base_name;
-                kv_pair = {ModelKey::CUSTOM_NUCLEOTIDE,
-                           QVariant::fromValue(nt)};
+    std::optional<std::pair<ModelKey, QVariant>> kv_pair;
+    auto current_tool = m_sketcher_model->getNucleicAcidTool();
+    switch (current_tool) {
+        case NucleicAcidTool::RNA_NUCLEOTIDE:
+        case NucleicAcidTool::DNA_NUCLEOTIDE:
+            if (BASE_KEYS.contains(key)) {
+                auto base = std::get<StdNucleobase>(BASE_KEYS.at(key));
+                auto model_key = current_tool == NucleicAcidTool::RNA_NUCLEOTIDE ? ModelKey::RNA_NUCLEOBASE : ModelKey::DNA_NUCLEOBASE;
+                kv_pair = {model_key, QVariant::fromValue(base)};
+            } else if (SUGAR_KEYS.contains(key)) {
+                auto tool = std::get<NucleicAcidTool>(SUGAR_KEYS.at(key));
+                kv_pair = {ModelKey::NUCLEIC_ACID_TOOL, QVariant::fromValue(tool)};
+            }
+            break;
+        case NucleicAcidTool::CUSTOM_NUCLEOTIDE: {
+            auto nt = m_sketcher_model->getCustomNucleotide();
+            if (BASE_KEYS.contains(key)) {
+                auto base = std::get<QString>(BASE_KEYS.at(key));
+                std::get<1>(nt) = base;
+            } else if (SUGAR_KEYS.contains(key)) {
+                auto sugar = std::get<QString>(SUGAR_KEYS.at(key));
+                std::get<0>(nt) = sugar;
+            } else if (key == Qt::Key_P) {
+                std::get<2>(nt) = "P";
+            } else {
                 break;
             }
-            default:
-                // a monomer tool is active, so switch to the monomer tool of
-                // the specified base
-                kv_pair = {ModelKey::NUCLEIC_ACID_TOOL,
-                           QVariant::fromValue(tool)};
+            kv_pair = {ModelKey::CUSTOM_NUCLEOTIDE,
+                        QVariant::fromValue(nt)};
+            break;
         }
-    } else if (key == Qt::Key_P) {
-        kv_pair = {ModelKey::NUCLEIC_ACID_TOOL,
-                    QVariant::fromValue(NucleicAcidTool::P)};
-    } else {
-        // there's no nucleic acid shortcut for this key
-        return;
+        default: {
+            // a monomer tool is active
+            NucleicAcidTool tool;
+            if (BASE_KEYS.contains(key)) {
+                tool = std::get<NucleicAcidTool>(BASE_KEYS.at(key));
+            } else if (SUGAR_KEYS.contains(key)) {
+                tool = std::get<NucleicAcidTool>(SUGAR_KEYS.at(key));
+            } else if (key == Qt::Key_P) {
+                tool = NucleicAcidTool::P;
+            } else {
+                break;
+            }
+            kv_pair = {ModelKey::NUCLEIC_ACID_TOOL,
+                        QVariant::fromValue(tool)};
+        }
     }
 
-    std::unordered_map<ModelKey, QVariant> kv_pairs = {
-        {ModelKey::DRAW_TOOL, QVariant::fromValue(DrawTool::MONOMER)},
-        {ModelKey::MONOMER_TOOL_TYPE,
-            QVariant::fromValue(MonomerToolType::NUCLEIC_ACID)},
-    };
-    bool has_targets = !targets.atoms.empty();
-    updateModelForKeyboardShortcut(has_targets, kv_pair, kv_pairs, targets);
+    if (kv_pair.has_value()) {
+        std::unordered_map<ModelKey, QVariant> kv_pairs = {
+            {ModelKey::DRAW_TOOL, QVariant::fromValue(DrawTool::MONOMER)},
+            {ModelKey::MONOMER_TOOL_TYPE,
+                QVariant::fromValue(MonomerToolType::NUCLEIC_ACID)},
+        };
+        bool has_targets = !targets.atoms.empty();
+        updateModelForKeyboardShortcut(has_targets, *kv_pair, kv_pairs, targets);
+    }
 }
 
 void SketcherWidget::onBackgroundColorChanged(const QColor& color)
