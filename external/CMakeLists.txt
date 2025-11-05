@@ -109,7 +109,7 @@ ExternalProject_Add(
 ExternalProject_Add(
   sqlite
   GIT_REPOSITORY https://github.com/algoritnl/sqlite-amalgamation.git
-  GIT_TAG version-${SQLITE_VERSION}
+  GIT_TAG fdd9f4f22ff775afdcb67ac1ecf4f0eee36e6f4d
   GIT_SHALLOW TRUE
   CMAKE_ARGS
     ${COMMON_EXTERNAL_PROJECT_CMAKE_ARGS}
