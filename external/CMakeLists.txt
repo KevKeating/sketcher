@@ -108,7 +108,8 @@ ExternalProject_Add(
 # Build SQLite library
 ExternalProject_Add(
   sqlite
-  URL https://www.sqlite.org/2023/sqlite-amalgamation-3420000.zip
+  GIT_REPOSITORY https://github.com/algoritnl/sqlite-amalgamation.git
+  GIT_TAG fdd9f4f22ff775afdcb67ac1ecf4f0eee36e6f4d
   CMAKE_ARGS
     ${COMMON_EXTERNAL_PROJECT_CMAKE_ARGS}
     -DCMAKE_INSTALL_PREFIX=${CMAKE_CURRENT_BINARY_DIR}/sqlite-${SQLITE_VERSION}
