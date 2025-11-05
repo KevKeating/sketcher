@@ -26,13 +26,17 @@ function(set_cmake_arg VAR_NAME)
       PARENT_SCOPE)
 endfunction()
 
-function(generate_sqlite_urls)
+function(generate_sqlite_urls VAR_NAME)
     # pull out the digits from the SQLite version
     string(REGEX REPLACE "[^0-9]" "" SQLITE_VERS_DIGITS "${SQLITE_VERS}")
     # the file name is padded with zeroes to seven digits
     string(LENGTH "{SQLITE_VERS_DIGITS}" SQLITE_VERS_NUM_DIGITS)
-    math(EXPR num_zeros "7 - ${SQLITE_VERS_NUM_DIGITS}")
-    string(REPEAT "0" ${num_zeros} TRAILING_ZEROS)
+    math(EXPR NUM_ZEROS "7 - ${SQLITE_VERS_NUM_DIGITS}")
+    string(REPEAT "0" ${NUM_ZEROS} TRAILING_ZEROS)
+    foreach(YEAR RANGE 2023 2035)
+        list(APPEND ${VAR_NAME} "https://www.sqlite.org/${YEAR}/sqlite-amalgamation-${SQLITE_VERS_DIGITS}${TRAILING_ZEROS}.zip")
+    endforeach(YEAR)
+endfunction()
     
 
 if(EMSCRIPTEN)
