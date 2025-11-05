@@ -18,8 +18,7 @@ namespace schrodinger
 namespace sketcher
 {
 
-PeriodicTableWidget::PeriodicTableWidget(QWidget* parent) :
-    SketcherViewWithWhiteBackground(parent)
+PeriodicTableWidget::PeriodicTableWidget(QWidget* parent) : SketcherView(parent)
 {
     ui.reset(new Ui::PeriodicTableForm());
     ui->setupUi(this);

@@ -2,7 +2,7 @@
 #include <memory>
 
 #include "schrodinger/sketcher/definitions.h"
-#include "schrodinger/sketcher/widget/sketcher_view_with_white_background.h"
+#include "schrodinger/sketcher/widget/sketcher_view.h"
 
 namespace Ui
 {
@@ -19,7 +19,7 @@ namespace sketcher
  * nucleotide
  */
 class SKETCHER_API CustomNucleotidePopup
-    : public SketcherViewWithWhiteBackground
+    : public SketcherView
 {
   public:
     CustomNucleotidePopup(QWidget* parent = nullptr);
