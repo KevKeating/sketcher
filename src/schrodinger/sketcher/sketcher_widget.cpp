@@ -1166,7 +1166,7 @@ void SketcherWidget::handleNucleicAcidKeyboardShortcuts(
                 auto sugar = std::get<QString>(SUGAR_KEYS.at(key));
                 std::get<0>(nt) = sugar;
             } else if (key == Qt::Key_P) {
-                // undo any phosphate modifications on the current tool
+                // remove any phosphate modifications from the current tool
                 auto phosphate = std::get<QString>(P_KEY);
                 std::get<2>(nt) = phosphate;
             } else {
