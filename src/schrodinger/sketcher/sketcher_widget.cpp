@@ -1094,24 +1094,46 @@ void SketcherWidget::handleAminoAcidKeyboardShortcuts(
 void SketcherWidget::handleNucleicAcidKeyboardShortcuts(
     QKeyEvent* event, const QPointF& cursor_pos, const ModelObjsByType& targets)
 {
+    // behavior for the keyboard keys that represent nucleobases, depending on
+    // the currently active tool
+    //  - the base name to switch the custom nucleotide tool to
+    //  - the base to switch the RNA/DNA nucleotide tool to
+    //  - the monomer tool to switch to
     static const std::unordered_map<
         Qt::Key, std::tuple<QString, StdNucleobase, NucleicAcidTool>>
         BASE_KEYS{
-            // clang-format off
             {Qt::Key_A, {"A", StdNucleobase::A, NucleicAcidTool::A}},
             {Qt::Key_C, {"C", StdNucleobase::C, NucleicAcidTool::C}},
             {Qt::Key_G, {"G", StdNucleobase::G, NucleicAcidTool::G}},
             {Qt::Key_U, {"U", StdNucleobase::U_OR_T, NucleicAcidTool::U}},
             {Qt::Key_T, {"T", StdNucleobase::U_OR_T, NucleicAcidTool::T}},
             {Qt::Key_N, {"N", StdNucleobase::N, NucleicAcidTool::N}},
-    }; // clang-format on
-    static const std::unordered_map<Qt::Key,
-                                    std::tuple<QString, NucleicAcidTool, NucleicAcidTool>>
+        };
+
+    // behavior for the keyboard keys that represent sugars, depending on
+    // the currently active tool
+    //  - the sugar name to switch the custom nucleotide tool to
+    //  - the RNA/DNA nucleotide tool to switch to
+    //  - the monomer tool to switch to
+    static const std::unordered_map<
+        Qt::Key, std::tuple<QString, NucleicAcidTool, NucleicAcidTool>>
         SUGAR_KEYS{
-            // clang-format off
-            {Qt::Key_R, {"R", NucleicAcidTool::RNA_NUCLEOTIDE, NucleicAcidTool::R}},
-            {Qt::Key_D, {"dR", NucleicAcidTool::DNA_NUCLEOTIDE, NucleicAcidTool::dR}},
-    }; // clang-format on
+            {Qt::Key_R,
+             {"R", NucleicAcidTool::RNA_NUCLEOTIDE, NucleicAcidTool::R}},
+            {Qt::Key_D,
+             {"dR", NucleicAcidTool::DNA_NUCLEOTIDE, NucleicAcidTool::dR}},
+        };
+
+    // behavior for the P key (i.e. phosphate), depending on
+    // the currently active tool
+    //  - the phosphate name to switch the custom nucleotide tool to (in case
+    //    the user had previously switched to a modified phosphate group)
+    //  - the monomer tool to switch to
+    // Note that this key has no effect if the RNA/DNA nucleotide tool is
+    // active, since those tools don't allow changes to the phosphate group
+    static const std::tuple<QString, NucleicAcidTool> P_KEY{"P",
+                                                            NucleicAcidTool::P};
+
     auto key = Qt::Key(event->key());
     std::optional<std::pair<ModelKey, QVariant>> kv_pair;
     auto current_tool = m_sketcher_model->getNucleicAcidTool();
@@ -1145,7 +1167,8 @@ void SketcherWidget::handleNucleicAcidKeyboardShortcuts(
                 std::get<0>(nt) = sugar;
             } else if (key == Qt::Key_P) {
                 // undo any phosphate modifications on the current tool
-                std::get<2>(nt) = "P";
+                auto phosphate = std::get<QString>(P_KEY);
+                std::get<2>(nt) = phosphate;
             } else {
                 break;
             }
@@ -1161,7 +1184,7 @@ void SketcherWidget::handleNucleicAcidKeyboardShortcuts(
             } else if (SUGAR_KEYS.contains(key)) {
                 tool = std::get<2>(SUGAR_KEYS.at(key));
             } else if (key == Qt::Key_P) {
-                tool = NucleicAcidTool::P;
+                tool = std::get<NucleicAcidTool>(P_KEY);
             } else {
                 break;
             }
