@@ -9,7 +9,7 @@ cmake_minimum_required(VERSION 3.24...3.31)
 # -- Project -------------------------------------------------------------------
 
 # Extract the version info from the header file.
-file(STRINGS source/sqlite3.h _ver_line
+file(STRINGS sqlite3.h _ver_line
     REGEX "^#define SQLITE_VERSION +\"([0-9]+\\.[0-9]+\\.[0-9]+)\""
     LIMIT_COUNT 1)
 set(SQLITE_VERSION ${CMAKE_MATCH_1})
@@ -19,7 +19,7 @@ unset(_ver_line)
 project(SQLite3
     VERSION ${SQLITE_VERSION}
     DESCRIPTION "SQLite: an embedded SQL database engine"
-    HOMEPAGE_URL https://github.com/algoritnl/sqlite-amalgamation
+    HOMEPAGE_URL https://sqlite.org/
     LANGUAGES C)
 
 if(PROJECT_IS_TOP_LEVEL)
@@ -203,9 +203,9 @@ set_target_properties(SQLite3 PROPERTIES
     SOVERSION ${SQLite3_VERSION_MAJOR})
 
 target_sources(SQLite3
-    PRIVATE source/sqlite3.c
+    PRIVATE sqlite3.c
     INTERFACE FILE_SET HEADERS BASE_DIRS source
-        FILES source/sqlite3.h source/sqlite3ext.h)
+        FILES sqlite3.h sqlite3ext.h)
 
 target_include_directories(SQLite3
     INTERFACE
@@ -340,7 +340,7 @@ if(SQLITE_BUILD_SHELL)
         INSTALL_RPATH "$ORIGIN/../lib")
 
     target_sources(Shell
-        PRIVATE source/shell.c)
+        PRIVATE shell.c)
 
     target_link_libraries(Shell PRIVATE SQLite::SQLite3)
 
