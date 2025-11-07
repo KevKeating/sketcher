@@ -20,7 +20,7 @@ unset(_ver_line)
 project(SQLite3
     VERSION ${SQLITE_VERSION}
     DESCRIPTION "SQLite: an embedded SQL database engine"
-    HOMEPAGE_URL https://sqlite.org/
+    HOMEPAGE_URL https://sqlite.org
     LANGUAGES C)
 
 if(PROJECT_IS_TOP_LEVEL)
