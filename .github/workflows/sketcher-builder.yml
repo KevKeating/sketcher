@@ -99,13 +99,6 @@ jobs:
         if: matrix.build-output == 'wasm'
         run: |
             cmake -B build/external/host/ -S external/ -G Ninja \
-
-      - name: Fetch SQLite3
-        id: fetch-sqlite
-        uses: ./.github/actions/build-external
-        with:
-          library: sqlite
-          version: ${{ fromJson(env.VERSIONS_JSON).sqlite }}
                 -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }} -DQT_HOST_BUILD=ON
 
       - name: Fetch fmt
@@ -142,6 +135,13 @@ jobs:
         with:
           library: eigen
           version: ${{ fromJson(env.VERSIONS_JSON).eigen }}
+
+      - name: Fetch SQLite3
+        id: fetch-sqlite
+        uses: ./.github/actions/build-external
+        with:
+          library: sqlite
+          version: ${{ fromJson(env.VERSIONS_JSON).sqlite }}
 
       - name: Fetch RDKit
         id: fetch-rdkit
