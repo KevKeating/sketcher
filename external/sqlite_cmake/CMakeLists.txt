@@ -12,7 +12,8 @@ cmake_minimum_required(VERSION 3.24...3.31)
 file(STRINGS sqlite3.h _ver_line
     REGEX "^#define SQLITE_VERSION +\"([0-9]+\\.[0-9]+\\.[0-9]+)\""
     LIMIT_COUNT 1)
-set(SQLITE_VERSION ${CMAKE_MATCH_1})
+string(REGEX MATCH "[0-9]+\\.[0-9]+\\.[0-9]+"
+    SQLITE_VERSION ${_ver_line})
 message(STATUS "SQLite library version: ${SQLITE_VERSION}")
 unset(_ver_line)
 
