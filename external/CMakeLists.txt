@@ -28,14 +28,18 @@ endfunction()
 
 function(generate_sqlite_urls VAR_NAME)
     # pull out the digits from the SQLite version
-    string(REGEX REPLACE "[^0-9]" "" SQLITE_VERS_DIGITS "${SQLITE_VERS}")
+    string(REGEX REPLACE "[^0-9]" "" SQLITE_VERS_DIGITS "${SQLITE_VERSION}")
     # the file name is padded with zeroes to seven digits
     string(LENGTH "${SQLITE_VERS_DIGITS}" SQLITE_VERS_NUM_DIGITS)
     math(EXPR NUM_ZEROS "7 - ${SQLITE_VERS_NUM_DIGITS}")
     string(REPEAT "0" ${NUM_ZEROS} TRAILING_ZEROS)
-    foreach(YEAR RANGE "2023" "2035")
-        list(APPEND ${VAR_NAME} "https://www.sqlite.org/${YEAR}/sqlite-amalgamation-${SQLITE_VERS_DIGITS}${TRAILING_ZEROS}.zip")
+    message("digits = ${SQLITE_VERS_DIGITS}${TRAILING_ZEROS}")
+    foreach(YEAR RANGE 2023 2035)
+        message("YEAR = ${YEAR}")
+        list(APPEND URLS_FOR_YEARS "https://www.sqlite.org/${YEAR}/sqlite-amalgamation-${SQLITE_VERS_DIGITS}${TRAILING_ZEROS}.zip")
     endforeach(YEAR)
+    list(JOIN URLS_FOR_YEARS " " ${VAR_NAME})
+    message(${${VAR_NAME}})
 endfunction()
     
 
