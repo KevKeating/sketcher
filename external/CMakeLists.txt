@@ -32,8 +32,8 @@ endfunction()
 # way to determine the year from the version number, so we just try a range of
 # years until we find the correct one. This could fail for edge cases (e.g. the
 # filenames for versions 3.5.0, 3.50.0, and 3.500.0 will all be the same, so we
-# might find the wrong one if our range of years is way too large), but should
-# be good enough for our needs.
+# might find the wrong one if our range of years is way too large), but it
+# should be good enough for our needs.
 function(generate_sqlite_urls VAR_NAME)
     # pull out the digits from the SQLite version
     string(REGEX REPLACE "[^0-9]" "" SQLITE_VERS_DIGITS "${SQLITE_VERSION}")
@@ -135,7 +135,7 @@ generate_sqlite_urls(SQLITE_URLS)
 ExternalProject_Add(
   sqlite
   URL ${SQLITE_URLS}
-  # SQLite doesn't work with CMake out-of-the-box, so copy in our CMake files
+  # SQLite doesn't work with CMake out of the box, so copy in our CMake files
   PATCH_COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_CURRENT_SOURCE_DIR}/sqlite_cmake <SOURCE_DIR>
   CMAKE_ARGS
     ${COMMON_EXTERNAL_PROJECT_CMAKE_ARGS}
