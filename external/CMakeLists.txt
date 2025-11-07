@@ -135,7 +135,8 @@ generate_sqlite_urls(SQLITE_URLS)
 ExternalProject_Add(
   sqlite
   URL ${SQLITE_URLS}
-  PATCH_COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_CURRENT_SOURCE_DIR}/sqlite_cmake/* <SOURCE_DIR>
+  # SQLite doesn't work with CMake out-of-the-box, so copy in our CMake files
+  PATCH_COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_CURRENT_SOURCE_DIR}/sqlite_cmake <SOURCE_DIR>
   CMAKE_ARGS
     ${COMMON_EXTERNAL_PROJECT_CMAKE_ARGS}
     -DCMAKE_INSTALL_PREFIX=${CMAKE_CURRENT_BINARY_DIR}/sqlite-${SQLITE_VERSION}
