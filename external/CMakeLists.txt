@@ -44,7 +44,7 @@ function(generate_sqlite_urls VAR_NAME)
     foreach(YEAR RANGE 2023 2035)
         list(APPEND URLS_FOR_YEARS "https://www.sqlite.org/${YEAR}/sqlite-amalgamation-${SQLITE_VERS_DIGITS}${TRAILING_ZEROS}.zip")
     endforeach(YEAR)
-    list(JOIN URLS_FOR_YEARS " " JOINED_URLS)
+    list(JOIN URLS_FOR_YEARS ";" JOINED_URLS)
     set(${VAR_NAME}
       "${JOINED_URLS}"
       PARENT_SCOPE)
