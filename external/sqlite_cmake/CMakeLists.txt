@@ -204,7 +204,7 @@ set_target_properties(SQLite3 PROPERTIES
 
 target_sources(SQLite3
     PRIVATE sqlite3.c
-    INTERFACE FILE_SET HEADERS BASE_DIRS source
+    INTERFACE FILE_SET HEADERS
         FILES sqlite3.h sqlite3ext.h)
 
 target_include_directories(SQLite3
