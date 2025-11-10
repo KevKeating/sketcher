@@ -17,6 +17,11 @@ namespace schrodinger
 namespace sketcher
 {
 
+template<typename key_t, typename val_t> static boost::bimap<key_t, val_t> create_bimap(std::vector<boost::bimap<key_t, val_t>::value_type> data)
+{
+    return {data.begin(), data.end()};
+}
+
 MonomerToolWidget::MonomerToolWidget(QWidget* parent) :
     AbstractDrawToolWidget(parent)
 {
@@ -69,7 +74,9 @@ MonomerToolWidget::MonomerToolWidget(QWidget* parent) :
         {ui->val_btn, AminoAcidTool::VAL},
         {ui->unk_btn, AminoAcidTool::UNK}
     };
-    m_button_amino_acid_bimap = ButtonAminoAcidBimapType(button_amino_acid_bimap_data.begin(), button_amino_acid_bimap_data.end());
+    m_button_amino_acid_bimap = 
+    
+    ButtonAminoAcidBimapType(button_amino_acid_bimap_data.begin(), button_amino_acid_bimap_data.end());
 
     std::vector<ButtonNucleicAcidBimapType::value_type> button_nucleic_acid_bimap_data{
         {ui->na_a_btn, NucleicAcidTool::A},
