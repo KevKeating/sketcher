@@ -46,7 +46,7 @@ MonomerToolWidget::MonomerToolWidget(QWidget* parent) :
     using ButtonNucleicAcidBimapType =
         boost::bimap<QAbstractButton*, NucleicAcidTool>;
     // clang-format off
-    m_button_amino_acid_bimap = create_bimap<ButtonAminoAcidBimapType>({
+    m_button_amino_acid_bimap = make_bimap<ButtonAminoAcidBimapType>({
         {ui->ala_btn, AminoAcidTool::ALA},
         {ui->arg_btn, AminoAcidTool::ARG},
         {ui->asn_btn, AminoAcidTool::ASN},
@@ -70,7 +70,7 @@ MonomerToolWidget::MonomerToolWidget(QWidget* parent) :
         {ui->unk_btn, AminoAcidTool::UNK}
     });
 
-    m_button_nucleic_acid_bimap = create_bimap<ButtonNucleicAcidBimapType>({
+    m_button_nucleic_acid_bimap = make_bimap<ButtonNucleicAcidBimapType>({
         {ui->na_a_btn, NucleicAcidTool::A},
         {ui->na_u_btn, NucleicAcidTool::U},
         {ui->na_g_btn, NucleicAcidTool::G},

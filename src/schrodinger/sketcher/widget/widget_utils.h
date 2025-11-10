@@ -39,8 +39,14 @@ static void set_combo_box_data(QComboBox* const combo, T data)
     combo->setCurrentIndex(combo->findData(variant));
 };
 
+/**
+ * Create and return a boost::bimap instance.
+ *
+ * This function is intended to be used with initializer list syntax, which
+ * can't be used when calling boost::bimap directly.
+ */
 template <typename bimap_T>
-static bimap_T create_bimap(std::vector<typename bimap_T::value_type> data)
+static bimap_T make_bimap(std::vector<typename bimap_T::value_type> data)
 {
     return {data.begin(), data.end()};
 }

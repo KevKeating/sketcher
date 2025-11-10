@@ -39,14 +39,14 @@ SetAtomWidget::SetAtomWidget(QWidget* parent) : AbstractDrawToolWidget(parent)
 
     using ButtonElementBimapType = boost::bimap<QAbstractButton*, Element>;
     m_button_element_bimap =
-        create_bimap<ButtonElementBimapType>({{ui->c_btn, Element::C},
-                                              {ui->h_btn, Element::H},
-                                              {ui->n_btn, Element::N},
-                                              {ui->o_btn, Element::O},
-                                              {ui->p_btn, Element::P},
-                                              {ui->s_btn, Element::S},
-                                              {ui->f_btn, Element::F},
-                                              {ui->cl_btn, Element::CL}});
+        make_bimap<ButtonElementBimapType>({{ui->c_btn, Element::C},
+                                            {ui->h_btn, Element::H},
+                                            {ui->n_btn, Element::N},
+                                            {ui->o_btn, Element::O},
+                                            {ui->p_btn, Element::P},
+                                            {ui->s_btn, Element::S},
+                                            {ui->f_btn, Element::F},
+                                            {ui->cl_btn, Element::CL}});
 
     connect(ui->atom_group,
             static_cast<void (QButtonGroup::*)(QAbstractButton*)>(
