@@ -39,5 +39,11 @@ static void set_combo_box_data(QComboBox* const combo, T data)
     combo->setCurrentIndex(combo->findData(variant));
 };
 
+template <typename bimap_T>
+static bimap_T create_bimap(std::vector<typename bimap_T::value_type> data)
+{
+    return {data.begin(), data.end()};
+}
+
 } // namespace sketcher
 } // namespace schrodinger

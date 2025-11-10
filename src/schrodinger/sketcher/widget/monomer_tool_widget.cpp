@@ -17,11 +17,6 @@ namespace schrodinger
 namespace sketcher
 {
 
-template<typename bimap_T> static bimap_T create_bimap(std::vector<typename bimap_T::value_type> data)
-{
-    return {data.begin(), data.end()};
-}
-
 MonomerToolWidget::MonomerToolWidget(QWidget* parent) :
     AbstractDrawToolWidget(parent)
 {
