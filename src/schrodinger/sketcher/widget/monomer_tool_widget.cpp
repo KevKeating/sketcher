@@ -41,41 +41,48 @@ MonomerToolWidget::MonomerToolWidget(QWidget* parent) :
     ui->amino_monomer_btn->setStyleSheet(TEXT_LINK_STYLE);
     ui->nucleic_monomer_btn->setStyleSheet(TEXT_LINK_STYLE);
 
-    populate_bimap(m_button_amino_acid_bimap,
-                   {{ui->ala_btn, AminoAcidTool::ALA}, // clang-format off
-                    {ui->arg_btn, AminoAcidTool::ARG},
-                    {ui->asn_btn, AminoAcidTool::ASN},
-                    {ui->asp_btn, AminoAcidTool::ASP},
-                    {ui->cys_btn, AminoAcidTool::CYS},
-                    {ui->gln_btn, AminoAcidTool::GLN},
-                    {ui->glu_btn, AminoAcidTool::GLU},
-                    {ui->gly_btn, AminoAcidTool::GLY},
-                    {ui->his_btn, AminoAcidTool::HIS},
-                    {ui->ile_btn, AminoAcidTool::ILE},
-                    {ui->leu_btn, AminoAcidTool::LEU},
-                    {ui->lys_btn, AminoAcidTool::LYS},
-                    {ui->met_btn, AminoAcidTool::MET},
-                    {ui->phe_btn, AminoAcidTool::PHE},
-                    {ui->pro_btn, AminoAcidTool::PRO},
-                    {ui->ser_btn, AminoAcidTool::SER},
-                    {ui->thr_btn, AminoAcidTool::THR},
-                    {ui->trp_btn, AminoAcidTool::TRP},
-                    {ui->tyr_btn, AminoAcidTool::TYR},
-                    {ui->val_btn, AminoAcidTool::VAL},
-                    {ui->unk_btn, AminoAcidTool::UNK}}); // clang-format on
-
-    populate_bimap(m_button_nucleic_acid_bimap,
-                   {{ui->na_a_btn, NucleicAcidTool::A},
-                    {ui->na_u_btn, NucleicAcidTool::U},
-                    {ui->na_g_btn, NucleicAcidTool::G},
-                    {ui->na_c_btn, NucleicAcidTool::C},
-                    {ui->na_t_btn, NucleicAcidTool::T},
-                    {ui->na_n_btn, NucleicAcidTool::N},
-                    {ui->na_r_btn, NucleicAcidTool::R},
-                    {ui->na_dr_btn, NucleicAcidTool::dR},
-                    {ui->na_p_btn, NucleicAcidTool::P},
-                    {ui->na_rna_btn, NucleicAcidTool::RNA_NUCLEOTIDE},
-                    {ui->na_dna_btn, NucleicAcidTool::DNA_NUCLEOTIDE}});
+    using ButtonAminoAcidBimapType =
+        boost::bimap<QAbstractButton*, AminoAcidTool>;
+    using ButtonNucleicAcidBimapType =
+        boost::bimap<QAbstractButton*, NucleicAcidTool>;
+    // clang-format off
+    m_button_amino_acid_bimap =
+        boost::assign::list_of<ButtonAminoAcidBimapType::relation>
+            (ui->ala_btn, AminoAcidTool::ALA)
+            (ui->arg_btn, AminoAcidTool::ARG)
+            (ui->asn_btn, AminoAcidTool::ASN)
+            (ui->asp_btn, AminoAcidTool::ASP)
+            (ui->cys_btn, AminoAcidTool::CYS)
+            (ui->gln_btn, AminoAcidTool::GLN)
+            (ui->glu_btn, AminoAcidTool::GLU)
+            (ui->gly_btn, AminoAcidTool::GLY)
+            (ui->his_btn, AminoAcidTool::HIS)
+            (ui->ile_btn, AminoAcidTool::ILE)
+            (ui->leu_btn, AminoAcidTool::LEU)
+            (ui->lys_btn, AminoAcidTool::LYS)
+            (ui->met_btn, AminoAcidTool::MET)
+            (ui->phe_btn, AminoAcidTool::PHE)
+            (ui->pro_btn, AminoAcidTool::PRO)
+            (ui->ser_btn, AminoAcidTool::SER)
+            (ui->thr_btn, AminoAcidTool::THR)
+            (ui->trp_btn, AminoAcidTool::TRP)
+            (ui->tyr_btn, AminoAcidTool::TYR)
+            (ui->val_btn, AminoAcidTool::VAL)
+            (ui->unk_btn, AminoAcidTool::UNK);
+    m_button_nucleic_acid_bimap =
+        boost::assign::list_of<ButtonNucleicAcidBimapType::relation>
+            (ui->na_a_btn, NucleicAcidTool::A)
+            (ui->na_u_btn, NucleicAcidTool::U)
+            (ui->na_g_btn, NucleicAcidTool::G)
+            (ui->na_c_btn, NucleicAcidTool::C)
+            (ui->na_t_btn, NucleicAcidTool::T)
+            (ui->na_n_btn, NucleicAcidTool::N)
+            (ui->na_r_btn, NucleicAcidTool::R)
+            (ui->na_dr_btn, NucleicAcidTool::dR)
+            (ui->na_p_btn, NucleicAcidTool::P)
+            (ui->na_rna_btn, NucleicAcidTool::RNA_NUCLEOTIDE)
+            (ui->na_dna_btn, NucleicAcidTool::DNA_NUCLEOTIDE);
+    // clang-format on
 
     connect(ui->amino_or_nucleic_group, &QButtonGroup::buttonClicked, this,
             &MonomerToolWidget::onAminoOrNucleicBtnClicked);
