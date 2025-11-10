@@ -41,29 +41,28 @@ MonomerToolWidget::MonomerToolWidget(QWidget* parent) :
     ui->amino_monomer_btn->setStyleSheet(TEXT_LINK_STYLE);
     ui->nucleic_monomer_btn->setStyleSheet(TEXT_LINK_STYLE);
 
-    populate_bimap(
-        m_button_amino_acid_bimap,
-        {{ui->ala_btn, AminoAcidTool::ALA}, // clang-format off
-         {ui->arg_btn, AminoAcidTool::ARG},
-         {ui->asn_btn, AminoAcidTool::ASN},
-         {ui->asp_btn, AminoAcidTool::ASP},
-         {ui->cys_btn, AminoAcidTool::CYS},
-         {ui->gln_btn, AminoAcidTool::GLN},
-         {ui->glu_btn, AminoAcidTool::GLU},
-         {ui->gly_btn, AminoAcidTool::GLY},
-         {ui->his_btn, AminoAcidTool::HIS},
-         {ui->ile_btn, AminoAcidTool::ILE},
-         {ui->leu_btn, AminoAcidTool::LEU},
-         {ui->lys_btn, AminoAcidTool::LYS},
-         {ui->met_btn, AminoAcidTool::MET},
-         {ui->phe_btn, AminoAcidTool::PHE},
-         {ui->pro_btn, AminoAcidTool::PRO},
-         {ui->ser_btn, AminoAcidTool::SER},
-         {ui->thr_btn, AminoAcidTool::THR},
-         {ui->trp_btn, AminoAcidTool::TRP},
-         {ui->tyr_btn, AminoAcidTool::TYR},
-         {ui->val_btn, AminoAcidTool::VAL},
-         {ui->unk_btn, AminoAcidTool::UNK}}); // clang-format on
+    populate_bimap(m_button_amino_acid_bimap,
+                   {{ui->ala_btn, AminoAcidTool::ALA}, // clang-format off
+                    {ui->arg_btn, AminoAcidTool::ARG},
+                    {ui->asn_btn, AminoAcidTool::ASN},
+                    {ui->asp_btn, AminoAcidTool::ASP},
+                    {ui->cys_btn, AminoAcidTool::CYS},
+                    {ui->gln_btn, AminoAcidTool::GLN},
+                    {ui->glu_btn, AminoAcidTool::GLU},
+                    {ui->gly_btn, AminoAcidTool::GLY},
+                    {ui->his_btn, AminoAcidTool::HIS},
+                    {ui->ile_btn, AminoAcidTool::ILE},
+                    {ui->leu_btn, AminoAcidTool::LEU},
+                    {ui->lys_btn, AminoAcidTool::LYS},
+                    {ui->met_btn, AminoAcidTool::MET},
+                    {ui->phe_btn, AminoAcidTool::PHE},
+                    {ui->pro_btn, AminoAcidTool::PRO},
+                    {ui->ser_btn, AminoAcidTool::SER},
+                    {ui->thr_btn, AminoAcidTool::THR},
+                    {ui->trp_btn, AminoAcidTool::TRP},
+                    {ui->tyr_btn, AminoAcidTool::TYR},
+                    {ui->val_btn, AminoAcidTool::VAL},
+                    {ui->unk_btn, AminoAcidTool::UNK}}); // clang-format on
 
     populate_bimap(m_button_nucleic_acid_bimap,
                    {{ui->na_a_btn, NucleicAcidTool::A},
