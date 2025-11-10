@@ -93,7 +93,11 @@ MonomerToolWidget::MonomerToolWidget(QWidget* parent) :
     ui->na_dna_btn->setPopupWidget(m_dna_popup);
 }
 
-MonomerToolWidget::~MonomerToolWidget() = default;
+MonomerToolWidget::~MonomerToolWidget()
+{
+    m_button_amino_acid_bimap.clear();
+    m_button_nucleic_acid_bimap.clear();
+}
 
 void MonomerToolWidget::setModel(SketcherModel* model)
 {
