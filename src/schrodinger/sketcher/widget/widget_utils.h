@@ -1,5 +1,7 @@
 #pragma once
 
+#include <boost/bimap.hpp>
+
 #include <QComboBox>
 
 #include "schrodinger/sketcher/definitions.h"
@@ -45,8 +47,8 @@ static void set_combo_box_data(QComboBox* const combo, T data)
  * This function is intended to be used with initializer list syntax, which
  * can't be used when calling boost::bimap directly.
  */
-template <typename bimap_T>
-static bimap_T make_bimap(std::vector<typename bimap_T::value_type> data)
+template <typename key_T, typename val_T>
+static boost::bimap<key_T, val_T> make_bimap(std::vector<typename boost::bimap<key_T, val_T>::value_type> data)
 {
     return {data.begin(), data.end()};
 }
