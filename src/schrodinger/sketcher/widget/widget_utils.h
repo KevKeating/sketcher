@@ -48,9 +48,17 @@ static void set_combo_box_data(QComboBox* const combo, T data)
  * can't be used when calling boost::bimap directly.
  */
 template <typename key_T, typename val_T> static boost::bimap<key_T, val_T>
-make_bimap(std::vector<typename boost::bimap<key_T, val_T>::value_type> data)
+make_bimap(const std::vector<typename boost::bimap<key_T, val_T>::value_type>& data)
 {
     return {data.begin(), data.end()};
+}
+
+template <typename key_T, typename val_T> static void
+populate_bimap(boost::bimap<key_T, val_T>& bimap, const std::vector<typename boost::bimap<key_T, val_T>::value_type>& data)
+{
+    for (auto key_and_value : data) {
+        bimap.insert(key_and_value);
+    }
 }
 
 } // namespace sketcher

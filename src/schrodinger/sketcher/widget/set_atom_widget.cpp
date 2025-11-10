@@ -37,15 +37,14 @@ SetAtomWidget::SetAtomWidget(QWidget* parent) : AbstractDrawToolWidget(parent)
     ui->periodic_table_btn->setPopupWidget(m_periodic_table_wdg);
     ui->periodic_table_btn->showPopupIndicator(false);
 
-    m_button_element_bimap = std::move(
-        make_bimap<QAbstractButton*, Element>({{ui->c_btn, Element::C},
-                                               {ui->h_btn, Element::H},
-                                               {ui->n_btn, Element::N},
-                                               {ui->o_btn, Element::O},
-                                               {ui->p_btn, Element::P},
-                                               {ui->s_btn, Element::S},
-                                               {ui->f_btn, Element::F},
-                                               {ui->cl_btn, Element::CL}}));
+    populate_bimap(m_button_element_bimap, {{ui->c_btn, Element::C},
+                                            {ui->h_btn, Element::H},
+                                            {ui->n_btn, Element::N},
+                                            {ui->o_btn, Element::O},
+                                            {ui->p_btn, Element::P},
+                                            {ui->s_btn, Element::S},
+                                            {ui->f_btn, Element::F},
+                                            {ui->cl_btn, Element::CL}});
 
     connect(ui->atom_group,
             static_cast<void (QButtonGroup::*)(QAbstractButton*)>(

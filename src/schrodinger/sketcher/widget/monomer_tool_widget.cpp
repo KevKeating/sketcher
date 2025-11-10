@@ -41,43 +41,42 @@ MonomerToolWidget::MonomerToolWidget(QWidget* parent) :
     ui->amino_monomer_btn->setStyleSheet(TEXT_LINK_STYLE);
     ui->nucleic_monomer_btn->setStyleSheet(TEXT_LINK_STYLE);
 
-    m_button_amino_acid_bimap =
-        std::move(make_bimap<QAbstractButton*, AminoAcidTool>(
-            {{ui->ala_btn, AminoAcidTool::ALA}, // clang-format offs
-             {ui->arg_btn, AminoAcidTool::ARG},
-             {ui->asn_btn, AminoAcidTool::ASN},
-             {ui->asp_btn, AminoAcidTool::ASP},
-             {ui->cys_btn, AminoAcidTool::CYS},
-             {ui->gln_btn, AminoAcidTool::GLN},
-             {ui->glu_btn, AminoAcidTool::GLU},
-             {ui->gly_btn, AminoAcidTool::GLY},
-             {ui->his_btn, AminoAcidTool::HIS},
-             {ui->ile_btn, AminoAcidTool::ILE},
-             {ui->leu_btn, AminoAcidTool::LEU},
-             {ui->lys_btn, AminoAcidTool::LYS},
-             {ui->met_btn, AminoAcidTool::MET},
-             {ui->phe_btn, AminoAcidTool::PHE},
-             {ui->pro_btn, AminoAcidTool::PRO},
-             {ui->ser_btn, AminoAcidTool::SER},
-             {ui->thr_btn, AminoAcidTool::THR},
-             {ui->trp_btn, AminoAcidTool::TRP},
-             {ui->tyr_btn, AminoAcidTool::TYR},
-             {ui->val_btn, AminoAcidTool::VAL},
-             {ui->unk_btn, AminoAcidTool::UNK}})); // clang-format on
+    populate_bimap(
+        m_button_amino_acid_bimap,
+        {{ui->ala_btn, AminoAcidTool::ALA}, // clang-format off
+         {ui->arg_btn, AminoAcidTool::ARG},
+         {ui->asn_btn, AminoAcidTool::ASN},
+         {ui->asp_btn, AminoAcidTool::ASP},
+         {ui->cys_btn, AminoAcidTool::CYS},
+         {ui->gln_btn, AminoAcidTool::GLN},
+         {ui->glu_btn, AminoAcidTool::GLU},
+         {ui->gly_btn, AminoAcidTool::GLY},
+         {ui->his_btn, AminoAcidTool::HIS},
+         {ui->ile_btn, AminoAcidTool::ILE},
+         {ui->leu_btn, AminoAcidTool::LEU},
+         {ui->lys_btn, AminoAcidTool::LYS},
+         {ui->met_btn, AminoAcidTool::MET},
+         {ui->phe_btn, AminoAcidTool::PHE},
+         {ui->pro_btn, AminoAcidTool::PRO},
+         {ui->ser_btn, AminoAcidTool::SER},
+         {ui->thr_btn, AminoAcidTool::THR},
+         {ui->trp_btn, AminoAcidTool::TRP},
+         {ui->tyr_btn, AminoAcidTool::TYR},
+         {ui->val_btn, AminoAcidTool::VAL},
+         {ui->unk_btn, AminoAcidTool::UNK}}); // clang-format on
 
-    m_button_nucleic_acid_bimap =
-        std::move(make_bimap<QAbstractButton*, NucleicAcidTool>(
-            {{ui->na_a_btn, NucleicAcidTool::A},
-             {ui->na_u_btn, NucleicAcidTool::U},
-             {ui->na_g_btn, NucleicAcidTool::G},
-             {ui->na_c_btn, NucleicAcidTool::C},
-             {ui->na_t_btn, NucleicAcidTool::T},
-             {ui->na_n_btn, NucleicAcidTool::N},
-             {ui->na_r_btn, NucleicAcidTool::R},
-             {ui->na_dr_btn, NucleicAcidTool::dR},
-             {ui->na_p_btn, NucleicAcidTool::P},
-             {ui->na_rna_btn, NucleicAcidTool::RNA_NUCLEOTIDE},
-             {ui->na_dna_btn, NucleicAcidTool::DNA_NUCLEOTIDE}}));
+    populate_bimap(m_button_nucleic_acid_bimap,
+                   {{ui->na_a_btn, NucleicAcidTool::A},
+                    {ui->na_u_btn, NucleicAcidTool::U},
+                    {ui->na_g_btn, NucleicAcidTool::G},
+                    {ui->na_c_btn, NucleicAcidTool::C},
+                    {ui->na_t_btn, NucleicAcidTool::T},
+                    {ui->na_n_btn, NucleicAcidTool::N},
+                    {ui->na_r_btn, NucleicAcidTool::R},
+                    {ui->na_dr_btn, NucleicAcidTool::dR},
+                    {ui->na_p_btn, NucleicAcidTool::P},
+                    {ui->na_rna_btn, NucleicAcidTool::RNA_NUCLEOTIDE},
+                    {ui->na_dna_btn, NucleicAcidTool::DNA_NUCLEOTIDE}});
 
     connect(ui->amino_or_nucleic_group, &QButtonGroup::buttonClicked, this,
             &MonomerToolWidget::onAminoOrNucleicBtnClicked);
@@ -95,11 +94,7 @@ MonomerToolWidget::MonomerToolWidget(QWidget* parent) :
     ui->na_dna_btn->setPopupWidget(m_dna_popup);
 }
 
-MonomerToolWidget::~MonomerToolWidget()
-{
-    m_button_amino_acid_bimap.clear();
-    m_button_nucleic_acid_bimap.clear();
-}
+MonomerToolWidget::~MonomerToolWidget() = default;
 
 void MonomerToolWidget::setModel(SketcherModel* model)
 {
