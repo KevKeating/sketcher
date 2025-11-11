@@ -231,6 +231,7 @@ if(EMSCRIPTEN)
       -lembind
       -fexceptions
       -sDISABLE_EXCEPTION_CATCHING=0)
+endif()
 target_link_libraries(
   ${APP_TARGET}
   PRIVATE Boost::boost Boost::filesystem Qt6::Widgets
