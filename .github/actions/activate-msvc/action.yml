@@ -4,6 +4,8 @@ description: >
   compiler, since gfortran doesn't work with MSVC. This action should only be
   run on Windows runners.
 
+# this action doesn't need any permissions for reading from or writing to the
+# repository itself
 permissions:
   contents: none
 
