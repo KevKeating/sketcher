@@ -231,12 +231,20 @@ if(EMSCRIPTEN)
       -lembind
       -fexceptions
       -sDISABLE_EXCEPTION_CATCHING=0)
-endif()
 target_link_libraries(
   ${APP_TARGET}
   PRIVATE Boost::boost Boost::filesystem Qt6::Widgets
           ${RDKIT_EXTENSIONS_TARGET} ${SKETCHER_TARGET}
           ${EXTRA_SKETCHER_APP_LINK_FLAGS})
+if(MSVC AND NOT ${BUILD_SHARED_LIBS})
+  # if we don't set this, then this target will try to build a
+  # schrodinger_sketcher.lib using the schrodinger_sketcher.lib from the
+  # SKETCHER_TARGET and complain about the filename collision.  By setting
+  # IMPORT_SUFFIX, this step builds a schrodinger_sketcher_bin.lib instead.
+  set_target_properties(
+    ${APP_TARGET}
+    PROPERTIES IMPORT_SUFFIX _bin${CMAKE_IMPORT_LIBRARY_SUFFIX})
+endif()
 
 # Tests
 if(ENABLE_TESTING)
