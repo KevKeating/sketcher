@@ -5,7 +5,7 @@ description: >
   run on Windows runners.
 
 permissions:
-  contents: read
+  contents: none
 
 runs:
   using: "composite"
