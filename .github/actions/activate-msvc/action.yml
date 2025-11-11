@@ -4,6 +4,9 @@ description: >
   compiler, since gfortran doesn't work with MSVC. This action should only be
   run on Windows runners.
 
+permissions:
+  contents: read
+
 runs:
   using: "composite"
   steps:
