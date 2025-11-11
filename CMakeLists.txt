@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.24)
 
 project(
-  schrodinger_sketcher_cmake
+  schrodinger_sketcher
   VERSION 2026.1.0
   LANGUAGES CXX)
 
@@ -238,10 +238,11 @@ target_link_libraries(
           ${RDKIT_EXTENSIONS_TARGET} ${SKETCHER_TARGET}
           ${EXTRA_SKETCHER_APP_LINK_FLAGS})
 if(MSVC AND NOT ${BUILD_SHARED_LIBS})
-  # if we don't set this, then this target will try to build a
-  # schrodinger_sketcher.lib using the schrodinger_sketcher.lib from the
-  # SKETCHER_TARGET and complain about the filename collision.  By setting
-  # IMPORT_SUFFIX, this step builds a schrodinger_sketcher_bin.lib instead.
+  # When using MSVC and building static libs, this target generates a file named
+  # schrodinger_sketcher.lib, which conflicts with an identically named file
+  # from the SKETCHER_TARGET, leading to an error from the linker. By setting
+  # IMPORT_SUFFIX, we change the filename for this target to
+  # schrodinger_sketcher_bin.lib.
   set_target_properties(
     ${APP_TARGET}
     PROPERTIES IMPORT_SUFFIX _bin${CMAKE_IMPORT_LIBRARY_SUFFIX})
