@@ -59,6 +59,7 @@ class TestSketcherWidget : public SketcherWidget
     using SketcherWidget::m_undo_stack;
     using SketcherWidget::m_watermark_item;
     using SketcherWidget::paste;
+    using SketcherWidget::addTextToMolModel;
 
     // using the system clipboard during tests leads to intermittent test
     // failures on buildbot, so we create our own clipboard
