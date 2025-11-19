@@ -2810,6 +2810,16 @@ void add_text_to_mol_model(MolModel& mol_model, const std::string& text,
 
     try {
         auto mol = to_rdkit(text, format);
+        
+        if (rdkit_extensions::isMonomeric(*mol)) {
+            if (mol_model.hasMolecularObjects() && !mol_model.isMonomeric()) {
+                throw std::runtime_error("Cannot add monomers to an atomistic model");
+            }
+        } else {
+            if (mol_model.hasMolecularObjects() && !mol_model.isMonomeric()) {
+            }
+        }
+        
         if (position.has_value()) {
             mol_model.addMolAt(*mol, *position, "Import molecule");
 
