@@ -321,12 +321,12 @@ bool MolModel::isEmpty() const
 
 bool MolModel::isMonomeric() const
 {
-    return rdkit_extensions::isMonomeric(m_mol);
+    return contains_monomeric_atom(m_mol);
 }
 
 bool MolModel::hasMolecularObjects() const
 {
-    return !m_mol.getNumAtoms();
+    return m_mol.getNumAtoms();
 }
 
 bool MolModel::hasSelectedBonds() const
@@ -2810,6 +2810,7 @@ void add_text_to_mol_model(MolModel& mol_model, const std::string& text,
 
     try {
         auto mol = to_rdkit(text, format);
+        std::cout << "Converted text to molecule: " << mol_model.hasMolecularObjects() << " " << rdkit_extensions::isMonomeric(*mol) << " " << mol_model.isMonomeric() << "\n";
 
         if (mol_model.hasMolecularObjects() &&
             (rdkit_extensions::isMonomeric(*mol) != mol_model.isMonomeric())) {

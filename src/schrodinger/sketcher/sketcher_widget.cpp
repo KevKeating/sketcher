@@ -1300,7 +1300,7 @@ void SketcherWidget::onMolModelChanged(const bool molecule_changed)
         // the same time; it must be one or the other (or empty).
         std::unordered_map<ModelKey, QVariant> kv_pairs;
         auto interface = m_sketcher_model->getInterfaceType();
-        if (m_mol_model->hasMolecularObjects()) {
+        if (!m_mol_model->hasMolecularObjects()) {
             kv_pairs.emplace(ModelKey::MOLECULE_TYPE,
                              QVariant::fromValue(MoleculeType::EMPTY));
         } else if (m_mol_model->isMonomeric()) {
