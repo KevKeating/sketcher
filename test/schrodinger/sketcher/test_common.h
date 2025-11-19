@@ -79,7 +79,7 @@ class TestScene : public Scene
   public:
     TestScene(MolModel* mol_model, SketcherModel* sketcher_model,
               QWidget* parent = nullptr) :
-        Scene(mol_model, sketcher_model, parent) {};
+        Scene(mol_model, sketcher_model, parent){};
     using Scene::m_atom_to_atom_item;
     using Scene::m_bond_to_bond_item;
     using Scene::m_fonts;
