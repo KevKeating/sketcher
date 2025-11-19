@@ -868,12 +868,12 @@ BOOST_AUTO_TEST_CASE(test_addTextToMolModel)
     TestSketcherWidget& sk = *TestWidgetFixture::get();
     const std::string MONOMERIC_STRING = "PEPTIDE1{D.E.F.G}$$$$V2.0";
     const std::string ATOMISTIC_STRING = "CCC";
-    
+
     sk.setInterfaceType(InterfaceType::ATOMISTIC);
     BOOST_CHECK_THROW(sk.addTextToMolModel(MONOMERIC_STRING), std::exception);
     BOOST_CHECK_NO_THROW(sk.addTextToMolModel(ATOMISTIC_STRING));
     sk.clear();
-    
+
     sk.setInterfaceType(InterfaceType::MONOMERIC);
     BOOST_CHECK_THROW(sk.addTextToMolModel(ATOMISTIC_STRING), std::exception);
     BOOST_CHECK_NO_THROW(sk.addTextToMolModel(MONOMERIC_STRING));

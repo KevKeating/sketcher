@@ -49,6 +49,7 @@ class TestSketcherWidget : public SketcherWidget
   public:
     TestSketcherWidget() : SketcherWidget(){};
     using SketcherWidget::addFromString;
+    using SketcherWidget::addTextToMolModel;
     using SketcherWidget::copy;
     using SketcherWidget::cut;
     using SketcherWidget::importText;
@@ -59,7 +60,6 @@ class TestSketcherWidget : public SketcherWidget
     using SketcherWidget::m_undo_stack;
     using SketcherWidget::m_watermark_item;
     using SketcherWidget::paste;
-    using SketcherWidget::addTextToMolModel;
 
     // using the system clipboard during tests leads to intermittent test
     // failures on buildbot, so we create our own clipboard
@@ -79,7 +79,7 @@ class TestScene : public Scene
   public:
     TestScene(MolModel* mol_model, SketcherModel* sketcher_model,
               QWidget* parent = nullptr) :
-        Scene(mol_model, sketcher_model, parent){};
+        Scene(mol_model, sketcher_model, parent) {};
     using Scene::m_atom_to_atom_item;
     using Scene::m_bond_to_bond_item;
     using Scene::m_fonts;
