@@ -1510,6 +1510,18 @@ class SKETCHER_API MolModel : public AbstractUndoableModel
     createReaction(const bool strip_tags) const;
 };
 
+SKETCHER_API std::variant<boost::shared_ptr<RDKit::RWMol>,
+             boost::shared_ptr<RDKit::ChemicalReaction>>
+convert_text_to_mol_or_reaction(const std::string& text,
+                                const rdkit_extensions::Format format);
+
+SKETCHER_API void add_mol_or_reaction_to_mol_model(
+    MolModel& mol_model,
+    const std::variant<boost::shared_ptr<RDKit::RWMol>,
+                       boost::shared_ptr<RDKit::ChemicalReaction>>
+        mol_or_reaction,
+    const std::optional<RDGeom::Point3D> position, const bool recenter_view);
+
 SKETCHER_API void
 add_text_to_mol_model(MolModel& mol_model, const std::string& text,
                       const rdkit_extensions::Format format =

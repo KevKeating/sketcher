@@ -1,6 +1,7 @@
 #pragma once
 
 #include <memory>
+#include <optional>
 #include <unordered_set>
 
 #include <boost/shared_ptr.hpp>
@@ -14,6 +15,11 @@
 class QGraphicsPixmapItem;
 class QGraphicsSceneMouseEvent;
 class QUndoStack;
+
+namespace RDGeom
+{
+class Point3D;
+}
 
 namespace RDKit
 {
@@ -511,12 +517,12 @@ class SKETCHER_API SketcherWidget : public QWidget
 
     void onMolModelChanged(const bool molecule_changed);
 
-    void addTextToMolModel(
-        const std::string& text,
-        const rdkit_extensions::Format format =
-            rdkit_extensions::Format::AUTO_DETECT,
-        const std::optional<RDGeom::Point3D> position = std::nullopt,
-        const bool recenter_view = true);
+    // void addTextToMolModel(
+    //     const std::string& text,
+    //     const rdkit_extensions::Format format =
+    //         rdkit_extensions::Format::AUTO_DETECT,
+    //     const std::optional<RDGeom::Point3D> position = std::nullopt,
+    //     const bool recenter_view = true);
 };
 
 } // namespace sketcher

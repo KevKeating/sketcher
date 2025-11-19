@@ -315,9 +315,28 @@ SketcherWidget::getRDKitReaction() const
     return m_mol_model->getReactionForExport();
 }
 
+static void add_text_to_mol_model_if_allowed(MolModel& mol_model, const InterfaceTypeType interface_type, const std::string& text,
+                                       const rdkit_extensions::Format format,
+                                       const std::optional<RDGeom::Point3D> position = std::nullopt,
+                                       const bool recenter_view = true)
+{
+    auto mol_or_reaction = convert_text_to_mol_or_reaction(text, format);
+    auto* mol_smart_ptr = std::get_if<boost::shared_ptr<RDKit::RWMol>>(&mol_or_reaction);
+    bool is_monomeric = (mol_smart_ptr && rdkit_extensions::isMonomeric(**mol_smart_ptr));
+
+    // auto interface_type = m_sketcher_model->getInterfaceType();
+    if (is_monomeric && !(interface_type & InterfaceType::MONOMERIC)) {
+        throw std::runtime_error("Monomeric models not allowed");
+    } else if (!is_monomeric && !(interface_type & InterfaceType::ATOMISTIC)) {
+        throw std::runtime_error("Atomistic models not allowed");
+    }
+    add_mol_or_reaction_to_mol_model(mol_model, mol_or_reaction, position, recenter_view);
+}
+
 void SketcherWidget::addFromString(const std::string& text, Format format)
 {
-    addTextToMolModel(text, format);
+    auto interface_type = m_sketcher_model->getInterfaceType();
+    add_text_to_mol_model_if_allowed(*m_mol_model, interface_type, text, format);
 }
 
 std::string SketcherWidget::getString(Format format) const
@@ -531,8 +550,9 @@ void SketcherWidget::pasteAt(std::optional<QPointF> position)
         // and then to mol coordinates
         mol_position = to_mol_xy(scene_position);
     }
+    auto interface_type = m_sketcher_model->getInterfaceType();
     try {
-        addTextToMolModel(text, Format::AUTO_DETECT, mol_position,
+        add_text_to_mol_model_if_allowed(*m_mol_model, interface_type, text, Format::AUTO_DETECT, mol_position,
                           /*recenter_view*/ false);
     } catch (const std::exception& exc) {
         show_error_dialog("Paste Error", exc.what(), window());
@@ -1331,30 +1351,6 @@ void SketcherWidget::onMolModelChanged(const bool molecule_changed)
 bool SketcherWidget::handleShortcutAction(const QKeySequence& key)
 {
     return m_ui->top_bar_wdg->handleShortcutAction(key);
-}
-
-static bool is_text_monomeric(const std::string& text, const rdkit_extensions::Format format)
-{
-    try {
-        auto mol = to_rdkit(text, format);
-        return rdkit_extensions::isMonomeric(*mol);
-    } catch (const std::exception&) {
-        // it might be a reaction, which we assume is atomistic
-        return false;
-    }
-}
-
-void SketcherWidget::addTextToMolModel(const std::string& text,
-                                       const rdkit_extensions::Format format,
-                                       const std::optional<RDGeom::Point3D> position,
-                                       const bool recenter_view)
-{
-    bool is_monomeric = is_text_monomeric(text, format);
-    auto interface_type = m_sketcher_model->getInterfaceType();
-    if (is_monomeric && !(interface_type & InterfaceType::MONOMERIC)) {
-        throw std::runtime_error("Monomeric models not allowed");
-    } else if (!is_monomeric && !(interface_type & InterfaceType::MONOMERIC)) {
-    add_text_to_mol_model(*m_mol_model, text, format, position, recenter_view);
 }
 
 } // namespace sketcher
