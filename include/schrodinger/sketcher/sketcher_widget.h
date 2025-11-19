@@ -518,6 +518,17 @@ class SKETCHER_API SketcherWidget : public QWidget
 
     void onMolModelChanged(const bool molecule_changed);
 
+    /**
+     * Attempt to add the given text to the MolModel instance. See
+     * add_mol_or_reaction_to_mol_model in mol_model.h for param documentation.
+     *
+     * @throw std::exception in any of the following scenarios:
+     *   - the text cannot be interpretted as the specified format
+     *   - the text specifies an atomistic/monomeric model and this
+     *     SketcherWidget only allows monomeric/atomistic models
+     *   - the text specifies an atomistic/monomeric model and this
+     *     SketcherWidget already contains a monomeric/atomistic model
+     */
     void addTextToMolModel(
         const std::string& text,
         const rdkit_extensions::Format format =

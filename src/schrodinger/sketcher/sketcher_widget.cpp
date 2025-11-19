@@ -1333,8 +1333,6 @@ bool SketcherWidget::handleShortcutAction(const QKeySequence& key)
     return m_ui->top_bar_wdg->handleShortcutAction(key);
 }
 
-// TODO: if paste disables ATOM or MONO buttons, make sure to click the other one
-
 void SketcherWidget::addTextToMolModel(
     const std::string& text, const rdkit_extensions::Format format,
     const std::optional<RDGeom::Point3D> position, const bool recenter_view)

@@ -2853,7 +2853,8 @@ void add_text_to_mol_model(MolModel& mol_model, const std::string& text,
                            const bool recenter_view)
 {
     auto mol_or_reaction = convert_text_to_mol_or_reaction(text, format);
-    add_mol_or_reaction_to_mol_model(mol_model, mol_or_reaction, position, recenter_view);
+    add_mol_or_reaction_to_mol_model(mol_model, mol_or_reaction, position,
+                                     recenter_view);
 }
 
 } // namespace sketcher
