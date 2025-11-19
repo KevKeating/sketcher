@@ -1514,8 +1514,8 @@ SKETCHER_API void
 add_text_to_mol_model(MolModel& mol_model, const std::string& text,
                       const rdkit_extensions::Format format =
                           rdkit_extensions::Format::AUTO_DETECT,
-                      std::optional<RDGeom::Point3D> position = std::nullopt,
-                      bool recenter_view = true);
+                      const std::optional<RDGeom::Point3D> position = std::nullopt,
+                      const bool recenter_view = true);
 
 } // namespace sketcher
 } // namespace schrodinger

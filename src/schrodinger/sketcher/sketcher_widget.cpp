@@ -22,6 +22,7 @@
 #include <emscripten/val.h>
 #endif
 
+#include "schrodinger/rdkit_extensions/helm.h"
 #include "schrodinger/sketcher/dialog/bracket_subgroup_dialog.h"
 #include "schrodinger/sketcher/dialog/edit_atom_properties.h"
 #include "schrodinger/sketcher/dialog/error_dialog.h"
@@ -316,7 +317,7 @@ SketcherWidget::getRDKitReaction() const
 
 void SketcherWidget::addFromString(const std::string& text, Format format)
 {
-    add_text_to_mol_model(*m_mol_model, text, format);
+    addTextToMolModel(text, format);
 }
 
 std::string SketcherWidget::getString(Format format) const
@@ -531,9 +532,8 @@ void SketcherWidget::pasteAt(std::optional<QPointF> position)
         mol_position = to_mol_xy(scene_position);
     }
     try {
-        add_text_to_mol_model(*m_mol_model, text, Format::AUTO_DETECT,
-                              mol_position,
-                              /*recenter_view*/ false);
+        addTextToMolModel(text, Format::AUTO_DETECT, mol_position,
+                          /*recenter_view*/ false);
     } catch (const std::exception& exc) {
         show_error_dialog("Paste Error", exc.what(), window());
     }
@@ -1331,6 +1331,30 @@ void SketcherWidget::onMolModelChanged(const bool molecule_changed)
 bool SketcherWidget::handleShortcutAction(const QKeySequence& key)
 {
     return m_ui->top_bar_wdg->handleShortcutAction(key);
+}
+
+static bool is_text_monomeric(const std::string& text, const rdkit_extensions::Format format)
+{
+    try {
+        auto mol = to_rdkit(text, format);
+        return rdkit_extensions::isMonomeric(*mol);
+    } catch (const std::exception&) {
+        // it might be a reaction, which we assume is atomistic
+        return false;
+    }
+}
+
+void SketcherWidget::addTextToMolModel(const std::string& text,
+                                       const rdkit_extensions::Format format,
+                                       const std::optional<RDGeom::Point3D> position,
+                                       const bool recenter_view)
+{
+    bool is_monomeric = is_text_monomeric(text, format);
+    auto interface_type = m_sketcher_model->getInterfaceType();
+    if (is_monomeric && !(interface_type & InterfaceType::MONOMERIC)) {
+        throw std::runtime_error("Monomeric models not allowed");
+    } else if (!is_monomeric && !(interface_type & InterfaceType::MONOMERIC)) {
+    add_text_to_mol_model(*m_mol_model, text, format, position, recenter_view);
 }
 
 } // namespace sketcher

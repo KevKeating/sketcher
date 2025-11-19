@@ -2801,7 +2801,7 @@ void MolModel::kekulize()
 
 void add_text_to_mol_model(MolModel& mol_model, const std::string& text,
                            const rdkit_extensions::Format format,
-                           std::optional<RDGeom::Point3D> position,
+                           const std::optional<RDGeom::Point3D> position,
                            const bool recenter_view)
 {
     auto probably_a_reaction = [](const auto& text) {
