@@ -7,6 +7,7 @@
 #include <boost/shared_ptr.hpp>
 #include <QSet>
 #include <QWidget>
+#include <rdkit/Geometry/point.h>
 
 #include "schrodinger/sketcher/definitions.h"
 #include "schrodinger/sketcher/public_constants.h"
@@ -517,12 +518,12 @@ class SKETCHER_API SketcherWidget : public QWidget
 
     void onMolModelChanged(const bool molecule_changed);
 
-    // void addTextToMolModel(
-    //     const std::string& text,
-    //     const rdkit_extensions::Format format =
-    //         rdkit_extensions::Format::AUTO_DETECT,
-    //     const std::optional<RDGeom::Point3D> position = std::nullopt,
-    //     const bool recenter_view = true);
+    void addTextToMolModel(
+        const std::string& text,
+        const rdkit_extensions::Format format =
+            rdkit_extensions::Format::AUTO_DETECT,
+        const std::optional<RDGeom::Point3D> position = std::nullopt,
+        const bool recenter_view = true);
 };
 
 } // namespace sketcher

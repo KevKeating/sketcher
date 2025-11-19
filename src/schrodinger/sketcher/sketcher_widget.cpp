@@ -315,28 +315,9 @@ SketcherWidget::getRDKitReaction() const
     return m_mol_model->getReactionForExport();
 }
 
-static void add_text_to_mol_model_if_allowed(MolModel& mol_model, const InterfaceTypeType interface_type, const std::string& text,
-                                       const rdkit_extensions::Format format,
-                                       const std::optional<RDGeom::Point3D> position = std::nullopt,
-                                       const bool recenter_view = true)
-{
-    auto mol_or_reaction = convert_text_to_mol_or_reaction(text, format);
-    auto* mol_smart_ptr = std::get_if<boost::shared_ptr<RDKit::RWMol>>(&mol_or_reaction);
-    bool is_monomeric = (mol_smart_ptr && rdkit_extensions::isMonomeric(**mol_smart_ptr));
-
-    // auto interface_type = m_sketcher_model->getInterfaceType();
-    if (is_monomeric && !(interface_type & InterfaceType::MONOMERIC)) {
-        throw std::runtime_error("Monomeric models not allowed");
-    } else if (!is_monomeric && !(interface_type & InterfaceType::ATOMISTIC)) {
-        throw std::runtime_error("Atomistic models not allowed");
-    }
-    add_mol_or_reaction_to_mol_model(mol_model, mol_or_reaction, position, recenter_view);
-}
-
 void SketcherWidget::addFromString(const std::string& text, Format format)
 {
-    auto interface_type = m_sketcher_model->getInterfaceType();
-    add_text_to_mol_model_if_allowed(*m_mol_model, interface_type, text, format);
+    addTextToMolModel(text, format);
 }
 
 std::string SketcherWidget::getString(Format format) const
@@ -550,9 +531,8 @@ void SketcherWidget::pasteAt(std::optional<QPointF> position)
         // and then to mol coordinates
         mol_position = to_mol_xy(scene_position);
     }
-    auto interface_type = m_sketcher_model->getInterfaceType();
     try {
-        add_text_to_mol_model_if_allowed(*m_mol_model, interface_type, text, Format::AUTO_DETECT, mol_position,
+        addTextToMolModel(text, Format::AUTO_DETECT, mol_position,
                           /*recenter_view*/ false);
     } catch (const std::exception& exc) {
         show_error_dialog("Paste Error", exc.what(), window());
@@ -1351,6 +1331,42 @@ void SketcherWidget::onMolModelChanged(const bool molecule_changed)
 bool SketcherWidget::handleShortcutAction(const QKeySequence& key)
 {
     return m_ui->top_bar_wdg->handleShortcutAction(key);
+}
+
+// TODO: if paste disables ATOM or MONO buttons, make sure to click the other one
+
+void SketcherWidget::addTextToMolModel(
+    const std::string& text, const rdkit_extensions::Format format,
+    const std::optional<RDGeom::Point3D> position, const bool recenter_view)
+{
+    auto mol_or_reaction = convert_text_to_mol_or_reaction(text, format);
+    auto* mol_ptr_ptr =
+        std::get_if<boost::shared_ptr<RDKit::RWMol>>(&mol_or_reaction);
+    // we assume that reactions are atomistic
+    bool mol_to_add_is_monomeric =
+        (mol_ptr_ptr && rdkit_extensions::isMonomeric(**mol_ptr_ptr));
+
+    auto interface_type = m_sketcher_model->getInterfaceType();
+    auto cur_molecule_type = m_sketcher_model->getMoleculeType();
+    if (mol_to_add_is_monomeric &&
+        !(interface_type & InterfaceType::MONOMERIC)) {
+        throw std::runtime_error("Monomeric models not allowed");
+    } else if (!mol_to_add_is_monomeric &&
+               !(interface_type & InterfaceType::ATOMISTIC)) {
+        throw std::runtime_error("Atomistic models not allowed");
+    } else if (cur_molecule_type == MoleculeType::ATOMISTIC &&
+               mol_to_add_is_monomeric) {
+        throw std::runtime_error(
+            "Cannot add a monomeric model when the Sketcher already contains "
+            "an atomistic model");
+    } else if (cur_molecule_type == MoleculeType::MONOMERIC &&
+               !mol_to_add_is_monomeric) {
+        throw std::runtime_error(
+            "Cannot add an atomistic model when the Sketcher already contains "
+            "a monomeric model");
+    }
+    add_mol_or_reaction_to_mol_model(*m_mol_model, mol_or_reaction, position,
+                                     recenter_view);
 }
 
 } // namespace sketcher
