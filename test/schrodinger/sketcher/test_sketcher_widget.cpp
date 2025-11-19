@@ -866,7 +866,7 @@ BOOST_AUTO_TEST_CASE(test_cleanup_selection_fits_only_selection)
 BOOST_AUTO_TEST_CASE(test_addTextToMolModel)
 {
     TestSketcherWidget& sk = *TestWidgetFixture::get();
-    const std::string MONOMERIC_STRING = "PEPTIDE1{D.E.F.G}";
+    const std::string MONOMERIC_STRING = "PEPTIDE1{D.E.F.G}$$$$V2.0";
     const std::string ATOMISTIC_STRING = "CCC";
     
     sk.setInterfaceType(InterfaceType::ATOMISTIC);
