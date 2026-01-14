@@ -97,35 +97,30 @@ int get_attachment_point_for_atom(std::string linkage, bool is_start_atom)
     }
 }
 
-std::vector<int> get_bound_attachment_points(const RDKit::Atom* monomer)
+std::unordered_set<int> get_bound_attachment_points(const RDKit::Atom* monomer)
 {
     const auto& mol = monomer->getOwningMol();
-    std::vector<int> bound_aps;
+    std::unordered_set<int> bound_aps;
     
-    auto record_li
+    auto record_linkage = [&bound_aps](const RDKit::Bond* bond, const bool is_start_atom, const std::string& prop_name){
+        std::string linkage;
+        if (bond->getPropIfPresent(prop_name, linkage)) {
+            auto ap_value = get_attachment_point_for_atom(linkage, is_start_atom);
+            if (ap_value > 0) {
+                bound_aps.insert(ap_value);
+            }
+        }
+    };
     
     for (auto* bond : mol.atomBonds(monomer)) { 
         bool is_start_atom = monomer == bond->getBeginAtom();
-        std::string linkage;
-        if (bond->getPropIfPresent(LINKAGE, linkage)) {
-            auto ap_value = get_attachment_point_for_atom(linkage, is_start_atom);
-            if (ap_value > 0) {
-                bound_aps.push_back(ap_value);
-            }
-        }
-        // the custom bond AP will be different than the linkage AP if this bond
-        // represents two separate connections
-        if (bond->getPropIfPresent(CUSTOM_BOND, linkage)) {
-            auto ap_value = get_attachment_point_for_atom(linkage, is_start_atom);
-            if (ap_value > 0) {
-                bound_aps.push_back(ap_value);
-            }
-        }
-        
+        record_linkage(bond, is_start_atom, LINKAGE);
+        record_linkage(bond, is_start_atom, CUSTOM_BOND);
     }
+    return bound_aps;
 }
 
-std::vector<int> get_available_attachment_points(const RDKit::Atom* monomer)
+std::unordered_set<int> get_available_attachment_points(const RDKit::Atom* monomer)
 {
     std::vector<int> available_connectors;
     auto monomer_type = get_monomer_type(monomer);
