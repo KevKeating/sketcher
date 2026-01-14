@@ -6,6 +6,7 @@
 #include <rdkit/GraphMol/Atom.h>
 #include <rdkit/GraphMol/Bond.h>
 #include <rdkit/GraphMol/MonomerInfo.h>
+#include <rdkit/GraphMol/ROMol.h>
 
 #include "schrodinger/rdkit_extensions/helm.h"
 
@@ -73,9 +74,60 @@ bool contains_two_monomer_linkages(const RDKit::Bond* bond)
     return custom_linkage_exists && custom_linkage != linkage;
 }
 
-std::vector<std::string> get_available_connectors(const RDKit::Atom* monomer)
+int get_attachment_point_for_atom(std::string linkage, bool is_start_atom)
 {
-    std::vector<std::string> available_connectors;
+    // auto num_dashes = std::
+    auto dash_pos = linkage.find("-");
+    if (dash_pos == std::string::npos) {
+        return -1;
+    }
+    std::string attachment_point_name = is_start_atom ?
+        linkage.substr(0, dash_pos) :
+        linkage.substr(dash_pos + 1);
+    if (attachment_point_name[0] != 'R') {
+        return -1;
+    }
+    // remove the leading 'R' now that we've confirmed it exists
+    attachment_point_name.erase(0, 1);
+    try {
+        return std::stoi(attachment_point_name);
+    } catch (const std::logic_error&) {
+        // it's not an integer
+        return -1;
+    }
+}
+
+std::vector<int> get_bound_attachment_points(const RDKit::Atom* monomer)
+{
+    const auto& mol = monomer->getOwningMol();
+    std::vector<int> bound_aps;
+    
+    auto record_li
+    
+    for (auto* bond : mol.atomBonds(monomer)) { 
+        bool is_start_atom = monomer == bond->getBeginAtom();
+        std::string linkage;
+        if (bond->getPropIfPresent(LINKAGE, linkage)) {
+            auto ap_value = get_attachment_point_for_atom(linkage, is_start_atom);
+            if (ap_value > 0) {
+                bound_aps.push_back(ap_value);
+            }
+        }
+        // the custom bond AP will be different than the linkage AP if this bond
+        // represents two separate connections
+        if (bond->getPropIfPresent(CUSTOM_BOND, linkage)) {
+            auto ap_value = get_attachment_point_for_atom(linkage, is_start_atom);
+            if (ap_value > 0) {
+                bound_aps.push_back(ap_value);
+            }
+        }
+        
+    }
+}
+
+std::vector<int> get_available_attachment_points(const RDKit::Atom* monomer)
+{
+    std::vector<int> available_connectors;
     auto monomer_type = get_monomer_type(monomer);
     if (monomer_type == MonomerType::CHEM) {
         
