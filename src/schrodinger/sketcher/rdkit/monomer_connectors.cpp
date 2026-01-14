@@ -81,9 +81,9 @@ int get_attachment_point_for_atom(std::string linkage, bool is_start_atom)
     if (dash_pos == std::string::npos) {
         return -1;
     }
-    std::string attachment_point_name = is_start_atom ?
-        linkage.substr(0, dash_pos) :
-        linkage.substr(dash_pos + 1);
+    std::string attachment_point_name = is_start_atom
+                                            ? linkage.substr(0, dash_pos)
+                                            : linkage.substr(dash_pos + 1);
     if (attachment_point_name[0] != 'R') {
         return -1;
     }
@@ -101,18 +101,21 @@ std::unordered_set<int> get_bound_attachment_points(const RDKit::Atom* monomer)
 {
     const auto& mol = monomer->getOwningMol();
     std::unordered_set<int> bound_aps;
-    
-    auto record_linkage = [&bound_aps](const RDKit::Bond* bond, const bool is_start_atom, const std::string& prop_name){
+
+    auto record_linkage = [&bound_aps](const RDKit::Bond* bond,
+                                       const bool is_start_atom,
+                                       const std::string& prop_name) {
         std::string linkage;
         if (bond->getPropIfPresent(prop_name, linkage)) {
-            auto ap_value = get_attachment_point_for_atom(linkage, is_start_atom);
+            auto ap_value =
+                get_attachment_point_for_atom(linkage, is_start_atom);
             if (ap_value > 0) {
                 bound_aps.insert(ap_value);
             }
         }
     };
-    
-    for (auto* bond : mol.atomBonds(monomer)) { 
+
+    for (auto* bond : mol.atomBonds(monomer)) {
         bool is_start_atom = monomer == bond->getBeginAtom();
         record_linkage(bond, is_start_atom, LINKAGE);
         record_linkage(bond, is_start_atom, CUSTOM_BOND);
@@ -120,15 +123,15 @@ std::unordered_set<int> get_bound_attachment_points(const RDKit::Atom* monomer)
     return bound_aps;
 }
 
-std::unordered_set<int> get_available_attachment_points(const RDKit::Atom* monomer)
+std::unordered_set<int>
+get_available_attachment_points(const RDKit::Atom* monomer)
 {
     std::vector<int> available_connectors;
     auto monomer_type = get_monomer_type(monomer);
     if (monomer_type == MonomerType::CHEM) {
-        
+
         return available_connectors;
     }
-    
 }
 
 } // namespace sketcher
