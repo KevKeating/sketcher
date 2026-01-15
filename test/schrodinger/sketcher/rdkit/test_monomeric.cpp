@@ -119,6 +119,8 @@ BOOST_AUTO_TEST_CASE(test_get_attachment_points)
     BOOST_TEST(get_available_attachment_points(atom) == exp_available);
     exp_names = {"C"};
     BOOST_TEST(get_available_attachment_point_names(atom) == exp_names);
+    
+    // TODO: test CHEM monomers
 }
 
 } // namespace sketcher
