@@ -130,16 +130,24 @@ get_available_attachment_points(const RDKit::Atom* monomer)
     auto monomer_type = get_monomer_type(monomer);
     int num_aps = -1;
     if (NUM_CONNECTIONS.contains(monomer_type)) {
-        num_aps = NUM_CONNECTIONS.at(monomer_type)
+        num_aps = NUM_CONNECTIONS.at(monomer_type);
     } else {
         // we don't know how many attachment points a CHEM monomer should have,
-        // so assume that it has one additional one
+        // so assume that it has one additional attachment point beyond what's
+        // already bound
+        num_aps = *std::max_element(bound_aps.begin(), bound_aps.end());
         
     }
-    std::unordered_set<int> available_connectors(boost::counting_iterator<int>(1), boost::counting_iterator<int>(num_aps));
-    available_connectors -= bound_aps;
-    return available_connectors;
+    std::unordered_set<int> available_aps;
+    for (int ap = 1; ap <= num_aps; ++ap) {
+        if (!bound_aps.contains(ap)) {
+            available_aps.insert(ap);
+        }
+    }
+    return available_aps;
 }
+
+// TODO: function that will return available attachment points as names instead of numbers
 
 } // namespace sketcher
 } // namespace schrodinger
