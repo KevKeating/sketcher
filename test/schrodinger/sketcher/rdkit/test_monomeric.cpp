@@ -51,6 +51,8 @@ BOOST_AUTO_TEST_CASE(test_get_attachment_points)
     BOOST_TEST(get_bound_attachment_points(atom).empty());
     std::unordered_set<int> exp_available = {1, 2, 3};
     BOOST_TEST(get_available_attachment_points(atom) == exp_available);
+    std::unordered_set<std::string> exp_names = {"N", "C", "X"};
+    BOOST_TEST(get_available_attachment_point_names(atom) == exp_names);
 
     // two alanines next to each other
     mol = rdkit_extensions::to_rdkit("PEPTIDE1{A.A}$$$$V2.0");
@@ -60,6 +62,8 @@ BOOST_AUTO_TEST_CASE(test_get_attachment_points)
     BOOST_TEST(get_bound_attachment_points(atom) == exp_bound);
     exp_available = {1, 3};
     BOOST_TEST(get_available_attachment_points(atom) == exp_available);
+    exp_names = {"N", "X"};
+    BOOST_TEST(get_available_attachment_point_names(atom) == exp_names);
 
     // the second alanine has a bound N-terminus
     atom = mol->getAtomWithIdx(1);
@@ -67,6 +71,8 @@ BOOST_AUTO_TEST_CASE(test_get_attachment_points)
     BOOST_TEST(get_bound_attachment_points(atom) == exp_bound);
     exp_available = {2, 3};
     BOOST_TEST(get_available_attachment_points(atom) == exp_available);
+    exp_names = {"C", "X"};
+    BOOST_TEST(get_available_attachment_point_names(atom) == exp_names);
 
     // a side-chain interaction between two non-adjacent residues
     mol = rdkit_extensions::to_rdkit(
@@ -76,18 +82,24 @@ BOOST_AUTO_TEST_CASE(test_get_attachment_points)
     BOOST_TEST(get_bound_attachment_points(atom) == exp_bound);
     exp_available = {1};
     BOOST_TEST(get_available_attachment_points(atom) == exp_available);
+    exp_names = {"N"};
+    BOOST_TEST(get_available_attachment_point_names(atom) == exp_names);
 
     atom = mol->getAtomWithIdx(1);
     exp_bound = {1, 2};
     BOOST_TEST(get_bound_attachment_points(atom) == exp_bound);
     exp_available = {3};
     BOOST_TEST(get_available_attachment_points(atom) == exp_available);
+    exp_names = {"X"};
+    BOOST_TEST(get_available_attachment_point_names(atom) == exp_names);
 
     atom = mol->getAtomWithIdx(2);
     exp_bound = {1, 3};
     BOOST_TEST(get_bound_attachment_points(atom) == exp_bound);
     exp_available = {2};
     BOOST_TEST(get_available_attachment_points(atom) == exp_available);
+    exp_names = {"C"};
+    BOOST_TEST(get_available_attachment_point_names(atom) == exp_names);
 
     // a side-chain interaction between two adjacent residues
     mol = rdkit_extensions::to_rdkit(
@@ -97,12 +109,16 @@ BOOST_AUTO_TEST_CASE(test_get_attachment_points)
     BOOST_TEST(get_bound_attachment_points(atom) == exp_bound);
     exp_available = {1};
     BOOST_TEST(get_available_attachment_points(atom) == exp_available);
+    exp_names = {"N"};
+    BOOST_TEST(get_available_attachment_point_names(atom) == exp_names);
 
     atom = mol->getAtomWithIdx(1);
     exp_bound = {1, 3};
     BOOST_TEST(get_bound_attachment_points(atom) == exp_bound);
     exp_available = {2};
     BOOST_TEST(get_available_attachment_points(atom) == exp_available);
+    exp_names = {"C"};
+    BOOST_TEST(get_available_attachment_point_names(atom) == exp_names);
 }
 
 } // namespace sketcher

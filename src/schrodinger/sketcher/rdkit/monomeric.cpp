@@ -1,6 +1,6 @@
 #include "schrodinger/sketcher/rdkit/monomeric.h"
 
-#include <string>
+#include <fmt/core.h>
 
 #include <rdkit/GraphMol/Atom.h>
 #include <rdkit/GraphMol/Bond.h>
@@ -20,11 +20,19 @@ const std::string PEPTIDE_POLYMER_PREFIX = "PEPTIDE";
 // According to HELM, DNA is a subtype of RNA, so DNA also uses the RNA prefix
 const std::string NUCLEOTIDE_POLYMER_PREFIX = "RNA";
 
-const std::unordered_map<MonomerType, unsigned int> NUM_CONNECTIONS = {
+const std::unordered_map<MonomerType, unsigned int> NUM_APS = {
     {MonomerType::PEPTIDE, 3},
-    {MonomerType::NA_BASE, 1},
+    {MonomerType::NA_BASE, 2},
     {MonomerType::NA_PHOSPHATE, 2},
     {MonomerType::NA_SUGAR, 3},
+};
+
+// note that the ′ marks are unicode primes
+const std::unordered_map<MonomerType, std::vector<std::string>> AP_NAMES = {
+    {MonomerType::PEPTIDE, {"N", "C", "X"}},
+    {MonomerType::NA_BASE, {"S", "BP"}},
+    {MonomerType::NA_PHOSPHATE, {"3′", "5′"}},
+    {MonomerType::NA_SUGAR, {"3′", "5′", "X"}},
 };
 
 } // namespace
@@ -71,7 +79,8 @@ bool contains_two_monomer_linkages(const RDKit::Bond* bond)
     return custom_linkage_exists && custom_linkage != linkage;
 }
 
-static int get_attachment_point_for_atom(std::string linkage, bool is_start_atom)
+static int get_attachment_point_for_atom(std::string linkage,
+                                         bool is_start_atom)
 {
     // auto num_dashes = std::
     auto dash_pos = linkage.find("-");
@@ -126,14 +135,13 @@ get_available_attachment_points(const RDKit::Atom* monomer)
     auto bound_aps = get_bound_attachment_points(monomer);
     auto monomer_type = get_monomer_type(monomer);
     int num_aps = -1;
-    if (NUM_CONNECTIONS.contains(monomer_type)) {
-        num_aps = NUM_CONNECTIONS.at(monomer_type);
+    if (NUM_APS.contains(monomer_type)) {
+        num_aps = NUM_APS.at(monomer_type);
     } else {
         // we don't know how many attachment points a CHEM monomer should have,
         // so assume that it has one additional attachment point beyond what's
         // already bound
         num_aps = *std::max_element(bound_aps.begin(), bound_aps.end());
-        
     }
     std::unordered_set<int> available_aps;
     for (int ap = 1; ap <= num_aps; ++ap) {
@@ -144,7 +152,26 @@ get_available_attachment_points(const RDKit::Atom* monomer)
     return available_aps;
 }
 
-// TODO: function that will return available attachment points as names instead of numbers
+std::unordered_set<std::string>
+get_available_attachment_point_names(const RDKit::Atom* monomer)
+{
+    auto available_aps = get_available_attachment_points(monomer);
+    auto monomer_type = get_monomer_type(monomer);
+    std::unordered_set<std::string> available_names;
+    if (AP_NAMES.contains(monomer_type)) {
+        auto all_names = AP_NAMES.at(monomer_type);
+        std::transform(
+            available_aps.begin(), available_aps.end(),
+            std::inserter(available_names, available_names.end()),
+            [&all_names](int ap_num) { return all_names[ap_num - 1]; });
+    } else {
+        std::transform(
+            available_aps.begin(), available_aps.end(),
+            std::inserter(available_names, available_names.end()),
+            [](int ap_num) { return  fmt::format("R{}", ap_num);});
+    };
+    return available_names;
+}
 
 } // namespace sketcher
 } // namespace schrodinger

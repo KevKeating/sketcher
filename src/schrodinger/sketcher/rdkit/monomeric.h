@@ -1,5 +1,6 @@
 #pragma once
 
+#include <string>
 #include <unordered_set>
 
 #include "schrodinger/sketcher/definitions.h"
@@ -27,7 +28,6 @@ enum class MonomerType { PEPTIDE, NA_BASE, NA_PHOSPHATE, NA_SUGAR, CHEM };
  */
 SKETCHER_API MonomerType get_monomer_type(const RDKit::Atom* atom);
 
-
 /**
  * @return whether the given bond represents two connections between the same
  * monomers, such as neighboring cysteines additionally joined by a disulfide
@@ -36,8 +36,14 @@ SKETCHER_API MonomerType get_monomer_type(const RDKit::Atom* atom);
  */
 SKETCHER_API bool contains_two_monomer_linkages(const RDKit::Bond* bond);
 
-SKETCHER_API std::unordered_set<int> get_bound_attachment_points(const RDKit::Atom* monomer);
-SKETCHER_API std::unordered_set<int> get_available_attachment_points(const RDKit::Atom* monomer);
+SKETCHER_API std::unordered_set<int>
+get_bound_attachment_points(const RDKit::Atom* monomer);
+
+SKETCHER_API std::unordered_set<int>
+get_available_attachment_points(const RDKit::Atom* monomer);
+
+SKETCHER_API std::unordered_set<std::string>
+get_available_attachment_point_names(const RDKit::Atom* monomer);
 
 } // namespace sketcher
 } // namespace schrodinger
