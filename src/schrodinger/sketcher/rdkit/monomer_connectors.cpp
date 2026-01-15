@@ -1,6 +1,5 @@
 #include "schrodinger/sketcher/rdkit/monomer_connectors.h"
 
-#include <ranges>
 #include <string>
 #include <unordered_map>
 
@@ -129,12 +128,17 @@ get_available_attachment_points(const RDKit::Atom* monomer)
 {
     auto bound_aps = get_bound_attachment_points(monomer);
     auto monomer_type = get_monomer_type(monomer);
-    int num_aps = 3;
-    if (monomer_type == MonomerType::CHEM) {
+    int num_aps = -1;
+    if (NUM_CONNECTIONS.contains(monomer_type)) {
+        num_aps = NUM_CONNECTIONS.at(monomer_type)
+    } else {
+        // we don't know how many attachment points a CHEM monomer should have,
+        // so assume that it has one additional one
         
     }
-    std::unordered_set<int> available_connectors;
-    std::ranges::insert(available_connectors, std::views::iota(1, num_aps + 1));
+    std::unordered_set<int> available_connectors(boost::counting_iterator<int>(1), boost::counting_iterator<int>(num_aps));
+    available_connectors -= bound_aps;
+    return available_connectors;
 }
 
 } // namespace sketcher
