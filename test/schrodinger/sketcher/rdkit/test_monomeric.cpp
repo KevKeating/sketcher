@@ -41,5 +41,13 @@ BOOST_AUTO_TEST_CASE(test_contains_two_monomer_linkages)
     BOOST_TEST(!contains_two_monomer_linkages(mol->getBondWithIdx(2)));
 }
 
+BOOST_AUTO_TEST_CASE(test_get_attachment_points)
+{
+    auto mol = rdkit_extensions::to_rdkit("PEPTIDE1{A}$$$$V2.0");
+    auto atom = mol->getAtomWithIdx(0);
+    BOOST_TEST(get_bound_attachment_points(atom).empty());
+    // BOOST_TEST(get_available_attachment_points(atom) == {1, 2, 3});
+}
+
 } // namespace sketcher
 } // namespace schrodinger

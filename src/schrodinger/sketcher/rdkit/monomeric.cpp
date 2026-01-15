@@ -1,7 +1,6 @@
 #include "schrodinger/sketcher/rdkit/monomeric.h"
 
 #include <string>
-#include <unordered_map>
 
 #include <rdkit/GraphMol/Atom.h>
 #include <rdkit/GraphMol/Bond.h>
@@ -72,7 +71,7 @@ bool contains_two_monomer_linkages(const RDKit::Bond* bond)
     return custom_linkage_exists && custom_linkage != linkage;
 }
 
-int get_attachment_point_for_atom(std::string linkage, bool is_start_atom)
+static int get_attachment_point_for_atom(std::string linkage, bool is_start_atom)
 {
     // auto num_dashes = std::
     auto dash_pos = linkage.find("-");

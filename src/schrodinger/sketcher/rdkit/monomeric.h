@@ -1,5 +1,7 @@
 #pragma once
 
+#include <unordered_set>
+
 #include "schrodinger/sketcher/definitions.h"
 
 namespace RDKit
@@ -33,6 +35,9 @@ SKETCHER_API MonomerType get_monomer_type(const RDKit::Atom* atom);
  * bond object must represent both connections.
  */
 SKETCHER_API bool contains_two_monomer_linkages(const RDKit::Bond* bond);
+
+SKETCHER_API std::unordered_set<int> get_bound_attachment_points(const RDKit::Atom* monomer);
+SKETCHER_API std::unordered_set<int> get_available_attachment_points(const RDKit::Atom* monomer);
 
 } // namespace sketcher
 } // namespace schrodinger
