@@ -42,7 +42,7 @@
 #include "schrodinger/sketcher/molviewer/fonts.h"
 #include "schrodinger/sketcher/molviewer/coord_utils.h"
 #include "schrodinger/sketcher/rdkit/rgroup.h"
-#include "schrodinger/sketcher/rdkit/monomer_connectors.h"
+#include "schrodinger/sketcher/rdkit/monomeric.h"
 
 namespace schrodinger
 {

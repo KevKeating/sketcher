@@ -1,4 +1,4 @@
-#include "schrodinger/sketcher/rdkit/monomer_connectors.h"
+#include "schrodinger/sketcher/rdkit/monomeric.h"
 
 #include <string>
 #include <unordered_map>
@@ -9,8 +9,6 @@
 #include <rdkit/GraphMol/ROMol.h>
 
 #include "schrodinger/rdkit_extensions/helm.h"
-
-// TODO: rename this file to monomeric now that it includes get_monomer_type?
 
 namespace schrodinger
 {

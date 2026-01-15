@@ -1,11 +1,11 @@
 
-#define BOOST_TEST_MODULE monomer_connectors
+#define BOOST_TEST_MODULE monomeric
 
 #include <rdkit/GraphMol/RWMol.h>
 #include <boost/test/unit_test.hpp>
 #include <boost/test/data/test_case.hpp>
 #include "schrodinger/rdkit_extensions/convert.h"
-#include "schrodinger/sketcher/rdkit/monomer_connectors.h"
+#include "schrodinger/sketcher/rdkit/monomeric.h"
 
 using namespace boost::unit_test;
 
