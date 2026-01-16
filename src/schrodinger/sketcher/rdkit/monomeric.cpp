@@ -180,7 +180,8 @@ get_available_attachment_points(const RDKit::Atom* monomer)
  * of the bound sugar, as the sites themselves are chemically identical. As a
  * result, these names are only meaningful when exactly one sugar is bound.
  * Because of this, we return blank attachment point names (i.e. empty strings,
- * *not* an empty list) unless there is exactly one bound attachment point.
+ * *not* an empty list) unless there is exactly one attachment point bound to a
+ * sugar.
  */
 static std::vector<std::string>
 get_all_attachment_point_names(const RDKit::Atom* monomer)
@@ -190,6 +191,9 @@ get_all_attachment_point_names(const RDKit::Atom* monomer)
     if (AP_NAMES.contains(monomer_type)) {
         all_names = AP_NAMES.at(monomer_type);
         const auto& mol = monomer->getOwningMol();
+        // TODO: check the identity of the bound monomer, since there might be
+        //       triphosphates. If this phosphate is bound to another phosphate,
+        //       follow the chain to see if there's a sugar.
         if (monomer_type == MonomerType::NA_PHOSPHATE &&
             mol.getAtomDegree(monomer) != 1) {
             all_names = {"", ""};

@@ -117,9 +117,49 @@ BOOST_AUTO_TEST_CASE(test_get_attachment_points)
         BOOST_TEST(get_available_attachment_point_names(atom1) == exp_available);
     }
     
-    // TODO: test CHEM monomers
-    // TODO: test NA_PHOSPHATE monomers
-    // TODO: test amino acid with an R4 connection
+    // CHEM monomers
+    mol = rdkit_extensions::to_rdkit(
+        "CHEM1{[MONO1]}|CHEM2{[MONO2]}$CHEM1,CHEM2,1:R1-1:R3$$$V2.0");
+    {
+        atom0 = mol->getAtomWithIdx(0);
+        atom1 = mol->getAtomWithIdx(1);
+
+        exp_bound = {{"R1", atom1}};
+        BOOST_TEST(get_bound_attachment_point_names_and_atoms(atom0) == exp_bound);
+        exp_available = {"R2"};
+        // TODO: this fails
+        BOOST_TEST(get_available_attachment_point_names(atom0) == exp_available);
+
+        exp_bound = {{"R3", atom0}};
+        BOOST_TEST(get_bound_attachment_point_names_and_atoms(atom1) == exp_bound);
+        exp_available = {"R1", "R2", "R4"};
+        // TODO: this fails
+        BOOST_TEST(get_available_attachment_point_names(atom1) == exp_available);
+    }
+    
+    // TODO: NA_PHOSPHATE monomers
+    mol = rdkit_extensions::to_rdkit("RNA1{P.R(U)P.R(T)P}$$$$");
+
+    // TODO: triphosphate
+    mol = rdkit_extensions::to_rdkit("RNA1{P.R(U)P.R(T)P.P.P}$$$$");
+
+    // an amino acid with an unrecognized attachment point
+    mol = rdkit_extensions::to_rdkit(
+        "PEPTIDE1{A.A}$PEPTIDE1,PEPTIDE1,1:R3-2:R4$$$V2.0");
+    {
+        atom0 = mol->getAtomWithIdx(0);
+        atom1 = mol->getAtomWithIdx(1);
+
+        exp_bound = {{"C", atom1}, {"X", atom1}};
+        BOOST_TEST(get_bound_attachment_point_names_and_atoms(atom0) == exp_bound);
+        exp_available = {"N"};
+        BOOST_TEST(get_available_attachment_point_names(atom0) == exp_available);
+
+        exp_bound = {{"N", atom0}, {"R4", atom0}};
+        BOOST_TEST(get_bound_attachment_point_names_and_atoms(atom1) == exp_bound);
+        exp_available = {"C", "X"};
+        BOOST_TEST(get_available_attachment_point_names(atom1) == exp_available);
+    }
 }
 
 } // namespace sketcher
