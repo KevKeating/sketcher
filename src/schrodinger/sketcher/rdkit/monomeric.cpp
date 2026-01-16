@@ -181,7 +181,7 @@ get_all_attachment_point_names(const RDKit::Atom* monomer)
 }
 
 std::unordered_map<std::string, const RDKit::Atom*>
-get_bound_attachment_point_names(const RDKit::Atom* monomer)
+get_bound_attachment_point_names_and_bound_atoms(const RDKit::Atom* monomer)
 {
     auto bound_aps = get_bound_attachment_points(monomer);
     auto all_names = get_all_attachment_point_names(monomer);
