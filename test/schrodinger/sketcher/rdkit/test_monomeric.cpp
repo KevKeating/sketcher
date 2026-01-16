@@ -119,6 +119,7 @@ BOOST_AUTO_TEST_CASE(test_get_attachment_points)
     
     // TODO: test CHEM monomers
     // TODO: test NA_PHOSPHATE monomers
+    // TODO: test amino acid with an R4 connection
 }
 
 } // namespace sketcher
