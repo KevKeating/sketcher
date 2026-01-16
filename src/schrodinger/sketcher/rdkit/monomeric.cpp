@@ -189,7 +189,7 @@ get_all_attachment_point_names(const RDKit::Atom* monomer)
         all_names = AP_NAMES.at(monomer_type);
         const auto& mol = monomer->getOwningMol();
         if (monomer_type == MonomerType::NA_PHOSPHATE &&
-            mol.getAtomDegree(monomer) == 1) {
+            mol.getAtomDegree(monomer) != 1) {
             all_names = {"", ""};
         }
     }
