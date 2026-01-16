@@ -75,7 +75,6 @@ bool contains_two_monomer_linkages(const RDKit::Bond* bond)
 static int get_attachment_point_for_atom(std::string linkage,
                                          bool is_start_atom)
 {
-    // auto num_dashes = std::
     auto dash_pos = linkage.find("-");
     if (dash_pos == std::string::npos) {
         return -1;
@@ -101,7 +100,8 @@ static int get_attachment_point_for_atom(std::string linkage,
  * currently bound to another monomer. Attachment points are specified using
  * integers, e.g. 1 for "R1".
  */
-static std::unordered_set<int> get_bound_attachment_points(const RDKit::Atom* monomer)
+static std::unordered_set<int>
+get_bound_attachment_points(const RDKit::Atom* monomer)
 {
     const auto& mol = monomer->getOwningMol();
     std::unordered_set<int> bound_aps;
@@ -178,10 +178,9 @@ get_available_attachment_point_names(const RDKit::Atom* monomer)
             std::inserter(available_names, available_names.end()),
             [&all_names](int ap_num) { return all_names[ap_num - 1]; });
     } else {
-        std::transform(
-            available_aps.begin(), available_aps.end(),
-            std::inserter(available_names, available_names.end()),
-            [](int ap_num) { return  fmt::format("R{}", ap_num);});
+        std::transform(available_aps.begin(), available_aps.end(),
+                       std::inserter(available_names, available_names.end()),
+                       [](int ap_num) { return fmt::format("R{}", ap_num); });
     };
     return available_names;
 }
