@@ -100,21 +100,22 @@ static int get_attachment_point_for_atom(std::string linkage,
  * currently bound to another monomer. Attachment points are specified using
  * integers, e.g. 1 for "R1".
  */
-static std::unordered_set<int>
+// TODO: update docstring
+static std::unordered_map<int, const RDKit::Atom*>
 get_bound_attachment_points(const RDKit::Atom* monomer)
 {
     const auto& mol = monomer->getOwningMol();
-    std::unordered_set<int> bound_aps;
+    std::unordered_map<int, const RDKit::Atom*> bound_aps;
 
-    auto record_linkage = [&bound_aps](const RDKit::Bond* bond,
-                                       const bool is_start_atom,
-                                       const std::string& prop_name) {
+    auto record_linkage = [&bound_aps, monomer](const RDKit::Bond* bond,
+                                                const bool is_start_atom,
+                                                const std::string& prop_name) {
         std::string linkage;
         if (bond->getPropIfPresent(prop_name, linkage)) {
             auto ap_value =
                 get_attachment_point_for_atom(linkage, is_start_atom);
             if (ap_value > 0) {
-                bound_aps.insert(ap_value);
+                bound_aps[ap_value] = bond->getOtherAtom(monomer);
             }
         }
     };
@@ -141,10 +142,14 @@ get_available_attachment_points(const RDKit::Atom* monomer)
     if (AP_NAMES.contains(monomer_type)) {
         num_aps = AP_NAMES.at(monomer_type).size();
     } else {
+        std::unordered_set<int> bound_ap_nums;
+        std::transform(bound_aps.begin(), bound_aps.end(),
+                       std::inserter(bound_ap_nums, bound_ap_nums.end()),
+                       [](auto num_and_atom) { return num_and_atom.first; });
         // we don't know how many attachment points a CHEM monomer should have,
         // so assume that it has one additional attachment point beyond what's
         // already bound
-        num_aps = *std::max_element(bound_aps.begin(), bound_aps.end());
+        num_aps = *std::max_element(bound_ap_nums.begin(), bound_ap_nums.end());
     }
     std::unordered_set<int> available_aps;
     for (int ap = 1; ap <= num_aps; ++ap) {
@@ -155,29 +160,55 @@ get_available_attachment_points(const RDKit::Atom* monomer)
     return available_aps;
 }
 
-std::unordered_set<std::string>
-get_available_attachment_point_names(const RDKit::Atom* monomer)
+static std::vector<std::string>
+get_all_attachment_point_names(const RDKit::Atom* monomer)
 {
-    auto available_aps = get_available_attachment_points(monomer);
+    std::vector<std::string> all_names;
     auto monomer_type = get_monomer_type(monomer);
-    std::unordered_set<std::string> available_names;
     if (AP_NAMES.contains(monomer_type)) {
-        auto all_names = AP_NAMES.at(monomer_type);
-        if (monomer_type == MonomerType::NA_PHOSPHATE) {
+        all_names = AP_NAMES.at(monomer_type);
+        const auto& mol = monomer->getOwningMol();
+        if (monomer_type == MonomerType::NA_PHOSPHATE &&
+            mol.getAtomDegree(monomer) == 1) {
             // Phosphate attachment point names reflect the attachment point of
             // the bound sugar, as the sites on the phosphate itself are
             // chemically identical. As a result, they're only meaningful when
             // exactly one sugar is bound, so use blank names otherwise.
-            const auto& mol = monomer->getOwningMol();
-            if (mol.getAtomDegree(monomer) == 1) {
-                all_names = {"", ""};
-            }
+            all_names = {"", ""};
         }
+    }
+    return all_names;
+}
+
+std::unordered_map<std::string, const RDKit::Atom*>
+get_bound_attachment_point_names(const RDKit::Atom* monomer)
+{
+    auto bound_aps = get_bound_attachment_points(monomer);
+    auto all_names = get_all_attachment_point_names(monomer);
+    std::unordered_map<std::string, const RDKit::Atom*> bound_ap_names;
+    std::transform(bound_aps.begin(), bound_aps.end(),
+                   std::inserter(bound_ap_names, bound_ap_names.end()),
+                   [&all_names](auto num_and_atom) {
+                       auto& [ap_num, atom] = num_and_atom;
+                       auto ap_name = all_names[ap_num - 1];
+                       return std::make_pair(ap_name, atom);
+                   });
+    return bound_ap_names;
+}
+
+std::unordered_set<std::string>
+get_available_attachment_point_names(const RDKit::Atom* monomer)
+{
+    auto available_aps = get_available_attachment_points(monomer);
+    auto all_names = get_all_attachment_point_names(monomer);
+    std::unordered_set<std::string> available_names;
+    if (!all_names.empty()) {
         std::transform(
             available_aps.begin(), available_aps.end(),
             std::inserter(available_names, available_names.end()),
             [&all_names](int ap_num) { return all_names[ap_num - 1]; });
     } else {
+        // CHEM monomers don't have special names, so we just use R#
         std::transform(available_aps.begin(), available_aps.end(),
                        std::inserter(available_names, available_names.end()),
                        [](int ap_num) { return fmt::format("R{}", ap_num); });
