@@ -121,6 +121,7 @@ BOOST_AUTO_TEST_CASE(test_get_attachment_points)
     BOOST_TEST(get_available_attachment_point_names(atom) == exp_names);
     
     // TODO: test CHEM monomers
+    // TODO: test NA_PHOSPHATE monomers
 }
 
 } // namespace sketcher
