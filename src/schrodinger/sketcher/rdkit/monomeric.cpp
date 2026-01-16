@@ -1,5 +1,7 @@
 #include "schrodinger/sketcher/rdkit/monomeric.h"
 
+#include <functional>
+
 #include <fmt/core.h>
 
 #include <rdkit/GraphMol/Atom.h>
@@ -196,30 +198,38 @@ get_all_attachment_point_names(const RDKit::Atom* monomer)
     return all_names;
 }
 
+static std::string prefix_with_r(int ap_num)
+{
+    return fmt::format("R{}", ap_num);
+}
+
+static std::function<std::string(int)> get_ap_name_to_num(const std::vector<std::string>& all_names)
+{
+    
+}
+
 std::unordered_map<std::string, const RDKit::Atom*>
 get_bound_attachment_point_names_and_atoms(const RDKit::Atom* monomer)
 {
     auto bound_aps = get_bound_attachment_points(monomer);
     auto all_names = get_all_attachment_point_names(monomer);
     std::unordered_map<std::string, const RDKit::Atom*> bound_ap_names;
+
+    std::function<std::string(int)> ap_name_to_num;
     if (!all_names.empty()) {
-        std::transform(bound_aps.begin(), bound_aps.end(),
-                       std::inserter(bound_ap_names, bound_ap_names.end()),
-                       [&all_names](auto num_and_atom) {
-                           auto& [ap_num, atom] = num_and_atom;
-                           auto ap_name = all_names[ap_num - 1];
-                           return std::make_pair(ap_name, atom);
-                       });
+        ap_name_to_num = [&all_names](int ap_num) {
+            return all_names[ap_num - 1];
+        };
     } else {
-        // CHEM monomers don't have special names, so we just use R#
-        std::transform(bound_aps.begin(), bound_aps.end(),
-                       std::inserter(bound_ap_names, bound_ap_names.end()),
-                       [](auto num_and_atom) {
-                           auto& [ap_num, atom] = num_and_atom;
-                           auto ap_name = fmt::format("R{}", ap_num);
-                           return std::make_pair(ap_name, atom);
-                       });
+        ap_name_to_num = prefix_with_r;
     }
+    std::transform(bound_aps.begin(), bound_aps.end(),
+                   std::inserter(bound_ap_names, bound_ap_names.end()),
+                   [&ap_name_to_num](auto num_and_atom) {
+                       auto& [ap_num, atom] = num_and_atom;
+                       auto ap_name = ap_name_to_num(ap_num);
+                       return std::make_pair(ap_name, atom);
+                   });
     return bound_ap_names;
 }
 
