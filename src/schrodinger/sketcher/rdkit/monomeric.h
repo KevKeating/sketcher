@@ -36,12 +36,10 @@ SKETCHER_API MonomerType get_monomer_type(const RDKit::Atom* atom);
  */
 SKETCHER_API bool contains_two_monomer_linkages(const RDKit::Bond* bond);
 
-SKETCHER_API std::unordered_set<int>
-get_bound_attachment_points(const RDKit::Atom* monomer);
-
-SKETCHER_API std::unordered_set<int>
-get_available_attachment_points(const RDKit::Atom* monomer);
-
+/**
+ * @return a set of all available attachment points for the given monomer 2using
+ * "pretty" names (e.g. "N" instead of "R1" for amino acids)
+ */
 SKETCHER_API std::unordered_set<std::string>
 get_available_attachment_point_names(const RDKit::Atom* monomer);
 

@@ -20,14 +20,7 @@ const std::string PEPTIDE_POLYMER_PREFIX = "PEPTIDE";
 // According to HELM, DNA is a subtype of RNA, so DNA also uses the RNA prefix
 const std::string NUCLEOTIDE_POLYMER_PREFIX = "RNA";
 
-const std::unordered_map<MonomerType, unsigned int> NUM_APS = {
-    {MonomerType::PEPTIDE, 3},
-    {MonomerType::NA_BASE, 2},
-    {MonomerType::NA_PHOSPHATE, 2},
-    {MonomerType::NA_SUGAR, 3},
-};
-
-// note that the ′ marks are unicode primes
+// note that the ′ marks are unicode primes, not apostrophes
 const std::unordered_map<MonomerType, std::vector<std::string>> AP_NAMES = {
     {MonomerType::PEPTIDE, {"N", "C", "X"}},
     {MonomerType::NA_BASE, {"S", "BP"}},
@@ -37,9 +30,6 @@ const std::unordered_map<MonomerType, std::vector<std::string>> AP_NAMES = {
 
 } // namespace
 
-/**
- * Determine what type of monomer the given atom represents.
- */
 MonomerType get_monomer_type(const RDKit::Atom* atom)
 {
     const auto* monomer_info = atom->getMonomerInfo();
@@ -103,7 +93,12 @@ static int get_attachment_point_for_atom(std::string linkage,
     }
 }
 
-std::unordered_set<int> get_bound_attachment_points(const RDKit::Atom* monomer)
+/**
+ * @return a set of all attachment points on the specified monomer that are
+ * currently bound to another monomer. Attachment points are specified using
+ * integers, e.g. 1 for "R1".
+ */
+static std::unordered_set<int> get_bound_attachment_points(const RDKit::Atom* monomer)
 {
     const auto& mol = monomer->getOwningMol();
     std::unordered_set<int> bound_aps;
@@ -129,14 +124,19 @@ std::unordered_set<int> get_bound_attachment_points(const RDKit::Atom* monomer)
     return bound_aps;
 }
 
-std::unordered_set<int>
+/**
+ * @return a set of all attachment points on the specified monomer that are
+ * currently unbound. Attachment points are specified using integers, e.g. 1 for
+ * "R1".
+ */
+static std::unordered_set<int>
 get_available_attachment_points(const RDKit::Atom* monomer)
 {
     auto bound_aps = get_bound_attachment_points(monomer);
     auto monomer_type = get_monomer_type(monomer);
     int num_aps = -1;
-    if (NUM_APS.contains(monomer_type)) {
-        num_aps = NUM_APS.at(monomer_type);
+    if (AP_NAMES.contains(monomer_type)) {
+        num_aps = AP_NAMES.at(monomer_type).size();
     } else {
         // we don't know how many attachment points a CHEM monomer should have,
         // so assume that it has one additional attachment point beyond what's
@@ -160,6 +160,8 @@ get_available_attachment_point_names(const RDKit::Atom* monomer)
     std::unordered_set<std::string> available_names;
     if (AP_NAMES.contains(monomer_type)) {
         auto all_names = AP_NAMES.at(monomer_type);
+        // TODO: only apply names to nucleic acid phosphates if the phosphate
+        //       has exactly one bond, otherwise, leave the names blank
         std::transform(
             available_aps.begin(), available_aps.end(),
             std::inserter(available_names, available_names.end()),
