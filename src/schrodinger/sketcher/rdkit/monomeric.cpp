@@ -24,6 +24,9 @@ const std::string NUCLEOTIDE_POLYMER_PREFIX = "RNA";
 const std::unordered_map<MonomerType, std::vector<std::string>> AP_NAMES = {
     {MonomerType::PEPTIDE, {"N", "C", "X"}},
     {MonomerType::NA_BASE, {"S", "BP"}},
+    // note that phosphate attachment point names reflect the attachment point
+    // of the bound sugar (as the sites on the phosphate itself are chemically
+    // identical), so they're only used when exactly one sugar is bound
     {MonomerType::NA_PHOSPHATE, {"3′", "5′"}},
     {MonomerType::NA_SUGAR, {"3′", "5′", "X"}},
 };
@@ -160,8 +163,16 @@ get_available_attachment_point_names(const RDKit::Atom* monomer)
     std::unordered_set<std::string> available_names;
     if (AP_NAMES.contains(monomer_type)) {
         auto all_names = AP_NAMES.at(monomer_type);
-        // TODO: only apply names to nucleic acid phosphates if the phosphate
-        //       has exactly one bond, otherwise, leave the names blank
+        if (monomer_type == MonomerType::NA_PHOSPHATE) {
+            // Phosphate attachment point names reflect the attachment point of
+            // the bound sugar, as the sites on the phosphate itself are
+            // chemically identical. As a result, they're only meaningful when
+            // exactly one sugar is bound, so use blank names otherwise.
+            const auto& mol = monomer->getOwningMol();
+            if (mol.getAtomDegree(monomer) == 1) {
+                all_names = {"", ""};
+            }
+        }
         std::transform(
             available_aps.begin(), available_aps.end(),
             std::inserter(available_names, available_names.end()),
