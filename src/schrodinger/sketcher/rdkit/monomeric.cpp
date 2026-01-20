@@ -23,10 +23,12 @@ const std::string PEPTIDE_POLYMER_PREFIX = "PEPTIDE";
 const std::string NUCLEOTIDE_POLYMER_PREFIX = "RNA";
 
 // note that the ′ marks are unicode primes, not apostrophes
+// NA_PHOSPHATE takes its attachment point names from the bound sugar
+// CHEM monomers don't have "pretty" attachment point names (we just use R1, R2, etc.)
 const std::unordered_map<MonomerType, std::vector<std::string>> AP_NAMES = {
     {MonomerType::PEPTIDE, {"N", "C", "X"}},
     {MonomerType::NA_BASE, {"S", "BP"}},
-    {MonomerType::NA_PHOSPHATE, {"3′", "5′"}},
+    // {MonomerType::NA_PHOSPHATE, {"3′", "5′"}},
     {MonomerType::NA_SUGAR, {"3′", "5′", "X"}},
 };
 
@@ -188,16 +190,42 @@ get_all_attachment_point_names(const RDKit::Atom* monomer)
 {
     std::vector<std::string> all_names;
     auto monomer_type = get_monomer_type(monomer);
+    
     if (AP_NAMES.contains(monomer_type)) {
-        all_names = AP_NAMES.at(monomer_type);
+        return AP_NAMES.at(monomer_type);
+    } else if (monomer_type == MonomerType::NA_PHOSPHATE) {
         const auto& mol = monomer->getOwningMol();
-        // TODO: check the identity of the bound monomer, since there might be
-        //       triphosphates. If this phosphate is bound to another phosphate,
-        //       follow the chain to see if there's a sugar.
-        if (monomer_type == MonomerType::NA_PHOSPHATE &&
-            mol.getAtomDegree(monomer) != 1) {
-            all_names = {"", ""};
+        // if this phosphate is bound to a sugar, or if it's at the end of a
+        // chain of phosphates bound to a sugar, then use the attachment point
+        // names from the sugar.  
+        auto neighbor = monomer;
+        const RDKit::Bond* bond = nullptr;
+        while (mol.getAtomDegree(neighbor) == 1 && get_monomer_type(neighbor) == MonomerType::NA_PHOSPHATE) {
+            bond = *mol.atomBonds(neighbor).begin();
+            neighbor = *mol.atomNeighbors(neighbor).begin();
         }
+        if (get_monomer_type(neighbor) == MonomerType::NA_SUGAR) {
+            std::string sugar_linkage;
+            if (bond->getPropIfPresent(LINKAGE, sugar_linkage)) {
+                bool is_sugar_start_atom = bond->getBeginAtom() == neighbor;
+                auto sugar_ap_num =
+                    get_attachment_point_for_atom(sugar_linkage, is_sugar_start_atom);
+                // make sure that ap_num is 1 or 2
+                auto sugar_ap_name = ap_num_to_name(sugar_ap_num, AP_NAMES.at(MonomerType::NA_SUGAR));
+                std::string phosphate_linkage;
+                if (bond->getPropIfPresent(LINKAGE, phosphate_linkage)) {
+                auto phosphate_ap_num = ;
+                
+            }
+        }
+        // in all other scenarios, leave the attachment points unnamed since
+        // they're chemically identical and there's no meaningful point of
+        // reference
+        return {"", ""};
+    } else {
+        // for CHEM monomers, we return an empty list, meaning that the
+        // attachment points will be named R1, R2, etc
+        return {};
     }
     return all_names;
 }
