@@ -127,13 +127,19 @@ BOOST_AUTO_TEST_CASE(test_get_attachment_points)
         exp_bound = {{"R1", atom1}};
         BOOST_TEST(get_bound_attachment_point_names_and_atoms(atom0) == exp_bound);
         exp_available = {"R2"};
-        // TODO: this fails
+        // std::cout << "get_available_attachment_point_names(atom0) = \n";
+        // for (auto cur_name : get_available_attachment_point_names(atom0)) {
+        //     std::cout << "\t" << cur_name << "\n";
+        // }
         BOOST_TEST(get_available_attachment_point_names(atom0) == exp_available);
 
         exp_bound = {{"R3", atom0}};
         BOOST_TEST(get_bound_attachment_point_names_and_atoms(atom1) == exp_bound);
         exp_available = {"R1", "R2", "R4"};
-        // TODO: this fails
+        // std::cout << "get_available_attachment_point_names(atom1) = \n";
+        // for (auto cur_name : get_available_attachment_point_names(atom1)) {
+        //     std::cout << "\t" << cur_name << "\n";
+        // }
         BOOST_TEST(get_available_attachment_point_names(atom1) == exp_available);
     }
     
@@ -143,18 +149,18 @@ BOOST_AUTO_TEST_CASE(test_get_attachment_points)
     {
         atom0 = mol->getAtomWithIdx(0);
         atom1 = mol->getAtomWithIdx(1);
-        auto atom5 = mol->getAtomWithIdx(5);
-        auto atom6 = mol->getAtomWithIdx(6);
+        auto term_sugar = mol->getAtomWithIdx(5);
+        auto term_phosphate = mol->getAtomWithIdx(6);
         
         exp_bound = {{"", atom1}};
         BOOST_TEST(get_bound_attachment_point_names_and_atoms(atom0) == exp_bound);
         exp_available = {"3′"};
         BOOST_TEST(get_available_attachment_point_names(atom0) == exp_available);
 
-        exp_bound = {{"", atom5}};
-        BOOST_TEST(get_bound_attachment_point_names_and_atoms(atom6) == exp_bound);
+        exp_bound = {{"", term_sugar}};
+        BOOST_TEST(get_bound_attachment_point_names_and_atoms(term_phosphate) == exp_bound);
         exp_available = {"5′"};
-        BOOST_TEST(get_available_attachment_point_names(atom6) == exp_available);
+        BOOST_TEST(get_available_attachment_point_names(term_phosphate) == exp_available);
     }
 
     // NA_PHOSPHATE monomers still take their name from the bound sugar even if

@@ -171,6 +171,7 @@ get_available_attachment_points(const RDKit::Atom* monomer)
                        std::inserter(bound_ap_nums, bound_ap_nums.end()),
                        [](auto num_and_atom) { return num_and_atom.first; });
         num_aps = *std::max_element(bound_ap_nums.begin(), bound_ap_nums.end());
+        num_aps += 1;
     }
     std::unordered_set<int> available_aps;
     for (int ap = 1; ap <= num_aps; ++ap) {
