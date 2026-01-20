@@ -22,9 +22,10 @@ const std::string PEPTIDE_POLYMER_PREFIX = "PEPTIDE";
 // According to HELM, DNA is a subtype of RNA, so DNA also uses the RNA prefix
 const std::string NUCLEOTIDE_POLYMER_PREFIX = "RNA";
 
-// note that the apostrophes, not unicode primes, to avoid issues with C++′s handling of Unicode.
-// NA_PHOSPHATE takes its attachment point names from the bound sugar
-// CHEM monomers don't have "pretty" attachment point names (we just use R1, R2, etc.)
+// note that the apostrophes, not unicode primes, to avoid issues with C++′s
+// handling of Unicode. NA_PHOSPHATE takes its attachment point names from the
+// bound sugar CHEM monomers don't have "pretty" attachment point names (we just
+// use R1, R2, etc.)
 const std::unordered_map<MonomerType, std::vector<std::string>> AP_NAMES = {
     {MonomerType::PEPTIDE, {"N", "C", "X"}},
     {MonomerType::NA_BASE, {"S", "BP"}},
@@ -104,7 +105,8 @@ static int get_attachment_point_for_atom(std::string linkage,
     }
 }
 
-static int get_attachment_point_for_atom(const RDKit::Atom* monomer, const RDKit::Bond* bond)
+static int get_attachment_point_for_atom(const RDKit::Atom* monomer,
+                                         const RDKit::Bond* bond)
 {
     std::string linkage;
     if (bond->getPropIfPresent(LINKAGE, linkage)) {
@@ -191,8 +193,8 @@ get_available_attachment_points(const RDKit::Atom* monomer)
  * @return If all_names contains a "pretty" name for ap_num, then that name will
  * be returned. Otherwise "R<ap_num>" will be returned.
  */
-static std::string
-ap_num_to_name(const int ap_num, const std::vector<std::string>& all_names)
+static std::string ap_num_to_name(const int ap_num,
+                                  const std::vector<std::string>& all_names)
 {
     if (0 < ap_num && ap_num <= all_names.size()) {
         return all_names[ap_num - 1];
@@ -200,17 +202,27 @@ ap_num_to_name(const int ap_num, const std::vector<std::string>& all_names)
     return fmt::format("R{}", ap_num);
 }
 
-static std::string get_attachment_point_name_of_bound_sugar(const RDKit::Atom* phosphate)
+/**
+ * If the given phosphate monomer is bound to exactly one sugar (or if it's
+ * bound to a chain of phosphates, and that chain of phosphates is bound to a
+ * sugar, e.g. ATP), return the "pretty" name of the sugar's attachment point
+ * (e.g. "3'", not "R1"). Otherwise, return en empty string.
+ */
+static std::string
+get_attachment_point_name_of_bound_sugar(const RDKit::Atom* phosphate)
 {
     const auto& mol = phosphate->getOwningMol();
     if (mol.getAtomDegree(phosphate) != 1) {
-            return "";
+        return "";
     }
     const RDKit::Bond* bond = *mol.atomBonds(phosphate).begin();
     auto prev_neighbor = phosphate;
     auto cur_neighbor = *mol.atomNeighbors(phosphate).begin();
     const RDKit::Atom* next_neighbor;
-    while (mol.getAtomDegree(cur_neighbor) == 2 && get_monomer_type(cur_neighbor) == MonomerType::NA_PHOSPHATE) {
+    // if there is a chain of phosphates, continue along it until we reach the
+    // end
+    while (mol.getAtomDegree(cur_neighbor) == 2 &&
+           get_monomer_type(cur_neighbor) == MonomerType::NA_PHOSPHATE) {
         for (auto possible_next_neighbor : mol.atomNeighbors(cur_neighbor)) {
             if (possible_next_neighbor != prev_neighbor) {
                 prev_neighbor = cur_neighbor;
@@ -220,11 +232,17 @@ static std::string get_attachment_point_name_of_bound_sugar(const RDKit::Atom* p
         }
     }
     if (get_monomer_type(cur_neighbor) == MonomerType::NA_SUGAR) {
-        auto bond_to_sugar = mol.getBondBetweenAtoms(prev_neighbor->getIdx(), cur_neighbor->getIdx());
-        auto sugar_ap_num = get_attachment_point_for_atom(cur_neighbor, bond_to_sugar);
+        auto bond_to_sugar = mol.getBondBetweenAtoms(prev_neighbor->getIdx(),
+                                                     cur_neighbor->getIdx());
+        auto sugar_ap_num =
+            get_attachment_point_for_atom(cur_neighbor, bond_to_sugar);
+        // the phosphate should be bound to either the 3' (R1) or 5' (R2). If
+        // it's bound to something else, ignore it, since something's gone
+        // wrong.
         if ((sugar_ap_num == 1 || sugar_ap_num == 2)) {
-            return ap_num_to_name(sugar_ap_num, AP_NAMES.at(MonomerType::NA_SUGAR));
-        } 
+            return ap_num_to_name(sugar_ap_num,
+                                  AP_NAMES.at(MonomerType::NA_SUGAR));
+        }
     }
     return "";
 }
@@ -248,22 +266,21 @@ get_all_attachment_point_names(const RDKit::Atom* monomer)
 {
     std::vector<std::string> all_names;
     auto monomer_type = get_monomer_type(monomer);
-    
+
     if (AP_NAMES.contains(monomer_type)) {
         return AP_NAMES.at(monomer_type);
     } else if (monomer_type == MonomerType::NA_PHOSPHATE) {
-        const auto& mol = monomer->getOwningMol();
-        // If this phosphate is bound to a sugar, or if it's at the end of a
-        // chain of phosphates bound to a sugar, then use the attachment point
-        // name from the sugar for the unbound attachment point. In all other
-        // scenarios, leave the attachment points unnamed since they're
-        // chemically identical and there's no meaningful point of reference
         std::vector<std::string> phos_ap_names = {"", ""};
         auto sugar_ap_name = get_attachment_point_name_of_bound_sugar(monomer);
         if (!sugar_ap_name.empty()) {
+            const auto& mol = monomer->getOwningMol();
+            // the phosphate must have exactly one bond; otherwise,
+            // sugar_ap_name would be empty
             const RDKit::Bond* phos_bond = *mol.atomBonds(monomer).begin();
-            auto bound_phos_ap_num =  get_attachment_point_for_atom(monomer, phos_bond);
+            auto bound_phos_ap_num =
+                get_attachment_point_for_atom(monomer, phos_bond);
             if (bound_phos_ap_num == 1 || bound_phos_ap_num == 2) {
+                // phosphates should only have two attachment points
                 int unbound_phos_ap_name_idx = bound_phos_ap_num == 1 ? 1 : 0;
                 phos_ap_names[unbound_phos_ap_name_idx] = sugar_ap_name;
             }
