@@ -214,7 +214,7 @@ static std::string get_attachment_point_name_of_bound_sugar(const RDKit::Atom* p
         for (auto possible_next_neighbor : mol.atomNeighbors(cur_neighbor)) {
             if (possible_next_neighbor != prev_neighbor) {
                 prev_neighbor = cur_neighbor;
-                next_neighbor = possible_next_neighbor;
+                cur_neighbor = possible_next_neighbor;
                 break;
             }
         }
