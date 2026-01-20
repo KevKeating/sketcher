@@ -150,10 +150,6 @@ BOOST_AUTO_TEST_CASE(test_get_attachment_points)
         BOOST_TEST(get_available_attachment_point_names(atom0) == exp_available);
 
         exp_bound = {{"", term_sugar}};
-        std::cout << "get_bound_attachment_point_names_and_atoms(term_phosphate) = \n";
-        for (auto [cur_name, bound_atom] : get_bound_attachment_point_names_and_atoms(term_phosphate)) {
-            std::cout << "\t<" << cur_name << ">\n";
-        }
         BOOST_TEST(get_bound_attachment_point_names_and_atoms(term_phosphate) == exp_bound);
         exp_available = {"5'"};
         BOOST_TEST(get_available_attachment_point_names(term_phosphate) == exp_available);
@@ -163,14 +159,20 @@ BOOST_AUTO_TEST_CASE(test_get_attachment_points)
     // they're at the end of a chain of phsophates
     mol = rdkit_extensions::to_rdkit("RNA1{P.R(U)P.R(T)P.P.P}$$$$");
     {
-        auto term_sugar = mol->getAtomWithIdx(5);
+        auto term_sugar = mol->getAtomWithIdx(4);
         auto term_phos_chain_1 = mol->getAtomWithIdx(6);
         auto term_phos_chain_2 = mol->getAtomWithIdx(7);
         auto term_phos_chain_3 = mol->getAtomWithIdx(8);
 
         // TODO: both bound attachment points use empty names
+        // exp_bound = {{"", term_sugar}, {"", term_phos_chain_2}};
+        // BOOST_TEST(get_bound_attachment_point_names_and_atoms(term_phos_chain_1) == exp_bound);
         BOOST_TEST(get_available_attachment_point_names(term_phos_chain_1).empty());
+        
+        // exp_bound = {{"", term_phos_chain_1}, {"", term_phos_chain_3}};
+        // BOOST_TEST(get_bound_attachment_point_names_and_atoms(term_phos_chain_2) == exp_bound);
         BOOST_TEST(get_available_attachment_point_names(term_phos_chain_2).empty());
+        
         exp_bound = {{"", term_phos_chain_2}};
         BOOST_TEST(get_bound_attachment_point_names_and_atoms(term_phos_chain_3) == exp_bound);
         exp_available = {"5'"};
