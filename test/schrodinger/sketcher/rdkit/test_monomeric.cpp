@@ -45,8 +45,8 @@ BOOST_AUTO_TEST_CASE(test_contains_two_monomer_linkages)
 
 BOOST_AUTO_TEST_CASE(test_get_attachment_points)
 {
-    std::unordered_map<std::wstring, const RDKit::Atom*> exp_bound;
-    std::unordered_set<std::wstring> exp_available;
+    std::unordered_map<std::string, const RDKit::Atom*> exp_bound;
+    std::unordered_set<std::string> exp_available;
     const RDKit::Atom *atom0, *atom1, *atom2;
     
     // a lone alanine has no bound attachment points
@@ -54,7 +54,7 @@ BOOST_AUTO_TEST_CASE(test_get_attachment_points)
     {
         atom0 = mol->getAtomWithIdx(0);
         BOOST_TEST(get_bound_attachment_point_names_and_atoms(atom0).empty());
-        exp_available = {L"N", L"C", L"X"};
+        exp_available = {"N", "C", "X"};
         BOOST_TEST(get_available_attachment_point_names(atom0) == exp_available);
     }
 
@@ -64,14 +64,14 @@ BOOST_AUTO_TEST_CASE(test_get_attachment_points)
         const auto* atom0 = mol->getAtomWithIdx(0);
         const auto* atom1 = mol->getAtomWithIdx(1);
 
-        exp_bound = {{L"C", atom1}};
+        exp_bound = {{"C", atom1}};
         BOOST_TEST(get_bound_attachment_point_names_and_atoms(atom0) == exp_bound);
-        exp_available = {L"N", L"X"};
+        exp_available = {"N", "X"};
         BOOST_TEST(get_available_attachment_point_names(atom0) == exp_available);
 
-        exp_bound = {{L"N", atom0}};
+        exp_bound = {{"N", atom0}};
         BOOST_TEST(get_bound_attachment_point_names_and_atoms(atom1) == exp_bound);
-        exp_available = {L"C", L"X"};
+        exp_available = {"C", "X"};
         BOOST_TEST(get_available_attachment_point_names(atom1) == exp_available);
     }
 
@@ -83,19 +83,19 @@ BOOST_AUTO_TEST_CASE(test_get_attachment_points)
         atom1 = mol->getAtomWithIdx(1);
         atom2 = mol->getAtomWithIdx(2);
         
-        exp_bound = {{L"C", atom1}, {L"X", atom2}};
+        exp_bound = {{"C", atom1}, {"X", atom2}};
         BOOST_TEST(get_bound_attachment_point_names_and_atoms(atom0) == exp_bound);
-        exp_available = {L"N"};
+        exp_available = {"N"};
         BOOST_TEST(get_available_attachment_point_names(atom0) == exp_available);
 
-        exp_bound = {{L"N", atom0}, {L"C", atom2}};
+        exp_bound = {{"N", atom0}, {"C", atom2}};
         BOOST_TEST(get_bound_attachment_point_names_and_atoms(atom1) == exp_bound);
-        exp_available = {L"X"};
+        exp_available = {"X"};
         BOOST_TEST(get_available_attachment_point_names(atom1) == exp_available);
 
-        exp_bound = {{L"N", atom1}, {L"X", atom0}};
+        exp_bound = {{"N", atom1}, {"X", atom0}};
         BOOST_TEST(get_bound_attachment_point_names_and_atoms(atom2) == exp_bound);
-        exp_available = {L"C"};
+        exp_available = {"C"};
         BOOST_TEST(get_available_attachment_point_names(atom2) == exp_available);
     }
 
@@ -106,14 +106,14 @@ BOOST_AUTO_TEST_CASE(test_get_attachment_points)
         atom0 = mol->getAtomWithIdx(0);
         atom1 = mol->getAtomWithIdx(1);
 
-        exp_bound = {{L"C", atom1}, {L"X", atom1}};
+        exp_bound = {{"C", atom1}, {"X", atom1}};
         BOOST_TEST(get_bound_attachment_point_names_and_atoms(atom0) == exp_bound);
-        exp_available = {L"N"};
+        exp_available = {"N"};
         BOOST_TEST(get_available_attachment_point_names(atom0) == exp_available);
 
-        exp_bound = {{L"N", atom0}, {L"X", atom0}};
+        exp_bound = {{"N", atom0}, {"X", atom0}};
         BOOST_TEST(get_bound_attachment_point_names_and_atoms(atom1) == exp_bound);
-        exp_available = {L"C"};
+        exp_available = {"C"};
         BOOST_TEST(get_available_attachment_point_names(atom1) == exp_available);
     }
     
@@ -124,14 +124,22 @@ BOOST_AUTO_TEST_CASE(test_get_attachment_points)
         atom0 = mol->getAtomWithIdx(0);
         atom1 = mol->getAtomWithIdx(1);
 
-        exp_bound = {{L"R1", atom1}};
+        exp_bound = {{"R1", atom1}};
         BOOST_TEST(get_bound_attachment_point_names_and_atoms(atom0) == exp_bound);
-        exp_available = {L"R2"};
+        exp_available = {"R2"};
+        // std::cout << "get_available_attachment_point_names(atom0) = \n";
+        // for (auto cur_name : get_available_attachment_point_names(atom0)) {
+        //     std::cout << "\t" << cur_name << "\n";
+        // }
         BOOST_TEST(get_available_attachment_point_names(atom0) == exp_available);
 
-        exp_bound = {{L"R3", atom0}};
+        exp_bound = {{"R3", atom0}};
         BOOST_TEST(get_bound_attachment_point_names_and_atoms(atom1) == exp_bound);
-        exp_available = {L"R1", L"R2", L"R4"};
+        exp_available = {"R1", "R2", "R4"};
+        // std::cout << "get_available_attachment_point_names(atom1) = \n";
+        // for (auto cur_name : get_available_attachment_point_names(atom1)) {
+        //     std::cout << "\t" << cur_name << "\n";
+        // }
         BOOST_TEST(get_available_attachment_point_names(atom1) == exp_available);
     }
     
@@ -144,18 +152,14 @@ BOOST_AUTO_TEST_CASE(test_get_attachment_points)
         auto term_sugar = mol->getAtomWithIdx(5);
         auto term_phosphate = mol->getAtomWithIdx(6);
         
-        exp_bound = {{L"", atom1}};
+        exp_bound = {{"", atom1}};
         BOOST_TEST(get_bound_attachment_point_names_and_atoms(atom0) == exp_bound);
-        exp_available = {L"3′"};
-        // std::cout << "get_available_attachment_point_names(atom0) = \n";
-        // for (auto cur_name : get_available_attachment_point_names(atom0)) {
-        //     std::cout << "\t" << cur_name << "\n";
-        // }
+        exp_available = {"3′"};
         BOOST_TEST(get_available_attachment_point_names(atom0) == exp_available);
 
-        exp_bound = {{L"", term_sugar}};
+        exp_bound = {{"", term_sugar}};
         BOOST_TEST(get_bound_attachment_point_names_and_atoms(term_phosphate) == exp_bound);
-        exp_available = {L"5′"};
+        exp_available = {"5′"};
         BOOST_TEST(get_available_attachment_point_names(term_phosphate) == exp_available);
     }
 
@@ -163,18 +167,18 @@ BOOST_AUTO_TEST_CASE(test_get_attachment_points)
     // they're at the end of a chain of phsophates
     mol = rdkit_extensions::to_rdkit("RNA1{P.R(U)P.R(T)P.P.P}$$$$");
     {
-        auto term_sugar = mol->getAtomWithIdx(5);
-        auto term_phos_chain_1 = mol->getAtomWithIdx(6);
-        auto term_phos_chain_2 = mol->getAtomWithIdx(7);
-        auto term_phos_chain_3 = mol->getAtomWithIdx(8);
+        auto atom6 = mol->getAtomWithIdx(6);
+        auto atom7 = mol->getAtomWithIdx(7);
+        auto atom8 = mol->getAtomWithIdx(8);
+        auto atom9 = mol->getAtomWithIdx(9);
 
         // TODO: both bound attachment points use empty names
-        BOOST_TEST(get_available_attachment_point_names(term_phos_chain_1).empty());
-        BOOST_TEST(get_available_attachment_point_names(term_phos_chain_2).empty());
-        exp_bound = {{L"", term_phos_chain_2}};
-        BOOST_TEST(get_bound_attachment_point_names_and_atoms(term_phos_chain_3) == exp_bound);
-        exp_available = {L"5′"};
-        BOOST_TEST(get_available_attachment_point_names(term_phos_chain_3) == exp_available);
+        BOOST_TEST(get_available_attachment_point_names(atom7).empty());
+        BOOST_TEST(get_available_attachment_point_names(atom8).empty());
+        exp_bound = {{"", atom8}};
+        BOOST_TEST(get_bound_attachment_point_names_and_atoms(atom9) == exp_bound);
+        exp_available = {"5′"};
+        BOOST_TEST(get_available_attachment_point_names(atom9) == exp_available);
     }
 
     // an amino acid with an unrecognized attachment point
@@ -184,14 +188,14 @@ BOOST_AUTO_TEST_CASE(test_get_attachment_points)
         atom0 = mol->getAtomWithIdx(0);
         atom1 = mol->getAtomWithIdx(1);
 
-        exp_bound = {{L"C", atom1}, {L"X", atom1}};
+        exp_bound = {{"C", atom1}, {"X", atom1}};
         BOOST_TEST(get_bound_attachment_point_names_and_atoms(atom0) == exp_bound);
-        exp_available = {L"N"};
+        exp_available = {"N"};
         BOOST_TEST(get_available_attachment_point_names(atom0) == exp_available);
 
-        exp_bound = {{L"N", atom0}, {L"R4", atom0}};
+        exp_bound = {{"N", atom0}, {"R4", atom0}};
         BOOST_TEST(get_bound_attachment_point_names_and_atoms(atom1) == exp_bound);
-        exp_available = {L"C", L"X"};
+        exp_available = {"C", "X"};
         BOOST_TEST(get_available_attachment_point_names(atom1) == exp_available);
     }
 }
