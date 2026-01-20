@@ -174,6 +174,7 @@ BOOST_AUTO_TEST_CASE(test_get_attachment_points)
         
         exp_bound = {{"", term_phos_chain_2}};
         BOOST_TEST(get_bound_attachment_point_names_and_atoms(term_phos_chain_3) == exp_bound);
+        // TODO: blank name is being returned here
         exp_available = {"5'"};
         std::cout << "get_available_attachment_point_names(term_phos_chain_3) = \n";
         for (auto cur_name : get_available_attachment_point_names(term_phos_chain_3)) {
