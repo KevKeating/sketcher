@@ -227,6 +227,9 @@ get_all_attachment_point_names(const RDKit::Atom* monomer)
         // name from the sugar for the unbound attachment point. In all other
         // scenarios, leave the attachment points unnamed since they're
         // chemically identical and there's no meaningful point of reference
+        
+        // TODO: create get_ap_num_of_bound_sugar or something like that, just
+        //       so that the weird logic is behing a clearly named function?
         std::vector<std::string> phos_ap_names = {"", ""};
         if (mol.getAtomDegree(monomer) != 1) {
             return phos_ap_names;
