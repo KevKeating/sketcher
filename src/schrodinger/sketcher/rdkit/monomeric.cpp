@@ -200,6 +200,35 @@ ap_num_to_name(const int ap_num, const std::vector<std::string>& all_names)
     return fmt::format("R{}", ap_num);
 }
 
+static std::string get_attachment_point_name_of_bound_sugar(const RDKit::Atom* phosphate)
+{
+    const auto& mol = phosphate->getOwningMol();
+    if (mol.getAtomDegree(phosphate) != 1) {
+            return "";
+    }
+    const RDKit::Bond* bond = *mol.atomBonds(phosphate).begin();
+    auto prev_neighbor = phosphate;
+    auto cur_neighbor = *mol.atomNeighbors(phosphate).begin();
+    const RDKit::Atom* next_neighbor;
+    while (mol.getAtomDegree(cur_neighbor) == 2 && get_monomer_type(cur_neighbor) == MonomerType::NA_PHOSPHATE) {
+        for (auto possible_next_neighbor : mol.atomNeighbors(cur_neighbor)) {
+            if (possible_next_neighbor != prev_neighbor) {
+                prev_neighbor = cur_neighbor;
+                next_neighbor = possible_next_neighbor;
+                break;
+            }
+        }
+    }
+    if (get_monomer_type(cur_neighbor) == MonomerType::NA_SUGAR) {
+        auto bond_to_sugar = mol.getBondBetweenAtoms(prev_neighbor->getIdx(), cur_neighbor->getIdx());
+        auto sugar_ap_num = get_attachment_point_for_atom(cur_neighbor, bond_to_sugar);
+        if ((sugar_ap_num == 1 || sugar_ap_num == 2)) {
+            return ap_num_to_name(sugar_ap_num, AP_NAMES.at(MonomerType::NA_SUGAR));
+        } 
+    }
+    return "";
+}
+
 /**
  * @return a list of all "pretty" attachment point names (e.g. "N" instead of
  * "R1" for amino acids) for the given monomer, regardless of whether those
@@ -229,25 +258,12 @@ get_all_attachment_point_names(const RDKit::Atom* monomer)
         // name from the sugar for the unbound attachment point. In all other
         // scenarios, leave the attachment points unnamed since they're
         // chemically identical and there's no meaningful point of reference
-        
-        // TODO: create get_ap_num_of_bound_sugar or something like that, just
-        //       so that the weird logic is behing a clearly named function?
         std::vector<std::string> phos_ap_names = {"", ""};
-        if (mol.getAtomDegree(monomer) != 1) {
-            return phos_ap_names;
-        }
-        const RDKit::Bond* phos_bond = *mol.atomBonds(monomer).begin();
-        auto neighbor = monomer;
-        const RDKit::Bond* neighbor_bond;
-        do {
-            neighbor_bond = *mol.atomBonds(neighbor).begin();
-            neighbor = *mol.atomNeighbors(neighbor).begin();
-        } while (mol.getAtomDegree(neighbor) == 1 && get_monomer_type(neighbor) == MonomerType::NA_PHOSPHATE);
-        if (get_monomer_type(neighbor) == MonomerType::NA_SUGAR) {
-            auto sugar_ap_num = get_attachment_point_for_atom(neighbor, neighbor_bond);
+        auto sugar_ap_name = get_attachment_point_name_of_bound_sugar(monomer);
+        if (!sugar_ap_name.empty()) {
+            const RDKit::Bond* phos_bond = *mol.atomBonds(monomer).begin();
             auto bound_phos_ap_num =  get_attachment_point_for_atom(monomer, phos_bond);
-            if ((sugar_ap_num == 1 || sugar_ap_num == 2) && (bound_phos_ap_num == 1 || bound_phos_ap_num == 2)) {
-                auto sugar_ap_name = ap_num_to_name(sugar_ap_num, AP_NAMES.at(MonomerType::NA_SUGAR));
+            if (bound_phos_ap_num == 1 || bound_phos_ap_num == 2) {
                 int unbound_phos_ap_name_idx = bound_phos_ap_num == 1 ? 1 : 0;
                 phos_ap_names[unbound_phos_ap_name_idx] = sugar_ap_name;
             }
