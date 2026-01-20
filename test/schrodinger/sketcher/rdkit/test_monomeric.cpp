@@ -141,19 +141,19 @@ BOOST_AUTO_TEST_CASE(test_get_attachment_points)
     {
         atom0 = mol->getAtomWithIdx(0);
         atom1 = mol->getAtomWithIdx(1);
-        auto term_sugar = mol->getAtomWithIdx(5);
+        auto term_sugar = mol->getAtomWithIdx(4);
         auto term_phosphate = mol->getAtomWithIdx(6);
         
         exp_bound = {{"", atom1}};
         BOOST_TEST(get_bound_attachment_point_names_and_atoms(atom0) == exp_bound);
         exp_available = {"3'"};
-        std::cout << "get_available_attachment_point_names(atom0) = \n";
-        for (auto cur_name : get_available_attachment_point_names(atom0)) {
-            std::cout << "\t<" << cur_name << ">\n";
-        }
         BOOST_TEST(get_available_attachment_point_names(atom0) == exp_available);
 
         exp_bound = {{"", term_sugar}};
+        std::cout << "get_bound_attachment_point_names_and_atoms(term_phosphate) = \n";
+        for (auto [cur_name, bound_atom] : get_bound_attachment_point_names_and_atoms(term_phosphate)) {
+            std::cout << "\t<" << cur_name << ">\n";
+        }
         BOOST_TEST(get_bound_attachment_point_names_and_atoms(term_phosphate) == exp_bound);
         exp_available = {"5'"};
         BOOST_TEST(get_available_attachment_point_names(term_phosphate) == exp_available);
@@ -163,18 +163,22 @@ BOOST_AUTO_TEST_CASE(test_get_attachment_points)
     // they're at the end of a chain of phsophates
     mol = rdkit_extensions::to_rdkit("RNA1{P.R(U)P.R(T)P.P.P}$$$$");
     {
-        auto atom6 = mol->getAtomWithIdx(6);
-        auto atom7 = mol->getAtomWithIdx(7);
-        auto atom8 = mol->getAtomWithIdx(8);
-        auto atom9 = mol->getAtomWithIdx(9);
+        auto term_sugar = mol->getAtomWithIdx(5);
+        auto term_phos_chain_1 = mol->getAtomWithIdx(6);
+        auto term_phos_chain_2 = mol->getAtomWithIdx(7);
+        auto term_phos_chain_3 = mol->getAtomWithIdx(8);
 
         // TODO: both bound attachment points use empty names
-        BOOST_TEST(get_available_attachment_point_names(atom7).empty());
-        BOOST_TEST(get_available_attachment_point_names(atom8).empty());
-        exp_bound = {{"", atom8}};
-        BOOST_TEST(get_bound_attachment_point_names_and_atoms(atom9) == exp_bound);
+        BOOST_TEST(get_available_attachment_point_names(term_phos_chain_1).empty());
+        BOOST_TEST(get_available_attachment_point_names(term_phos_chain_2).empty());
+        exp_bound = {{"", term_phos_chain_2}};
+        BOOST_TEST(get_bound_attachment_point_names_and_atoms(term_phos_chain_3) == exp_bound);
         exp_available = {"5'"};
-        BOOST_TEST(get_available_attachment_point_names(atom9) == exp_available);
+        std::cout << "get_available_attachment_point_names(term_phos_chain_3) = \n";
+        for (auto cur_name : get_available_attachment_point_names(term_phos_chain_3)) {
+            std::cout << "\t<" << cur_name << ">\n";
+        }
+        BOOST_TEST(get_available_attachment_point_names(term_phos_chain_3) == exp_available);
     }
 
     // an amino acid with an unrecognized attachment point
