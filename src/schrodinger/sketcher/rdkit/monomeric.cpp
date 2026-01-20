@@ -3,6 +3,7 @@
 #include <functional>
 
 #include <fmt/core.h>
+#include <fmt/xchar.h>
 
 #include <rdkit/GraphMol/Atom.h>
 #include <rdkit/GraphMol/Bond.h>
@@ -25,7 +26,7 @@ const std::string NUCLEOTIDE_POLYMER_PREFIX = "RNA";
 // note that the ′ marks are unicode primes, not apostrophes
 // NA_PHOSPHATE takes its attachment point names from the bound sugar
 // CHEM monomers don't have "pretty" attachment point names (we just use R1, R2, etc.)
-const std::unordered_map<MonomerType, std::vector<std::string>> AP_NAMES = {
+const std::unordered_map<MonomerType, std::vector<std::wstring>> AP_NAMES = {
     {MonomerType::PEPTIDE, {"N", "C", "X"}},
     {MonomerType::NA_BASE, {"S", "BP"}},
     // {MonomerType::NA_PHOSPHATE, {"3′", "5′"}},
@@ -190,13 +191,13 @@ get_available_attachment_points(const RDKit::Atom* monomer)
  * @return If all_names contains a "pretty" name for ap_num, then that name will
  * be returned. Otherwise "R<ap_num>" will be returned.
  */
-static std::string
-ap_num_to_name(const int ap_num, const std::vector<std::string>& all_names)
+static std::wstring
+ap_num_to_name(const int ap_num, const std::vector<std::wstring>& all_names)
 {
     if (0 < ap_num && ap_num <= all_names.size()) {
         return all_names[ap_num - 1];
     }
-    return fmt::format("R{}", ap_num);
+    return fmt::format(L"R{}", ap_num);
 }
 
 /**
@@ -213,10 +214,9 @@ ap_num_to_name(const int ap_num, const std::vector<std::string>& all_names)
  * *not* an empty list) unless there is exactly one attachment point bound to a
  * sugar.
  */
-static std::vector<std::string>
+static std::vector<std::wstring>
 get_all_attachment_point_names(const RDKit::Atom* monomer)
 {
-    std::vector<std::string> all_names;
     auto monomer_type = get_monomer_type(monomer);
     
     if (AP_NAMES.contains(monomer_type)) {
@@ -231,7 +231,7 @@ get_all_attachment_point_names(const RDKit::Atom* monomer)
         
         // TODO: create get_ap_num_of_bound_sugar or something like that, just
         //       so that the weird logic is behing a clearly named function?
-        std::vector<std::string> phos_ap_names = {"", ""};
+        std::vector<std::wstring> phos_ap_names = {L"", L""};
         if (mol.getAtomDegree(monomer) != 1) {
             return phos_ap_names;
         }
@@ -257,16 +257,15 @@ get_all_attachment_point_names(const RDKit::Atom* monomer)
         // attachment points will be named R1, R2, etc
         return {};
     }
-    return all_names;
 }
 
 // TODO: attachment points for phosphates aren't uniquely names - use vector of pairs instead?
-std::unordered_map<std::string, const RDKit::Atom*>
+std::unordered_map<std::wstring, const RDKit::Atom*>
 get_bound_attachment_point_names_and_atoms(const RDKit::Atom* monomer)
 {
     auto bound_aps = get_bound_attachment_points(monomer);
     auto all_names = get_all_attachment_point_names(monomer);
-    std::unordered_map<std::string, const RDKit::Atom*> bound_ap_names;
+    std::unordered_map<std::wstring, const RDKit::Atom*> bound_ap_names;
     std::transform(bound_aps.begin(), bound_aps.end(),
                    std::inserter(bound_ap_names, bound_ap_names.end()),
                    [&all_names](auto num_and_atom) {
@@ -277,12 +276,12 @@ get_bound_attachment_point_names_and_atoms(const RDKit::Atom* monomer)
     return bound_ap_names;
 }
 
-std::unordered_set<std::string>
+std::unordered_set<std::wstring>
 get_available_attachment_point_names(const RDKit::Atom* monomer)
 {
     auto available_aps = get_available_attachment_points(monomer);
     auto all_names = get_all_attachment_point_names(monomer);
-    std::unordered_set<std::string> available_names;
+    std::unordered_set<std::wstring> available_names;
     std::transform(available_aps.begin(), available_aps.end(),
                    std::inserter(available_names, available_names.end()),
                    std::bind(ap_num_to_name, std::placeholders::_1, all_names));
