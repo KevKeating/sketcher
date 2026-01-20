@@ -105,6 +105,16 @@ static int get_attachment_point_for_atom(std::string linkage,
     }
 }
 
+static int get_attachment_point_for_atom(const RDKit::Atom* monomer, const RDKit::Bond* bond)
+{
+    std::string linkage;
+    if (bond->getPropIfPresent(LINKAGE, linkage)) {
+        bool is_start_atom = bond->getBeginAtom() == monomer;
+        return get_attachment_point_for_atom(linkage, is_start_atom);
+    }
+    return -1;
+}
+
 /**
  * @return a map of {attachment point: bound monomer} for all bound attachment
  * points of the specified monomer. Attachment points are specified using
@@ -172,6 +182,23 @@ get_available_attachment_points(const RDKit::Atom* monomer)
 }
 
 /**
+ * Convert an attachment point number to a name
+ * @param ap_num The attachment point number to convert
+ * @param all_names A list of "pretty" names for attachment points, starting
+ * with R1.
+ * @return If all_names contains a "pretty" name for ap_num, then that name will
+ * be returned. Otherwise "R<ap_num>" will be returned.
+ */
+static std::string
+ap_num_to_name(const int ap_num, const std::vector<std::string>& all_names)
+{
+    if (0 < ap_num && ap_num <= all_names.size()) {
+        return all_names[ap_num - 1];
+    }
+    return fmt::format("R{}", ap_num);
+}
+
+/**
  * @return a list of all "pretty" attachment point names (e.g. "N" instead of
  * "R1" for amino acids) for the given monomer, regardless of whether those
  * attachment points are bound or available.
@@ -195,56 +222,38 @@ get_all_attachment_point_names(const RDKit::Atom* monomer)
         return AP_NAMES.at(monomer_type);
     } else if (monomer_type == MonomerType::NA_PHOSPHATE) {
         const auto& mol = monomer->getOwningMol();
-        // if this phosphate is bound to a sugar, or if it's at the end of a
+        // If this phosphate is bound to a sugar, or if it's at the end of a
         // chain of phosphates bound to a sugar, then use the attachment point
-        // names from the sugar.  
-        auto neighbor = monomer;
-        const RDKit::Bond* bond = nullptr;
-        while (mol.getAtomDegree(neighbor) == 1 && get_monomer_type(neighbor) == MonomerType::NA_PHOSPHATE) {
-            bond = *mol.atomBonds(neighbor).begin();
-            neighbor = *mol.atomNeighbors(neighbor).begin();
+        // name from the sugar for the unbound attachment point. In all other
+        // scenarios, leave the attachment points unnamed since they're
+        // chemically identical and there's no meaningful point of reference
+        std::vector<std::string> phos_ap_names = {"", ""};
+        if (mol.getAtomDegree(monomer) != 1) {
+            return phos_ap_names;
         }
+        const RDKit::Bond* phos_bond = *mol.atomBonds(monomer).begin();
+        auto neighbor = monomer;
+        const RDKit::Bond* neighbor_bond;
+        do {
+            neighbor_bond = *mol.atomBonds(neighbor).begin();
+            neighbor = *mol.atomNeighbors(neighbor).begin();
+        } while (mol.getAtomDegree(neighbor) == 1 && get_monomer_type(neighbor) == MonomerType::NA_PHOSPHATE);
         if (get_monomer_type(neighbor) == MonomerType::NA_SUGAR) {
-            std::string sugar_linkage;
-            if (bond->getPropIfPresent(LINKAGE, sugar_linkage)) {
-                bool is_sugar_start_atom = bond->getBeginAtom() == neighbor;
-                auto sugar_ap_num =
-                    get_attachment_point_for_atom(sugar_linkage, is_sugar_start_atom);
-                // make sure that ap_num is 1 or 2
+            auto sugar_ap_num = get_attachment_point_for_atom(neighbor, neighbor_bond);
+            auto bound_phos_ap_num =  get_attachment_point_for_atom(monomer, phos_bond);
+            if ((sugar_ap_num == 1 || sugar_ap_num == 2) && (bound_phos_ap_num == 1 || bound_phos_ap_num == 2)) {
                 auto sugar_ap_name = ap_num_to_name(sugar_ap_num, AP_NAMES.at(MonomerType::NA_SUGAR));
-                std::string phosphate_linkage;
-                if (bond->getPropIfPresent(LINKAGE, phosphate_linkage)) {
-                auto phosphate_ap_num = ;
-                
+                int unbound_phos_ap_name_idx = bound_phos_ap_num == 1 ? 1 : 0;
+                phos_ap_names[unbound_phos_ap_name_idx] = sugar_ap_name;
             }
         }
-        // in all other scenarios, leave the attachment points unnamed since
-        // they're chemically identical and there's no meaningful point of
-        // reference
-        return {"", ""};
+        return phos_ap_names;
     } else {
         // for CHEM monomers, we return an empty list, meaning that the
         // attachment points will be named R1, R2, etc
         return {};
     }
     return all_names;
-}
-
-/**
- * Convert an attachment point number to a name
- * @param ap_num The attachment point number to convert
- * @param all_names A list of "pretty" names for attachment points, starting
- * with R1.
- * @return If all_names contains a "pretty" name for ap_num, then that name will
- * be returned. Otherwise "R<ap_num>" will be returned.
- */
-static std::string
-ap_num_to_name(const int ap_num, const std::vector<std::string>& all_names)
-{
-    if (0 < ap_num && ap_num <= all_names.size()) {
-        return all_names[ap_num - 1];
-    }
-    return fmt::format("R{}", ap_num);
 }
 
 std::unordered_map<std::string, const RDKit::Atom*>
