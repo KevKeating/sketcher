@@ -261,15 +261,14 @@ get_all_attachment_point_names(const RDKit::Atom* monomer)
     return all_names;
 }
 
-// TODO: attachment points for phosphates aren't uniquely names - use vector of pairs instead?
-std::unordered_map<std::string, const RDKit::Atom*>
+std::vector<std::pair<std::string, const RDKit::Atom*>>
 get_bound_attachment_point_names_and_atoms(const RDKit::Atom* monomer)
 {
     auto bound_aps = get_bound_attachment_points(monomer);
     auto all_names = get_all_attachment_point_names(monomer);
-    std::unordered_map<std::string, const RDKit::Atom*> bound_ap_names;
+    std::vector<std::pair<std::string, const RDKit::Atom*>> bound_ap_names;
     std::transform(bound_aps.begin(), bound_aps.end(),
-                   std::inserter(bound_ap_names, bound_ap_names.end()),
+                   std::back_inserter(bound_ap_names),
                    [&all_names](auto num_and_atom) {
                        auto& [ap_num, atom] = num_and_atom;
                        auto ap_name = ap_num_to_name(ap_num, all_names);
@@ -278,14 +277,14 @@ get_bound_attachment_point_names_and_atoms(const RDKit::Atom* monomer)
     return bound_ap_names;
 }
 
-std::unordered_set<std::string>
+std::vector<std::string>
 get_available_attachment_point_names(const RDKit::Atom* monomer)
 {
     auto available_aps = get_available_attachment_points(monomer);
     auto all_names = get_all_attachment_point_names(monomer);
-    std::unordered_set<std::string> available_names;
+    std::vector<std::string> available_names;
     std::transform(available_aps.begin(), available_aps.end(),
-                   std::inserter(available_names, available_names.end()),
+                   std::back_inserter(available_names),
                    std::bind(ap_num_to_name, std::placeholders::_1, all_names));
     return available_names;
 }

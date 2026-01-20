@@ -45,8 +45,8 @@ BOOST_AUTO_TEST_CASE(test_contains_two_monomer_linkages)
 
 BOOST_AUTO_TEST_CASE(test_get_attachment_points)
 {
-    std::unordered_map<std::string, const RDKit::Atom*> exp_bound;
-    std::unordered_set<std::string> exp_available;
+    std::vector<std::pair<std::string, const RDKit::Atom*>> exp_bound;
+    std::vector<std::string> exp_available;
     const RDKit::Atom *atom0, *atom1, *atom2;
     
     // a lone alanine has no bound attachment points
@@ -164,13 +164,12 @@ BOOST_AUTO_TEST_CASE(test_get_attachment_points)
         auto term_phos_chain_2 = mol->getAtomWithIdx(7);
         auto term_phos_chain_3 = mol->getAtomWithIdx(8);
 
-        // TODO: both bound attachment points use empty names
-        // exp_bound = {{"", term_sugar}, {"", term_phos_chain_2}};
-        // BOOST_TEST(get_bound_attachment_point_names_and_atoms(term_phos_chain_1) == exp_bound);
+        exp_bound = {{"", term_sugar}, {"", term_phos_chain_2}};
+        BOOST_TEST(get_bound_attachment_point_names_and_atoms(term_phos_chain_1) == exp_bound);
         BOOST_TEST(get_available_attachment_point_names(term_phos_chain_1).empty());
         
-        // exp_bound = {{"", term_phos_chain_1}, {"", term_phos_chain_3}};
-        // BOOST_TEST(get_bound_attachment_point_names_and_atoms(term_phos_chain_2) == exp_bound);
+        exp_bound = {{"", term_phos_chain_1}, {"", term_phos_chain_3}};
+        BOOST_TEST(get_bound_attachment_point_names_and_atoms(term_phos_chain_2) == exp_bound);
         BOOST_TEST(get_available_attachment_point_names(term_phos_chain_2).empty());
         
         exp_bound = {{"", term_phos_chain_2}};
@@ -181,6 +180,16 @@ BOOST_AUTO_TEST_CASE(test_get_attachment_points)
             std::cout << "\t<" << cur_name << ">\n";
         }
         BOOST_TEST(get_available_attachment_point_names(term_phos_chain_3) == exp_available);
+    }
+    
+    // attachment points on lone phosphates are unnamed since there's no bound
+    // sugar
+    mol = rdkit_extensions::to_rdkit("RNA1{P}$$$$");
+    {
+        atom0 = mol->getAtomWithIdx(0);
+        BOOST_TEST(get_bound_attachment_point_names_and_atoms(atom0).empty());
+        exp_available = {"", ""};
+        BOOST_TEST(get_available_attachment_point_names(atom0) == exp_available);
     }
 
     // an amino acid with an unrecognized attachment point
