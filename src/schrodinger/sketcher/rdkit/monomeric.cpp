@@ -22,14 +22,13 @@ const std::string PEPTIDE_POLYMER_PREFIX = "PEPTIDE";
 // According to HELM, DNA is a subtype of RNA, so DNA also uses the RNA prefix
 const std::string NUCLEOTIDE_POLYMER_PREFIX = "RNA";
 
-// note that the ′ marks are unicode primes, not apostrophes
+// note that the apostrophes, not unicode primes, to avoid issues with C++′s handling of Unicode.
 // NA_PHOSPHATE takes its attachment point names from the bound sugar
 // CHEM monomers don't have "pretty" attachment point names (we just use R1, R2, etc.)
 const std::unordered_map<MonomerType, std::vector<std::string>> AP_NAMES = {
     {MonomerType::PEPTIDE, {"N", "C", "X"}},
     {MonomerType::NA_BASE, {"S", "BP"}},
-    // {MonomerType::NA_PHOSPHATE, {"3′", "5′"}},
-    {MonomerType::NA_SUGAR, {"3′", "5′", "X"}},
+    {MonomerType::NA_SUGAR, {"3'", "5'", "X"}},
 };
 
 } // namespace
@@ -164,6 +163,8 @@ get_available_attachment_points(const RDKit::Atom* monomer)
     int num_aps = -1;
     if (AP_NAMES.contains(monomer_type)) {
         num_aps = AP_NAMES.at(monomer_type).size();
+    } else if (monomer_type == MonomerType::NA_PHOSPHATE) {
+        num_aps = 2;
     } else {
         // a CHEM monomer
         std::unordered_set<int> bound_ap_nums;
