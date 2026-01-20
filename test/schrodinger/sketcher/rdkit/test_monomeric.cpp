@@ -137,11 +137,43 @@ BOOST_AUTO_TEST_CASE(test_get_attachment_points)
         BOOST_TEST(get_available_attachment_point_names(atom1) == exp_available);
     }
     
-    // TODO: NA_PHOSPHATE monomers
+    // NA_PHOSPHATE monomers name their unbound attachment points after the
+    // attachment point of the bound sugar
     mol = rdkit_extensions::to_rdkit("RNA1{P.R(U)P.R(T)P}$$$$");
+    {
+        atom0 = mol->getAtomWithIdx(0);
+        atom1 = mol->getAtomWithIdx(1);
+        auto atom5 = mol->getAtomWithIdx(5);
+        auto atom6 = mol->getAtomWithIdx(6);
+        
+        exp_bound = {{"", atom1}};
+        BOOST_TEST(get_bound_attachment_point_names_and_atoms(atom0) == exp_bound);
+        exp_available = {"3′"};
+        BOOST_TEST(get_available_attachment_point_names(atom0) == exp_available);
 
-    // TODO: triphosphate
+        exp_bound = {{"", atom5}};
+        BOOST_TEST(get_bound_attachment_point_names_and_atoms(atom6) == exp_bound);
+        exp_available = {"5′"};
+        BOOST_TEST(get_available_attachment_point_names(atom6) == exp_available);
+    }
+
+    // NA_PHOSPHATE monomers still take their name from the bound sugar even if
+    // they're at the end of a chain of phsophates
     mol = rdkit_extensions::to_rdkit("RNA1{P.R(U)P.R(T)P.P.P}$$$$");
+    {
+        auto atom6 = mol->getAtomWithIdx(6);
+        auto atom7 = mol->getAtomWithIdx(7);
+        auto atom8 = mol->getAtomWithIdx(8);
+        auto atom9 = mol->getAtomWithIdx(9);
+
+        // TODO: both bound attachment points use empty names
+        BOOST_TEST(get_available_attachment_point_names(atom7).empty());
+        BOOST_TEST(get_available_attachment_point_names(atom8).empty());
+        exp_bound = {{"", atom8}};
+        BOOST_TEST(get_bound_attachment_point_names_and_atoms(atom9) == exp_bound);
+        exp_available = {"5′"};
+        BOOST_TEST(get_available_attachment_point_names(atom9) == exp_available);
+    }
 
     // an amino acid with an unrecognized attachment point
     mol = rdkit_extensions::to_rdkit(

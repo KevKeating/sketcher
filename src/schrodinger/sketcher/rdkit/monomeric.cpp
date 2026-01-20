@@ -259,6 +259,7 @@ get_all_attachment_point_names(const RDKit::Atom* monomer)
     return all_names;
 }
 
+// TODO: attachment points for phosphates aren't uniquely names - use vector of pairs instead?
 std::unordered_map<std::string, const RDKit::Atom*>
 get_bound_attachment_point_names_and_atoms(const RDKit::Atom* monomer)
 {
