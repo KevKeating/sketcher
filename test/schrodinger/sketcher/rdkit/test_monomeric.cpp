@@ -43,6 +43,11 @@ BOOST_AUTO_TEST_CASE(test_contains_two_monomer_linkages)
     BOOST_TEST(!contains_two_monomer_linkages(mol->getBondWithIdx(2)));
 }
 
+/**
+ * Make sure that get_bound_attachment_point_names_and_atoms() and
+ * get_available_attachment_point_names() return the expected attachment point
+ * names for a variety of molecules
+ */
 BOOST_AUTO_TEST_CASE(test_get_attachment_points)
 {
     std::vector<std::pair<std::string, const RDKit::Atom*>> exp_bound;
@@ -158,18 +163,25 @@ BOOST_AUTO_TEST_CASE(test_get_attachment_points)
     // attachment point of the bound sugar
     mol = rdkit_extensions::to_rdkit("RNA1{P.R(U)P.R(T)P}$$$$");
     {
-        atom0 = mol->getAtomWithIdx(0);
-        atom1 = mol->getAtomWithIdx(1);
+        auto start_phos = mol->getAtomWithIdx(0);
+        auto start_sugar = mol->getAtomWithIdx(1);
+        auto middle_phos = mol->getAtomWithIdx(3);
         auto term_sugar = mol->getAtomWithIdx(4);
         auto term_phosphate = mol->getAtomWithIdx(6);
 
-        exp_bound = {{"", atom1}};
-        BOOST_TEST(get_bound_attachment_point_names_and_atoms(atom0) ==
+        exp_bound = {{"", start_sugar}};
+        BOOST_TEST(get_bound_attachment_point_names_and_atoms(start_phos) ==
                    exp_bound);
         exp_available = {"3'"};
-        BOOST_TEST(get_available_attachment_point_names(atom0) ==
+        BOOST_TEST(get_available_attachment_point_names(start_phos) ==
                    exp_available);
 
+        exp_bound = {{"", start_sugar}, {"", term_sugar}};
+        BOOST_TEST(get_bound_attachment_point_names_and_atoms(middle_phos) ==
+                   exp_bound);
+        BOOST_TEST(get_available_attachment_point_names(middle_phos).empty());
+        
+        
         exp_bound = {{"", term_sugar}};
         BOOST_TEST(get_bound_attachment_point_names_and_atoms(term_phosphate) ==
                    exp_bound);
@@ -179,7 +191,7 @@ BOOST_AUTO_TEST_CASE(test_get_attachment_points)
     }
 
     // NA_PHOSPHATE monomers still take their name from the bound sugar even if
-    // they're at the end of a chain of phsophates
+    // they're at the end of a chain of phosphates
     mol = rdkit_extensions::to_rdkit("RNA1{P.R(U)P.R(T)P.P.P}$$$$");
     {
         auto term_sugar = mol->getAtomWithIdx(4);
@@ -218,7 +230,7 @@ BOOST_AUTO_TEST_CASE(test_get_attachment_points)
                    exp_available);
     }
 
-    // an amino acid with an unrecognized attachment point
+    // an amino acid with an unrecognized attachment point (R4)
     mol = rdkit_extensions::to_rdkit(
         "PEPTIDE1{A.A}$PEPTIDE1,PEPTIDE1,1:R3-2:R4$$$V2.0");
     {

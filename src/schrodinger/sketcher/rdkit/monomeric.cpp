@@ -22,16 +22,13 @@ const std::string PEPTIDE_POLYMER_PREFIX = "PEPTIDE";
 // According to HELM, DNA is a subtype of RNA, so DNA also uses the RNA prefix
 const std::string NUCLEOTIDE_POLYMER_PREFIX = "RNA";
 
-// note that the apostrophes, not unicode primes, to avoid issues with C++′s
-// handling of Unicode. NA_PHOSPHATE takes its attachment point names from the
-// bound sugar CHEM monomers don't have "pretty" attachment point names (we just
-// use R1, R2, etc.)
+// note that the primes use apostrophes instead of a Unicode prime to avoid
+// issues with C++′s handling of Unicode
 const std::unordered_map<MonomerType, std::vector<std::string>> AP_NAMES = {
     {MonomerType::PEPTIDE, {"N", "C", "X"}},
     {MonomerType::NA_BASE, {"S", "BP"}},
     {MonomerType::NA_SUGAR, {"3'", "5'", "X"}},
 };
-
 } // namespace
 
 MonomerType get_monomer_type(const RDKit::Atom* atom)
@@ -81,6 +78,8 @@ bool contains_two_monomer_linkages(const RDKit::Bond* bond)
  * @param is_begin_atom If true, we'll return the attachment point for the
  * bond's begin atom.  Otherwise, we'll return the attachment point for the
  * bond's end atom.
+ * @return the attachment point number, or -1 if the attachment point is not
+ * properly specified
  */
 static int get_attachment_point_for_atom(std::string linkage,
                                          bool is_begin_atom)
@@ -105,6 +104,13 @@ static int get_attachment_point_for_atom(std::string linkage,
     }
 }
 
+/**
+ * @overload Return the number of the attachment point for the bond on the
+ * specified monomer. Note that if the bond specifies two linkages, this
+ * overload will only return the attachment point of the primary linkage.
+ * @return the attachment point number, or -1 if the attachment point is not
+ * properly specified
+ */
 static int get_attachment_point_for_atom(const RDKit::Atom* monomer,
                                          const RDKit::Bond* bond)
 {
@@ -204,7 +210,7 @@ static std::string ap_num_to_name(const int ap_num,
 
 /**
  * If the given phosphate monomer is bound to exactly one sugar (or if it's
- * bound to a chain of phosphates, and that chain of phosphates is bound to a
+ * bound to a chain of phosphates and that chain of phosphates is bound to a
  * sugar, e.g. ATP), return the "pretty" name of the sugar's attachment point
  * (e.g. "3'", not "R1"). Otherwise, return en empty string.
  */
@@ -219,8 +225,8 @@ get_attachment_point_name_of_bound_sugar(const RDKit::Atom* phosphate)
     auto prev_neighbor = phosphate;
     auto cur_neighbor = *mol.atomNeighbors(phosphate).begin();
     const RDKit::Atom* next_neighbor;
-    // if there is a chain of phosphates, continue along it until we reach the
-    // end
+    // if there's a chain of phosphates, continue along it until we reach the
+    // sugar
     while (mol.getAtomDegree(cur_neighbor) == 2 &&
            get_monomer_type(cur_neighbor) == MonomerType::NA_PHOSPHATE) {
         for (auto possible_next_neighbor : mol.atomNeighbors(cur_neighbor)) {
@@ -237,8 +243,7 @@ get_attachment_point_name_of_bound_sugar(const RDKit::Atom* phosphate)
         auto sugar_ap_num =
             get_attachment_point_for_atom(cur_neighbor, bond_to_sugar);
         // the phosphate should be bound to either the 3' (R1) or 5' (R2). If
-        // it's bound to something else, ignore it, since something's gone
-        // wrong.
+        // it's bound to something else, ignore it since something's gone wrong.
         if ((sugar_ap_num == 1 || sugar_ap_num == 2)) {
             return ap_num_to_name(sugar_ap_num,
                                   AP_NAMES.at(MonomerType::NA_SUGAR));
@@ -252,7 +257,8 @@ get_attachment_point_name_of_bound_sugar(const RDKit::Atom* phosphate)
  * "R1" for amino acids) for the given monomer, regardless of whether those
  * attachment points are bound or available.
  *
- * Note that CHEM monomers don't have special names, so we return an empty list.
+ * Note that CHEM monomers don't have special names, so we return an empty list
+ * (which will cause ap_num_to_name() to return R1, R2, etc).
  *
  * Also note that phosphate attachment point names reflect the attachment point
  * of the bound sugar, as the sites themselves are chemically identical. As a
