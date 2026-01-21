@@ -131,16 +131,18 @@ static std::vector<std::pair<int, const RDKit::Atom*>>
 get_bound_attachment_points(const RDKit::Atom* monomer)
 {
     const auto& mol = monomer->getOwningMol();
+    std::unordered_set<int> bound_ap_nums;
     std::vector<std::pair<int, const RDKit::Atom*>> bound_aps;
 
-    auto record_linkage = [&bound_aps, monomer](const RDKit::Bond* bond,
-                                                const bool is_start_atom,
-                                                const std::string& prop_name) {
+    auto record_linkage = [&bound_aps, &bound_ap_nums, monomer](
+                              const RDKit::Bond* bond, const bool is_start_atom,
+                              const std::string& prop_name) {
         std::string linkage;
         if (bond->getPropIfPresent(prop_name, linkage)) {
             auto ap_value =
                 get_attachment_point_for_atom(linkage, is_start_atom);
-            if (ap_value > 0) {
+            if (ap_value > 0 && !bound_ap_nums.contains(ap_value)) {
+                bound_ap_nums.insert(ap_value);
                 bound_aps.push_back({ap_value, bond->getOtherAtom(monomer)});
             }
         }
@@ -170,8 +172,8 @@ get_available_attachment_points(const RDKit::Atom* monomer)
     auto monomer_type = get_monomer_type(monomer);
     std::unordered_set<int> bound_ap_nums;
     std::transform(bound_aps.begin(), bound_aps.end(),
-                    std::inserter(bound_ap_nums, bound_ap_nums.end()),
-                    [](auto num_and_atom) { return num_and_atom.first; });
+                   std::inserter(bound_ap_nums, bound_ap_nums.end()),
+                   [](auto num_and_atom) { return num_and_atom.first; });
     int num_aps = -1;
     if (AP_NAMES.contains(monomer_type)) {
         num_aps = AP_NAMES.at(monomer_type).size();
