@@ -1,4 +1,4 @@
-#define BOOST_TEST_MODULE rdkit_extensions_cg_coordgen
+#define BOOST_TEST_MODULE rdkit_extensions_monomer_coordgen
 
 #include <boost/test/data/test_case.hpp>
 #include <boost/test/unit_test.hpp>
@@ -22,7 +22,7 @@ typedef std::pair<std::string, coords_t> mol_data_t;
 BOOST_TEST_DONT_PRINT_LOG_VALUE(mol_data_t)
 
 BOOST_DATA_TEST_CASE(
-    TestComputeCGCoords,
+    TestComputeMonomerCoords,
     bdata::make(std::vector<mol_data_t>{
         {"CHEM1{[[*:1]N]}|PEPTIDE1{A.C.R.K}$PEPTIDE1,CHEM1,4:R2-1:R1|PEPTIDE1,"
          "PEPTIDE1,2:R3-4:R3$$$V2.0",
@@ -64,22 +64,22 @@ BOOST_DATA_TEST_CASE(
         {"PEPTIDE1{[Sar].[dR].[dC].[dY].[dC].[dH].[dP].[dF]}|PEPTIDE2{[Sar].["
          "dR].[dC].[dY].[dC].[dH].[dP].[dF]}$PEPTIDE1,PEPTIDE2,5:R3-3:R3|"
          "PEPTIDE1,PEPTIDE2,3:R3-5:R3$$$",
-         {{4.299038, -0.75},
-          {2.799038, -0.75},
-          {1.299038, -0.75},
-          {-0, -1.5},
-          {-1.299038, -0.75},
-          {-2.598076, -1.5},
-          {-4.098076, -1.5},
-          {-5.598076, -1.5},
-          {-4.098076, 1.5},
-          {-2.598076, 1.5},
-          {-1.299038, 0.75},
-          {0, 1.5},
-          {1.299038, 0.75},
-          {2.799038, 0.75},
-          {4.299038, 0.75},
-          {5.799038, 0.75}}},
+         {{0, 0},
+          {1.5, 0},
+          {3, 0},
+          {4.5, 0},
+          {6, 0},
+          {7.5, 0},
+          {9, 0},
+          {10.5, 0},
+          {9, -1.5},
+          {7.5, -1.5},
+          {6, -1.5},
+          {4.5, -1.5},
+          {3, -1.5},
+          {1.5, -1.5},
+          {0, -1.5},
+          {-1.5, -1.5}}},
 
         // Snaking linear polymers
         {"PEPTIDE1{K.W.L.N.A.L.L.H.H.G.L}$$$$V2.0",
