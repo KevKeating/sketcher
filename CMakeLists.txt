@@ -243,7 +243,8 @@ if(EMSCRIPTEN)
       -sASYNCIFY
       -lembind
       -fexceptions
-      -sDISABLE_EXCEPTION_CATCHING=0)
+      -sDISABLE_EXCEPTION_CATCHING=0
+      -sPTHREAD_POOL_SIZE=4)
 endif()
 target_link_libraries(
   ${APP_TARGET}
