@@ -130,9 +130,9 @@ ConfigureViewMenu::ConfigureViewMenu(QWidget* parent) : QMenu(parent)
 HelpMenu::HelpMenu(QWidget* parent) : QMenu(parent)
 {
     m_help_act = addAction("Help...");
-    addAction("Getting Started...", this, &HelpMenu::showWelcomeDialog);
+    addAction("Getting Started...", this, &HelpMenu::showWelcomeDialog, Qt::QueuedConnection);
     addAction("About 2D Sketcher...", this,
-              &HelpMenu::showAbout2DSketcherDialog);
+              &HelpMenu::showAbout2DSketcherDialog, Qt::QueuedConnection);
 }
 
 void HelpMenu::showWelcomeDialog()
