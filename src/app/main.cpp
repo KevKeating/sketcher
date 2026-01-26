@@ -13,6 +13,7 @@
 
 #include <QApplication>
 #include <QFile>
+#include <QStyleHints>
 
 #include "schrodinger/rdkit_extensions/convert.h"
 #include "schrodinger/rdkit_extensions/helm.h"
