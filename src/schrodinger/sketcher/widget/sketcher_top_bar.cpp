@@ -66,15 +66,15 @@ void SketcherTopBar::initMenus()
     connect(m_import_menu->m_import_from_file_act, &QAction::triggered, this,
             &SketcherTopBar::onImportFromFileClicked);
     connect(m_import_menu->m_paste_in_text_act, &QAction::triggered, this,
-            &SketcherTopBar::onPasteInTextClicked);
+            &SketcherTopBar::onPasteInTextClicked, Qt::QueuedConnection);
 
     // Set up "Export" menu
     m_export_menu = new ExportMenu(this);
     ui->export_btn->setMenu(m_export_menu);
     connect(m_export_menu->m_save_image_act, &QAction::triggered, this,
-            &SketcherTopBar::saveImageRequested);
+            &SketcherTopBar::saveImageRequested, Qt::QueuedConnection);
     connect(m_export_menu->m_export_to_file_act, &QAction::triggered, this,
-            &SketcherTopBar::exportToFileRequested);
+            &SketcherTopBar::exportToFileRequested, Qt::QueuedConnection);
 
     // Set up "More Actions" menu
     m_more_actions_menu = new MoreActionsMenu(getModel(), this);
@@ -118,7 +118,8 @@ void SketcherTopBar::initMenus()
     m_configure_view_menu = new ConfigureViewMenu(this);
     ui->configure_view_btn->setMenu(m_configure_view_menu);
     connect(m_configure_view_menu->m_preferences_act, &QAction::triggered, this,
-            &SketcherTopBar::adjustRenderingSettingsRequested);
+            &SketcherTopBar::adjustRenderingSettingsRequested,
+            Qt::QueuedConnection);
 
     // Set up "Help" menu
     m_help_menu = new HelpMenu(this);
