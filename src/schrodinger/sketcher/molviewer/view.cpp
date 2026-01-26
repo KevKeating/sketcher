@@ -333,7 +333,7 @@ void View::updateCursor(const QPixmap& cursor_hint)
     } // destroy the painter to finish painting
 
     QCursor cursor(combined, CURSOR_HOTSPOT_X, CURSOR_HOTSPOT_Y);
-    setCursor(cursor);
+    // setCursor(cursor);
 }
 
 } // namespace sketcher
