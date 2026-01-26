@@ -142,7 +142,7 @@ void apply_stylesheet(QApplication& app)
 #if QT_VERSION >= QT_VERSION_CHECK(6, 8, 0)
     QApplication::styleHints()->setColorScheme(Qt::ColorScheme::Light);
 #endif
-    
+
     QFile styleFile(":resources/schrodinger_livedesign.qss");
     bool success = styleFile.open(QFile::ReadOnly);
     if (!success) {
