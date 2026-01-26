@@ -60,8 +60,8 @@ class SKETCHER_API ModalDialog : public QDialog
     // NOTE: modal dialogs that use `exec()` are problematic in the
     // WebAssembly (WASM) build, and will not return values. Explicitly enforce
     // dialogs inherited from this class to be modal and use show.
-    // using QDialog::exec;
-    // using QDialog::open;
+    using QDialog::exec;
+    using QDialog::open;
 
     /**
      * (WASM) Update the custom title bar's title when the window title changes

@@ -78,7 +78,7 @@ jobs:
         run: sudo apt-get update && sudo apt-get install valgrind
 
       - name: Determine build type
-        run: echo BUILD_TYPE=Debug >> "$GITHUB_ENV"
+        run: echo BUILD_TYPE=${{ matrix.build-name == 'memtest' && 'Debug' || 'Release' }} >> "$GITHUB_ENV"
 
       - name: Read external/versions.json
         run: |
