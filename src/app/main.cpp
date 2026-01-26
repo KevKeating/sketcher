@@ -137,6 +137,12 @@ EMSCRIPTEN_BINDINGS(sketcher)
 
 void apply_stylesheet(QApplication& app)
 {
+    // In Qt 6.8, Qt will try to automatically apply dark mode if the system is
+    // set to that.  The result looks terrible, so switch back to light mode
+#if QT_VERSION >= QT_VERSION_CHECK(6, 8, 0)
+    QApplication::styleHints()->setColorScheme(Qt::ColorScheme::Light);
+#endif
+    
     QFile styleFile(":resources/schrodinger_livedesign.qss");
     bool success = styleFile.open(QFile::ReadOnly);
     if (!success) {
