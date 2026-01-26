@@ -137,8 +137,9 @@ EMSCRIPTEN_BINDINGS(sketcher)
 
 void apply_stylesheet(QApplication& app)
 {
-    // In Qt 6.8, Qt will try to automatically apply dark mode if the system is
-    // set to that.  The result looks terrible, so switch back to light mode
+    // In Qt 6.8 and newer, Qt will try to automatically apply dark mode if the
+    // system and/or browser is set to that. The result looks terrible, so
+    // switch back to light mode.
 #if QT_VERSION >= QT_VERSION_CHECK(6, 8, 0)
     QApplication::styleHints()->setColorScheme(Qt::ColorScheme::Light);
 #endif
