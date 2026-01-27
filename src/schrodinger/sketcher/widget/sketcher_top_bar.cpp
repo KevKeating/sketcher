@@ -251,7 +251,7 @@ void SketcherTopBar::onImportFromFileClicked()
     }
     auto name_filter = filters.join(";;");
 
-    QFileDialog::getOpenFileContent(name_filter, file_open_completed, this);
+    QFileDialog::getOpenFileContent(name_filter, file_open_completed);
 }
 
 void SketcherTopBar::onPasteInTextClicked()
