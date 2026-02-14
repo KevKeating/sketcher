@@ -17,6 +17,7 @@
 #include "schrodinger/sketcher/molviewer/constants.h"
 #include "schrodinger/sketcher/molviewer/monomer_connector_item.h"
 #include "schrodinger/sketcher/molviewer/monomer_constants.h"
+#include "schrodinger/sketcher/molviewer/unbound_monomeric_attachment_point_item.h"
 #include "schrodinger/sketcher/molviewer/coord_utils.h"
 #include "schrodinger/sketcher/molviewer/scene.h"
 #include "schrodinger/sketcher/molviewer/scene_utils.h"
@@ -77,7 +78,7 @@ void DrawMonomerSceneTool::onMouseMove(QGraphicsSceneMouseEvent* const event)
         // hovering over a monomer
         auto* monomer_item = dynamic_cast<AbstractMonomerItem*>(item);
         const auto* monomer = monomer_item->getAtom();
-        labelAttachmentPointsOnMonomer(monomer);
+        labelAttachmentPointsOnMonomer(monomer, monomer_item);
     } else {
         // hovering over a monomeric connector
         auto* connector_item = qgraphicsitem_cast<MonomerConnectorItem*>(item);
@@ -125,13 +126,17 @@ QPixmap DrawMonomerSceneTool::createDefaultCursorPixmap() const
 }
 
 void DrawMonomerSceneTool::labelAttachmentPointsOnMonomer(
-    const RDKit::Atom* const monomer)
+    const RDKit::Atom* const monomer, AbstractMonomerItem* const monomer_item)
 {
     auto [bound_aps, unbound_aps] = get_attachment_points_for_monomer(monomer);
     for (auto& cur_ap : bound_aps) {
         labelBoundAttachmentPoint(monomer, cur_ap.bound_monomer,
                                   cur_ap.is_secondary_connection, cur_ap.name);
     }
+    for (auto& cur_ap : unbound_aps) {
+        new UnboundMonomericAttachmentPointItem(cur_ap, monomer_item, m_fonts);
+    }
+    
     // TODO: add connector nubs for available attachment points
 }
 

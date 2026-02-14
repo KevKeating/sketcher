@@ -38,7 +38,7 @@ class SKETCHER_API UnboundMonomericAttachmentPointItem : public QGraphicsItem
      */
     UnboundMonomericAttachmentPointItem(
         const UnboundAttachmentPoint& attachment_point,
-        AbstractMonomerItem& parent_monomer,
+        AbstractMonomerItem* parent_monomer,
         const Fonts& fonts);
 
     /**
@@ -76,9 +76,9 @@ class SKETCHER_API UnboundMonomericAttachmentPointItem : public QGraphicsItem
     void updateColors();
 
     // Data references
-    const UnboundAttachmentPoint& m_attachment_point;
-    AbstractMonomerItem& m_parent_monomer;
-    const Fonts& m_fonts;
+    UnboundAttachmentPoint m_attachment_point;
+    AbstractMonomerItem* m_parent_monomer;
+    Fonts m_fonts;
 
     // Cached geometry (line always starts from origin)
     QPointF m_line_end;

@@ -44,9 +44,9 @@ QPointF direction_to_unit_vector(Direction dir)
 
 UnboundMonomericAttachmentPointItem::UnboundMonomericAttachmentPointItem(
     const UnboundAttachmentPoint& attachment_point,
-    AbstractMonomerItem& parent_monomer,
+    AbstractMonomerItem* parent_monomer,
     const Fonts& fonts)
-    : QGraphicsItem(&parent_monomer)
+    : QGraphicsItem(parent_monomer)
     , m_attachment_point(attachment_point)
     , m_parent_monomer(parent_monomer)
     , m_fonts(fonts)
@@ -114,7 +114,7 @@ void UnboundMonomericAttachmentPointItem::updateCachedData()
 
     // Calculate the line endpoint based on the parent's bounding rect
     // The line extends from center (0,0) outward in the direction
-    QRectF parent_bounds = m_parent_monomer.boundingRect();
+    QRectF parent_bounds = m_parent_monomer->boundingRect();
 
     // Calculate how far to extend based on direction
     // For cardinal directions, use half width or half height
