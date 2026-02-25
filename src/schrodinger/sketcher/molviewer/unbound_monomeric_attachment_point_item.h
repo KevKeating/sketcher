@@ -57,6 +57,7 @@ class SKETCHER_API UnboundMonomericAttachmentPointItem : public QGraphicsItem
      * Update all cached geometry and visual data. Should be called when
      * the parent monomer's geometry changes.
      */
+    // TODO: we probably don't need this, or at least don't need it to be public
     void updateCachedData();
 
     // QGraphicsItem overrides
@@ -77,7 +78,10 @@ class SKETCHER_API UnboundMonomericAttachmentPointItem : public QGraphicsItem
 
     // Data references
     UnboundAttachmentPoint m_attachment_point;
+    // TODO: this is only used to grab the bounding rect, so we don't need to
+    //       store it if we don't allow geometry to be recalculated
     AbstractMonomerItem* m_parent_monomer;
+    // TODO: this could be a pointer to the scene tool's fonts
     Fonts m_fonts;
 
     // Cached geometry (line always starts from origin)

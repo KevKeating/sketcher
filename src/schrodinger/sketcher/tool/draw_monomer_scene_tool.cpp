@@ -134,7 +134,8 @@ void DrawMonomerSceneTool::labelAttachmentPointsOnMonomer(
                                   cur_ap.is_secondary_connection, cur_ap.name);
     }
     for (auto& cur_ap : unbound_aps) {
-        new UnboundMonomericAttachmentPointItem(cur_ap, monomer_item, m_fonts);
+        auto* item = new UnboundMonomericAttachmentPointItem(cur_ap, monomer_item, m_fonts);
+        m_unbound_ap_items.push_back(item);
     }
     
     // TODO: add connector nubs for available attachment points
@@ -360,6 +361,10 @@ void DrawMonomerSceneTool::clearAttachmentPointsLabels()
         m_attachment_point_labels_group.removeFromGroup(item);
         delete item;
     }
+    for (auto* item : m_unbound_ap_items) {
+        delete item;
+    }
+    m_unbound_ap_items.clear();
 }
 
 } // namespace sketcher

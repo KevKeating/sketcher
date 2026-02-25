@@ -31,6 +31,8 @@ enum class ChainType;
 namespace sketcher
 {
 
+class UnboundMonomericAttachmentPointItem;
+
 /**
  * A scene tools that draws a monomer
  */
@@ -52,6 +54,7 @@ class SKETCHER_API DrawMonomerSceneTool : public StandardSceneToolBase
     Fonts m_fonts;
     QGraphicsItemGroup m_attachment_point_labels_group;
     const QGraphicsItem* m_hovered_item = nullptr;
+    std::vector<UnboundMonomericAttachmentPointItem*> m_unbound_ap_items;
 
     QPixmap createDefaultCursorPixmap() const override;
 
