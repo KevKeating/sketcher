@@ -8,6 +8,7 @@
 #include <QString>
 
 #include "schrodinger/sketcher/definitions.h"
+#include "schrodinger/sketcher/molviewer/fonts.h"
 #include "schrodinger/sketcher/rdkit/monomeric.h"
 
 namespace schrodinger
@@ -16,7 +17,6 @@ namespace sketcher
 {
 
 class AbstractMonomerItem;
-class Fonts;
 
 /**
  * A graphics item for representing an unbound (available) attachment point
