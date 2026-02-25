@@ -89,7 +89,7 @@ void UnboundMonomericAttachmentPointItem::paint(
     painter->drawLine(QPointF(0, 0), m_line_end);
 
     // Draw the filled circle at the endpoint
-    painter->setPen(Qt::black);
+    painter->setPen(Qt::NoPen);
     painter->setBrush(m_circle_brush);
     qreal radius = UNBOUND_AP_CIRCLE_DIAMETER / 2.0;
     painter->drawEllipse(m_line_end, radius, radius);
@@ -131,12 +131,16 @@ void UnboundMonomericAttachmentPointItem::updateCachedData()
         // Diagonal direction - find where the ray exits the bounding rect
         qreal t_x = half_width / qAbs(dir.x());
         qreal t_y = half_height / qAbs(dir.y());
+        // TODO: why isn't this Pythagorean theorem?
         extent = qMin(t_x, t_y);
     }
 
+    // TODO: we want to hit the corners of the shape with diagonals, not
+    //       necessarily 45 degrees
     // Line endpoint is extent + line length in the direction
     m_line_end = dir * (extent + UNBOUND_AP_LINE_LENGTH);
 
+    // TODO: reuse the logic from the scene tool for this
     // Build label text with Unicode prime substitution
     m_label_text = QString::fromStdString(m_attachment_point.name);
     m_label_text.replace('\'', QString::fromUtf8("\u2032"));
@@ -145,6 +149,7 @@ void UnboundMonomericAttachmentPointItem::updateCachedData()
     m_label_rect = m_fonts.m_monomeric_attachment_point_label_fm.boundingRect(
         m_label_text);
 
+    // TODO: reuse the logic from the scene tool for this
     // Position the label based on direction
     positionLabelRect();
 
