@@ -92,7 +92,7 @@ class SKETCHER_API UnboundMonomericAttachmentPointItem : public QGraphicsItem
 
     // Drawing resources
     QPen m_line_pen;
-    QBrush m_circle_brush;
+    QBrush m_circle_brush{Qt::SolidPattern};
 
     // State
     bool m_is_active = false;

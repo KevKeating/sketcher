@@ -89,7 +89,7 @@ void UnboundMonomericAttachmentPointItem::paint(
     painter->drawLine(QPointF(0, 0), m_line_end);
 
     // Draw the filled circle at the endpoint
-    painter->setPen(Qt::NoPen);
+    painter->setPen(Qt::black);
     painter->setBrush(m_circle_brush);
     qreal radius = UNBOUND_AP_CIRCLE_DIAMETER / 2.0;
     painter->drawEllipse(m_line_end, radius, radius);
