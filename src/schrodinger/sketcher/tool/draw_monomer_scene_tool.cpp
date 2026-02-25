@@ -45,6 +45,16 @@ DrawMonomerSceneTool::DrawMonomerSceneTool(
     m_attachment_point_labels_group.setZValue(static_cast<qreal>(ZOrder::HINT));
 }
 
+DrawMonomerSceneTool::~DrawMonomerSceneTool()
+{
+    // explicitly erase any attachment point labels. The bound attachment point
+    // labels would be implicitly deleted regardless when
+    // m_attachment_point_labels_group is destroyed, but the unbound attachment
+    // point labels are parented to their monomer, so they could outlive the
+    // scene tool without this call.
+    clearAttachmentPointsLabels();
+}
+
 std::vector<QGraphicsItem*> DrawMonomerSceneTool::getGraphicsItems()
 {
     auto items = StandardSceneToolBase::getGraphicsItems();

@@ -42,6 +42,7 @@ class SKETCHER_API DrawMonomerSceneTool : public StandardSceneToolBase
     DrawMonomerSceneTool(const std::string& res_name,
                          const rdkit_extensions::ChainType chain_type,
                          const Fonts& fonts, Scene* scene, MolModel* mol_model);
+    virtual ~DrawMonomerSceneTool();
 
     // Reimplemented AbstractSceneTool methods
     std::vector<QGraphicsItem*> getGraphicsItems() override;
