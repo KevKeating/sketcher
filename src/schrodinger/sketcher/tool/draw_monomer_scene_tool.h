@@ -62,7 +62,9 @@ class SKETCHER_API DrawMonomerSceneTool : public StandardSceneToolBase
     /**
      * Label all attachment points on the given monomer
      */
-    void labelAttachmentPointsOnMonomer(const RDKit::Atom* const monomer, AbstractMonomerItem* const monomer_item);
+    void
+    labelAttachmentPointsOnMonomer(const RDKit::Atom* const monomer,
+                                   AbstractMonomerItem* const monomer_item);
 
     /**
      * Label both attachment points for the given monomeric connector

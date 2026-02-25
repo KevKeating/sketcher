@@ -44,12 +44,11 @@ QPointF direction_to_unit_vector(Direction dir)
 
 UnboundMonomericAttachmentPointItem::UnboundMonomericAttachmentPointItem(
     const UnboundAttachmentPoint& attachment_point,
-    AbstractMonomerItem* parent_monomer,
-    const Fonts& fonts)
-    : QGraphicsItem(parent_monomer)
-    , m_attachment_point(attachment_point)
-    , m_parent_monomer(parent_monomer)
-    , m_fonts(fonts)
+    AbstractMonomerItem* parent_monomer, const Fonts& fonts) :
+    QGraphicsItem(parent_monomer),
+    m_attachment_point(attachment_point),
+    m_parent_monomer(parent_monomer),
+    m_fonts(fonts)
 {
     setFlag(QGraphicsItem::ItemStacksBehindParent);
 
@@ -78,9 +77,7 @@ QRectF UnboundMonomericAttachmentPointItem::boundingRect() const
 }
 
 void UnboundMonomericAttachmentPointItem::paint(
-    QPainter* painter,
-    const QStyleOptionGraphicsItem* option,
-    QWidget* widget)
+    QPainter* painter, const QStyleOptionGraphicsItem* option, QWidget* widget)
 {
     Q_UNUSED(option);
     Q_UNUSED(widget);
@@ -155,18 +152,15 @@ void UnboundMonomericAttachmentPointItem::updateCachedData()
     qreal half_line_width = m_line_pen.widthF() / 2.0;
 
     // Line bounding rect (from origin to endpoint)
-    QRectF line_bounds =
-        QRectF(QPointF(0, 0), m_line_end).normalized();
-    line_bounds.adjust(
-        -half_line_width, -half_line_width, half_line_width, half_line_width);
+    QRectF line_bounds = QRectF(QPointF(0, 0), m_line_end).normalized();
+    line_bounds.adjust(-half_line_width, -half_line_width, half_line_width,
+                       half_line_width);
 
     // Circle bounding rect
     qreal radius = UNBOUND_AP_CIRCLE_DIAMETER / 2.0;
-    QRectF circle_bounds(
-        m_line_end.x() - radius,
-        m_line_end.y() - radius,
-        UNBOUND_AP_CIRCLE_DIAMETER,
-        UNBOUND_AP_CIRCLE_DIAMETER);
+    QRectF circle_bounds(m_line_end.x() - radius, m_line_end.y() - radius,
+                         UNBOUND_AP_CIRCLE_DIAMETER,
+                         UNBOUND_AP_CIRCLE_DIAMETER);
 
     m_bounding_rect = line_bounds.united(circle_bounds).united(m_label_rect);
 
@@ -179,7 +173,8 @@ void UnboundMonomericAttachmentPointItem::positionLabelRect()
     qreal gap = UNBOUND_AP_CIRCLE_DIAMETER / 2.0 + UNBOUND_AP_LABEL_GAP;
 
     // Calculate label center position offset from the circle center
-    QPointF label_center = m_line_end + dir * (gap + m_label_rect.width() / 2.0);
+    QPointF label_center =
+        m_line_end + dir * (gap + m_label_rect.width() / 2.0);
 
     // Adjust based on direction components
     // For horizontal component: align left/right edge appropriately
@@ -211,7 +206,8 @@ void UnboundMonomericAttachmentPointItem::positionLabelRect()
 
 void UnboundMonomericAttachmentPointItem::updateColors()
 {
-    QColor color = m_is_active ? UNBOUND_AP_ACTIVE_COLOR : UNBOUND_AP_INACTIVE_COLOR;
+    QColor color =
+        m_is_active ? UNBOUND_AP_ACTIVE_COLOR : UNBOUND_AP_INACTIVE_COLOR;
     m_line_pen.setColor(color);
     m_circle_brush.setColor(color);
     update();

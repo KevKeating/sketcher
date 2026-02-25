@@ -47,10 +47,10 @@ DrawMonomerSceneTool::DrawMonomerSceneTool(
 
 DrawMonomerSceneTool::~DrawMonomerSceneTool()
 {
-    // explicitly erase any attachment point labels. The bound attachment point
-    // labels would be implicitly deleted regardless when
+    // explicitly erase any attachment point labels. Without this, the bound
+    // attachment point labels would be deleted regardless when
     // m_attachment_point_labels_group is destroyed, but the unbound attachment
-    // point labels are parented to their monomer, so they could outlive the
+    // point labels are parented to their monomer, so they would outlive the
     // scene tool without this call.
     clearAttachmentPointsLabels();
 }
@@ -144,11 +144,10 @@ void DrawMonomerSceneTool::labelAttachmentPointsOnMonomer(
                                   cur_ap.is_secondary_connection, cur_ap.name);
     }
     for (auto& cur_ap : unbound_aps) {
-        auto* item = new UnboundMonomericAttachmentPointItem(cur_ap, monomer_item, m_fonts);
+        auto* item = new UnboundMonomericAttachmentPointItem(
+            cur_ap, monomer_item, m_fonts);
         m_unbound_ap_items.push_back(item);
     }
-    
-    // TODO: add connector nubs for available attachment points
 }
 
 void DrawMonomerSceneTool::labelAttachmentPointsOnConnector(
