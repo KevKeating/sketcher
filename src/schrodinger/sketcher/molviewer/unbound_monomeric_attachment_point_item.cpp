@@ -18,6 +18,8 @@ namespace
 const qreal SQRT_HALF = M_SQRT1_2; // 1/sqrt(2) ≈ 0.707
 } // namespace
 
+// TODO: we want to hit the corners of the shape with diagonals, not
+    //       necessarily 45 degrees
 QPointF direction_to_unit_vector(Direction dir)
 {
     switch (dir) {
