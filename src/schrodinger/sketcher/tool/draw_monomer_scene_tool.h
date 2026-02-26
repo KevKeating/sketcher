@@ -33,6 +33,12 @@ namespace sketcher
 
 class UnboundMonomericAttachmentPointItem;
 
+QString prep_attachment_point_name(const std::string& name);
+
+void position_ap_label_rect(QRectF& ap_label_rect,
+                                   const QPointF& monomer_coords,
+                                   const QPointF& bound_coords);
+
 /**
  * A scene tools that draws a monomer
  */

@@ -7,6 +7,7 @@
 #include "schrodinger/sketcher/molviewer/abstract_monomer_item.h"
 #include "schrodinger/sketcher/molviewer/fonts.h"
 #include "schrodinger/sketcher/molviewer/monomer_constants.h"
+#include "schrodinger/sketcher/tool/draw_monomer_scene_tool.h"
 
 namespace schrodinger
 {
@@ -133,19 +134,13 @@ void UnboundMonomericAttachmentPointItem::updateCachedData()
         // Diagonal direction - find where the ray exits the bounding rect
         qreal t_x = half_width / qAbs(dir.x());
         qreal t_y = half_height / qAbs(dir.y());
-        // TODO: why isn't this Pythagorean theorem?
         extent = qMin(t_x, t_y);
     }
 
-    // TODO: we want to hit the corners of the shape with diagonals, not
-    //       necessarily 45 degrees
     // Line endpoint is extent + line length in the direction
     m_line_end = dir * (extent + UNBOUND_AP_LINE_LENGTH);
 
-    // TODO: reuse the logic from the scene tool for this
-    // Build label text with Unicode prime substitution
-    m_label_text = QString::fromStdString(m_attachment_point.name);
-    m_label_text.replace('\'', QString::fromUtf8("\u2032"));
+    m_label_text = prep_attachment_point_name(m_attachment_point.name);
 
     // Calculate label rect size from font metrics
     m_label_rect = m_fonts.m_monomeric_attachment_point_label_fm.boundingRect(

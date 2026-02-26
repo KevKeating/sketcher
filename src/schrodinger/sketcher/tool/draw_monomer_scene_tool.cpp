@@ -179,11 +179,12 @@ void DrawMonomerSceneTool::labelAttachmentPointsOnConnector(
  * @param monomer_coords The coordinates of the monomer being labeled
  * @param bound_coords The coordinates of the other monomer involved in the bond
  */
-static void position_ap_label_rect(QRectF& ap_label_rect,
-                                   const RDGeom::Point3D& monomer_coords,
-                                   const RDGeom::Point3D& bound_coords)
+
+void position_ap_label_rect(QRectF& ap_label_rect,
+                                   const QPointF& monomer_coords,
+                                   const QPointF& bound_coords)
 {
-    auto qline = QLineF(to_scene_xy(monomer_coords), to_scene_xy(bound_coords));
+    auto qline = QLineF(monomer_coords, bound_coords);
     auto angle = qline.angle();
 
     bool rotate_ccw;
@@ -248,6 +249,14 @@ static void position_ap_label_rect(QRectF& ap_label_rect,
     ap_label_rect.translate(qline.p2());
 }
 
+static void position_ap_label_rect(QRectF& ap_label_rect,
+                                   const RDGeom::Point3D& monomer_coords,
+                                   const RDGeom::Point3D& bound_coords)
+{
+    position_ap_label_rect(ap_label_rect, to_scene_xy(monomer_coords), to_scene_xy(bound_coords));
+}
+
+
 /**
  * For the bond between monomer and bound_monomer, return whether monomer's
  * attachment point has been drawn with an arrowhead (which happens for
@@ -269,6 +278,15 @@ attachment_point_is_drawn_with_arrowhead(const RDKit::Atom* const monomer,
     }
 }
 
+QString prep_attachment_point_name(const std::string& name)
+{
+    auto qname = QString::fromStdString(name);
+    // convert apostrophes in nucleic acid attachment point names to Unicode
+    // primes
+    qname.replace('\'', "′"); 
+    return qname;
+}
+
 void DrawMonomerSceneTool::labelBoundAttachmentPoint(
     const RDKit::Atom* const monomer, const RDKit::Atom* const bound_monomer,
     const bool is_secondary_connection, const std::string& ap_name)
@@ -282,10 +300,7 @@ void DrawMonomerSceneTool::labelBoundAttachmentPoint(
     auto monomer_coords = conf.getAtomPos(monomer->getIdx());
     auto bound_coords = conf.getAtomPos(bound_monomer->getIdx());
 
-    auto ap_qname = QString::fromStdString(ap_name);
-    // convert apostrophes in nucleic acid attachment point names to Unicode
-    // primes
-    ap_qname.replace('\'', "′");
+    auto ap_qname = prep_attachment_point_name(ap_name);
     auto ap_label_rect =
         m_fonts.m_monomeric_attachment_point_label_fm.boundingRect(ap_qname);
     position_ap_label_rect(ap_label_rect, monomer_coords, bound_coords);
