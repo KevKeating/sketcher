@@ -53,12 +53,6 @@ class SKETCHER_API UnboundMonomericAttachmentPointItem : public QGraphicsItem
      */
     bool isActive() const;
 
-    /**
-     * Update all cached geometry and visual data. Should be called when
-     * the parent monomer's geometry changes.
-     */
-    // TODO: we probably don't need this, or at least don't need it to be public
-    void updateCachedData();
 
     // QGraphicsItem overrides
     QRectF boundingRect() const override;
@@ -66,11 +60,6 @@ class SKETCHER_API UnboundMonomericAttachmentPointItem : public QGraphicsItem
                QWidget* widget = nullptr) override;
 
   private:
-
-    /**
-     * Update pen and brush colors based on active state.
-     */
-    void updateColors();
 
     // Data references
     UnboundAttachmentPoint m_attachment_point;
@@ -92,15 +81,18 @@ class SKETCHER_API UnboundMonomericAttachmentPointItem : public QGraphicsItem
 
     // State
     bool m_is_active = false;
-};
 
-/**
- * Convert a Direction enum value to a unit vector in scene coordinates.
- * Note: Y-axis is inverted in Qt (positive Y goes down), so N is (0, -1).
- * @param dir The direction
- * @return Unit vector pointing in that direction
- */
-SKETCHER_API QPointF direction_to_unit_vector(Direction dir);
+    /**
+     * Update pen and brush colors based on active state.
+     */
+    void updateColors();
+
+    /**
+     * Update all cached geometry and visual data
+     */
+    // TODO: rename this to distinguish it from the "real" graphics items
+    void updateCachedData();
+};
 
 } // namespace sketcher
 } // namespace schrodinger

@@ -14,7 +14,13 @@ namespace schrodinger
 namespace sketcher
 {
 
-QPointF direction_to_unit_vector(Direction dir)
+/**
+ * Convert a Direction enum value to a unit vector in scene coordinates.
+ * Note: Y-axis is inverted in Qt (positive Y goes down), so N is (0, -1).
+ * @param dir The direction
+ * @return Unit vector pointing in that direction
+ */
+static QPointF direction_to_unit_vector(Direction dir)
 {
     switch (dir) {
         case Direction::N:
@@ -54,6 +60,8 @@ UnboundMonomericAttachmentPointItem::UnboundMonomericAttachmentPointItem(
     updateCachedData();
 }
 
+// TODO: active items should have be colored blue, have a line that's a full bond length, and not draw the circle
+// TODO: for active items, draw the other monomer and label its attachment point?
 void UnboundMonomericAttachmentPointItem::setActive(bool active)
 {
     if (m_is_active != active) {
@@ -62,6 +70,7 @@ void UnboundMonomericAttachmentPointItem::setActive(bool active)
     }
 }
 
+// TODO: is this needed?
 bool UnboundMonomericAttachmentPointItem::isActive() const
 {
     return m_is_active;
@@ -75,9 +84,6 @@ QRectF UnboundMonomericAttachmentPointItem::boundingRect() const
 void UnboundMonomericAttachmentPointItem::paint(
     QPainter* painter, const QStyleOptionGraphicsItem* option, QWidget* widget)
 {
-    Q_UNUSED(option);
-    Q_UNUSED(widget);
-
     painter->save();
 
     // Draw the line from center to endpoint
