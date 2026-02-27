@@ -78,6 +78,17 @@ QGraphicsItem* DrawMonomerSceneTool::getTopMonomericItemAt(const QPointF& scene_
     return nullptr;
 }
 
+UnboundMonomericAttachmentPointItem* DrawMonomerSceneTool::getActiveAttachmentPointAt(const QPointF& scene_pos)
+{
+    for (auto* ap_item : m_unbound_ap_items) {
+        if (ap_item->withinHoverArea(scene_pos)) {
+            return ap_item;
+        }
+    }
+    // TODO: figure out the default unbound attachment point
+    return nullptr;
+}
+
 void DrawMonomerSceneTool::onMouseMove(QGraphicsSceneMouseEvent* const event)
 {
     StandardSceneToolBase::onMouseMove(event);
@@ -94,18 +105,9 @@ void DrawMonomerSceneTool::onMouseMove(QGraphicsSceneMouseEvent* const event)
 
     if (!m_unbound_ap_items.empty()) {
         // if we're over a monomer with attachment points, update which attachment point is hovered
-        UnboundMonomericAttachmentPointItem* hovered_ap = nullptr;
+        auto* active_ap_item = getActiveAttachmentPointAt(scene_pos);
         for (auto* ap_item : m_unbound_ap_items) {
-            if (ap_item->withinHoverArea(scene_pos)) {
-                hovered_ap = ap_item;
-                break;
-            }
-        }
-        if (hovered_ap == nullptr) {
-            // TODO: figure out the default unbound attachment point
-        }
-        for (auto* ap_item : m_unbound_ap_items) {
-            ap_item->setActive(ap_item == hovered_ap);
+            ap_item->setActive(ap_item == active_ap_item);
         }
     }
 }
@@ -211,7 +213,6 @@ void DrawMonomerSceneTool::labelAttachmentPointsOnConnector(
  * @param monomer_coords The coordinates of the monomer being labeled
  * @param bound_coords The coordinates of the other monomer involved in the bond
  */
-
 void position_ap_label_rect(QRectF& ap_label_rect,
                                    const QPointF& monomer_coords,
                                    const QPointF& bound_coords)

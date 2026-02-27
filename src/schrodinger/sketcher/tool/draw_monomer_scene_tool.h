@@ -117,6 +117,7 @@ class SKETCHER_API DrawMonomerSceneTool : public StandardSceneToolBase
     
     QGraphicsItem* getTopMonomericItemAt(const QPointF& scene_pos);
     void startHoveringOver(QGraphicsItem* const item);
+    UnboundMonomericAttachmentPointItem* getActiveAttachmentPointAt(const QPointF& scene_pos);
 };
 
 } // namespace sketcher

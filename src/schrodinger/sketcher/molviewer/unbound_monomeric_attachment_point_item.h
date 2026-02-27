@@ -51,6 +51,7 @@ class SKETCHER_API UnboundMonomericAttachmentPointItem : public QGraphicsItem
      */
     void setActive(bool active);
 
+    // TODO: I don't think we need this method
     /**
      * @return whether this attachment point indicator is currently active
      */
