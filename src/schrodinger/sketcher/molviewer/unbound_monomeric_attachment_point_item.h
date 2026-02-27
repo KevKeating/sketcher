@@ -50,13 +50,7 @@ class SKETCHER_API UnboundMonomericAttachmentPointItem : public QGraphicsItem
      * @param active true for black coloring, false for gray
      */
     void setActive(bool active);
-
-    // TODO: I don't think we need this method
-    /**
-     * @return whether this attachment point indicator is currently active
-     */
-    bool isActive() const;
-    
+   
     bool withinHoverArea(const QPointF& scene_pos) const;
 
 
@@ -69,9 +63,6 @@ class SKETCHER_API UnboundMonomericAttachmentPointItem : public QGraphicsItem
 
     // Data references
     UnboundAttachmentPoint m_attachment_point;
-    // TODO: this is only used to grab the bounding rect, so we don't need to
-    //       store it if we don't allow geometry to be recalculated
-    AbstractMonomerItem* m_parent_monomer;
     // TODO: this could be a pointer to the scene tool's fonts
     Fonts m_fonts;
 
@@ -80,6 +71,7 @@ class SKETCHER_API UnboundMonomericAttachmentPointItem : public QGraphicsItem
     QRectF m_label_rect;
     QString m_label_text;
     QRectF m_bounding_rect;
+    QPainterPath m_hover_area;
 
     // Drawing resources
     QPen m_line_pen;
@@ -96,8 +88,7 @@ class SKETCHER_API UnboundMonomericAttachmentPointItem : public QGraphicsItem
     /**
      * Update all cached geometry and visual data
      */
-    // TODO: rename this to distinguish it from the "real" graphics items
-    void updateCachedData();
+    void calculateGeometry(const AbstractMonomerItem* parent_monomer);
 };
 
 } // namespace sketcher

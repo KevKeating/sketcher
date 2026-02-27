@@ -40,8 +40,11 @@ class UnboundMonomericAttachmentPointItem;
 QString prep_attachment_point_name(const std::string& name);
 
 /**
- * Position the given attachment point label rectangle based on the coordinates
- * of the monomer being labeled and the other bound monomer.
+ * Position the given rectangle to label a monomer's bound attachment point
+ * @param ap_label_rect The rectangle to position. It should already be sized
+ * correctly for the attachment point label.
+ * @param monomer_coords The coordinates of the monomer being labeled
+ * @param bound_coords The coordinates of the other monomer involved in the bond
  */
 void position_ap_label_rect(QRectF& ap_label_rect,
                                    const QPointF& monomer_coords,

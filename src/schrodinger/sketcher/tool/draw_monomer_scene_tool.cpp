@@ -206,13 +206,6 @@ void DrawMonomerSceneTool::labelAttachmentPointsOnConnector(
     }
 }
 
-/**
- * Position the given rectangle to label a monomer's bound attachment point
- * @param ap_label_rect The rectangle to position. It should already be sized
- * correctly for the attachment point label.
- * @param monomer_coords The coordinates of the monomer being labeled
- * @param bound_coords The coordinates of the other monomer involved in the bond
- */
 void position_ap_label_rect(QRectF& ap_label_rect,
                                    const QPointF& monomer_coords,
                                    const QPointF& bound_coords)
@@ -282,6 +275,9 @@ void position_ap_label_rect(QRectF& ap_label_rect,
     ap_label_rect.translate(qline.p2());
 }
 
+/**
+ * @overload Accepts RDKit coordinates instead of Scene coordinates
+ */
 static void position_ap_label_rect(QRectF& ap_label_rect,
                                    const RDGeom::Point3D& monomer_coords,
                                    const RDGeom::Point3D& bound_coords)

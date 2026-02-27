@@ -49,7 +49,6 @@ UnboundMonomericAttachmentPointItem::UnboundMonomericAttachmentPointItem(
     AbstractMonomerItem* parent_monomer, const Fonts& fonts) :
     QGraphicsItem(parent_monomer),
     m_attachment_point(attachment_point),
-    m_parent_monomer(parent_monomer),
     m_fonts(fonts)
 {
     setFlag(QGraphicsItem::ItemStacksBehindParent);
@@ -57,7 +56,7 @@ UnboundMonomericAttachmentPointItem::UnboundMonomericAttachmentPointItem(
     m_line_pen.setWidthF(UNBOUND_AP_LINE_THICKNESS);
     m_line_pen.setCapStyle(Qt::RoundCap);
 
-    updateCachedData();
+    calculateGeometry(parent_monomer);
 }
 
 int UnboundMonomericAttachmentPointItem::type() const
@@ -73,12 +72,6 @@ void UnboundMonomericAttachmentPointItem::setActive(bool active)
         m_is_active = active;
         updateColors();
     }
-}
-
-// TODO: is this needed?
-bool UnboundMonomericAttachmentPointItem::isActive() const
-{
-    return m_is_active;
 }
 
 QRectF UnboundMonomericAttachmentPointItem::boundingRect() const
@@ -109,16 +102,14 @@ void UnboundMonomericAttachmentPointItem::paint(
     painter->restore();
 }
 
-void UnboundMonomericAttachmentPointItem::updateCachedData()
+void UnboundMonomericAttachmentPointItem::calculateGeometry(const AbstractMonomerItem* parent_monomer)
 {
-    prepareGeometryChange();
-
     // Get direction unit vector
     QPointF dir = direction_to_unit_vector(m_attachment_point.direction);
 
     // Calculate the line endpoint based on the parent's bounding rect
     // The line extends from center (0,0) outward in the direction
-    QRectF parent_bounds = m_parent_monomer->boundingRect();
+    QRectF parent_bounds = parent_monomer->boundingRect();
 
     // Calculate how far to extend based on direction
     // For cardinal directions, use half width or half height
@@ -166,6 +157,10 @@ void UnboundMonomericAttachmentPointItem::updateCachedData()
                          UNBOUND_AP_CIRCLE_DIAMETER);
 
     m_bounding_rect = line_bounds.united(circle_bounds).united(m_label_rect);
+    m_hover_area.addRect(m_bounding_rect);
+    QPainterPath parent_bounds_path;
+    parent_bounds_path.addRect(parent_bounds);
+    m_hover_area -= mapFromParent(parent_bounds_path);
 
     updateColors();
 }
@@ -181,8 +176,7 @@ void UnboundMonomericAttachmentPointItem::updateColors()
 
 bool UnboundMonomericAttachmentPointItem::withinHoverArea(const QPointF& scene_pos) const
 {
-    // TODO: return false if we're over the monomer itself
-    return m_bounding_rect.contains(mapFromScene(scene_pos));
+    return m_hover_area.contains(mapFromScene(scene_pos));
 }
 
 } // namespace sketcher
