@@ -115,7 +115,7 @@ class SKETCHER_API DrawMonomerSceneTool : public StandardSceneToolBase
      */
     void clearAttachmentPointsLabels();
     
-    QGraphicsItem* getTopMonomericOrAttachmentPointItemAt(const QPointF& scene_pos);
+    QGraphicsItem* getTopMonomericItemAt(const QPointF& scene_pos);
     void startHoveringOver(QGraphicsItem* const item);
 };
 

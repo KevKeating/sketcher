@@ -181,6 +181,7 @@ void UnboundMonomericAttachmentPointItem::updateColors()
 
 bool UnboundMonomericAttachmentPointItem::withinHoverArea(const QPointF& scene_pos) const
 {
+    // TODO: return false if we're over the monomer itself
     return m_bounding_rect.contains(mapFromScene(scene_pos));
 }
 
