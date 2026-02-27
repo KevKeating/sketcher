@@ -172,38 +172,41 @@ void UnboundMonomericAttachmentPointItem::updateCachedData()
 void UnboundMonomericAttachmentPointItem::positionLabelRect()
 {
     QPointF dir = direction_to_unit_vector(m_attachment_point.direction);
-    qreal gap = UNBOUND_AP_CIRCLE_DIAMETER / 2.0 + UNBOUND_AP_LABEL_GAP;
+    position_ap_label_rect(m_label_rect, {0.0, 0.0}, dir);
+    
+    
+    // qreal gap = UNBOUND_AP_CIRCLE_DIAMETER / 2.0 + UNBOUND_AP_LABEL_GAP;
 
-    // Calculate label center position offset from the circle center
-    QPointF label_center =
-        m_line_end + dir * (gap + m_label_rect.width() / 2.0);
+    // // Calculate label center position offset from the circle center
+    // QPointF label_center =
+    //     m_line_end + dir * (gap + m_label_rect.width() / 2.0);
 
-    // Adjust based on direction components
-    // For horizontal component: align left/right edge appropriately
-    if (dir.x() > 0.1) {
-        // East component: align left edge of label to just past circle
-        label_center.setX(m_line_end.x() + gap + m_label_rect.width() / 2.0);
-    } else if (dir.x() < -0.1) {
-        // West component: align right edge of label to just before circle
-        label_center.setX(m_line_end.x() - gap - m_label_rect.width() / 2.0);
-    } else {
-        // Pure N or S: center horizontally
-        label_center.setX(m_line_end.x());
-    }
+    // // Adjust based on direction components
+    // // For horizontal component: align left/right edge appropriately
+    // if (dir.x() > 0.1) {
+    //     // East component: align left edge of label to just past circle
+    //     label_center.setX(m_line_end.x() + gap + m_label_rect.width() / 2.0);
+    // } else if (dir.x() < -0.1) {
+    //     // West component: align right edge of label to just before circle
+    //     label_center.setX(m_line_end.x() - gap - m_label_rect.width() / 2.0);
+    // } else {
+    //     // Pure N or S: center horizontally
+    //     label_center.setX(m_line_end.x());
+    // }
 
-    // For vertical component: align top/bottom edge appropriately
-    if (dir.y() < -0.1) {
-        // North component: align bottom of label to just above circle
-        label_center.setY(m_line_end.y() - gap - m_label_rect.height() / 2.0);
-    } else if (dir.y() > 0.1) {
-        // South component: align top of label to just below circle
-        label_center.setY(m_line_end.y() + gap + m_label_rect.height() / 2.0);
-    } else {
-        // Pure E or W: center vertically
-        label_center.setY(m_line_end.y());
-    }
+    // // For vertical component: align top/bottom edge appropriately
+    // if (dir.y() < -0.1) {
+    //     // North component: align bottom of label to just above circle
+    //     label_center.setY(m_line_end.y() - gap - m_label_rect.height() / 2.0);
+    // } else if (dir.y() > 0.1) {
+    //     // South component: align top of label to just below circle
+    //     label_center.setY(m_line_end.y() + gap + m_label_rect.height() / 2.0);
+    // } else {
+    //     // Pure E or W: center vertically
+    //     label_center.setY(m_line_end.y());
+    // }
 
-    m_label_rect.moveCenter(label_center);
+    // m_label_rect.moveCenter(label_center);
 }
 
 void UnboundMonomericAttachmentPointItem::updateColors()
