@@ -89,6 +89,26 @@ QGraphicsItem* DrawMonomerSceneTool::getTopMonomericItemAt(const QPointF& scene_
     return nullptr;
 }
 
+// TODO: figure this out
+static std::vector<int> get_preferred_attachment_point_order(const MonomerType tool_type, const MonomerType hovered_type) {
+    if (tool_type == MonomerType::PEPTIDE) {
+        return {2, 1, 3};
+    } else if (tool_type == MonomerType::NA_BASE) {
+        if (hovered_type == MonomerType::NA_BASE) {
+            // TODO: should be "pair"
+            return {};
+        } else if (hovered_type == MonomerType::NA_SUGAR) {
+            return {1};
+        }
+        return {};
+    } else if (tool_type == MonomerType::NA_SUGAR) {
+    } else if (tool_type == MonomerType::NA_PHOSPHATE) {
+    } else if (tool_type == MonomerType::CHEM) {
+        // TODO: do this better
+        return {1, 2, 3, 4, 5, 6, 7, 8};
+    }
+}
+
 // should only be called when hovering over a monomer
 UnboundMonomericAttachmentPointItem* DrawMonomerSceneTool::getActiveAttachmentPointAt(const QPointF& scene_pos)
 {
