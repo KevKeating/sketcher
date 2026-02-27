@@ -33,8 +33,16 @@ namespace sketcher
 
 class UnboundMonomericAttachmentPointItem;
 
+/**
+ * Convert the attachment point name to a QString and convert apostrophes to
+ * Unicode primes.
+ */
 QString prep_attachment_point_name(const std::string& name);
 
+/**
+ * Position the given attachment point label rectangle based on the coordinates
+ * of the monomer being labeled and the other bound monomer.
+ */
 void position_ap_label_rect(QRectF& ap_label_rect,
                                    const QPointF& monomer_coords,
                                    const QPointF& bound_coords);
