@@ -114,6 +114,8 @@ class SKETCHER_API DrawMonomerSceneTool : public StandardSceneToolBase
      * Clear all attachment point labels drawn by this scene tool
      */
     void clearAttachmentPointsLabels();
+    
+    QGraphicsItem* getTopMonomericOrAttachmentPointItemAt(const QPointF& scene_pos);
 };
 
 } // namespace sketcher

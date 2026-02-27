@@ -62,6 +62,16 @@ std::vector<QGraphicsItem*> DrawMonomerSceneTool::getGraphicsItems()
     return items;
 }
 
+QGraphicsItem* DrawMonomerSceneTool::getTopMonomericOrAttachmentPointItemAt(const QPointF& scene_pos)
+{
+    for (auto* item : m_scene->items(scene_pos)) {
+        if (item_matches_type_flag(item, InteractiveItemFlag::MONOMERIC) || qgraphicsitem_cast<UnboundMonomericAttachmentPointItem*>(item) != nullptr) {
+            return item;
+        }
+    }
+    return nullptr;
+}
+
 void DrawMonomerSceneTool::onMouseMove(QGraphicsSceneMouseEvent* const event)
 {
     StandardSceneToolBase::onMouseMove(event);
@@ -89,12 +99,14 @@ void DrawMonomerSceneTool::onMouseMove(QGraphicsSceneMouseEvent* const event)
         auto* monomer_item = dynamic_cast<AbstractMonomerItem*>(item);
         const auto* monomer = monomer_item->getAtom();
         labelAttachmentPointsOnMonomer(monomer, monomer_item);
-    } else {
+    } else if (item_matches_type_flag(item, InteractiveItemFlag::MONOMER_CONNECTOR)) {
         // hovering over a monomeric connector
         auto* connector_item = qgraphicsitem_cast<MonomerConnectorItem*>(item);
         const auto* connector = connector_item->getBond();
         labelAttachmentPointsOnConnector(
             connector, connector_item->isSecondaryConnection());
+    } else {
+        // hovering over an attachment point
     }
 }
 

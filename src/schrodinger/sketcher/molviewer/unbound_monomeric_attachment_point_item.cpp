@@ -60,6 +60,11 @@ UnboundMonomericAttachmentPointItem::UnboundMonomericAttachmentPointItem(
     updateCachedData();
 }
 
+int UnboundMonomericAttachmentPointItem::type() const
+{
+    return Type;
+}
+
 // TODO: active items should have be colored blue, have a line that's a full bond length, and not draw the circle
 // TODO: for active items, draw the other monomer and label its attachment point?
 void UnboundMonomericAttachmentPointItem::setActive(bool active)

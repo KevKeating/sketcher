@@ -41,6 +41,9 @@ class SKETCHER_API UnboundMonomericAttachmentPointItem : public QGraphicsItem
         AbstractMonomerItem* parent_monomer,
         const Fonts& fonts);
 
+    enum { Type = QGraphicsItem::UserType + 2000 };
+    int type() const override;
+
     /**
      * Set whether this attachment point indicator is active (black) or
      * inactive (gray).
