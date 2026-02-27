@@ -95,13 +95,22 @@ void DrawMonomerSceneTool::onMouseMove(QGraphicsSceneMouseEvent* const event)
     }
 
     if (item_matches_type_flag(item, InteractiveItemFlag::MONOMER)) {
-        UnboundMonomericAttachmentPointItem* hovered_ap = nullptr;
         // if we're over a monomer, update which attachment point is hovered
+        
+        // first, find all of the attachment points
+        // TODO: save these when we create them?
+        std::vector<UnboundMonomericAttachmentPointItem*> aps;
         for (auto* child_item : item->childItems()) {
             auto* ap_item = qgraphicsitem_cast<UnboundMonomericAttachmentPointItem*>(child_item);
-            if (ap_item == nullptr) {
-                continue;
+            if (ap_item != nullptr) {
+                aps.push_back(ap_item);
             }
+        }
+        if (aps.empty()) {
+            return;
+        }
+        UnboundMonomericAttachmentPointItem* hovered_ap = nullptr;
+        for (auto* ap_item : aps) {
             if (ap_item->withinHoverArea(scene_pos)) {
                 hovered_ap = ap_item;
                 break;
