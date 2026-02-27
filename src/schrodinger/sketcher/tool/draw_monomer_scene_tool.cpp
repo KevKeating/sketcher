@@ -28,6 +28,17 @@ namespace schrodinger
 namespace sketcher
 {
 
+namespace {
+
+const std::unordered_set<MonomerType, std::vector<int>> DEFAULT_ATTACHMENT_POINTS_BY_MONOMER_TYPE = {
+    {MonomerType::PEPTIDE, {2, 1, 3}},
+    {MonomerType::NA_BASE, {2, 1, 3}},
+    {MonomerType::NA_PHOSPHATE, {2, 1, 3}},
+    {MonomerType::NA_SUGAR, {2, 1, 3}},
+};
+
+} // namespace
+
 DrawMonomerSceneTool::DrawMonomerSceneTool(
     const std::string& res_name, const rdkit_extensions::ChainType chain_type,
     const Fonts& fonts, Scene* scene, MolModel* mol_model) :
@@ -78,6 +89,7 @@ QGraphicsItem* DrawMonomerSceneTool::getTopMonomericItemAt(const QPointF& scene_
     return nullptr;
 }
 
+// should only be called when hovering over a monomer
 UnboundMonomericAttachmentPointItem* DrawMonomerSceneTool::getActiveAttachmentPointAt(const QPointF& scene_pos)
 {
     for (auto* ap_item : m_unbound_ap_items) {
@@ -85,7 +97,17 @@ UnboundMonomericAttachmentPointItem* DrawMonomerSceneTool::getActiveAttachmentPo
             return ap_item;
         }
     }
-    // TODO: figure out the default unbound attachment point
+    const auto* monomer_item = static_cast<const AbstractMonomerItem*>(m_hovered_item);
+    auto* monomer = monomer_item->getAtom();
+    auto chain_type = rdkit_extensions::getChainType(*monomer);
+    if (chain_type == m_chain_type && get_monomer_res_name(monomer) == m_res_name) {
+        // TODO: figure out the default unbound attachment point
+        
+    }
+    // the hovered monomer is a different residue than the tool, so a click on
+    // the monomer would mutate the monomer, not add a connection.  As a result,
+    // hovering over the monomer itself shouldn't highlight any attachment
+    // points
     return nullptr;
 }
 
