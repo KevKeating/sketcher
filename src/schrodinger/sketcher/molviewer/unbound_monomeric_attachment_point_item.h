@@ -55,6 +55,8 @@ class SKETCHER_API UnboundMonomericAttachmentPointItem : public QGraphicsItem
      * @return whether this attachment point indicator is currently active
      */
     bool isActive() const;
+    
+    bool withinHoverArea(const QPointF& scene_pos) const;
 
 
     // QGraphicsItem overrides

@@ -179,5 +179,10 @@ void UnboundMonomericAttachmentPointItem::updateColors()
     update();
 }
 
+bool UnboundMonomericAttachmentPointItem::withinHoverArea(const QPointF& scene_pos) const
+{
+    return m_bounding_rect.contains(mapFromScene(scene_pos));
+}
+
 } // namespace sketcher
 } // namespace schrodinger

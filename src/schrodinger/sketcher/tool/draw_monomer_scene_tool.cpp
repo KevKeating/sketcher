@@ -66,8 +66,6 @@ QGraphicsItem* DrawMonomerSceneTool::getTopMonomericOrAttachmentPointItemAt(cons
 {
     // TODO: draw a circle around scene_pos, then wait to check for hovered 
     //       attachment points until after we've drawn them
-    // TODO: only count an attachment point as hovered if we're over where it 
-    //       would be drawn if it wasn't hovered
     for (auto* item : m_scene->items(scene_pos)) {
         if (item_matches_type_flag(item, InteractiveItemFlag::MONOMERIC)) {
             return item;
@@ -94,23 +92,10 @@ void DrawMonomerSceneTool::onMouseMove(QGraphicsSceneMouseEvent* const event)
         startHoveringOver(item);
     }
 
-    if (item_matches_type_flag(item, InteractiveItemFlag::MONOMER)) {
-        // if we're over a monomer, update which attachment point is hovered
-        
-        // first, find all of the attachment points
-        // TODO: save these when we create them?
-        std::vector<UnboundMonomericAttachmentPointItem*> aps;
-        for (auto* child_item : item->childItems()) {
-            auto* ap_item = qgraphicsitem_cast<UnboundMonomericAttachmentPointItem*>(child_item);
-            if (ap_item != nullptr) {
-                aps.push_back(ap_item);
-            }
-        }
-        if (aps.empty()) {
-            return;
-        }
+    if (item_matches_type_flag(item, InteractiveItemFlag::MONOMER) && !m_unbound_ap_items.empty()) {
+        // if we're over a monomer with attachment points, update which attachment point is hovered
         UnboundMonomericAttachmentPointItem* hovered_ap = nullptr;
-        for (auto* ap_item : aps) {
+        for (auto* ap_item : m_unbound_ap_items) {
             if (ap_item->withinHoverArea(scene_pos)) {
                 hovered_ap = ap_item;
                 break;
@@ -119,7 +104,9 @@ void DrawMonomerSceneTool::onMouseMove(QGraphicsSceneMouseEvent* const event)
         if (hovered_ap == nullptr) {
             // TODO: figure out the default unbound attachment point
         }
-        
+        for (auto* ap_item : m_unbound_ap_items) {
+            ap_item->setActive(ap_item == hovered_ap);
+        }
     }
 }
 
