@@ -115,7 +115,7 @@ class SKETCHER_API DrawMonomerSceneTool : public StandardSceneToolBase
      */
     void clearAttachmentPointsLabels();
     
-    QGraphicsItem* getTopMonomericOrAttachmentPointItemAt(const QPointF& scene_pos);
+    std::pair<QGraphicsItem*, QGraphicsItem*> getTopMonomericOrAttachmentPointItemAt(const QPointF& scene_pos);
 };
 
 } // namespace sketcher
