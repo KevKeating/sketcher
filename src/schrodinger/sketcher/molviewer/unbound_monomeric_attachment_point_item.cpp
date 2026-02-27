@@ -142,13 +142,10 @@ void UnboundMonomericAttachmentPointItem::updateCachedData()
 
     m_label_text = prep_attachment_point_name(m_attachment_point.name);
 
-    // Calculate label rect size from font metrics
+    // Calculate label rect size and position
     m_label_rect = m_fonts.m_monomeric_attachment_point_label_fm.boundingRect(
         m_label_text);
-
-    // TODO: reuse the logic from the scene tool for this
-    // Position the label based on direction
-    positionLabelRect();
+    position_ap_label_rect(m_label_rect, {0.0, 0.0}, dir);
 
     // Calculate bounding rect as union of all elements
     qreal half_line_width = m_line_pen.widthF() / 2.0;
@@ -167,46 +164,6 @@ void UnboundMonomericAttachmentPointItem::updateCachedData()
     m_bounding_rect = line_bounds.united(circle_bounds).united(m_label_rect);
 
     updateColors();
-}
-
-void UnboundMonomericAttachmentPointItem::positionLabelRect()
-{
-    QPointF dir = direction_to_unit_vector(m_attachment_point.direction);
-    position_ap_label_rect(m_label_rect, {0.0, 0.0}, dir);
-    
-    
-    // qreal gap = UNBOUND_AP_CIRCLE_DIAMETER / 2.0 + UNBOUND_AP_LABEL_GAP;
-
-    // // Calculate label center position offset from the circle center
-    // QPointF label_center =
-    //     m_line_end + dir * (gap + m_label_rect.width() / 2.0);
-
-    // // Adjust based on direction components
-    // // For horizontal component: align left/right edge appropriately
-    // if (dir.x() > 0.1) {
-    //     // East component: align left edge of label to just past circle
-    //     label_center.setX(m_line_end.x() + gap + m_label_rect.width() / 2.0);
-    // } else if (dir.x() < -0.1) {
-    //     // West component: align right edge of label to just before circle
-    //     label_center.setX(m_line_end.x() - gap - m_label_rect.width() / 2.0);
-    // } else {
-    //     // Pure N or S: center horizontally
-    //     label_center.setX(m_line_end.x());
-    // }
-
-    // // For vertical component: align top/bottom edge appropriately
-    // if (dir.y() < -0.1) {
-    //     // North component: align bottom of label to just above circle
-    //     label_center.setY(m_line_end.y() - gap - m_label_rect.height() / 2.0);
-    // } else if (dir.y() > 0.1) {
-    //     // South component: align top of label to just below circle
-    //     label_center.setY(m_line_end.y() + gap + m_label_rect.height() / 2.0);
-    // } else {
-    //     // Pure E or W: center vertically
-    //     label_center.setY(m_line_end.y());
-    // }
-
-    // m_label_rect.moveCenter(label_center);
 }
 
 void UnboundMonomericAttachmentPointItem::updateColors()

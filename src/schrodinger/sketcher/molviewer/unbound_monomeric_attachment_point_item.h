@@ -66,10 +66,6 @@ class SKETCHER_API UnboundMonomericAttachmentPointItem : public QGraphicsItem
                QWidget* widget = nullptr) override;
 
   private:
-    /**
-     * Position the label rect appropriately based on direction.
-     */
-    void positionLabelRect();
 
     /**
      * Update pen and brush colors based on active state.
