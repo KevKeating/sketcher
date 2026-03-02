@@ -105,24 +105,52 @@ static UnboundMonomericAttachmentPointItem* find_preferred_attachment_point_by_n
     return nullptr;
 }
 
-// TODO: figure this out
-static std::vector<int> get_preferred_attachment_point_order(const MonomerType tool_type, const MonomerType hovered_type) {
-    if (tool_type == MonomerType::PEPTIDE) {
-        return {2, 1, 3};
-    } else if (tool_type == MonomerType::NA_BASE) {
-        if (hovered_type == MonomerType::NA_BASE) {
-            // TODO: should be "pair"
-            return {};
-        } else if (hovered_type == MonomerType::NA_SUGAR) {
-            return {1};
-        }
-        return {};
-    } else if (tool_type == MonomerType::NA_SUGAR) {
-    } else if (tool_type == MonomerType::NA_PHOSPHATE) {
-    } else if (tool_type == MonomerType::CHEM) {
-        // TODO: do this better
-        return {1, 2, 3, 4, 5, 6, 7, 8};
+static UnboundMonomericAttachmentPointItem* find_min_attachment_point_by_num(const std::vector<UnboundMonomericAttachmentPointItem*>& unbound_ap_items)
+{
+    auto min_it = std::min_element(unbound_ap_items.begin(), unbound_ap_items.end(), [](const auto* ap_item_left, const auto* ap_item_right) {
+        return ap_item_left->getAttachmentPoint().num < ap_item_right->getAttachmentPoint().num;
+    });
+    return *min_it;
+}
+
+static UnboundMonomericAttachmentPointItem* find_attachment_point_with_name(const std::vector<UnboundMonomericAttachmentPointItem*>& unbound_ap_items, const std::string& name)
+{
+    auto it = std::find_if(unbound_ap_items.begin(), unbound_ap_items.end(), [&name](const auto* ap_item){
+        return (ap_item->getAttachmentPoint().name == name);
+    });
+    if (it == unbound_ap_items.end()) {
+        return nullptr;
     }
+    return *it;
+}
+
+static UnboundMonomericAttachmentPointItem* get_preferred_attachment_point(const MonomerType tool_type, const MonomerType hovered_type, const std::vector<UnboundMonomericAttachmentPointItem*>& unbound_ap_items) {
+    if (unbound_ap_items.empty()) {
+        return nullptr;
+    } else if (hovered_type == MonomerType::CHEM) {
+        return find_min_attachment_point_by_num(unbound_ap_items);
+    } else if (hovered_type == MonomerType::PEPTIDE) {
+        if (tool_type == MonomerType::PEPTIDE || tool_type == MonomerType::CHEM) {
+            return find_preferred_attachment_point_by_num(unbound_ap_items, {2, 1, 3});
+        }
+    } else if (hovered_type == MonomerType::NA_BASE) {
+        if (tool_type == MonomerType::NA_BASE) {
+            find_attachment_point_with_name(unbound_ap_items, "pair");
+        } else if (tool_type == MonomerType::NA_SUGAR) {
+            return find_preferred_attachment_point_by_num(unbound_ap_items, {1});
+        }
+    } else if (hovered_type == MonomerType::NA_SUGAR) {
+        if (tool_type == MonomerType::NA_BASE) {
+            return find_preferred_attachment_point_by_num(unbound_ap_items, {3});
+        } else if (tool_type == MonomerType::NA_PHOSPHATE) {
+            return find_preferred_attachment_point_by_num(unbound_ap_items, {2, 1});
+        }
+    } else if (hovered_type == MonomerType::NA_PHOSPHATE) {
+        if (tool_type == MonomerType::NA_SUGAR) {
+            return find_preferred_attachment_point_by_num(unbound_ap_items, {2, 1});
+        }
+    }
+    return nullptr;
 }
 
 // should only be called when hovering over a monomer
@@ -136,8 +164,6 @@ UnboundMonomericAttachmentPointItem* DrawMonomerSceneTool::getActiveAttachmentPo
     const auto* monomer_item = static_cast<const AbstractMonomerItem*>(m_hovered_item);
     auto* monomer = monomer_item->getAtom();
     auto chain_type = rdkit_extensions::getChainType(*monomer);
-    // std::vector<std::pair<UnboundAttachmentPoint, UnboundMonomericAttachmentPointItem>> aps_and_items;
-    // std::transform(m_unbound_ap_items.begin(), m_unbound_ap_items.end(), std::back_inserter(aps)
     if (chain_type == m_chain_type && get_monomer_res_name(monomer) == m_res_name) {
         // TODO: figure out the default unbound attachment point
         
