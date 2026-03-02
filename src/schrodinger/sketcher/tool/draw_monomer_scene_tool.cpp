@@ -168,6 +168,7 @@ UnboundMonomericAttachmentPointItem* DrawMonomerSceneTool::getActiveAttachmentPo
         // TODO: figure out the default unbound attachment point
         
     }
+    // TODO: won't mutate unless the monomer type is the same
     // the hovered monomer is a different residue than the tool, so a click on
     // the monomer would mutate the monomer, not add a connection.  As a result,
     // hovering over the monomer itself shouldn't highlight any attachment
