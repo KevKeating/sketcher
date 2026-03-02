@@ -73,6 +73,8 @@ std::vector<QGraphicsItem*> DrawMonomerSceneTool::getGraphicsItems()
 QGraphicsItem*
 DrawMonomerSceneTool::getTopMonomericItemAt(const QPointF& scene_pos)
 {
+    // check to see if we've over a monomer, monomeric connector, or unbound
+    // attachment point item
     for (auto* item : m_scene->items(scene_pos)) {
         if (item_matches_type_flag(item, InteractiveItemFlag::MONOMERIC)) {
             return item;
@@ -85,11 +87,12 @@ DrawMonomerSceneTool::getTopMonomericItemAt(const QPointF& scene_pos)
         }
     }
 
-    // if we're not over anything but we're near a monomer, check to see whether
-    // we'd be over one of its attachment points once they're drawn
+    // if we're not over anything, check to see if we're near a monomer.  If we
+    // are, check to see whether we'd be over one of its attachment points once
+    // they're drawn
     QPainterPath near_scene_pos;
-    // the label can stick out past the attachment point line, so make the
-    // circle a bit bigger than just the line length
+    // the attachment point label can stick out past the attachment point line,
+    // so make the circle a bit bigger than just the line length
     near_scene_pos.addEllipse(scene_pos, 2 * UNBOUND_AP_LINE_LENGTH,
                               2 * UNBOUND_AP_LINE_LENGTH);
     for (auto* item : m_scene->items(near_scene_pos)) {
@@ -115,6 +118,13 @@ DrawMonomerSceneTool::getTopMonomericItemAt(const QPointF& scene_pos)
     return nullptr;
 }
 
+/**
+ * @return the unbound attachment point graphics item representing the
+ * attachment point with the "best" number. "Best" is defined using the
+ * preferred_order list, with earlier numbers in the list preferred over later
+ * numbers. Will return nullptr if no attachment points on the preferred_order
+ * list are found.
+ */
 [[nodiscard]] static UnboundMonomericAttachmentPointItem*
 find_preferred_attachment_point_by_num(
     const std::vector<UnboundMonomericAttachmentPointItem*>& unbound_ap_items,
@@ -138,6 +148,13 @@ find_preferred_attachment_point_by_num(
     return nullptr;
 }
 
+/**
+ * Return the unbound attachment point graphics item that represents the
+ * attachment point with the lowest number. An attachment points with a custom
+ * name will be returned only if there are no numbered attachment point.
+ * @param unbound_ap_items The non-empty list of unbound attachment point
+ * graphics item
+ */
 [[nodiscard]] static UnboundMonomericAttachmentPointItem*
 find_min_attachment_point_by_num(
     const std::vector<UnboundMonomericAttachmentPointItem*>& unbound_ap_items)
@@ -145,12 +162,18 @@ find_min_attachment_point_by_num(
     auto min_it = std::min_element(
         unbound_ap_items.begin(), unbound_ap_items.end(),
         [](const auto* ap_item_left, const auto* ap_item_right) {
-            return ap_item_left->getAttachmentPoint().num <
-                   ap_item_right->getAttachmentPoint().num;
+            auto left_num = ap_item_left->getAttachmentPoint().num;
+            auto right_num = ap_item_right->getAttachmentPoint().num;
+            return  right_num < 0 || left_num < right_num;
         });
     return *min_it;
 }
 
+/**
+ * @return the unbound attachment point graphics item representing an attachment
+ * point with the given name. Will return nullptr if no such attachment point is
+ * found.
+ */
 [[nodiscard]] static UnboundMonomericAttachmentPointItem*
 find_attachment_point_with_name(
     const std::vector<UnboundMonomericAttachmentPointItem*>& unbound_ap_items,
@@ -167,6 +190,11 @@ find_attachment_point_with_name(
     return *it;
 }
 
+/**
+ * @return the unbound attachment point graphics item representing an attachment
+ * point with the given number. Will return nullptr if no such attachment point is
+ * found.
+ */
 [[nodiscard]] static UnboundMonomericAttachmentPointItem*
 find_attachment_point_with_num(
     const std::vector<UnboundMonomericAttachmentPointItem*>& unbound_ap_items,
@@ -183,7 +211,16 @@ find_attachment_point_with_num(
     return *it;
 }
 
-static UnboundMonomericAttachmentPointItem* get_preferred_attachment_point(
+/**
+ * Return the default unbound attachment point; that is, the attachment point
+ * that should be selected when the user hovers over a monomer.
+ * @param hovered_type The type of monomer being hovered over
+ * @param tool_type  The type of monomer that would be drawn by the active scene
+ * tool
+ * @param unbound_ap_items A list of all graphics items representing unbound
+ * attachment points of the hovered monomer
+ */
+static UnboundMonomericAttachmentPointItem* get_default_attachment_point(
     const MonomerType hovered_type, const MonomerType tool_type,
     const std::vector<UnboundMonomericAttachmentPointItem*>& unbound_ap_items)
 {
@@ -223,7 +260,7 @@ static UnboundMonomericAttachmentPointItem* get_preferred_attachment_point(
 
 // should only be called when hovering over a monomer
 UnboundMonomericAttachmentPointItem*
-DrawMonomerSceneTool::getActiveAttachmentPointAt(const QPointF& scene_pos)
+DrawMonomerSceneTool::getUnboundAttachmentPointAt(const QPointF& scene_pos)
 {
     for (auto* ap_item : m_unbound_ap_items) {
         if (ap_item->withinHoverArea(scene_pos)) {
@@ -241,7 +278,7 @@ DrawMonomerSceneTool::getActiveAttachmentPointAt(const QPointF& scene_pos)
         // when the monomer itself is hovered
         return nullptr;
     }
-    return get_preferred_attachment_point(monomer_type, m_monomer_type,
+    return get_default_attachment_point(monomer_type, m_monomer_type,
                                           m_unbound_ap_items);
 }
 
@@ -256,20 +293,20 @@ void DrawMonomerSceneTool::onMouseMove(QGraphicsSceneMouseEvent* const event)
     auto* item = getTopMonomericItemAt(scene_pos);
     if (item != m_hovered_item) {
         m_hovered_item = item;
-        startHoveringOver(item);
+        drawAttachmentPointLabelsFor(item);
     }
 
     if (!m_unbound_ap_items.empty()) {
         // if we're over a monomer with attachment points, update which
         // attachment point is hovered
-        auto* active_ap_item = getActiveAttachmentPointAt(scene_pos);
+        auto* active_ap_item = getUnboundAttachmentPointAt(scene_pos);
         for (auto* ap_item : m_unbound_ap_items) {
             ap_item->setActive(ap_item == active_ap_item);
         }
     }
 }
 
-void DrawMonomerSceneTool::startHoveringOver(QGraphicsItem* const item)
+void DrawMonomerSceneTool::drawAttachmentPointLabelsFor(QGraphicsItem* const item)
 {
     clearAttachmentPointsLabels();
     if (item == nullptr) {

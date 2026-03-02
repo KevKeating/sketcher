@@ -128,10 +128,38 @@ class SKETCHER_API DrawMonomerSceneTool : public StandardSceneToolBase
      */
     void clearAttachmentPointsLabels();
 
+    /**
+     * Return the top graphics item representing a monomer or monomeric
+     * connector and the given coordinates. Note that this method will consider
+     * the cursor to be over a monomer if the cursor is over an unbound
+     * attachment point belonging to that monomer (or if the cursor *would be*
+     * over an unbound attachment point once it's drawn).
+     * @param scene_pos The position in Scene coordinates
+     */
     QGraphicsItem* getTopMonomericItemAt(const QPointF& scene_pos);
-    void startHoveringOver(QGraphicsItem* const item);
+
+    /**
+     * Clear any existing attachment point labels and draw new ones for the
+     * specified monomeric graphics item. If item is nullptr, then all labels
+     * will be cleared and no new ones will be drawn.
+     */
+    void drawAttachmentPointLabelsFor(QGraphicsItem* const item);
+
+    /**
+     * Return the unbound attachment point graphics item that should be "active"
+     * (i.e. that we'd drawn a connection for if the user clicked) for the given
+     * coordinates. If the coordinates are over an unbound attachment point
+     * item, that item will be returned. If the coordinates are over the
+     * monomer, then the default unbound attachment point will be returned,
+     * assuming one exists for the current tool. If no default attachment point
+     * exists, then nullptr will be returned.
+     *
+     * @note This method only returns accurate results for the currently hovered
+     * monomer, and assumes that the unbound attachment point graphics items
+     * have already been drawn for this monomer.
+     */
     UnboundMonomericAttachmentPointItem*
-    getActiveAttachmentPointAt(const QPointF& scene_pos);
+    getUnboundAttachmentPointAt(const QPointF& scene_pos);
 };
 
 } // namespace sketcher
