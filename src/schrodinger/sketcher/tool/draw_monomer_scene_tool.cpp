@@ -28,17 +28,6 @@ namespace schrodinger
 namespace sketcher
 {
 
-namespace {
-
-const std::unordered_set<MonomerType, std::vector<int>> DEFAULT_ATTACHMENT_POINTS_BY_MONOMER_TYPE = {
-    {MonomerType::PEPTIDE, {2, 1, 3}},
-    {MonomerType::NA_BASE, {2, 1, 3}},
-    {MonomerType::NA_PHOSPHATE, {2, 1, 3}},
-    {MonomerType::NA_SUGAR, {2, 1, 3}},
-};
-
-} // namespace
-
 DrawMonomerSceneTool::DrawMonomerSceneTool(
     const std::string& res_name, const rdkit_extensions::ChainType chain_type,
     const Fonts& fonts, Scene* scene, MolModel* mol_model) :
@@ -97,7 +86,7 @@ QGraphicsItem* DrawMonomerSceneTool::getTopMonomericItemAt(const QPointF& scene_
     return nullptr;
 }
 
-static UnboundMonomericAttachmentPointItem* find_preferred_attachment_point_by_num(const std::vector<UnboundMonomericAttachmentPointItem*>& unbound_ap_items, const std::vector<int>& preferred_order)
+[[nodiscard]] static UnboundMonomericAttachmentPointItem* find_preferred_attachment_point_by_num(const std::vector<UnboundMonomericAttachmentPointItem*>& unbound_ap_items, const std::vector<int>& preferred_order)
 {
     auto index_of = [&preferred_order](const auto* ap_item) {
         auto it = std::find(preferred_order.begin(), preferred_order.end(), ap_item->getAttachmentPoint().num);
@@ -113,7 +102,7 @@ static UnboundMonomericAttachmentPointItem* find_preferred_attachment_point_by_n
     return nullptr;
 }
 
-static UnboundMonomericAttachmentPointItem* find_min_attachment_point_by_num(const std::vector<UnboundMonomericAttachmentPointItem*>& unbound_ap_items)
+[[nodiscard]] static UnboundMonomericAttachmentPointItem* find_min_attachment_point_by_num(const std::vector<UnboundMonomericAttachmentPointItem*>& unbound_ap_items)
 {
     auto min_it = std::min_element(unbound_ap_items.begin(), unbound_ap_items.end(), [](const auto* ap_item_left, const auto* ap_item_right) {
         return ap_item_left->getAttachmentPoint().num < ap_item_right->getAttachmentPoint().num;
@@ -121,7 +110,7 @@ static UnboundMonomericAttachmentPointItem* find_min_attachment_point_by_num(con
     return *min_it;
 }
 
-static UnboundMonomericAttachmentPointItem* find_attachment_point_with_name(const std::vector<UnboundMonomericAttachmentPointItem*>& unbound_ap_items, const std::string& name)
+[[nodiscard]] static UnboundMonomericAttachmentPointItem* find_attachment_point_with_name(const std::vector<UnboundMonomericAttachmentPointItem*>& unbound_ap_items, const std::string& name)
 {
     auto it = std::find_if(unbound_ap_items.begin(), unbound_ap_items.end(), [&name](const auto* ap_item){
         return (ap_item->getAttachmentPoint().name == name);
@@ -145,7 +134,7 @@ static UnboundMonomericAttachmentPointItem* get_preferred_attachment_point(const
         }
     } else if (hovered_type == MonomerType::NA_BASE) {
         if (tool_type == MonomerType::NA_BASE || tool_type == MonomerType::CHEM) {
-            find_attachment_point_with_name(unbound_ap_items, "pair");
+            return find_attachment_point_with_name(unbound_ap_items, "pair");
         } else if (tool_type == MonomerType::NA_SUGAR) {
             return find_preferred_attachment_point_by_num(unbound_ap_items, {1});
         }
