@@ -73,8 +73,6 @@ std::vector<QGraphicsItem*> DrawMonomerSceneTool::getGraphicsItems()
 QGraphicsItem*
 DrawMonomerSceneTool::getTopMonomericItemAt(const QPointF& scene_pos)
 {
-    // TODO: draw a circle around scene_pos, then wait to check for hovered
-    //       attachment points until after we've drawn them
     for (auto* item : m_scene->items(scene_pos)) {
         if (item_matches_type_flag(item, InteractiveItemFlag::MONOMERIC)) {
             return item;
@@ -91,21 +89,18 @@ DrawMonomerSceneTool::getTopMonomericItemAt(const QPointF& scene_pos)
     // we'd be over one of its attachment points once they're drawn
     QPainterPath near_scene_pos;
     // the label can stick out past the attachment point line, so make the
-    // ellipse bigger than just the line length
-    near_scene_pos.addEllipse(scene_pos, 3 * UNBOUND_AP_LINE_LENGTH, 3 * UNBOUND_AP_LINE_LENGTH);
+    // circle a bit bigger than just the line length
+    near_scene_pos.addEllipse(scene_pos, 2 * UNBOUND_AP_LINE_LENGTH, 2 * UNBOUND_AP_LINE_LENGTH);
     for (auto* item : m_scene->items(near_scene_pos)) {
         if (!item_matches_type_flag(item, InteractiveItemFlag::MONOMER)) {
             continue;
         }
-        std:: cout << "found nearby monomer " << item->type() << "\n";
         const auto* monomer_item =
             dynamic_cast<const AbstractMonomerItem*>(item);
-        std::cout << "monomer_item =" << monomer_item << " " << (monomer_item == nullptr) << "\n";
         auto local_pos = monomer_item->mapFromScene(scene_pos);
         auto* monomer = monomer_item->getAtom();
         auto [bound_aps, unbound_aps] = get_attachment_points_for_monomer(monomer);
         for (auto cur_unbound_ap : unbound_aps) {
-            std:: cout << "testing unbound ap\n";
             auto unbound_ap_bounding_rect = get_bounding_rect_for_unbound_monomer_attachment_point_item(cur_unbound_ap, monomer_item, m_fonts);
             if (unbound_ap_bounding_rect.contains(local_pos)) {
                 return item;
