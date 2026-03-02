@@ -72,9 +72,13 @@ std::vector<QGraphicsItem*> DrawMonomerSceneTool::getGraphicsItems()
 QGraphicsItem*
 DrawMonomerSceneTool::getTopMonomericItemAt(const QPointF& scene_pos)
 {
-    // TODO: draw a circle around scene_pos, then wait to check for hovered
-    //       attachment points until after we've drawn them
-    for (auto* item : m_scene->items(scene_pos)) {
+    // look for any monomers within UNBOUND_AP_LINE_LENGTH, since we may be over
+    // a currently-undrawn attachment point of that monomer, in which case we'd
+    // want to draw the attachment points
+    QPainterPath near_scene_pos;
+    near_scene_pos.addEllipse(scene_pos, UNBOUND_AP_LINE_LENGTH, UNBOUND_AP_LINE_LENGTH);
+    
+    for (auto* item : m_scene->items(near_scene_pos)) {
         if (item_matches_type_flag(item, InteractiveItemFlag::MONOMERIC)) {
             return item;
         } else if (auto* ap_item =
