@@ -69,16 +69,12 @@ std::vector<QGraphicsItem*> DrawMonomerSceneTool::getGraphicsItems()
     return items;
 }
 
-// TODO: rename At -> Near
 QGraphicsItem*
 DrawMonomerSceneTool::getTopMonomericItemAt(const QPointF& scene_pos)
 {
-    // look for any monomers within UNBOUND_AP_LINE_LENGTH, since we may be over
-    // a currently-undrawn attachment point of that monomer, in which case we'd
-    // want to draw the attachment points
-    QPainterPath near_scene_pos;
-    near_scene_pos.addEllipse(scene_pos, UNBOUND_AP_LINE_LENGTH, UNBOUND_AP_LINE_LENGTH);
-    for (auto* item : m_scene->items(near_scene_pos)) {
+    // TODO: draw a circle around scene_pos, then wait to check for hovered
+    //       attachment points until after we've drawn them
+    for (auto* item : m_scene->items(scene_pos)) {
         if (item_matches_type_flag(item, InteractiveItemFlag::MONOMERIC)) {
             return item;
         } else if (auto* ap_item =
@@ -222,19 +218,6 @@ DrawMonomerSceneTool::getActiveAttachmentPointAt(const QPointF& scene_pos)
                                           m_unbound_ap_items);
 }
 
-static bool pos_is_over_item_or_unbound_aps(const QPointF& scene_pos, const QGraphicsItem* item, std::vector<UnboundMonomericAttachmentPointItem*> unbound_ap_items)
-{
-    if (item != nullptr && item->contains(item->mapFromScene(scene_pos))) {
-        return true;
-    }
-    for (auto* ap_item : unbound_ap_items) {
-        if (ap_item->withinHoverArea(scene_pos)) {
-            return true;
-        }
-    }
-    return false;
-}
-
 void DrawMonomerSceneTool::onMouseMove(QGraphicsSceneMouseEvent* const event)
 {
     StandardSceneToolBase::onMouseMove(event);
@@ -244,46 +227,11 @@ void DrawMonomerSceneTool::onMouseMove(QGraphicsSceneMouseEvent* const event)
     }
     QPointF scene_pos = event->scenePos();
     auto* item = getTopMonomericItemAt(scene_pos);
-    std::vector<UnboundMonomericAttachmentPointItem*> unbound_ap_items;
-    bool created_new_ap_items = false;
-    std::cout << "checkpoint 1\n";
-    if (item == m_hovered_item) {
-        std::cout << "checkpoint 1a\n";
-        unbound_ap_items = m_unbound_ap_items;
-    } else if (item != nullptr && item_matches_type_flag(item, InteractiveItemFlag::MONOMER)) {
-        std::cout << "checkpoint 1b\n";
-        auto* monomer_item = static_cast<AbstractMonomerItem*>(item);
-        const auto* monomer = monomer_item->getAtom();
-        auto [bound_aps, unbound_aps] = get_attachment_points_for_monomer(monomer);
-        for (auto& cur_ap : unbound_aps) {
-            std::cout << "\tcreating new unbound ap item\n";
-            auto* item = new UnboundMonomericAttachmentPointItem(
-                cur_ap, monomer_item, m_fonts);
-            unbound_ap_items.push_back(item);
-        }
-        created_new_ap_items = true;
-    }
-    std::cout << "checkpoint 2\n";
-    if (!pos_is_over_item_or_unbound_aps(scene_pos, item, unbound_ap_items)) {
-        std::cout << "checkpoint 2a\n";
-        item = nullptr;
-        if (created_new_ap_items) {
-            for (auto* ap_item : unbound_ap_items) {
-                delete ap_item;
-            }
-        }
-    } else if (created_new_ap_items) {
-        std::cout << "checkpoint 2b\n";
-        m_unbound_ap_items = unbound_ap_items;
-    }
-    std::cout << "checkpoint 3\n";
-    
     if (item != m_hovered_item) {
-        startHoveringOver(item);
         m_hovered_item = item;
-    
+        startHoveringOver(item);
     }
-    std::cout << "checkpoint 4\n";
+
     if (!m_unbound_ap_items.empty()) {
         // if we're over a monomer with attachment points, update which
         // attachment point is hovered
@@ -292,7 +240,6 @@ void DrawMonomerSceneTool::onMouseMove(QGraphicsSceneMouseEvent* const event)
             ap_item->setActive(ap_item == active_ap_item);
         }
     }
-    std::cout << "Finishing onMouseMove\n";
 }
 
 void DrawMonomerSceneTool::startHoveringOver(QGraphicsItem* const item)
