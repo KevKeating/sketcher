@@ -44,9 +44,12 @@ static QPointF direction_to_unit_vector(Direction dir)
     }
 }
 
-static std::tuple<QPointF, QString, QRectF, QRectF> calculate_geometry(const UnboundAttachmentPoint& attachment_point, const AbstractMonomerItem* const parent_monomer, const Fonts& fonts)
+static std::tuple<QPointF, QString, QRectF, QRectF>
+calculate_geometry(const UnboundAttachmentPoint& attachment_point,
+                   const AbstractMonomerItem* const parent_monomer,
+                   const Fonts& fonts)
 {
-        // Get direction unit vector
+    // Get direction unit vector
     QPointF dir = direction_to_unit_vector(attachment_point.direction);
 
     // Calculate the line endpoint based on the parent's bounding rect
@@ -80,8 +83,8 @@ static std::tuple<QPointF, QString, QRectF, QRectF> calculate_geometry(const Unb
     auto label_text = prep_attachment_point_name(attachment_point.name);
 
     // Calculate label rect size and position
-    auto label_rect = fonts.m_monomeric_attachment_point_label_fm.boundingRect(
-        label_text);
+    auto label_rect =
+        fonts.m_monomeric_attachment_point_label_fm.boundingRect(label_text);
     position_ap_label_rect(label_rect, {0.0, 0.0}, dir);
 
     // Calculate bounding rect as union of all elements
@@ -99,13 +102,16 @@ static std::tuple<QPointF, QString, QRectF, QRectF> calculate_geometry(const Unb
                          UNBOUND_AP_CIRCLE_DIAMETER);
 
     auto bounding_rect = line_bounds.united(circle_bounds).united(label_rect);
-    
+
     return {line_end, label_text, label_rect, bounding_rect};
 }
 
-QRectF get_bounding_rect_for_unbound_monomer_attachment_point_item(const UnboundAttachmentPoint& attachment_point, const AbstractMonomerItem* const parent_monomer, const Fonts& fonts)
+QRectF get_bounding_rect_for_unbound_monomer_attachment_point_item(
+    const UnboundAttachmentPoint& attachment_point,
+    const AbstractMonomerItem* const parent_monomer, const Fonts& fonts)
 {
-    auto [line_end, label_text, label_rect, bounding_rect] = calculate_geometry(attachment_point, parent_monomer, fonts);
+    auto [line_end, label_text, label_rect, bounding_rect] =
+        calculate_geometry(attachment_point, parent_monomer, fonts);
     return bounding_rect;
 }
 
@@ -129,8 +135,10 @@ int UnboundMonomericAttachmentPointItem::type() const
     return Type;
 }
 
-// TODO: active items should have be colored blue, have a line that's a full bond length, and not draw the circle
-// TODO: for active items, draw the other monomer and label its attachment point?
+// TODO: active items should have be colored blue, have a line that's a full
+// bond length, and not draw the circle
+// TODO: for active items, draw the other monomer and label its attachment
+// point?
 void UnboundMonomericAttachmentPointItem::setActive(bool active)
 {
     if (m_is_active != active) {
@@ -167,9 +175,11 @@ void UnboundMonomericAttachmentPointItem::paint(
     painter->restore();
 }
 
-void UnboundMonomericAttachmentPointItem::calculateGeometry(const AbstractMonomerItem* parent_monomer)
+void UnboundMonomericAttachmentPointItem::calculateGeometry(
+    const AbstractMonomerItem* parent_monomer)
 {
-    std::tie(m_line_end, m_label_text, m_label_rect, m_bounding_rect) = calculate_geometry(m_attachment_point, parent_monomer, m_fonts);
+    std::tie(m_line_end, m_label_text, m_label_rect, m_bounding_rect) =
+        calculate_geometry(m_attachment_point, parent_monomer, m_fonts);
     m_hover_area.addRect(m_bounding_rect);
     QPainterPath parent_bounds_path;
     parent_bounds_path.addRect(parent_monomer->boundingRect());
@@ -186,12 +196,14 @@ void UnboundMonomericAttachmentPointItem::updateColors()
     update();
 }
 
-bool UnboundMonomericAttachmentPointItem::withinHoverArea(const QPointF& scene_pos) const
+bool UnboundMonomericAttachmentPointItem::withinHoverArea(
+    const QPointF& scene_pos) const
 {
     return m_hover_area.contains(mapFromScene(scene_pos));
 }
 
-const UnboundAttachmentPoint& UnboundMonomericAttachmentPointItem::getAttachmentPoint() const
+const UnboundAttachmentPoint&
+UnboundMonomericAttachmentPointItem::getAttachmentPoint() const
 {
     return m_attachment_point;
 }

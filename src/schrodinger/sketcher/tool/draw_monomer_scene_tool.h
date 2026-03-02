@@ -48,8 +48,8 @@ QString prep_attachment_point_name(const std::string& name);
  * @param bound_coords The coordinates of the other monomer involved in the bond
  */
 void position_ap_label_rect(QRectF& ap_label_rect,
-                                   const QPointF& monomer_coords,
-                                   const QPointF& bound_coords);
+                            const QPointF& monomer_coords,
+                            const QPointF& bound_coords);
 
 /**
  * A scene tools that draws a monomer
@@ -127,10 +127,11 @@ class SKETCHER_API DrawMonomerSceneTool : public StandardSceneToolBase
      * Clear all attachment point labels drawn by this scene tool
      */
     void clearAttachmentPointsLabels();
-    
+
     QGraphicsItem* getTopMonomericItemAt(const QPointF& scene_pos);
     void startHoveringOver(QGraphicsItem* const item);
-    UnboundMonomericAttachmentPointItem* getActiveAttachmentPointAt(const QPointF& scene_pos);
+    UnboundMonomericAttachmentPointItem*
+    getActiveAttachmentPointAt(const QPointF& scene_pos);
 };
 
 } // namespace sketcher

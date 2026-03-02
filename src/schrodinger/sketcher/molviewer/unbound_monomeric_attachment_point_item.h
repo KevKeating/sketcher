@@ -18,7 +18,9 @@ namespace sketcher
 
 class AbstractMonomerItem;
 
-QRectF get_bounding_rect_for_unbound_monomer_attachment_point_item(const UnboundAttachmentPoint& attachment_point, const AbstractMonomerItem* const parent_monomer, const Fonts& fonts);
+QRectF get_bounding_rect_for_unbound_monomer_attachment_point_item(
+    const UnboundAttachmentPoint& attachment_point,
+    const AbstractMonomerItem* const parent_monomer, const Fonts& fonts);
 
 /**
  * A graphics item for representing an unbound (available) attachment point
@@ -40,8 +42,7 @@ class SKETCHER_API UnboundMonomericAttachmentPointItem : public QGraphicsItem
      */
     UnboundMonomericAttachmentPointItem(
         const UnboundAttachmentPoint& attachment_point,
-        AbstractMonomerItem* parent_monomer,
-        const Fonts& fonts);
+        AbstractMonomerItem* parent_monomer, const Fonts& fonts);
 
     enum { Type = QGraphicsItem::UserType + 2000 };
     int type() const override;
@@ -52,10 +53,9 @@ class SKETCHER_API UnboundMonomericAttachmentPointItem : public QGraphicsItem
      * @param active true for black coloring, false for gray
      */
     void setActive(bool active);
-   
+
     bool withinHoverArea(const QPointF& scene_pos) const;
     const UnboundAttachmentPoint& getAttachmentPoint() const;
-
 
     // QGraphicsItem overrides
     QRectF boundingRect() const override;
@@ -63,7 +63,6 @@ class SKETCHER_API UnboundMonomericAttachmentPointItem : public QGraphicsItem
                QWidget* widget = nullptr) override;
 
   private:
-
     // Data references
     UnboundAttachmentPoint m_attachment_point;
     // TODO: this could be a pointer to the scene tool's fonts
