@@ -50,7 +50,6 @@ DrawMonomerSceneTool::DrawMonomerSceneTool(
     } else {
         m_monomer_type = get_na_monomer_type_from_res_name(res_name);
     }
-        
 }
 
 DrawMonomerSceneTool::~DrawMonomerSceneTool()
@@ -70,14 +69,17 @@ std::vector<QGraphicsItem*> DrawMonomerSceneTool::getGraphicsItems()
     return items;
 }
 
-QGraphicsItem* DrawMonomerSceneTool::getTopMonomericItemAt(const QPointF& scene_pos)
+QGraphicsItem*
+DrawMonomerSceneTool::getTopMonomericItemAt(const QPointF& scene_pos)
 {
-    // TODO: draw a circle around scene_pos, then wait to check for hovered 
+    // TODO: draw a circle around scene_pos, then wait to check for hovered
     //       attachment points until after we've drawn them
     for (auto* item : m_scene->items(scene_pos)) {
         if (item_matches_type_flag(item, InteractiveItemFlag::MONOMERIC)) {
             return item;
-        } else if (auto* ap_item = qgraphicsitem_cast<UnboundMonomericAttachmentPointItem*>(item)) {
+        } else if (auto* ap_item =
+                       qgraphicsitem_cast<UnboundMonomericAttachmentPointItem*>(
+                           item)) {
             if (ap_item->withinHoverArea(scene_pos)) {
                 return item->parentItem();
             }
@@ -86,91 +88,121 @@ QGraphicsItem* DrawMonomerSceneTool::getTopMonomericItemAt(const QPointF& scene_
     return nullptr;
 }
 
-[[nodiscard]] static UnboundMonomericAttachmentPointItem* find_preferred_attachment_point_by_num(const std::vector<UnboundMonomericAttachmentPointItem*>& unbound_ap_items, const std::vector<int>& preferred_order)
+[[nodiscard]] static UnboundMonomericAttachmentPointItem*
+find_preferred_attachment_point_by_num(
+    const std::vector<UnboundMonomericAttachmentPointItem*>& unbound_ap_items,
+    const std::vector<int>& preferred_order)
 {
     auto index_of = [&preferred_order](const auto* ap_item) {
-        auto it = std::find(preferred_order.begin(), preferred_order.end(), ap_item->getAttachmentPoint().num);
+        auto it = std::find(preferred_order.begin(), preferred_order.end(),
+                            ap_item->getAttachmentPoint().num);
         return std::distance(preferred_order.begin(), it);
     };
-    auto min_it = std::min_element(unbound_ap_items.begin(), unbound_ap_items.end(), [&index_of](const auto* ap_item_left, const auto* ap_item_right) {
-        return index_of(ap_item_left) < index_of(ap_item_right);
-    });
-    // make sure that the attachment point we found is actually on the preferred_order list
+    auto min_it = std::min_element(
+        unbound_ap_items.begin(), unbound_ap_items.end(),
+        [&index_of](const auto* ap_item_left, const auto* ap_item_right) {
+            return index_of(ap_item_left) < index_of(ap_item_right);
+        });
+    // make sure that the attachment point we found is actually on the
+    // preferred_order list
     if (index_of(*min_it) < preferred_order.size()) {
         return *min_it;
     }
     return nullptr;
 }
 
-[[nodiscard]] static UnboundMonomericAttachmentPointItem* find_min_attachment_point_by_num(const std::vector<UnboundMonomericAttachmentPointItem*>& unbound_ap_items)
+[[nodiscard]] static UnboundMonomericAttachmentPointItem*
+find_min_attachment_point_by_num(
+    const std::vector<UnboundMonomericAttachmentPointItem*>& unbound_ap_items)
 {
-    auto min_it = std::min_element(unbound_ap_items.begin(), unbound_ap_items.end(), [](const auto* ap_item_left, const auto* ap_item_right) {
-        return ap_item_left->getAttachmentPoint().num < ap_item_right->getAttachmentPoint().num;
-    });
+    auto min_it = std::min_element(
+        unbound_ap_items.begin(), unbound_ap_items.end(),
+        [](const auto* ap_item_left, const auto* ap_item_right) {
+            return ap_item_left->getAttachmentPoint().num <
+                   ap_item_right->getAttachmentPoint().num;
+        });
     return *min_it;
 }
 
-[[nodiscard]] static UnboundMonomericAttachmentPointItem* find_attachment_point_with_name(const std::vector<UnboundMonomericAttachmentPointItem*>& unbound_ap_items, const std::string& name)
+[[nodiscard]] static UnboundMonomericAttachmentPointItem*
+find_attachment_point_with_name(
+    const std::vector<UnboundMonomericAttachmentPointItem*>& unbound_ap_items,
+    const std::string& name)
 {
-    auto it = std::find_if(unbound_ap_items.begin(), unbound_ap_items.end(), [&name](const auto* ap_item){
-        return (ap_item->getAttachmentPoint().name == name);
-    });
+    auto it =
+        std::find_if(unbound_ap_items.begin(), unbound_ap_items.end(),
+                     [&name](const auto* ap_item) {
+                         return (ap_item->getAttachmentPoint().name == name);
+                     });
     if (it == unbound_ap_items.end()) {
         return nullptr;
     }
     return *it;
 }
 
-static UnboundMonomericAttachmentPointItem* get_preferred_attachment_point(const MonomerType hovered_type, const MonomerType tool_type, const std::vector<UnboundMonomericAttachmentPointItem*>& unbound_ap_items) {
+static UnboundMonomericAttachmentPointItem* get_preferred_attachment_point(
+    const MonomerType hovered_type, const MonomerType tool_type,
+    const std::vector<UnboundMonomericAttachmentPointItem*>& unbound_ap_items)
+{
     if (unbound_ap_items.empty()) {
         return nullptr;
     } else if (hovered_type == MonomerType::CHEM) {
         return find_min_attachment_point_by_num(unbound_ap_items);
     } else if (hovered_type == MonomerType::PEPTIDE) {
         if (tool_type == MonomerType::PEPTIDE) {
-            return find_preferred_attachment_point_by_num(unbound_ap_items, {2, 1, 3});
-        } else if  (tool_type == MonomerType::CHEM) {
-            return find_preferred_attachment_point_by_num(unbound_ap_items, {3});
+            return find_preferred_attachment_point_by_num(unbound_ap_items,
+                                                          {2, 1, 3});
+        } else if (tool_type == MonomerType::CHEM) {
+            return find_preferred_attachment_point_by_num(unbound_ap_items,
+                                                          {3});
         }
     } else if (hovered_type == MonomerType::NA_BASE) {
-        if (tool_type == MonomerType::NA_BASE || tool_type == MonomerType::CHEM) {
+        if (tool_type == MonomerType::NA_BASE ||
+            tool_type == MonomerType::CHEM) {
             return find_attachment_point_with_name(unbound_ap_items, "pair");
         } else if (tool_type == MonomerType::NA_SUGAR) {
-            return find_preferred_attachment_point_by_num(unbound_ap_items, {1});
+            return find_preferred_attachment_point_by_num(unbound_ap_items,
+                                                          {1});
         }
     } else if (hovered_type == MonomerType::NA_SUGAR) {
         if (tool_type == MonomerType::NA_BASE) {
-            return find_preferred_attachment_point_by_num(unbound_ap_items, {3});
+            return find_preferred_attachment_point_by_num(unbound_ap_items,
+                                                          {3});
         } else if (tool_type == MonomerType::NA_PHOSPHATE) {
-            return find_preferred_attachment_point_by_num(unbound_ap_items, {2, 1});
+            return find_preferred_attachment_point_by_num(unbound_ap_items,
+                                                          {2, 1});
         }
     } else if (hovered_type == MonomerType::NA_PHOSPHATE) {
         if (tool_type == MonomerType::NA_SUGAR) {
-            return find_preferred_attachment_point_by_num(unbound_ap_items, {2, 1});
+            return find_preferred_attachment_point_by_num(unbound_ap_items,
+                                                          {2, 1});
         }
     }
     return nullptr;
 }
 
 // should only be called when hovering over a monomer
-UnboundMonomericAttachmentPointItem* DrawMonomerSceneTool::getActiveAttachmentPointAt(const QPointF& scene_pos)
+UnboundMonomericAttachmentPointItem*
+DrawMonomerSceneTool::getActiveAttachmentPointAt(const QPointF& scene_pos)
 {
     for (auto* ap_item : m_unbound_ap_items) {
         if (ap_item->withinHoverArea(scene_pos)) {
             return ap_item;
         }
     }
-    const auto* monomer_item = static_cast<const AbstractMonomerItem*>(m_hovered_item);
+    const auto* monomer_item =
+        static_cast<const AbstractMonomerItem*>(m_hovered_item);
     auto* monomer = monomer_item->getAtom();
-    // auto chain_type = rdkit_extensions::getChainType(*monomer);
     auto monomer_type = get_monomer_type(monomer);
-    if (monomer_type == m_monomer_type && get_monomer_res_name(monomer) != m_res_name) {
-        // a click on the monomer should mutate the monomer, not add a
-        // connection, so we don't select an attachment point when the monomer
-        // itself is hovered
+    if (monomer_type == m_monomer_type &&
+        get_monomer_res_name(monomer) != m_res_name) {
+        // a click on this monomer should mutate the residue type of the
+        // monomer, not add a connection, so we don't select an attachment point
+        // when the monomer itself is hovered
         return nullptr;
     }
-    return get_preferred_attachment_point(monomer_type, m_monomer_type, m_unbound_ap_items);
+    return get_preferred_attachment_point(monomer_type, m_monomer_type,
+                                          m_unbound_ap_items);
 }
 
 void DrawMonomerSceneTool::onMouseMove(QGraphicsSceneMouseEvent* const event)
@@ -188,7 +220,8 @@ void DrawMonomerSceneTool::onMouseMove(QGraphicsSceneMouseEvent* const event)
     }
 
     if (!m_unbound_ap_items.empty()) {
-        // if we're over a monomer with attachment points, update which attachment point is hovered
+        // if we're over a monomer with attachment points, update which
+        // attachment point is hovered
         auto* active_ap_item = getActiveAttachmentPointAt(scene_pos);
         for (auto* ap_item : m_unbound_ap_items) {
             ap_item->setActive(ap_item == active_ap_item);
@@ -228,7 +261,7 @@ void DrawMonomerSceneTool::onLeftButtonClick(
         auto mol_pos = to_mol_xy(scene_pos);
         m_mol_model->addMonomer(m_res_name, m_chain_type, mol_pos);
     } else if (item_matches_type_flag(item, InteractiveItemFlag::MONOMER)) {
-        // TODO: mutate monomer
+        // TODO: mutate monomer, or add a new monomer with a connection
         // auto* monomer_item = dynamic_cast<AbstractMonomerItem*>(item);
         // const auto* monomer = monomer_item->getAtom();
     }
@@ -291,8 +324,8 @@ void DrawMonomerSceneTool::labelAttachmentPointsOnConnector(
 }
 
 void position_ap_label_rect(QRectF& ap_label_rect,
-                                   const QPointF& monomer_coords,
-                                   const QPointF& bound_coords)
+                            const QPointF& monomer_coords,
+                            const QPointF& bound_coords)
 {
     auto qline = QLineF(monomer_coords, bound_coords);
     auto angle = qline.angle();
@@ -366,9 +399,9 @@ static void position_ap_label_rect(QRectF& ap_label_rect,
                                    const RDGeom::Point3D& monomer_coords,
                                    const RDGeom::Point3D& bound_coords)
 {
-    position_ap_label_rect(ap_label_rect, to_scene_xy(monomer_coords), to_scene_xy(bound_coords));
+    position_ap_label_rect(ap_label_rect, to_scene_xy(monomer_coords),
+                           to_scene_xy(bound_coords));
 }
-
 
 /**
  * For the bond between monomer and bound_monomer, return whether monomer's
@@ -396,7 +429,7 @@ QString prep_attachment_point_name(const std::string& name)
     auto qname = QString::fromStdString(name);
     // convert apostrophes in nucleic acid attachment point names to Unicode
     // primes
-    qname.replace('\'', "′"); 
+    qname.replace('\'', "′");
     return qname;
 }
 
