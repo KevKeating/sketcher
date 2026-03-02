@@ -6,6 +6,7 @@
 #include <QtMath>
 #include <QGraphicsItem>
 #include <QGraphicsSimpleTextItem>
+#include <QPainterPath>
 #include <QPen>
 
 #include <rdkit/Geometry/point.h>
@@ -85,6 +86,30 @@ DrawMonomerSceneTool::getTopMonomericItemAt(const QPointF& scene_pos)
             }
         }
     }
+    
+    // if we're not over anything but we're near a monomer, check to see whether
+    // we'd be over one of its attachment points once they're drawn
+    QPainterPath near_scene_pos;
+    // the label can stick out past the attachment point line, so make the
+    // ellipse bigger than just the line length
+    near_scene_pos.addEllipse(scene_pos, 3 * UNBOUND_AP_LINE_LENGTH, 3 * UNBOUND_AP_LINE_LENGTH);
+    for (auto* item : m_scene->items(near_scene_pos)) {
+        if (!item_matches_type_flag(item, InteractiveItemFlag::MONOMER)) {
+            continue;
+        }
+        const auto* monomer_item =
+            static_cast<const AbstractMonomerItem*>(m_hovered_item);
+        auto local_pos = monomer_item->mapFromScene(scene_pos);
+        auto* monomer = monomer_item->getAtom();
+        auto [bound_aps, unbound_aps] = get_attachment_points_for_monomer(monomer);
+        for (auto cur_unbound_ap : unbound_aps) {
+            auto unbound_ap_bounding_rect = get_bounding_rect_for_unbound_monomer_attachment_point_item(cur_unbound_ap, monomer_item, m_fonts);
+            if (unbound_ap_bounding_rect.contains(local_pos)) {
+                return item;
+            }
+        }
+    }
+    
     return nullptr;
 }
 

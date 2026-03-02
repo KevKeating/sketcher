@@ -44,6 +44,71 @@ static QPointF direction_to_unit_vector(Direction dir)
     }
 }
 
+static std::tuple<QPointF, QString, QRectF, QRectF> calculate_geometry(const UnboundAttachmentPoint& attachment_point, const AbstractMonomerItem* const parent_monomer, const Fonts& fonts)
+{
+        // Get direction unit vector
+    QPointF dir = direction_to_unit_vector(attachment_point.direction);
+
+    // Calculate the line endpoint based on the parent's bounding rect
+    // The line extends from center (0,0) outward in the direction
+    QRectF parent_bounds = parent_monomer->boundingRect();
+
+    // Calculate how far to extend based on direction
+    // For cardinal directions, use half width or half height
+    // For diagonal directions, use the larger of the two
+    qreal half_width = parent_bounds.width() / 2.0;
+    qreal half_height = parent_bounds.height() / 2.0;
+
+    // Project the direction onto the bounding rect to find the extent
+    qreal extent;
+    if (qFuzzyIsNull(dir.x())) {
+        // Vertical direction (N or S)
+        extent = half_height;
+    } else if (qFuzzyIsNull(dir.y())) {
+        // Horizontal direction (E or W)
+        extent = half_width;
+    } else {
+        // Diagonal direction - find where the ray exits the bounding rect
+        qreal t_x = half_width / qAbs(dir.x());
+        qreal t_y = half_height / qAbs(dir.y());
+        extent = qMin(t_x, t_y);
+    }
+
+    // Line endpoint is extent + line length in the direction
+    auto line_end = dir * (extent + UNBOUND_AP_LINE_LENGTH);
+
+    auto label_text = prep_attachment_point_name(attachment_point.name);
+
+    // Calculate label rect size and position
+    auto label_rect = fonts.m_monomeric_attachment_point_label_fm.boundingRect(
+        label_text);
+    position_ap_label_rect(label_rect, {0.0, 0.0}, dir);
+
+    // Calculate bounding rect as union of all elements
+    qreal half_line_width = UNBOUND_AP_LINE_THICKNESS / 2.0;
+
+    // Line bounding rect (from origin to endpoint)
+    QRectF line_bounds = QRectF(QPointF(0, 0), line_end).normalized();
+    line_bounds.adjust(-half_line_width, -half_line_width, half_line_width,
+                       half_line_width);
+
+    // Circle bounding rect
+    qreal radius = UNBOUND_AP_CIRCLE_DIAMETER / 2.0;
+    QRectF circle_bounds(line_end.x() - radius, line_end.y() - radius,
+                         UNBOUND_AP_CIRCLE_DIAMETER,
+                         UNBOUND_AP_CIRCLE_DIAMETER);
+
+    auto bounding_rect = line_bounds.united(circle_bounds).united(label_rect);
+    
+    return {line_end, label_text, label_rect, bounding_rect};
+}
+
+QRectF get_bounding_rect_for_unbound_monomer_attachment_point_item(const UnboundAttachmentPoint& attachment_point, const AbstractMonomerItem* const parent_monomer, const Fonts& fonts)
+{
+    auto [line_end, label_text, label_rect, bounding_rect] = calculate_geometry(attachment_point, parent_monomer, fonts);
+    return bounding_rect;
+}
+
 UnboundMonomericAttachmentPointItem::UnboundMonomericAttachmentPointItem(
     const UnboundAttachmentPoint& attachment_point,
     AbstractMonomerItem* parent_monomer, const Fonts& fonts) :
@@ -104,64 +169,11 @@ void UnboundMonomericAttachmentPointItem::paint(
 
 void UnboundMonomericAttachmentPointItem::calculateGeometry(const AbstractMonomerItem* parent_monomer)
 {
-    // Get direction unit vector
-    QPointF dir = direction_to_unit_vector(m_attachment_point.direction);
-
-    // Calculate the line endpoint based on the parent's bounding rect
-    // The line extends from center (0,0) outward in the direction
-    QRectF parent_bounds = parent_monomer->boundingRect();
-
-    // Calculate how far to extend based on direction
-    // For cardinal directions, use half width or half height
-    // For diagonal directions, use the larger of the two
-    qreal half_width = parent_bounds.width() / 2.0;
-    qreal half_height = parent_bounds.height() / 2.0;
-
-    // Project the direction onto the bounding rect to find the extent
-    qreal extent;
-    if (qFuzzyIsNull(dir.x())) {
-        // Vertical direction (N or S)
-        extent = half_height;
-    } else if (qFuzzyIsNull(dir.y())) {
-        // Horizontal direction (E or W)
-        extent = half_width;
-    } else {
-        // Diagonal direction - find where the ray exits the bounding rect
-        qreal t_x = half_width / qAbs(dir.x());
-        qreal t_y = half_height / qAbs(dir.y());
-        extent = qMin(t_x, t_y);
-    }
-
-    // Line endpoint is extent + line length in the direction
-    m_line_end = dir * (extent + UNBOUND_AP_LINE_LENGTH);
-
-    m_label_text = prep_attachment_point_name(m_attachment_point.name);
-
-    // Calculate label rect size and position
-    m_label_rect = m_fonts.m_monomeric_attachment_point_label_fm.boundingRect(
-        m_label_text);
-    position_ap_label_rect(m_label_rect, {0.0, 0.0}, dir);
-
-    // Calculate bounding rect as union of all elements
-    qreal half_line_width = m_line_pen.widthF() / 2.0;
-
-    // Line bounding rect (from origin to endpoint)
-    QRectF line_bounds = QRectF(QPointF(0, 0), m_line_end).normalized();
-    line_bounds.adjust(-half_line_width, -half_line_width, half_line_width,
-                       half_line_width);
-
-    // Circle bounding rect
-    qreal radius = UNBOUND_AP_CIRCLE_DIAMETER / 2.0;
-    QRectF circle_bounds(m_line_end.x() - radius, m_line_end.y() - radius,
-                         UNBOUND_AP_CIRCLE_DIAMETER,
-                         UNBOUND_AP_CIRCLE_DIAMETER);
-
-    m_bounding_rect = line_bounds.united(circle_bounds).united(m_label_rect);
+    std::tie(m_line_end, m_label_text, m_label_rect, m_bounding_rect) = calculate_geometry(m_attachment_point, parent_monomer, m_fonts);
     m_hover_area.addRect(m_bounding_rect);
     QPainterPath parent_bounds_path;
-    parent_bounds_path.addRect(parent_bounds);
+    parent_bounds_path.addRect(parent_monomer->boundingRect());
     m_hover_area -= mapFromParent(parent_bounds_path);
-
     updateColors();
 }
 
