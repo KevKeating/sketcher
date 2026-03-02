@@ -70,6 +70,7 @@ class SKETCHER_API DrawMonomerSceneTool : public StandardSceneToolBase
     std::string m_res_name;
     rdkit_extensions::ChainType m_chain_type;
     Fonts m_fonts;
+    MonomerType m_monomer_type;
     QGraphicsItemGroup m_attachment_point_labels_group;
     const QGraphicsItem* m_hovered_item = nullptr;
     std::vector<UnboundMonomericAttachmentPointItem*> m_unbound_ap_items;

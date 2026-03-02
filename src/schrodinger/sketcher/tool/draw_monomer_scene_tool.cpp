@@ -54,6 +54,14 @@ DrawMonomerSceneTool::DrawMonomerSceneTool(
     m_fonts.m_main_label_font.setBold(true);
     m_fonts.updateFontMetrics();
     m_attachment_point_labels_group.setZValue(static_cast<qreal>(ZOrder::HINT));
+    if (chain_type == rdkit_extensions::ChainType::PEPTIDE) {
+        m_monomer_type = MonomerType::PEPTIDE;
+    } else if (chain_type == rdkit_extensions::ChainType::CHEM) {
+        m_monomer_type = MonomerType::CHEM;
+    } else {
+        m_monomer_type = get_na_monomer_type_from_res_name(res_name);
+    }
+        
 }
 
 DrawMonomerSceneTool::~DrawMonomerSceneTool()
@@ -124,17 +132,19 @@ static UnboundMonomericAttachmentPointItem* find_attachment_point_with_name(cons
     return *it;
 }
 
-static UnboundMonomericAttachmentPointItem* get_preferred_attachment_point(const MonomerType tool_type, const MonomerType hovered_type, const std::vector<UnboundMonomericAttachmentPointItem*>& unbound_ap_items) {
+static UnboundMonomericAttachmentPointItem* get_preferred_attachment_point(const MonomerType hovered_type, const MonomerType tool_type, const std::vector<UnboundMonomericAttachmentPointItem*>& unbound_ap_items) {
     if (unbound_ap_items.empty()) {
         return nullptr;
     } else if (hovered_type == MonomerType::CHEM) {
         return find_min_attachment_point_by_num(unbound_ap_items);
     } else if (hovered_type == MonomerType::PEPTIDE) {
-        if (tool_type == MonomerType::PEPTIDE || tool_type == MonomerType::CHEM) {
+        if (tool_type == MonomerType::PEPTIDE) {
             return find_preferred_attachment_point_by_num(unbound_ap_items, {2, 1, 3});
+        } else if  (tool_type == MonomerType::CHEM) {
+            return find_preferred_attachment_point_by_num(unbound_ap_items, {3});
         }
     } else if (hovered_type == MonomerType::NA_BASE) {
-        if (tool_type == MonomerType::NA_BASE) {
+        if (tool_type == MonomerType::NA_BASE || tool_type == MonomerType::CHEM) {
             find_attachment_point_with_name(unbound_ap_items, "pair");
         } else if (tool_type == MonomerType::NA_SUGAR) {
             return find_preferred_attachment_point_by_num(unbound_ap_items, {1});
@@ -163,17 +173,15 @@ UnboundMonomericAttachmentPointItem* DrawMonomerSceneTool::getActiveAttachmentPo
     }
     const auto* monomer_item = static_cast<const AbstractMonomerItem*>(m_hovered_item);
     auto* monomer = monomer_item->getAtom();
-    auto chain_type = rdkit_extensions::getChainType(*monomer);
-    if (chain_type == m_chain_type && get_monomer_res_name(monomer) == m_res_name) {
-        // TODO: figure out the default unbound attachment point
-        
+    // auto chain_type = rdkit_extensions::getChainType(*monomer);
+    auto monomer_type = get_monomer_type(monomer);
+    if (monomer_type == m_monomer_type && get_monomer_res_name(monomer) != m_res_name) {
+        // a click on the monomer should mutate the monomer, not add a
+        // connection, so we don't select an attachment point when the monomer
+        // itself is hovered
+        return nullptr;
     }
-    // TODO: won't mutate unless the monomer type is the same
-    // the hovered monomer is a different residue than the tool, so a click on
-    // the monomer would mutate the monomer, not add a connection.  As a result,
-    // hovering over the monomer itself shouldn't highlight any attachment
-    // points
-    return nullptr;
+    return get_preferred_attachment_point(monomer_type, m_monomer_type, m_unbound_ap_items);
 }
 
 void DrawMonomerSceneTool::onMouseMove(QGraphicsSceneMouseEvent* const event)
