@@ -69,6 +69,7 @@ std::vector<QGraphicsItem*> DrawMonomerSceneTool::getGraphicsItems()
     return items;
 }
 
+// TODO: rename At -> Near
 QGraphicsItem*
 DrawMonomerSceneTool::getTopMonomericItemAt(const QPointF& scene_pos)
 {
@@ -77,7 +78,6 @@ DrawMonomerSceneTool::getTopMonomericItemAt(const QPointF& scene_pos)
     // want to draw the attachment points
     QPainterPath near_scene_pos;
     near_scene_pos.addEllipse(scene_pos, UNBOUND_AP_LINE_LENGTH, UNBOUND_AP_LINE_LENGTH);
-    
     for (auto* item : m_scene->items(near_scene_pos)) {
         if (item_matches_type_flag(item, InteractiveItemFlag::MONOMERIC)) {
             return item;
@@ -222,6 +222,19 @@ DrawMonomerSceneTool::getActiveAttachmentPointAt(const QPointF& scene_pos)
                                           m_unbound_ap_items);
 }
 
+static bool pos_is_over_item_or_unbound_aps(const QPointF& scene_pos, const QGraphicsItem* item, std::vector<UnboundMonomericAttachmentPointItem*> unbound_ap_items)
+{
+    if (item->contains(scene_pos)) {
+        return true;
+    }
+    for (auto* ap_item : unbound_ap_items) {
+        if (ap_item->withinHoverArea(scene_pos)) {
+            return true;
+        }
+    }
+    return false;
+}
+
 void DrawMonomerSceneTool::onMouseMove(QGraphicsSceneMouseEvent* const event)
 {
     StandardSceneToolBase::onMouseMove(event);
@@ -231,11 +244,37 @@ void DrawMonomerSceneTool::onMouseMove(QGraphicsSceneMouseEvent* const event)
     }
     QPointF scene_pos = event->scenePos();
     auto* item = getTopMonomericItemAt(scene_pos);
-    if (item != m_hovered_item) {
-        m_hovered_item = item;
-        startHoveringOver(item);
+    std::vector<UnboundMonomericAttachmentPointItem*> unbound_ap_items;
+    bool created_new_ap_items = false;
+    if (item == m_hovered_item) {
+        unbound_ap_items = m_unbound_ap_items;
+    } else if (item_matches_type_flag(item, InteractiveItemFlag::MONOMER)) {
+        auto* monomer_item = static_cast<AbstractMonomerItem*>(item);
+        const auto* monomer = monomer_item->getAtom();
+        auto [bound_aps, unbound_aps] = get_attachment_points_for_monomer(monomer);
+        for (auto& cur_ap : unbound_aps) {
+            // auto* item = new UnboundMonomericAttachmentPointItem(
+            //     cur_ap, monomer_item, m_fonts);
+            // unbound_ap_items.push_back(item);
+        }
+        created_new_ap_items = true;
     }
-
+    if (!pos_is_over_item_or_unbound_aps(scene_pos, item, unbound_ap_items)) {
+        item = nullptr;
+        if (created_new_ap_items) {
+            for (auto* ap_item : unbound_ap_items) {
+                delete ap_item;
+            }
+        }
+    } if (created_new_ap_items) {
+        m_unbound_ap_items = unbound_ap_items;
+    }
+    
+    if (item != m_hovered_item) {
+        startHoveringOver(item);
+        m_hovered_item = item;
+    
+    }
     if (!m_unbound_ap_items.empty()) {
         // if we're over a monomer with attachment points, update which
         // attachment point is hovered
@@ -311,11 +350,11 @@ void DrawMonomerSceneTool::labelAttachmentPointsOnMonomer(
         labelBoundAttachmentPoint(monomer, cur_ap.bound_monomer,
                                   cur_ap.is_secondary_connection, cur_ap.name);
     }
-    for (auto& cur_ap : unbound_aps) {
-        auto* item = new UnboundMonomericAttachmentPointItem(
-            cur_ap, monomer_item, m_fonts);
-        m_unbound_ap_items.push_back(item);
-    }
+    // for (auto& cur_ap : unbound_aps) {
+    //     auto* item = new UnboundMonomericAttachmentPointItem(
+    //         cur_ap, monomer_item, m_fonts);
+    //     m_unbound_ap_items.push_back(item);
+    // }
 }
 
 void DrawMonomerSceneTool::labelAttachmentPointsOnConnector(
