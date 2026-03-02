@@ -140,6 +140,22 @@ find_attachment_point_with_name(
     return *it;
 }
 
+[[nodiscard]] static UnboundMonomericAttachmentPointItem*
+find_attachment_point_with_num(
+    const std::vector<UnboundMonomericAttachmentPointItem*>& unbound_ap_items,
+    const int num)
+{
+    auto it =
+        std::find_if(unbound_ap_items.begin(), unbound_ap_items.end(),
+                     [&num](const auto* ap_item) {
+                         return (ap_item->getAttachmentPoint().num == num);
+                     });
+    if (it == unbound_ap_items.end()) {
+        return nullptr;
+    }
+    return *it;
+}
+
 static UnboundMonomericAttachmentPointItem* get_preferred_attachment_point(
     const MonomerType hovered_type, const MonomerType tool_type,
     const std::vector<UnboundMonomericAttachmentPointItem*>& unbound_ap_items)
@@ -153,21 +169,18 @@ static UnboundMonomericAttachmentPointItem* get_preferred_attachment_point(
             return find_preferred_attachment_point_by_num(unbound_ap_items,
                                                           {2, 1, 3});
         } else if (tool_type == MonomerType::CHEM) {
-            return find_preferred_attachment_point_by_num(unbound_ap_items,
-                                                          {3});
+            return find_attachment_point_with_num(unbound_ap_items, 3);
         }
     } else if (hovered_type == MonomerType::NA_BASE) {
         if (tool_type == MonomerType::NA_BASE ||
             tool_type == MonomerType::CHEM) {
             return find_attachment_point_with_name(unbound_ap_items, "pair");
         } else if (tool_type == MonomerType::NA_SUGAR) {
-            return find_preferred_attachment_point_by_num(unbound_ap_items,
-                                                          {1});
+            return find_attachment_point_with_num(unbound_ap_items, 1);
         }
     } else if (hovered_type == MonomerType::NA_SUGAR) {
         if (tool_type == MonomerType::NA_BASE) {
-            return find_preferred_attachment_point_by_num(unbound_ap_items,
-                                                          {3});
+            return find_attachment_point_with_num(unbound_ap_items, 3);
         } else if (tool_type == MonomerType::NA_PHOSPHATE) {
             return find_preferred_attachment_point_by_num(unbound_ap_items,
                                                           {2, 1});
