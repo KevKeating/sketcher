@@ -179,5 +179,10 @@ bool UnboundMonomericAttachmentPointItem::withinHoverArea(const QPointF& scene_p
     return m_hover_area.contains(mapFromScene(scene_pos));
 }
 
+const UnboundAttachmentPoint& UnboundMonomericAttachmentPointItem::getAttachmentPoint() const
+{
+    return m_attachment_point;
+}
+
 } // namespace sketcher
 } // namespace schrodinger

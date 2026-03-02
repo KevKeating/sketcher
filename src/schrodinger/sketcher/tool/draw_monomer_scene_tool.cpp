@@ -89,6 +89,22 @@ QGraphicsItem* DrawMonomerSceneTool::getTopMonomericItemAt(const QPointF& scene_
     return nullptr;
 }
 
+static UnboundMonomericAttachmentPointItem* find_preferred_attachment_point_by_num(const std::vector<UnboundMonomericAttachmentPointItem*>& unbound_ap_items, const std::vector<int>& preferred_order)
+{
+    auto index_of = [&preferred_order](const auto* ap_item) {
+        auto it = std::find(preferred_order.begin(), preferred_order.end(), ap_item->getAttachmentPoint().num);
+        return std::distance(preferred_order.begin(), it);
+    };
+    auto min_it = std::min_element(unbound_ap_items.begin(), unbound_ap_items.end(), [&index_of](const auto* ap_item_left, const auto* ap_item_right) {
+        return index_of(ap_item_left) < index_of(ap_item_right);
+    });
+    // make sure that the attachment point we found is actually on the preferred_order list
+    if (index_of(*min_it) < preferred_order.size()) {
+        return *min_it;
+    }
+    return nullptr;
+}
+
 // TODO: figure this out
 static std::vector<int> get_preferred_attachment_point_order(const MonomerType tool_type, const MonomerType hovered_type) {
     if (tool_type == MonomerType::PEPTIDE) {
@@ -120,6 +136,8 @@ UnboundMonomericAttachmentPointItem* DrawMonomerSceneTool::getActiveAttachmentPo
     const auto* monomer_item = static_cast<const AbstractMonomerItem*>(m_hovered_item);
     auto* monomer = monomer_item->getAtom();
     auto chain_type = rdkit_extensions::getChainType(*monomer);
+    // std::vector<std::pair<UnboundAttachmentPoint, UnboundMonomericAttachmentPointItem>> aps_and_items;
+    // std::transform(m_unbound_ap_items.begin(), m_unbound_ap_items.end(), std::back_inserter(aps)
     if (chain_type == m_chain_type && get_monomer_res_name(monomer) == m_res_name) {
         // TODO: figure out the default unbound attachment point
         

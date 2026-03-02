@@ -52,6 +52,7 @@ class SKETCHER_API UnboundMonomericAttachmentPointItem : public QGraphicsItem
     void setActive(bool active);
    
     bool withinHoverArea(const QPointF& scene_pos) const;
+    const UnboundAttachmentPoint& getAttachmentPoint() const;
 
 
     // QGraphicsItem overrides
