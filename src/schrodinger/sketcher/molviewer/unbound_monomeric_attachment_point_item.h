@@ -18,6 +18,14 @@ namespace sketcher
 
 class AbstractMonomerItem;
 
+/**
+ * Return the bounding rect for the UnboundMonomericAttachmentPointItem that
+ * corresponds to the given parameters. Note that this graphics item doesn't
+ * necessarily need to exist (and will *not* be created by this function).
+ * 
+ * Parameter are the same as the UnboundMonomericAttachmentPointItem
+ * constructor.
+ */
 QRectF get_bounding_rect_for_unbound_monomer_attachment_point_item(
     const UnboundAttachmentPoint& attachment_point,
     const AbstractMonomerItem* const parent_monomer, const Fonts& fonts);
