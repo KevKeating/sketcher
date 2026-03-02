@@ -360,11 +360,11 @@ void DrawMonomerSceneTool::labelAttachmentPointsOnMonomer(
         labelBoundAttachmentPoint(monomer, cur_ap.bound_monomer,
                                   cur_ap.is_secondary_connection, cur_ap.name);
     }
-    // for (auto& cur_ap : unbound_aps) {
-    //     auto* item = new UnboundMonomericAttachmentPointItem(
-    //         cur_ap, monomer_item, m_fonts);
-    //     m_unbound_ap_items.push_back(item);
-    // }
+    for (auto& cur_ap : unbound_aps) {
+        auto* item = new UnboundMonomericAttachmentPointItem(
+            cur_ap, monomer_item, m_fonts);
+        m_unbound_ap_items.push_back(item);
+    }
 }
 
 void DrawMonomerSceneTool::labelAttachmentPointsOnConnector(
