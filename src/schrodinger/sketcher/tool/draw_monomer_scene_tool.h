@@ -35,13 +35,13 @@ enum class MonomerType;
 class UnboundMonomericAttachmentPointItem;
 
 /**
- * Convert the attachment point name to a QString and convert apostrophes to
- * Unicode primes.
+ * @return the attachment point name to a QString after converting apostrophes
+ * to Unicode primes.
  */
 QString prep_attachment_point_name(const std::string& name);
 
 /**
- * Position the given rectangle to label a monomer's bound attachment point
+ * Position the given rectangle to label a monomer's attachment point
  * @param ap_label_rect The rectangle to position. It should already be sized
  * correctly for the attachment point label.
  * @param monomer_coords The coordinates of the monomer being labeled
@@ -130,10 +130,10 @@ class SKETCHER_API DrawMonomerSceneTool : public StandardSceneToolBase
 
     /**
      * Return the top graphics item representing a monomer or monomeric
-     * connector and the given coordinates. Note that this method will consider
+     * connector at the given coordinates. Note that this method will consider
      * the cursor to be over a monomer if the cursor is over an unbound
-     * attachment point belonging to that monomer (or if the cursor *would be*
-     * over an unbound attachment point once it's drawn).
+     * attachment point belonging to that monomer, or if the cursor *would be*
+     * over an unbound attachment point once it's drawn.
      * @param scene_pos The position in Scene coordinates
      */
     QGraphicsItem* getTopMonomericItemAt(const QPointF& scene_pos);
@@ -152,7 +152,9 @@ class SKETCHER_API DrawMonomerSceneTool : public StandardSceneToolBase
      * item, that item will be returned. If the coordinates are over the
      * monomer, then the default unbound attachment point will be returned,
      * assuming one exists for the current tool. If no default attachment point
-     * exists, then nullptr will be returned.
+     * exists (e.g. if a click would mutate the monomer or if the tool and the
+     * hovered monomer are of different molecule types), then nullptr will be
+     * returned.
      *
      * @note This method only returns accurate results for the currently hovered
      * monomer, and assumes that the unbound attachment point graphics items

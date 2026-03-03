@@ -73,7 +73,7 @@ std::vector<QGraphicsItem*> DrawMonomerSceneTool::getGraphicsItems()
 QGraphicsItem*
 DrawMonomerSceneTool::getTopMonomericItemAt(const QPointF& scene_pos)
 {
-    // check to see if we've over a monomer, monomeric connector, or unbound
+    // check to see if we're over a monomer, monomeric connector, or unbound
     // attachment point item
     for (auto* item : m_scene->items(scene_pos)) {
         if (item_matches_type_flag(item, InteractiveItemFlag::MONOMERIC)) {
@@ -87,9 +87,9 @@ DrawMonomerSceneTool::getTopMonomericItemAt(const QPointF& scene_pos)
         }
     }
 
-    // if we're not over anything, check to see if we're near a monomer.  If we
-    // are, check to see whether we'd be over one of its attachment points once
-    // they're drawn
+    // if we're not over any of those, check to see if we're near a monomer. If
+    // we are, check to see whether we'd be over one of its attachment points
+    // once they're drawn
     QPainterPath near_scene_pos;
     // the attachment point label can stick out past the attachment point line,
     // so make the circle a bit bigger than just the line length
@@ -258,7 +258,6 @@ static UnboundMonomericAttachmentPointItem* get_default_attachment_point(
     return nullptr;
 }
 
-// should only be called when hovering over a monomer
 UnboundMonomericAttachmentPointItem*
 DrawMonomerSceneTool::getUnboundAttachmentPointAt(const QPointF& scene_pos)
 {
