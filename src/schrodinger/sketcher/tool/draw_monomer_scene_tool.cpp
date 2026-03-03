@@ -211,16 +211,7 @@ find_attachment_point_with_num(
     return *it;
 }
 
-/**
- * Return the default unbound attachment point; that is, the attachment point
- * that should be selected when the user hovers over a monomer.
- * @param hovered_type The type of monomer being hovered over
- * @param tool_type  The type of monomer that would be drawn by the active scene
- * tool
- * @param unbound_ap_items A list of all graphics items representing unbound
- * attachment points of the hovered monomer
- */
-static UnboundMonomericAttachmentPointItem* get_default_attachment_point(
+UnboundMonomericAttachmentPointItem* get_default_attachment_point(
     const MonomerType hovered_type, const MonomerType tool_type,
     const std::vector<UnboundMonomericAttachmentPointItem*>& unbound_ap_items)
 {
