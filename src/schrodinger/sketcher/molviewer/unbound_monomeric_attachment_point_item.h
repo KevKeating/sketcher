@@ -71,23 +71,17 @@ class SKETCHER_API UnboundMonomericAttachmentPointItem : public QGraphicsItem
                QWidget* widget = nullptr) override;
 
   private:
-    // Data references
     UnboundAttachmentPoint m_attachment_point;
-    // TODO: this could be a pointer to the scene tool's fonts
-    Fonts m_fonts;
-
-    // Cached geometry (line always starts from origin)
+    // this graphics item will never outlive the scene tool that created it, so
+    // we store a pointer to the scene tool's fonts instead of making a copy
+    const Fonts* m_fonts;
     QPointF m_line_end;
     QRectF m_label_rect;
     QString m_label_text;
     QRectF m_bounding_rect;
     QPainterPath m_hover_area;
-
-    // Drawing resources
     QPen m_line_pen;
     QBrush m_circle_brush{Qt::SolidPattern};
-
-    // State
     bool m_is_active = false;
 
     /**
@@ -96,7 +90,7 @@ class SKETCHER_API UnboundMonomericAttachmentPointItem : public QGraphicsItem
     void updateColors();
 
     /**
-     * Update all cached geometry and visual data
+     * Determine all geometry and visual data
      */
     void calculateGeometry(const AbstractMonomerItem* parent_monomer);
 };

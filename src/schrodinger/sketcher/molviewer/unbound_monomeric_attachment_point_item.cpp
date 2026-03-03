@@ -120,7 +120,7 @@ UnboundMonomericAttachmentPointItem::UnboundMonomericAttachmentPointItem(
     AbstractMonomerItem* parent_monomer, const Fonts& fonts) :
     QGraphicsItem(parent_monomer),
     m_attachment_point(attachment_point),
-    m_fonts(fonts)
+    m_fonts(&fonts)
 {
     setFlag(QGraphicsItem::ItemStacksBehindParent);
 
@@ -168,7 +168,7 @@ void UnboundMonomericAttachmentPointItem::paint(
     painter->drawEllipse(m_line_end, radius, radius);
 
     // Draw the label
-    painter->setFont(m_fonts.m_monomeric_attachment_point_label_font);
+    painter->setFont(m_fonts->m_monomeric_attachment_point_label_font);
     painter->setPen(m_line_pen);
     painter->drawText(m_label_rect, Qt::AlignCenter, m_label_text);
 
@@ -179,7 +179,7 @@ void UnboundMonomericAttachmentPointItem::calculateGeometry(
     const AbstractMonomerItem* parent_monomer)
 {
     std::tie(m_line_end, m_label_text, m_label_rect, m_bounding_rect) =
-        calculate_geometry(m_attachment_point, parent_monomer, m_fonts);
+        calculate_geometry(m_attachment_point, parent_monomer, *m_fonts);
     m_hover_area.addRect(m_bounding_rect);
     QPainterPath parent_bounds_path;
     parent_bounds_path.addRect(parent_monomer->boundingRect());
