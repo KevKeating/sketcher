@@ -26,7 +26,7 @@ class AbstractMonomerItem;
  * Parameter are the same as the UnboundMonomericAttachmentPointItem
  * constructor.
  */
-QRectF get_bounding_rect_for_unbound_monomer_attachment_point_item(
+SKETCHER_API QRectF get_bounding_rect_for_unbound_monomer_attachment_point_item(
     const UnboundAttachmentPoint& attachment_point,
     const AbstractMonomerItem* const parent_monomer, const Fonts& fonts);
 
