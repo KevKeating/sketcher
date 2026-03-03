@@ -49,20 +49,13 @@ calculate_geometry(const UnboundAttachmentPoint& attachment_point,
                    const AbstractMonomerItem* const parent_monomer,
                    const Fonts& fonts)
 {
-    // Get direction unit vector
     QPointF dir = direction_to_unit_vector(attachment_point.direction);
-
-    // Calculate the line endpoint based on the parent's bounding rect
-    // The line extends from center (0,0) outward in the direction
     QRectF parent_bounds = parent_monomer->boundingRect();
-
-    // Calculate how far to extend based on direction
-    // For cardinal directions, use half width or half height
-    // For diagonal directions, use the larger of the two
     qreal half_width = parent_bounds.width() / 2.0;
     qreal half_height = parent_bounds.height() / 2.0;
 
-    // Project the direction onto the bounding rect to find the extent
+    // Project the direction onto the bounding rect to determine how much of the
+    // line will be drawn behind the parent monomer's shape
     qreal extent;
     if (qFuzzyIsNull(dir.x())) {
         // Vertical direction (N or S)
@@ -76,26 +69,19 @@ calculate_geometry(const UnboundAttachmentPoint& attachment_point,
         qreal t_y = half_height / qAbs(dir.y());
         extent = qMin(t_x, t_y);
     }
-
-    // Line endpoint is extent + line length in the direction
     auto line_end = dir * (extent + UNBOUND_AP_LINE_LENGTH);
 
     auto label_text = prep_attachment_point_name(attachment_point.name);
-
-    // Calculate label rect size and position
     auto label_rect =
         fonts.m_monomeric_attachment_point_label_fm.boundingRect(label_text);
     position_ap_label_rect(label_rect, {0.0, 0.0}, dir);
 
-    // Calculate bounding rect as union of all elements
     qreal half_line_width = UNBOUND_AP_LINE_THICKNESS / 2.0;
 
-    // Line bounding rect (from origin to endpoint)
     QRectF line_bounds = QRectF(QPointF(0, 0), line_end).normalized();
     line_bounds.adjust(-half_line_width, -half_line_width, half_line_width,
                        half_line_width);
 
-    // Circle bounding rect
     qreal radius = UNBOUND_AP_CIRCLE_DIAMETER / 2.0;
     QRectF circle_bounds(line_end.x() - radius, line_end.y() - radius,
                          UNBOUND_AP_CIRCLE_DIAMETER,
@@ -135,10 +121,6 @@ int UnboundMonomericAttachmentPointItem::type() const
     return Type;
 }
 
-// TODO: active items should have be colored blue, have a line that's a full
-// bond length, and not draw the circle
-// TODO: for active items, draw the other monomer and label its attachment
-// point?
 void UnboundMonomericAttachmentPointItem::setActive(bool active)
 {
     if (m_is_active != active) {
