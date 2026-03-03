@@ -32,21 +32,17 @@ QRectF get_bounding_rect_for_unbound_monomer_attachment_point_item(
 
 /**
  * A graphics item for representing an unbound (available) attachment point
- * on a monomer. Draws a short line extending from the monomer center outward
- * in the specified direction, a small filled circle at the end, and a text
+ * on a monomer. Draws a short line extending from the monomer with a text
  * label indicating the attachment point name.
- *
- * The item is drawn behind its parent monomer using ItemStacksBehindParent,
- * so the monomer's filled border naturally hides the portion of the line
- * inside the monomer.
  */
 class SKETCHER_API UnboundMonomericAttachmentPointItem : public QGraphicsItem
 {
   public:
     /**
-     * @param attachment_point The attachment point data (name, direction)
-     * @param parent_monomer The parent monomer item
-     * @param fonts The fonts object for label rendering
+     * @param attachment_point The attachment point to be represented by this
+     * graphics item
+     * @param parent_monomer The parent monomer graphics item
+     * @param fonts The fonts to use for label rendering
      */
     UnboundMonomericAttachmentPointItem(
         const UnboundAttachmentPoint& attachment_point,
@@ -55,6 +51,11 @@ class SKETCHER_API UnboundMonomericAttachmentPointItem : public QGraphicsItem
     enum { Type = QGraphicsItem::UserType + 2000 };
     int type() const override;
 
+    // QGraphicsItem overrides
+    QRectF boundingRect() const override;
+    void paint(QPainter* painter, const QStyleOptionGraphicsItem* option,
+               QWidget* widget = nullptr) override;
+
     /**
      * Set whether this attachment point indicator is active (black) or
      * inactive (gray).
@@ -62,13 +63,16 @@ class SKETCHER_API UnboundMonomericAttachmentPointItem : public QGraphicsItem
      */
     void setActive(bool active);
 
+    /**
+     * @return whether the given scene coordinates are within the attachment
+     * point, but not within the parent monomer
+     */
     bool withinHoverArea(const QPointF& scene_pos) const;
-    const UnboundAttachmentPoint& getAttachmentPoint() const;
 
-    // QGraphicsItem overrides
-    QRectF boundingRect() const override;
-    void paint(QPainter* painter, const QStyleOptionGraphicsItem* option,
-               QWidget* widget = nullptr) override;
+    /**
+     * @return the attachment point represented by this graphics item
+     */
+    const UnboundAttachmentPoint& getAttachmentPoint() const;
 
   private:
     UnboundAttachmentPoint m_attachment_point;
@@ -89,9 +93,6 @@ class SKETCHER_API UnboundMonomericAttachmentPointItem : public QGraphicsItem
      */
     void updateColors();
 
-    /**
-     * Determine all geometry and visual data
-     */
     void calculateGeometry(const AbstractMonomerItem* parent_monomer);
 };
 
