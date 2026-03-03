@@ -464,7 +464,7 @@ static void orient_ring_system(RDKit::ROMol& polymer)
         rotation_center = centroid;
 
     } else { // at least two attachment points: orient the first two attachment
-        // points vertically
+             // points vertically
         auto& [atom_idx1, centroid1] = attachment_atoms_and_centroids[0];
         auto& [atom_idx2, centroid2] = attachment_atoms_and_centroids[1];
         auto atom1_pos = conformer.getAtomPos(atom_idx1);
@@ -543,17 +543,37 @@ generate_coordinates_for_cycles(RDKit::ROMol& polymer,
     }
 }
 
-// Structure to hold CUSTOM_BOND information
-struct CustomBondInfo {
-    unsigned int monomer_i; // First monomer position in chain
-    unsigned int monomer_j; // Second monomer position (j > i)
-};
-
 // Structure to hold turn constraint: turn must be in range (min_pos, max_pos)
 struct TurnConstraint {
     unsigned int min_pos; // Turn must be after this position
     unsigned int max_pos; // Turn must be before this position
 };
+
+/**
+ * Extracts the CUSTOM_BONDs from `polymer` and returns them as a list of
+ * CustomBondInfo, sorted by starting position.
+ */
+static std::vector<CustomBondInfo>
+extract_custom_bonds(const RDKit::ROMol& polymer)
+{
+    std::vector<CustomBondInfo> custom_bonds;
+    for (const auto& bond : polymer.bonds()) {
+        if (bond->hasProp(CUSTOM_BOND)) {
+            auto begin_idx = bond->getBeginAtom()->getIdx();
+            auto end_idx = bond->getEndAtom()->getIdx();
+
+            unsigned int i = std::min(begin_idx, end_idx);
+            unsigned int j = std::max(begin_idx, end_idx);
+            custom_bonds.push_back({i, j});
+        }
+    }
+
+    // Sort bonds by starting position
+    std::sort(
+        custom_bonds.begin(), custom_bonds.end(),
+        [](const auto& a, const auto& b) { return a.monomer_i < b.monomer_i; });
+    return custom_bonds;
+}
 
 /**
  * Extracts turn constraints from the CUSTOM_BONDs in `polymer`. Each
@@ -568,17 +588,7 @@ std::vector<TurnConstraint>
 compute_turn_positions_for_chain(const RDKit::ROMol& polymer)
 {
     // Extract all CUSTOM_BONDS
-    std::vector<CustomBondInfo> custom_bonds;
-    for (const auto& bond : polymer.bonds()) {
-        if (bond->hasProp(CUSTOM_BOND)) {
-            auto begin_idx = bond->getBeginAtom()->getIdx();
-            auto end_idx = bond->getEndAtom()->getIdx();
-
-            unsigned int i = std::min(begin_idx, end_idx);
-            unsigned int j = std::max(begin_idx, end_idx);
-            custom_bonds.push_back({i, j});
-        }
-    }
+    std::vector<CustomBondInfo> custom_bonds = extract_custom_bonds(polymer);
 
     // No CUSTOM_BONDS: this should not happens since linear polymers should be
     // handled by a different code path. Return empty constraints so the calling
@@ -586,11 +596,6 @@ compute_turn_positions_for_chain(const RDKit::ROMol& polymer)
     if (custom_bonds.empty()) {
         return {};
     }
-
-    // Sort bonds by starting position
-    std::sort(
-        custom_bonds.begin(), custom_bonds.end(),
-        [](const auto& a, const auto& b) { return a.monomer_i < b.monomer_i; });
 
     // Each CUSTOM_BOND requires exactly one turn between i and j
     std::vector<TurnConstraint> constraints;
@@ -658,16 +663,6 @@ compute_turn_positions_for_chain(const RDKit::ROMol& polymer)
 }
 
 /**
- * Information about a turn in a snaking chain layout.
- */
-struct TurnInfo {
-    unsigned int position; // Monomer index where the turn begins (exclusive end
-                           // of segment)
-    unsigned int
-        size; // Number of residues consumed in the turn (0 = instant turn)
-};
-
-/**
  * Lays out turn monomers following a polygon arc.
  *
  * @param polymer The polymer molecule
@@ -679,6 +674,11 @@ struct TurnInfo {
  * @param turn_size Number of turn monomers to place
  * @param total_monomers Total number of monomers in the polymer
  * @param chain_dir Direction of the chain segment that was just placed
+ * @param downward Whether the turn should go downward (true) or upward (false)
+ * @param y_size_difference this turn will occupy space as if it had
+ * y_size_difference more monomers than it actually has. This is used to make
+ * sure that turns with different number of monomers still occupy the same
+ * vertical space and can be aligned with each other
  * @return The position where the next segment should start
  */
 static RDGeom::Point3D
@@ -686,7 +686,8 @@ lay_out_turn(RDKit::ROMol& polymer, RDKit::Conformer& conformer,
              std::unordered_set<int>& placed_monomers_idcs,
              const RDGeom::Point3D& turn_start_pos, unsigned int segment_end,
              unsigned int turn_size, unsigned int total_monomers,
-             ChainDirection chain_dir)
+             ChainDirection chain_dir, bool downward = true,
+             int y_size_difference = 0)
 {
     if (turn_size == 0) {
         // No turn monomers, just return position one bond length below
@@ -696,14 +697,31 @@ lay_out_turn(RDKit::ROMol& polymer, RDKit::Conformer& conformer,
 
     RDGeom::Point3D current_pos = turn_start_pos;
 
-    // Calculate external angle for regular polygon with (turn_size + 1) * 2
+    // Calculate external angle for regular polygon with (turn_size + 2) * 2
     // vertices
     unsigned int n = 2 * (turn_size + 2);
+
+    float bond_scale = 1.0;
+    if (y_size_difference != 0) {
+        // scale y coordinates by a factor to make sure that the turn occupies
+        // the same vertical space as if it had y_size_difference more monomers.
+        // This is the ratio between the apothem of the regular polygon with
+        // turn_size monomers and the apothem of the regular polygon with
+        // turn_size + y_size_difference monomers
+        bond_scale = (2 * std::tan(PI / n)) /
+                     (2 * std::tan(PI / (n + 2 * y_size_difference)));
+    }
+
     double external_angle = -2.0 * M_PI / n;
 
     // For RTL, rotate in opposite direction (clockwise instead of
     // counterclockwise)
     if (chain_dir == ChainDirection::RTL) {
+        external_angle = -external_angle;
+    }
+    // if the turn goes upward instead of downward, also rotate in opposite
+    // direction
+    if (!downward) {
         external_angle = -external_angle;
     }
 
@@ -722,8 +740,10 @@ lay_out_turn(RDKit::ROMol& polymer, RDKit::Conformer& conformer,
         current_angle += external_angle;
 
         // Calculate step using 2D rotation
-        double step_x = MONOMER_BOND_LENGTH * std::cos(current_angle);
-        double step_y = MONOMER_BOND_LENGTH * std::sin(current_angle);
+        double step_x =
+            MONOMER_BOND_LENGTH * std::cos(current_angle) * bond_scale;
+        double step_y =
+            MONOMER_BOND_LENGTH * std::sin(current_angle) * bond_scale;
 
         current_pos.x += step_x;
         current_pos.y += step_y;
@@ -734,30 +754,258 @@ lay_out_turn(RDKit::ROMol& polymer, RDKit::Conformer& conformer,
 
     // Calculate position for next segment: one more rotation and step
     current_angle += external_angle;
-    double final_step_x = MONOMER_BOND_LENGTH * std::cos(current_angle);
-    double final_step_y = MONOMER_BOND_LENGTH * std::sin(current_angle);
+    double final_step_x =
+        MONOMER_BOND_LENGTH * std::cos(current_angle) * bond_scale;
+    double final_step_y =
+        MONOMER_BOND_LENGTH * std::sin(current_angle) * bond_scale;
 
     return RDGeom::Point3D(current_pos.x + final_step_x,
                            current_pos.y + final_step_y, 0.0);
 }
 
 /**
- * Lays out a snaking chain with explicit turn positions.
+ * Computes the turn positions and sizes for a coiling layout based on the
+ * following parameters:
+ * @param polymer The polymer molecule
+ * @param increment The amount by which the turn size should increase for each
+ * subsequent turn. This controls how quickly the coil expands and can be used
+ * to approximate an elliptical shape. If it has a negative value the coiling
+ * will be reversed, starting with the longest turn and decreasing the turn size
+ * for each subsequent turn.
+ * @param turn_size The size of the first turn (number of monomers in the turn)
+ * @param chain_size The size of the chain segments between turns (number of
+ * monomers in each segment). This remains constant for every coil
+ * @param first_chain_size The size of the first chain segment (number of
+ * monomers in the first segment). This is used to allow the first turn to be
+ * placed later or earlier than the regular chain_size, which can be useful to
+ * better align the coil with certain CUSTOM_BOND positions.
+ * @return A vector of TurnInfo with the position and size and direction
+ * (downward or upward) of each turn. If the parameters are invalid an empty
+ * vector is returned to indicate failure.
+ */
+static std::vector<TurnInfo> compute_coiling_turns_for_chain_with_params(
+    const RDKit::ROMol& polymer, int increment, int turn_size, int chain_size,
+    int first_chain_size)
+{
+
+    std::vector<TurnInfo> turns;
+
+    unsigned int residues_accounted = 0;
+    auto total_monomers = polymer.getNumAtoms();
+    unsigned int current_chain_size = first_chain_size;
+    bool turn_downward = true;
+    while (residues_accounted < total_monomers) {
+        if (turn_size < 0) {
+            // invalid parameters, return empty vector to indicate failure
+            return {};
+        }
+        unsigned int turn_position = residues_accounted + current_chain_size;
+        if (turn_position >= total_monomers) {
+            // no more turns needed, we're done
+            break;
+        }
+        turns.push_back({turn_position, static_cast<unsigned int>(turn_size),
+                         turn_downward, 0});
+        residues_accounted += current_chain_size + turn_size;
+        current_chain_size = chain_size;
+        turn_size += increment;
+        turn_downward = !turn_downward;
+    }
+    return turns;
+}
+
+double get_position_in_coils_double(unsigned int monomer_idx,
+                                    const RDKit::ROMol& polymer,
+                                    const std::vector<TurnInfo>& turns)
+{
+    int section_number = 0;
+    int begin_of_section = 0;
+    int section_size = 0;
+    int last_segment_size = 0;
+
+    for (unsigned int turn_idx = 0; turn_idx < turns.size(); ++turn_idx) {
+        const auto& turn = turns[turn_idx];
+        section_number = turn_idx * 2;
+        last_segment_size = turn.position - begin_of_section;
+        if (monomer_idx < turn.position + turn.size) {
+            if (monomer_idx >= turn.position) {
+                // we're in the turn
+                section_number += 1;
+                begin_of_section = turn.position;
+                section_size = turn.size;
+            } else {
+                // we're in the segment before the turn
+                section_size = last_segment_size;
+            }
+
+            return section_number +
+                   static_cast<double>(monomer_idx + 1 - begin_of_section) /
+                       (section_size + 1);
+            break;
+        }
+        begin_of_section = turn.position + turn.size;
+    }
+    // we are in the last segment after the last turn. This segment might not be
+    // complete, so the best way to approximate the position score is to assume
+    // that the segment has the same size as the last complete segment
+    section_size = last_segment_size;
+
+    section_number = turns.size() * 2;
+
+    return section_number +
+           static_cast<double>(monomer_idx - begin_of_section) /
+               (section_size + 1);
+}
+
+double score_coiling_layout(const RDKit::ROMol& polymer,
+                            const std::vector<TurnInfo>& turns,
+                            const std::vector<CustomBondInfo>& custom_bonds)
+{
+    if (custom_bonds.empty()) {
+        return 0.0;
+    }
+
+    double DEVIATION_PENALTY =
+        0.1; // penalty factor for deviation from ideal turn size
+
+    double return_score = 0.0;
+    for (const auto& turn : turns) {
+        return_score += DEVIATION_PENALTY * std::abs(turn.y_size_difference);
+    }
+    for (const auto& bond : custom_bonds) {
+        auto pos_i =
+            get_position_in_coils_double(bond.monomer_i, polymer, turns);
+        auto pos_j =
+            get_position_in_coils_double(bond.monomer_j, polymer, turns);
+
+        // ideal distance between bonded monomers in the coiling layout is 4
+        // (one full coil), so score is based on how close the actual distance
+        // is to 4. We use a quadratic function to penalize larger deviations
+        // more
+        double distance = std::abs(pos_j - pos_i);
+        double score = (distance - 4.0) * (distance - 4.0);
+        return_score += score;
+    }
+    return return_score / custom_bonds.size();
+}
+
+/**
+ * Computes turn information for coiling chain layout.
+ *
+ * Analyzes CUSTOM_BONDs to determine if the polymer can be laid out as a
+ * coiling pattern where chains alternate between top and bottom positions
+ * (y = 0, -1, +1, -2, +2, ...), with each turn progressively longer to
+ * approximate an ellipse.
+ *
+ * @param polymer The polymer molecule to analyze
+ * @return Vector of turn information if coiling layout is feasible, empty
+ *         vector otherwise
+ */
+static std::vector<TurnInfo>
+compute_coiling_turns_for_chain(const RDKit::ROMol& polymer)
+{
+    // Extract all CUSTOM_BONDs
+    auto custom_bonds = extract_custom_bonds(polymer);
+
+    // Need CUSTOM_BONDs to determine pattern
+    if (custom_bonds.empty()) {
+        return {};
+    }
+
+    // custom bonds are ordered by monomer_i. If monomer_j are not listed
+    // in ascending order, the bonds cross and the coiling layout is not
+    // possible
+    for (size_t idx = 1; idx < custom_bonds.size(); ++idx) {
+        if (custom_bonds[idx].monomer_j < custom_bonds[idx - 1].monomer_j) {
+            return {};
+        }
+    }
+
+    // now we need to figure out a layout that puts connected monomers in
+    // "corresponding" positions in the layers (i.e. bound monomers need to be
+    // separated by exactly a full coil, or as close as possible to that
+    // position). This way the bond will not cross with the coiling backbone
+    // score different layouts to see if any of them would put the bonds in good
+    // position. Variables are: chain_size, first_chain_size (which can be
+    // smaller than the others, to allow for more flexibility in the layout),
+    // first_turn_size and increment (+1 or -1). Each chain after the first one
+    // will have the same size, and each turn will be increment bigger (or
+    // smaller if increment is negative) than the previous one. Depending on the
+    // sign of increment the spiral will expand from the center or become
+    // progressively smaller (the equivalent of reversing the sequence). The
+    // best layout will be the one that minimizes the distance between connected
+    // monomers and their ideal positions in the layers.
+    std::vector<std::vector<TurnInfo>> possible_layouts;
+    for (auto increment : {2, -2}) {
+        for (auto turn_size = 0; turn_size < 3; ++turn_size) {
+            for (auto chain_size = 1; chain_size < 8; ++chain_size) {
+                for (auto first_chain_size = 1; first_chain_size <= chain_size;
+                     ++first_chain_size) {
+                    auto first_turn_size = turn_size;
+                    // if increment is negative, turn_size is actually the size
+                    // of the last turn. Compute a plausible first turn size
+                    // based on the number of residues and the chain sizes
+                    if (increment < 0) {
+                        int placed_residues = first_chain_size;
+                        int current_turn_size = first_turn_size;
+                        while (static_cast<unsigned int>(placed_residues) <
+                               polymer.getNumAtoms()) {
+                            placed_residues += current_turn_size + chain_size;
+                            current_turn_size += abs(increment);
+                        }
+                        first_turn_size = current_turn_size - abs(increment);
+                    }
+                    auto turns = compute_coiling_turns_for_chain_with_params(
+                        polymer, increment, first_turn_size, chain_size,
+                        first_chain_size);
+                    if (!turns.empty()) {
+                        possible_layouts.push_back(turns);
+                    }
+                }
+            }
+        }
+    }
+    // return the best_scoring layout, or empty vector if no valid layouts found
+    if (possible_layouts.empty()) {
+        return {};
+    }
+
+    std::vector<std::pair<std::vector<TurnInfo>, float>> layouts_with_scores;
+    std::transform(possible_layouts.begin(), possible_layouts.end(),
+                   std::back_inserter(layouts_with_scores),
+                   [&polymer, &custom_bonds](const auto& layout) {
+                       return std::make_pair(
+                           layout,
+                           score_coiling_layout(polymer, layout, custom_bonds));
+                   });
+    auto min_layout_and_score =
+        std::min_element(layouts_with_scores.begin(), layouts_with_scores.end(),
+                         [](const auto& layout1, const auto& layout2) {
+                             return layout1.second < layout2.second;
+                         });
+    return min_layout_and_score->first;
+}
+
+/**
+ * Lays out a chain with explicit turn positions. Used for both snaking and
+ * coiling layouts
  *
  * @param polymer The polymer molecule to lay out
  * @param placed_monomers_idcs Set to track which monomers have been placed
- * @param turn_positions Vector of turns specifying where turns occur and their
- * sizes. Each turn position marks the END of a segment. Turn size
- * specifies how many residues are consumed in the turn. For example, [{10, 0},
- * {20, 2}] means:
+ * @param turn_positions Vector of turns specifying where turns occur, their
+ * sizes and the direction to turn towards. Each turn position marks the END of
+ * a segment. Turn size specifies how many residues are consumed in the turn.
+ * For example, [{10, 0}, {20, 2}] means:
  *   - monomers 0-9 in first row (instant turn at 10)
  *   - monomers 10-19 in second row (turn consumes residues 20-21)
  *   - monomers 22-end in third row
  */
-static void lay_out_snaking_chain(RDKit::ROMol& polymer,
-                                  std::unordered_set<int>& placed_monomers_idcs,
-                                  const std::vector<TurnInfo>& turn_positions)
+static void
+lay_out_chain_with_turns(RDKit::ROMol& polymer,
+                         std::unordered_set<int>& placed_monomers_idcs,
+                         const std::vector<TurnInfo>& turn_positions)
 {
+    std::cerr << turn_positions.size() << " turns\n";
     auto& conformer = polymer.getConformer();
     RDGeom::Point3D chain_start_pos(0, 0, 0);
     ChainDirection chain_dir = ChainDirection::LTR;
@@ -778,9 +1026,12 @@ static void lay_out_snaking_chain(RDKit::ROMol& polymer,
                                      ? turn_positions[turn_idx].size
                                      : 0;
 
-        if (segment_start >= segment_end) {
-            continue; // Skip empty segments
+        if (segment_start >= segment_end || segment_start >= total_monomers) {
+            break; // No more monomers to place
         }
+
+        // Clamp segment_end to not exceed total monomers
+        segment_end = std::min(segment_end, total_monomers);
 
         // Lay out this segment
         lay_out_chain(polymer, polymer.getAtomWithIdx(segment_start),
@@ -791,22 +1042,24 @@ static void lay_out_snaking_chain(RDKit::ROMol& polymer,
                       });
 
         // Lay out turn monomers (if any) and prepare for next segment
-        if (segment_end + turn_size < total_monomers) {
+        if (turn_idx < turn_positions.size()) {
             RDGeom::Point3D turn_start = conformer.getAtomPos(segment_end - 1);
 
             // Lay out turn monomers following polygon arc
-            chain_start_pos = lay_out_turn(
-                polymer, conformer, placed_monomers_idcs, turn_start,
-                segment_end, turn_size, total_monomers, chain_dir);
+            chain_start_pos =
+                lay_out_turn(polymer, conformer, placed_monomers_idcs,
+                             turn_start, segment_end, turn_size, total_monomers,
+                             chain_dir, turn_positions[turn_idx].downward,
+                             turn_positions[turn_idx].y_size_difference);
 
             // Reverse direction for next segment
             chain_dir = (chain_dir == ChainDirection::LTR)
                             ? ChainDirection::RTL
                             : ChainDirection::LTR;
-        }
 
-        // Skip turn_size residues before starting the next segment
-        segment_start = segment_end + turn_size;
+            // Skip turn_size residues before starting the next segment
+            segment_start = segment_end + turn_size;
+        }
     }
 }
 
@@ -870,11 +1123,6 @@ static bool is_a_chain(const RDKit::ROMol& polymer)
 static bool maybe_lay_out_cyclic_polymer_as_snaking_chain(
     RDKit::ROMol& polymer, std::unordered_set<int>& placed_monomers_idcs)
 {
-    // This approach only works for chain polymers,i.e. any rings must be closed
-    // by non-backbone connections.
-    if (!is_a_chain(polymer)) {
-        return false;
-    }
     auto turns = compute_turn_positions_for_chain(polymer);
 
     if (turns.size() == 0) {
@@ -901,7 +1149,103 @@ static bool maybe_lay_out_cyclic_polymer_as_snaking_chain(
 
         turn_positions.push_back({turn_pos, turn_size});
     }
-    lay_out_snaking_chain(polymer, placed_monomers_idcs, turn_positions);
+    lay_out_chain_with_turns(polymer, placed_monomers_idcs, turn_positions);
+    return true;
+}
+
+/**
+ * modifies the turn information by changing the size of the turn at turn_i by
+ * size_change, and adjusting the positions of subsequent turns accordingly.
+ * This is used to optimize the coiling layout by trying different turn sizes
+ * and seeing how they affect the overall layout score.
+ */
+std::vector<TurnInfo> change_turn_size(const std::vector<TurnInfo>& turns,
+                                       int turn_i, int size_change)
+{
+    std::vector<TurnInfo> new_turns = turns;
+    new_turns[turn_i].size += size_change;
+    new_turns[turn_i].y_size_difference -= size_change;
+
+    for (unsigned int i = turn_i + 1; i < new_turns.size(); ++i) {
+        new_turns[i].position += size_change;
+    }
+    return new_turns;
+}
+
+/**
+ * Attempts to optimize the coiling layout by adjusting turn sizes to better
+ * align the bonds with the ideal positions in the coil. The function scores
+ * the initial layout and then tries increasing or decreasing the size of each
+ * turn to see if it improves the score. If a better layout is found, the turns
+ * are updated accordingly. The function returns true if the final layout is
+ * acceptable based on a score threshold, or false if no acceptable layout could
+ * be found (e.g. due to incompatible constraints from CUSTOM_BONDs).
+ */
+static bool optimize_coiling_layout(RDKit::ROMol& polymer,
+                                    std::vector<TurnInfo>& turns)
+{
+    // Score the layout to evaluate bond alignment
+    auto custom_bonds = extract_custom_bonds(polymer);
+    auto score = score_coiling_layout(polymer, turns, custom_bonds);
+
+    const float GOOD_SCORE = 0.1; // Threshold for acceptable layout
+    if (score < GOOD_SCORE) {
+        return true; // Perfect layout, no optimization needed
+    }
+    auto best_layout = turns;
+    float best_score = score;
+    // Try optimizing by adjusting turn sizes (e.g. increasing or
+    // decreasing turn sizes to better alignment)
+
+    for (unsigned int turn_i = 0; turn_i < best_layout.size(); ++turn_i) {
+        for (auto change : {-1, 1}) {
+            if ((turn_i > 0 && best_layout[turn_i].size + change < 2) ||
+                (best_layout[turn_i].size == 0 && change < 0)) {
+                continue; // use very small turns only at the beginning of the
+                          // coil, to avoid clashes and avoid negative turn
+                          // sizes
+            }
+            auto new_layout = change_turn_size(best_layout, turn_i, change);
+            auto score =
+                score_coiling_layout(polymer, new_layout, custom_bonds);
+            if (score < best_score) {
+                best_score = score;
+                best_layout = new_layout;
+                break;
+            }
+        }
+    }
+    turns = best_layout;
+    // Threshold for acceptable layout after optimization
+    const float ACCEPTABLE_SCORE = 1.5;
+    return best_score < ACCEPTABLE_SCORE;
+}
+
+/**
+ * Attempts to lay out a polymer with cycles as a coiling chain. This is only
+ * possible if the cycles are closed by non-backbone connections (e.g. a turn
+ * closed by a disulfide bond), and if the pattern of CUSTOM_BOND constraints is
+ * compatible with a coiling layout. If successful, the polymer will be laid out
+ * in a coiling pattern, placed_monomers_idcs will be updated for every atom,
+ * and the function will return true. If not successful, the function will
+ * return false, coordinates will not be changed and placed_monomers_idcs will
+ * not be updated
+ */
+static bool maybe_lay_out_cyclic_polymer_as_coiling_chain(
+    RDKit::ROMol& polymer, std::unordered_set<int>& placed_monomers_idcs)
+{
+    // Analyze CUSTOM_BONDs to determine if pattern fits coiling layout
+    auto turns = compute_coiling_turns_for_chain(polymer);
+
+    if (turns.empty()) {
+        return false; // Pattern doesn't fit coiling layout
+    }
+    if (!optimize_coiling_layout(polymer, turns)) {
+        return false; // Optimization failed, likely due to incompatible
+                      // constraints
+    }
+    // Perform the layout
+    lay_out_chain_with_turns(polymer, placed_monomers_idcs, turns);
     return true;
 }
 
@@ -910,12 +1254,21 @@ lay_out_cyclic_polymer(RDKit::ROMol& polymer,
                        std::unordered_set<int>& placed_monomers_idcs)
 {
 
-    // try first to lay out with a snaking layout
-    if (maybe_lay_out_cyclic_polymer_as_snaking_chain(polymer,
-                                                      placed_monomers_idcs)) {
-        // laid out successfully, nothing else to do
-        return;
+    if (is_a_chain(polymer)) {
+        // try first to lay out with a snaking layout
+        if (maybe_lay_out_cyclic_polymer_as_snaking_chain(
+                polymer, placed_monomers_idcs)) {
+            // laid out successfully, nothing else to do
+            return;
+        }
+        // if the first attempt fails, try laying out as a coiling chain
+        if (maybe_lay_out_cyclic_polymer_as_coiling_chain(
+                polymer, placed_monomers_idcs)) {
+            // laid out successfully, nothing else to do
+            return;
+        }
     }
+
     // If the approach above fails, fall back to laying out the rings first
     // and then extending chains from there
     generate_coordinates_for_cycles(polymer, placed_monomers_idcs);
@@ -1159,16 +1512,20 @@ static void lay_out_snaked_linear_polymer(RDKit::ROMol& polymer)
     for (unsigned int row = 0; row < num_rows; ++row) {
         current_pos += segment_length;
         unsigned int turn_size = (row < num_of_longer_turns) ? 2 : 1;
+        // turns always take space like a 1 residue turn, so they can be aligned
+        int y_size_difference =
+            1 - turn_size; // -1 for 2-residue turns, 0 for 1-residue turns
 
         // Add a turn after this segment (except for the last segment)
         if (row < num_rows - 1) {
-            turn_positions.push_back({current_pos, turn_size});
+            turn_positions.push_back(
+                {current_pos, turn_size, true, y_size_difference});
             // Advance position past the turn residues
             current_pos += turn_size;
         }
     }
     // Use the calculated turn positions to lay out the snaking chain
-    lay_out_snaking_chain(polymer, placed_monomers_idcs, turn_positions);
+    lay_out_chain_with_turns(polymer, placed_monomers_idcs, turn_positions);
 }
 
 /**
@@ -1498,23 +1855,32 @@ break_into_topological_units(const RDKit::ROMol& monomer_mol)
 /**
  * Provides the y-coordinate offset to apply to each monomer in
  * `polymer_to_translate` to place it one `MONOMER_BOND_LENGTH` away below
- * `reference_polymer` with no overlap.
+ * `reference_polymer` with no overlap. If `invert` is true, provides the offset
+ * to place it above the reference instead of below.
  */
 static double get_y_offset_for_polymer(const RDKit::ROMol& polymer_to_translate,
-                                       const RDKit::ROMol& reference_polymer)
+                                       const RDKit::ROMol& reference_polymer,
+                                       bool invert = false)
 {
-    auto reference_coords = reference_polymer.getConformer().getPositions();
-    auto lowest_point = std::min_element(
-        reference_coords.begin(), reference_coords.end(),
-        [](RDGeom::Point3D a, RDGeom::Point3D b) { return a.y < b.y; });
+    auto polymer_to_place_above =
+        invert ? polymer_to_translate : reference_polymer;
+    auto polymer_to_place_below =
+        invert ? reference_polymer : polymer_to_translate;
+    auto above_coords = polymer_to_place_above.getConformer().getPositions();
+    auto below_coords = polymer_to_place_below.getConformer().getPositions();
+    auto lowest_point =
+        std::min_element(above_coords.begin(), above_coords.end(),
+                         [](const RDGeom::Point3D& a,
+                            const RDGeom::Point3D& b) { return a.y < b.y; });
 
-    auto to_translate_coords =
-        polymer_to_translate.getConformer().getPositions();
-    auto highest_point = std::max_element(
-        to_translate_coords.begin(), to_translate_coords.end(),
-        [](RDGeom::Point3D a, RDGeom::Point3D b) { return a.y < b.y; });
+    auto highest_point =
+        std::max_element(below_coords.begin(), below_coords.end(),
+                         [](const RDGeom::Point3D& a,
+                            const RDGeom::Point3D& b) { return a.y < b.y; });
+    auto offset = lowest_point->y - highest_point->y - MONOMER_BOND_LENGTH;
 
-    return (*lowest_point).y - (*highest_point).y - MONOMER_BOND_LENGTH;
+    // When inverted, negate the offset so it moves in the opposite direction
+    return invert ? -offset : offset;
 }
 
 /**
@@ -1534,30 +1900,38 @@ static double get_y_offset_for_polymer(const RDKit::ROMol& polymer_to_translate,
  * @param reference the reference polymer used for placement
  * @param polymer_bonds list of inter-polymer bonds. The start atom of each bond
  * is in `polymer`, the end atom is in `reference`
+ * @param invert if true, place the polymer above the reference instead of below
  */
 static void place_polymer_below_reference(RDKit::ROMol& polymer,
                                           const RDKit::ROMol& reference,
-                                          const BOND_IDX_VEC& polymer_bonds)
+                                          const BOND_IDX_VEC& polymer_bonds,
+                                          bool invert = false)
 {
     // Translation offset to be applied to all atom positions
     auto pos_offset = RDGeom::Point3D(0, 0, 0);
 
     // Vertical separation needed to avoid overlap with the reference  polymer
-    auto y_offset = get_y_offset_for_polymer(polymer, reference);
+    auto y_offset = get_y_offset_for_polymer(polymer, reference, invert);
 
     if (polymer_bonds.empty()) {
-        // No explicit connection: stack polymer below the reference
+        // No explicit connection: stack polymer below/above the reference
         // using a fixed vertical separation
-        pos_offset.y = y_offset - DIST_BETWEEN_MULTIPLE_POLYMERS;
+        // When inverted, add spacing instead of subtract to maintain same gap
+        if (invert) {
+            pos_offset.y = y_offset + DIST_BETWEEN_MULTIPLE_POLYMERS;
+        } else {
+            pos_offset.y = y_offset - DIST_BETWEEN_MULTIPLE_POLYMERS;
+        }
     } else {
         // Align the first bonded monomer so that the inter-polymer bond
-        // is vertical and points downward
+        // is vertical and points downward (or upward if inverted)
         auto& monomer_coords =
             polymer.getConformer().getAtomPos(polymer_bonds[0].first);
         auto& placed_monomer_coords =
             reference.getConformer().getAtomPos(polymer_bonds[0].second);
 
         // Target position for the bonded monomer after translation
+        // y_offset is already signed correctly by get_y_offset_for_polymer
         auto translated_monomer_coords = RDGeom::Point3D(
             placed_monomer_coords.x, monomer_coords.y + y_offset,
             placed_monomer_coords.z);
@@ -1695,26 +2069,96 @@ static void flip_horizontally(RDKit::ROMol& polymer)
 }
 
 /**
+ * Determine whether two monomers at `pos1` and `pos2` are closer than
+ * MONOMER_CLASH_DISTANCE, indicating a geometric clash.
+ */
+static bool positions_clash(const RDGeom::Point3D& pos1,
+                            const RDGeom::Point3D& pos2)
+{
+    return (!(pos1.x - pos2.x > MONOMER_CLASH_DISTANCE ||
+              pos1.x - pos2.x < -MONOMER_CLASH_DISTANCE ||
+              pos1.y - pos2.y > MONOMER_CLASH_DISTANCE ||
+              pos1.y - pos2.y < -MONOMER_CLASH_DISTANCE));
+}
+
+static bool clashes_with_placed_polymers(
+    const RDKit::ROMol& polymer,
+    const std::vector<RDKit::ROMOL_SPTR>& placed_polymers)
+{
+    for (auto placed_polymer : placed_polymers) {
+        auto bonds_between =
+            get_bonds_between_polymers(polymer, *placed_polymer);
+        if (needs_vertical_flip_due_to_clashes(polymer, *placed_polymer,
+                                               bonds_between)) {
+            return true;
+        }
+        // do a basic monomer coordinate clash check
+        for (auto monomer : polymer.atoms()) {
+            auto monomer_pos =
+                polymer.getConformer().getAtomPos(monomer->getIdx());
+            for (auto placed_monomer : placed_polymer->atoms()) {
+                auto placed_monomer_pos =
+                    placed_polymer->getConformer().getAtomPos(
+                        placed_monomer->getIdx());
+                if (positions_clash(monomer_pos, placed_monomer_pos)) {
+                    return true;
+                }
+            }
+        }
+    }
+    return false;
+}
+/**
+ * Resolve geometric clashes and topological crossings between
+ * `polymer_to_orient` and `reference_polymer` by flipping `polymer_to_orient`
+ * vertically and/or horizontally as needed. Placement is recomputed after each
+ * flip to restore correct alignment.
+ */
+static void resolve_polymer_clashes_and_crossings(
+    RDKit::ROMol& polymer_to_orient, const RDKit::ROMol& reference_polymer,
+    const BOND_IDX_VEC& polymer_bonds, bool invert_placement = false)
+{
+    // Resolve vertical clashes
+    if (needs_vertical_flip_due_to_clashes(polymer_to_orient, reference_polymer,
+                                           polymer_bonds)) {
+        flip_vertically(polymer_to_orient);
+        place_polymer_below_reference(polymer_to_orient, reference_polymer,
+                                      polymer_bonds, invert_placement);
+    }
+
+    // Resolve horizontal crossings (index inversion)
+    if (needs_horizontal_flip_due_to_inversion(polymer_bonds)) {
+        flip_horizontally(polymer_to_orient);
+        place_polymer_below_reference(polymer_to_orient, reference_polymer,
+                                      polymer_bonds, invert_placement);
+    }
+}
+
+/**
  * Move `polymer_to_orient` so that it is positioned below `reference_polymer`
  * with no overlap, resolving vertical clashes and horizontal crossings.
  *
- * - First places the polymer below the reference
+ * - First places the polymer below the reference, or above if there are clashes
+ * with already placed polymers
  * - Flips vertically if needed to resolve bond clashes
  * - Flips horizontally if needed to remove topological crossings
+ *
  * Placement is recomputed after each flip to restore correct alignment.
  * If the polymer was rotated during layout (for double stranded nucleic
  * acids), flipping steps are skipped
  */
-static void orient_polymer(RDKit::ROMol& polymer_to_orient,
-                           const RDKit::ROMol& reference_polymer,
-                           bool polymer_was_rotated)
+static void
+orient_polymer(RDKit::ROMol& polymer_to_orient,
+               const RDKit::ROMol& reference_polymer, bool polymer_was_rotated,
+               const std::vector<RDKit::ROMOL_SPTR>& placed_polymers)
 {
     auto polymer_bonds =
         get_bonds_between_polymers(polymer_to_orient, reference_polymer);
 
     // Initial placement
+    bool invert_placement = false;
     place_polymer_below_reference(polymer_to_orient, reference_polymer,
-                                  polymer_bonds);
+                                  polymer_bonds, invert_placement);
 
     // if the polymer was rotated during layout, skip flipping steps to avoid
     // undoing the rotation
@@ -1722,19 +2166,16 @@ static void orient_polymer(RDKit::ROMol& polymer_to_orient,
         return;
     }
 
-    // Resolve vertical clashes
-    if (needs_vertical_flip_due_to_clashes(polymer_to_orient, reference_polymer,
-                                           polymer_bonds)) {
-        flip_vertically(polymer_to_orient);
-        place_polymer_below_reference(polymer_to_orient, reference_polymer,
-                                      polymer_bonds);
-    }
+    resolve_polymer_clashes_and_crossings(polymer_to_orient, reference_polymer,
+                                          polymer_bonds, invert_placement);
 
-    // Resolve horizontal crossings (index inversion)
-    if (needs_horizontal_flip_due_to_inversion(polymer_bonds)) {
-        flip_horizontally(polymer_to_orient);
+    if (clashes_with_placed_polymers(polymer_to_orient, placed_polymers)) {
+        invert_placement = true;
         place_polymer_below_reference(polymer_to_orient, reference_polymer,
-                                      polymer_bonds);
+                                      polymer_bonds, invert_placement);
+        resolve_polymer_clashes_and_crossings(polymer_to_orient,
+                                              reference_polymer, polymer_bonds,
+                                              invert_placement);
     }
 }
 
@@ -1871,7 +2312,7 @@ void lay_out_polymers(
     const std::map<RDKit::ROMOL_SPTR, RDKit::ROMOL_SPTR>& parent_polymer)
 {
     std::unordered_set<int> placed_monomers_idcs{};
-    RDKit::ROMOL_SPTR last_placed_polymer = nullptr;
+    std::vector<RDKit::ROMOL_SPTR> placed_polymers;
 
     // lay out the polymers in connection order so connected polymers are laid
     // out next to each other.
@@ -1883,9 +2324,11 @@ void lay_out_polymers(
         // positioned relative to the previous one (typically stacked
         // vertically), instead of all being placed relative to a null parent at
         // the origin, which would make them overlap.
-        RDKit::ROMOL_SPTR parent = last_placed_polymer;
+        RDKit::ROMOL_SPTR parent = nullptr;
         if (parent_polymer.contains(polymer)) {
             parent = parent_polymer.at(polymer);
+        } else if (!placed_polymers.empty()) {
+            parent = placed_polymers.back();
         }
         // For double stranded nucleic acids we want to lay out the first
         // polymer normally and then rotate the other polymer 180° so the
@@ -1894,9 +2337,9 @@ void lay_out_polymers(
                               are_double_stranded_nucleic_acid(polymer, parent);
         lay_out_polymer(*polymer, placed_monomers_idcs, rotate_polymer);
         if (parent != nullptr) {
-            orient_polymer(*polymer, *parent, rotate_polymer);
+            orient_polymer(*polymer, *parent, rotate_polymer, placed_polymers);
         }
-        last_placed_polymer = polymer;
+        placed_polymers.push_back(polymer);
     }
 }
 
@@ -1906,13 +2349,9 @@ bool has_no_clashes(const RDKit::ROMol& monomer_mol)
     auto positions = conformer.getPositions();
     for (size_t i = 0; i < positions.size(); i++) {
         for (size_t j = i + 1; j < positions.size(); j++) {
-            if (positions[i].x - positions[j].x > MONOMER_CLASH_DISTANCE ||
-                positions[i].x - positions[j].x < -MONOMER_CLASH_DISTANCE ||
-                positions[i].y - positions[j].y > MONOMER_CLASH_DISTANCE ||
-                positions[i].y - positions[j].y < -MONOMER_CLASH_DISTANCE) {
-                continue;
+            if (positions_clash(positions[i], positions[j])) {
+                return false;
             }
-            return false;
         }
     }
     return true;
@@ -2079,14 +2518,12 @@ void assign_clusters(std::vector<MonomerResizeData>& resize_data,
         }
 
         resize_data[i].*cluster_member = next_cluster_id;
-
         for (size_t j = i + 1; j < resize_data.size(); ++j) {
-            if (std::abs(resize_data[i].delta.*coord_member -
-                         resize_data[j].delta.*coord_member) < eps) {
+            if (std::abs(resize_data[i].ref_pos.*coord_member -
+                         resize_data[j].ref_pos.*coord_member) < eps) {
                 resize_data[j].*cluster_member = next_cluster_id;
             }
         }
-
         ++next_cluster_id;
     }
 }
@@ -2222,11 +2659,11 @@ std::vector<MonomerResizeData> collect_linear_resize_data(
 
     // group vertically stacked monomers to avoid compound horizontal shifts
     assign_clusters(result, &RDGeom::Point3D::x, &MonomerResizeData::x_cluster,
-                    MONOMER_MINIMUM_SIZE * 0.25);
+                    MONOMER_MINIMUM_SIZE);
 
     // group horizontally stacked monomers to avoid compound vertical shifts
     assign_clusters(result, &RDGeom::Point3D::y, &MonomerResizeData::y_cluster,
-                    MONOMER_MINIMUM_SIZE * 0.25);
+                    MONOMER_MINIMUM_SIZE);
 
     return result;
 }
@@ -2570,6 +3007,7 @@ void resize_monomers(RDKit::ROMol& mol,
     if (monomer_sizes.empty()) {
         return;
     }
+
     // override ring info to ensure rings are fully perceived.
     compute_full_ring_info(mol);
 
@@ -2577,6 +3015,7 @@ void resize_monomers(RDKit::ROMol& mol,
 
     auto linear_resize_data =
         collect_linear_resize_data(mol, monomer_sizes, ring_resize_info);
+
     auto ring_resize_data =
         collect_ring_resize_data(mol, monomer_sizes, ring_resize_info);
     if (linear_resize_data.empty() && ring_resize_data.empty()) {
