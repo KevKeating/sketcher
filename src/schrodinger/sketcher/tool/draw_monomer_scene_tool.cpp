@@ -164,7 +164,7 @@ find_min_attachment_point_by_num(
         [](const auto* ap_item_left, const auto* ap_item_right) {
             auto left_num = ap_item_left->getAttachmentPoint().num;
             auto right_num = ap_item_right->getAttachmentPoint().num;
-            return  right_num < 0 || left_num < right_num;
+            return right_num < 0 || left_num < right_num;
         });
     return *min_it;
 }
@@ -192,8 +192,8 @@ find_attachment_point_with_name(
 
 /**
  * @return the unbound attachment point graphics item representing an attachment
- * point with the given number. Will return nullptr if no such attachment point is
- * found.
+ * point with the given number. Will return nullptr if no such attachment point
+ * is found.
  */
 [[nodiscard]] static UnboundMonomericAttachmentPointItem*
 find_attachment_point_with_num(
@@ -269,7 +269,7 @@ DrawMonomerSceneTool::getUnboundAttachmentPointAt(const QPointF& scene_pos)
         return nullptr;
     }
     return get_default_attachment_point(monomer_type, m_monomer_type,
-                                          m_unbound_ap_items);
+                                        m_unbound_ap_items);
 }
 
 void DrawMonomerSceneTool::onMouseMove(QGraphicsSceneMouseEvent* const event)
@@ -296,7 +296,8 @@ void DrawMonomerSceneTool::onMouseMove(QGraphicsSceneMouseEvent* const event)
     }
 }
 
-void DrawMonomerSceneTool::drawAttachmentPointLabelsFor(QGraphicsItem* const item)
+void DrawMonomerSceneTool::drawAttachmentPointLabelsFor(
+    QGraphicsItem* const item)
 {
     clearAttachmentPointsLabels();
     if (item == nullptr) {

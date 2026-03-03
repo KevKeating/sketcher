@@ -73,8 +73,8 @@ BOOST_AUTO_TEST_CASE(test_chem_hovered_returns_min_num)
     auto* ap2 = monomer.makeAP(2);
     std::vector<UnboundMonomericAttachmentPointItem*> items{ap3, ap1, ap2};
 
-    auto* result =
-        get_default_attachment_point(MonomerType::CHEM, MonomerType::CHEM, items);
+    auto* result = get_default_attachment_point(MonomerType::CHEM,
+                                                MonomerType::CHEM, items);
     BOOST_TEST(result == ap1);
 }
 
@@ -86,8 +86,8 @@ BOOST_AUTO_TEST_CASE(test_chem_hovered_prefers_numbered_over_custom_name)
     auto* ap2 = monomer.makeAP(2);
     std::vector<UnboundMonomericAttachmentPointItem*> items{ap_custom, ap2};
 
-    auto* result =
-        get_default_attachment_point(MonomerType::CHEM, MonomerType::CHEM, items);
+    auto* result = get_default_attachment_point(MonomerType::CHEM,
+                                                MonomerType::CHEM, items);
     BOOST_TEST(result == ap2);
 }
 
@@ -98,8 +98,8 @@ BOOST_AUTO_TEST_CASE(test_chem_hovered_returns_custom_name_when_only_option)
     auto* ap_custom = monomer.makeNamedAP("pair");
     std::vector<UnboundMonomericAttachmentPointItem*> items{ap_custom};
 
-    auto* result =
-        get_default_attachment_point(MonomerType::CHEM, MonomerType::CHEM, items);
+    auto* result = get_default_attachment_point(MonomerType::CHEM,
+                                                MonomerType::CHEM, items);
     BOOST_TEST(result == ap_custom);
 }
 
@@ -315,8 +315,8 @@ BOOST_AUTO_TEST_CASE(test_na_phosphate_na_sugar_prefers_ap2)
     auto* ap2 = monomer.makeAP(2);
     std::vector<UnboundMonomericAttachmentPointItem*> items{ap1, ap2};
 
-    auto* result = get_default_attachment_point(
-        MonomerType::NA_PHOSPHATE, MonomerType::NA_SUGAR, items);
+    auto* result = get_default_attachment_point(MonomerType::NA_PHOSPHATE,
+                                                MonomerType::NA_SUGAR, items);
     BOOST_TEST(result == ap2);
 }
 
@@ -327,8 +327,8 @@ BOOST_AUTO_TEST_CASE(test_na_phosphate_na_sugar_falls_back_to_ap1)
     auto* ap1 = monomer.makeAP(1);
     std::vector<UnboundMonomericAttachmentPointItem*> items{ap1};
 
-    auto* result = get_default_attachment_point(
-        MonomerType::NA_PHOSPHATE, MonomerType::NA_SUGAR, items);
+    auto* result = get_default_attachment_point(MonomerType::NA_PHOSPHATE,
+                                                MonomerType::NA_SUGAR, items);
     BOOST_TEST(result == ap1);
 }
 
@@ -339,8 +339,8 @@ BOOST_AUTO_TEST_CASE(test_na_phosphate_unmatched_tool_returns_nullptr)
     auto* ap1 = monomer.makeAP(1);
     std::vector<UnboundMonomericAttachmentPointItem*> items{ap1};
 
-    auto* result = get_default_attachment_point(
-        MonomerType::NA_PHOSPHATE, MonomerType::PEPTIDE, items);
+    auto* result = get_default_attachment_point(MonomerType::NA_PHOSPHATE,
+                                                MonomerType::PEPTIDE, items);
     BOOST_TEST(result == nullptr);
 }
 

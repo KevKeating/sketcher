@@ -48,8 +48,8 @@ SKETCHER_API QString prep_attachment_point_name(const std::string& name);
  * @param bound_coords The coordinates of the other monomer involved in the bond
  */
 SKETCHER_API void position_ap_label_rect(QRectF& ap_label_rect,
-                            const QPointF& monomer_coords,
-                            const QPointF& bound_coords);
+                                         const QPointF& monomer_coords,
+                                         const QPointF& bound_coords);
 
 /**
  * Return the default unbound attachment point; that is, the attachment point

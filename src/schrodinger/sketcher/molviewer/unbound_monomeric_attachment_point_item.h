@@ -22,7 +22,7 @@ class AbstractMonomerItem;
  * Return the bounding rect for the UnboundMonomericAttachmentPointItem that
  * corresponds to the given parameters. Note that this graphics item doesn't
  * necessarily need to exist (and will *not* be created by this function).
- * 
+ *
  * Parameter are the same as the UnboundMonomericAttachmentPointItem
  * constructor.
  */
