@@ -1,4 +1,4 @@
-#define BOOST_TEST_MODULE Test_Sketcher
+#define BOOST_TEST_MODULE test_draw_monomer_scene_tool
 
 #include <memory>
 #include <string>
@@ -20,10 +20,12 @@ namespace schrodinger
 namespace sketcher
 {
 
-/// Helper that owns a monomer atom and its graphics item, and creates
-/// UnboundMonomericAttachmentPointItem children for testing.
-/// The attachment point items are Qt children of the monomer item, so they
-/// are deleted when the monomer item is deleted.
+/**
+ * Helper that owns a monomer atom and its graphics item, and creates
+ * UnboundMonomericAttachmentPointItem children for testing. The attachment
+ * point items are Qt children of the monomer item, so they are deleted when the
+ * monomer item is deleted.
+ */
 struct TestMonomer {
     std::unique_ptr<RDKit::Atom> atom;
     std::unique_ptr<AbstractMonomerItem> item;
