@@ -10,8 +10,12 @@
 #include <QPen>
 
 #include <rdkit/Geometry/point.h>
+#include <rdkit/GraphMol/Conformer.h>
 #include <rdkit/GraphMol/ROMol.h>
+#include <rdkit/GraphMol/RWMol.h>
 
+#include "schrodinger/rdkit_extensions/helm.h"
+#include "schrodinger/rdkit_extensions/monomer_directions.h"
 #include "schrodinger/rdkit_extensions/monomer_mol.h"
 #include "schrodinger/sketcher/molviewer/abstract_graphics_item.h"
 #include "schrodinger/sketcher/molviewer/abstract_monomer_item.h"
@@ -329,8 +333,61 @@ void DrawMonomerSceneTool::drawAttachmentPointLabelsFor(
 void DrawMonomerSceneTool::drawBoundMonomerHintFor(
     UnboundMonomericAttachmentPointItem* const ap_item)
 {
-    const auto* monomer = static_cast<const AbstractMonomerItem*>(m_hovered_item)->getAtom();
-    
+    delete m_hint_fragment_item;
+    m_hint_fragment_item = nullptr;
+
+    if (ap_item == nullptr) {
+        return;
+    }
+
+    const auto* monomer =
+        static_cast<const AbstractMonomerItem*>(m_hovered_item)->getAtom();
+
+    // Get the existing monomer's position from its molecule's conformer
+    auto& conf = monomer->getOwningMol().getConformer();
+    auto monomer_pos = conf.getAtomPos(monomer->getIdx());
+
+    // Compute the new monomer's position: BOND_LENGTH away in the given
+    // direction
+    auto direction = ap_item->getAttachmentPoint().direction;
+    auto offset = rdkit_extensions::direction_to_unit_vector(direction);
+    offset *= BOND_LENGTH;
+    auto new_pos = monomer_pos + offset;
+
+    // Create an RWMol fragment with two monomers and a connection between them
+    RDKit::RWMol frag;
+    frag.setProp(HELM_MODEL, true);
+
+    // First atom: copy of the existing monomer
+    auto first_idx = frag.addAtom(new RDKit::Atom(*monomer), true, true);
+
+    // Second atom: new monomer with the tool's residue name and chain type.
+    // If the chain types match, let addMonomer determine the chain_id from the
+    // first atom.
+    size_t second_idx;
+    if (m_chain_type == rdkit_extensions::getChainType(*monomer)) {
+        second_idx = rdkit_extensions::addMonomer(frag, m_res_name);
+    } else {
+        auto chain_id = rdkit_extensions::toString(m_chain_type) + "1";
+        second_idx =
+            rdkit_extensions::addMonomer(frag, m_res_name, 1, chain_id);
+    }
+
+    auto linkage = ap_item->getAttachmentPoint().name + "-R2";
+    rdkit_extensions::addConnection(frag, first_idx, second_idx, linkage);
+
+    // Add a conformer with the atom coordinates
+    auto* frag_conf = new RDKit::Conformer(frag.getNumAtoms());
+    frag_conf->set3D(false);
+    frag_conf->setAtomPos(first_idx, monomer_pos);
+    frag_conf->setAtomPos(second_idx, new_pos);
+    frag.addConformer(frag_conf, true);
+
+    // Create the hint fragment, hiding the first atom (the copy of the
+    // existing monomer that's already visible in the scene)
+    m_hint_fragment_item =
+        new MonomerHintFragmentItem(frag, m_fonts, first_idx);
+    m_scene->addItem(m_hint_fragment_item);
 }
 
 void DrawMonomerSceneTool::onLeftButtonClick(

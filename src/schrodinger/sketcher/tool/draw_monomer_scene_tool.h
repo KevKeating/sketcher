@@ -90,7 +90,7 @@ class SKETCHER_API DrawMonomerSceneTool : public StandardSceneToolBase
     const QGraphicsItem* m_hovered_item = nullptr;
     const UnboundMonomericAttachmentPointItem* m_hovered_ap_item = nullptr;
     std::vector<UnboundMonomericAttachmentPointItem*> m_unbound_ap_items;
-    MonomerHintFragmentItem* m_hint_fragment_item = null;
+    MonomerHintFragmentItem* m_hint_fragment_item = nullptr;
 
     QPixmap createDefaultCursorPixmap() const override;
 
@@ -179,8 +179,8 @@ class SKETCHER_API DrawMonomerSceneTool : public StandardSceneToolBase
     UnboundMonomericAttachmentPointItem*
     getUnboundAttachmentPointAt(const QPointF& scene_pos);
 
-    void DrawMonomerSceneTool::drawBoundMonomerHintFor(
-    UnboundMonomericAttachmentPointItem* const ap_item)
+    void drawBoundMonomerHintFor(
+        UnboundMonomericAttachmentPointItem* const ap_item);
 };
 
 } // namespace sketcher

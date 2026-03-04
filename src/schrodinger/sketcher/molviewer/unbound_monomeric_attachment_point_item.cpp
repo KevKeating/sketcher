@@ -1,9 +1,8 @@
 #include "schrodinger/sketcher/molviewer/unbound_monomeric_attachment_point_item.h"
 
-#include <cmath>
-
 #include <QPainter>
 
+#include "schrodinger/rdkit_extensions/monomer_directions.h"
 #include "schrodinger/sketcher/molviewer/abstract_monomer_item.h"
 #include "schrodinger/sketcher/molviewer/fonts.h"
 #include "schrodinger/sketcher/molviewer/monomer_constants.h"
@@ -20,28 +19,10 @@ namespace sketcher
  * @param dir The direction
  * @return Unit vector pointing in that direction
  */
-static QPointF direction_to_unit_vector(Direction dir)
+static QPointF direction_to_qt_unit_vector(Direction dir)
 {
-    switch (dir) {
-        case Direction::N:
-            return QPointF(0, -1);
-        case Direction::S:
-            return QPointF(0, 1);
-        case Direction::E:
-            return QPointF(1, 0);
-        case Direction::W:
-            return QPointF(-1, 0);
-        case Direction::NE:
-            return QPointF(M_SQRT1_2, -M_SQRT1_2);
-        case Direction::NW:
-            return QPointF(-M_SQRT1_2, -M_SQRT1_2);
-        case Direction::SE:
-            return QPointF(M_SQRT1_2, M_SQRT1_2);
-        case Direction::SW:
-            return QPointF(-M_SQRT1_2, M_SQRT1_2);
-        default:
-            return QPointF(1, 0);
-    }
+    auto mol_vec = rdkit_extensions::direction_to_unit_vector(dir);
+    return QPointF(mol_vec.x, -mol_vec.y);
 }
 
 static std::tuple<QPointF, QString, QRectF, QRectF>
@@ -49,7 +30,7 @@ calculate_geometry(const UnboundAttachmentPoint& attachment_point,
                    const AbstractMonomerItem* const parent_monomer,
                    const Fonts& fonts)
 {
-    QPointF dir = direction_to_unit_vector(attachment_point.direction);
+    QPointF dir = direction_to_qt_unit_vector(attachment_point.direction);
     QRectF parent_bounds = parent_monomer->boundingRect();
     qreal half_width = parent_bounds.width() / 2.0;
     qreal half_height = parent_bounds.height() / 2.0;

@@ -6,6 +6,7 @@
 
 #include <Qt>
 
+#include "schrodinger/rdkit_extensions/monomer_directions.h"
 #include "schrodinger/sketcher/definitions.h"
 
 class QGraphicsItem;
@@ -22,6 +23,8 @@ namespace schrodinger
 namespace sketcher
 {
 
+using rdkit_extensions::Direction;
+
 enum class MonomerType { PEPTIDE, NA_BASE, NA_PHOSPHATE, NA_SUGAR, CHEM };
 
 enum class ConnectorType {
@@ -34,8 +37,6 @@ enum class ConnectorType {
     NA_BACKBONE,
     NA_BACKBONE_TO_BASE
 };
-
-enum class Direction { N, S, E, W, NW, NE, SW, SE };
 
 /**
  * Information about an attachment point on a monomer that's bound to another

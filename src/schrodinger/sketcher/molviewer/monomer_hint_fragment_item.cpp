@@ -17,6 +17,7 @@ MonomerHintFragmentItem::MonomerHintFragmentItem(
     m_fonts(&fonts),
     m_atom_index_to_hide(atom_index_to_hide)
 {
+    createGraphicsItems();
 }
 
 void MonomerHintFragmentItem::createGraphicsItems()
