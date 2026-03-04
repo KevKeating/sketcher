@@ -9,6 +9,8 @@
 #include <QList>
 
 #include "schrodinger/sketcher/definitions.h"
+#include "schrodinger/sketcher/molviewer/atom_display_settings.h"
+#include "schrodinger/sketcher/molviewer/bond_display_settings.h"
 #include "schrodinger/sketcher/molviewer/constants.h"
 
 class QColor;
@@ -37,9 +39,9 @@ class AbstractAtomOrMonomerItem;
 class AbstractGraphicsItem;
 class AbstractMonomerItem;
 class AtomItem;
-class AtomDisplaySettings;
+// class AtomDisplaySettings;
 class BondItem;
-class BondDisplaySettings;
+// class BondDisplaySettings;
 class Fonts;
 class SGroupItem;
 class NonMolecularObject;

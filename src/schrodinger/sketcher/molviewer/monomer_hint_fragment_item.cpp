@@ -1,6 +1,6 @@
 #include "schrodinger/sketcher/molviewer/monomer_hint_fragment_item.h"
 
-#include <ranges>
+#include <boost/range/join.hpp>
 
 #include "schrodinger/sketcher/molviewer/abstract_monomer_item.h"
 #include "schrodinger/sketcher/molviewer/monomer_connector_item.h"
@@ -34,7 +34,7 @@ void MonomerHintFragmentItem::createGraphicsItems()
         }
         m_atom_items.append(kv.second);
     }
-    for (auto& kv : std::ranges::join_view({bond_to_bond_item, bond_to_secondary_connection_item})) {
+    for (auto& kv : boost::range::join(bond_to_bond_item, bond_to_secondary_connection_item)) {
         if (auto* connector_item = qgraphicsitem_cast<MonomerConnectorItem*>(kv.second)) {
             // TODO: make a constant for the width
             connector_item->setConnectorStyle(CURSOR_HINT_COLOR, 3);
