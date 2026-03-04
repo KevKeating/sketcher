@@ -189,5 +189,14 @@ void MonomerConnectorItem::paint(QPainter* painter,
     painter->restore();
 }
 
+void MonomerConnectorItem::setConnectorStyle(const QColor& connector_color, const qreal connector_width)
+{
+    m_connector_pen.setColor(connector_color);
+    m_connector_pen.setWidthF(connector_width);
+    m_arrowhead_pen.setColor(connector_color);
+    m_arrowhead_pen.setWidthF(connector_width);
+    m_arrowhead_brush.setColor(connector_color);
+}
+
 } // namespace sketcher
 } // namespace schrodinger
