@@ -373,6 +373,9 @@ void DrawMonomerSceneTool::drawBoundMonomerHintFor(
             rdkit_extensions::addMonomer(frag, m_res_name, 1, chain_id);
     }
 
+    // TODO: the first attachment point here is wrong. I want the real
+    //       attachment point name, not the pretty name.
+    // TODO: figure out the right second attachment point
     auto linkage = ap_item->getAttachmentPoint().name + "-R2";
     rdkit_extensions::addConnection(frag, first_idx, second_idx, linkage);
 
