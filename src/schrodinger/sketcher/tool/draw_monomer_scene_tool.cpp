@@ -16,12 +16,13 @@
 #include "schrodinger/sketcher/molviewer/abstract_graphics_item.h"
 #include "schrodinger/sketcher/molviewer/abstract_monomer_item.h"
 #include "schrodinger/sketcher/molviewer/constants.h"
+#include "schrodinger/sketcher/molviewer/coord_utils.h"
 #include "schrodinger/sketcher/molviewer/monomer_connector_item.h"
 #include "schrodinger/sketcher/molviewer/monomer_constants.h"
-#include "schrodinger/sketcher/molviewer/unbound_monomeric_attachment_point_item.h"
-#include "schrodinger/sketcher/molviewer/coord_utils.h"
+#include "schrodinger/sketcher/molviewer/monomer_hint_fragment_item.h"
 #include "schrodinger/sketcher/molviewer/scene.h"
 #include "schrodinger/sketcher/molviewer/scene_utils.h"
+#include "schrodinger/sketcher/molviewer/unbound_monomeric_attachment_point_item.h"
 #include "schrodinger/sketcher/rdkit/monomeric.h"
 
 namespace schrodinger
@@ -368,6 +369,9 @@ void DrawMonomerSceneTool::labelAttachmentPointsOnMonomer(
         auto* item = new UnboundMonomericAttachmentPointItem(
             cur_ap, monomer_item, m_fonts);
         m_unbound_ap_items.push_back(item);
+    }
+    if (!unbound_aps.empty()) {
+        
     }
 }
 

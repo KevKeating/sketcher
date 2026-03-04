@@ -32,6 +32,7 @@ namespace sketcher
 {
 
 enum class MonomerType;
+class MonomerHintFragmentItem;
 class UnboundMonomericAttachmentPointItem;
 
 /**
@@ -88,6 +89,7 @@ class SKETCHER_API DrawMonomerSceneTool : public StandardSceneToolBase
     QGraphicsItemGroup m_attachment_point_labels_group;
     const QGraphicsItem* m_hovered_item = nullptr;
     std::vector<UnboundMonomericAttachmentPointItem*> m_unbound_ap_items;
+    MonomerHintFragmentItem* m_hint_fragment_item = null;
 
     QPixmap createDefaultCursorPixmap() const override;
 
