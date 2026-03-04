@@ -110,9 +110,7 @@ void MoreActionsMenu::setModel(SketcherModel* model)
 void MoreActionsMenu::showEvent(QShowEvent* event)
 {
     QMenu::showEvent(event);
-    QTimer::singleShot(0, [this](){
-        window()->activateWindow();
-    });
+    QTimer::singleShot(0, [this]() { window()->activateWindow(); });
 }
 
 ConfigureViewMenu::ConfigureViewMenu(QWidget* parent) : QMenu(parent)
