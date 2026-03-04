@@ -88,6 +88,7 @@ class SKETCHER_API DrawMonomerSceneTool : public StandardSceneToolBase
     MonomerType m_monomer_type;
     QGraphicsItemGroup m_attachment_point_labels_group;
     const QGraphicsItem* m_hovered_item = nullptr;
+    const UnboundMonomericAttachmentPointItem* m_hovered_ap_item = nullptr;
     std::vector<UnboundMonomericAttachmentPointItem*> m_unbound_ap_items;
     MonomerHintFragmentItem* m_hint_fragment_item = null;
 
@@ -177,6 +178,9 @@ class SKETCHER_API DrawMonomerSceneTool : public StandardSceneToolBase
      */
     UnboundMonomericAttachmentPointItem*
     getUnboundAttachmentPointAt(const QPointF& scene_pos);
+
+    void DrawMonomerSceneTool::drawBoundMonomerHintFor(
+    UnboundMonomericAttachmentPointItem* const ap_item)
 };
 
 } // namespace sketcher

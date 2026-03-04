@@ -255,6 +255,9 @@ UnboundMonomericAttachmentPointItem* get_default_attachment_point(
 UnboundMonomericAttachmentPointItem*
 DrawMonomerSceneTool::getUnboundAttachmentPointAt(const QPointF& scene_pos)
 {
+    if (m_unbound_ap_items.empty()) {
+        return nullptr;
+    }
     for (auto* ap_item : m_unbound_ap_items) {
         if (ap_item->withinHoverArea(scene_pos)) {
             return ap_item;
@@ -289,13 +292,15 @@ void DrawMonomerSceneTool::onMouseMove(QGraphicsSceneMouseEvent* const event)
         drawAttachmentPointLabelsFor(item);
     }
 
-    if (!m_unbound_ap_items.empty()) {
-        // if we're over a monomer with attachment points, update which
-        // attachment point is hovered
-        auto* active_ap_item = getUnboundAttachmentPointAt(scene_pos);
+    auto* hovered_ap_item = getUnboundAttachmentPointAt(scene_pos);
+    if (hovered_ap_item != m_hovered_ap_item) {
+        // update which attachment point is hovered
+        m_hovered_ap_item = hovered_ap_item;
+        // hide the hovered "nubbin" and draw a hint fragment instead
         for (auto* ap_item : m_unbound_ap_items) {
-            ap_item->setActive(ap_item == active_ap_item);
+            ap_item->setVisible(ap_item != hovered_ap_item);
         }
+        drawBoundMonomerHintFor(hovered_ap_item);
     }
 }
 
@@ -318,6 +323,14 @@ void DrawMonomerSceneTool::drawAttachmentPointLabelsFor(
         labelAttachmentPointsOnConnector(
             connector, connector_item->isSecondaryConnection());
     }
+}
+
+// should only be called when hovering over a monomer
+void DrawMonomerSceneTool::drawBoundMonomerHintFor(
+    UnboundMonomericAttachmentPointItem* const ap_item)
+{
+    const auto* monomer = static_cast<const AbstractMonomerItem*>(m_hovered_item)->getAtom();
+    
 }
 
 void DrawMonomerSceneTool::onLeftButtonClick(
@@ -369,9 +382,6 @@ void DrawMonomerSceneTool::labelAttachmentPointsOnMonomer(
         auto* item = new UnboundMonomericAttachmentPointItem(
             cur_ap, monomer_item, m_fonts);
         m_unbound_ap_items.push_back(item);
-    }
-    if (!unbound_aps.empty()) {
-        
     }
 }
 
@@ -609,6 +619,11 @@ void DrawMonomerSceneTool::clearAttachmentPointsLabels()
         delete item;
     }
     m_unbound_ap_items.clear();
+    m_hovered_ap_item = nullptr;
+    if (m_hint_fragment_item != nullptr) {
+        delete m_hint_fragment_item;
+        m_hint_fragment_item = nullptr;
+    }
 }
 
 } // namespace sketcher
