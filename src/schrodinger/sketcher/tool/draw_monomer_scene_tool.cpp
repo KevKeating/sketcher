@@ -680,10 +680,8 @@ void DrawMonomerSceneTool::clearAttachmentPointsLabels()
     }
     m_unbound_ap_items.clear();
     m_hovered_ap_item = nullptr;
-    if (m_hint_fragment_item != nullptr) {
-        delete m_hint_fragment_item;
-        m_hint_fragment_item = nullptr;
-    }
+    delete m_hint_fragment_item;
+    m_hint_fragment_item = nullptr;
 }
 
 } // namespace sketcher
