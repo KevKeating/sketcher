@@ -55,6 +55,8 @@ class SKETCHER_API MoreActionsMenu : public QMenu
     QAction* m_kekulize_act = nullptr;
     QAction* m_add_explicit_hydrogens_act = nullptr;
     QAction* m_remove_explicit_hydrogens_act = nullptr;
+  protected:
+    void showEvent(QShowEvent* event) override;
 };
 
 class SKETCHER_API ConfigureViewMenu : public QMenu

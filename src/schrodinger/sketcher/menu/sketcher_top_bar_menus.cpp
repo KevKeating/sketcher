@@ -4,6 +4,7 @@
 
 #include <QKeySequence>
 #include <QString>
+#include <QTimer>
 
 #include "schrodinger/sketcher/dialog/about_2d_sketcher.h"
 #include "schrodinger/sketcher/dialog/sketcher_welcome_dialog.h"
@@ -104,6 +105,14 @@ MoreActionsMenu::MoreActionsMenu(SketcherModel* model, QWidget* parent) :
 void MoreActionsMenu::setModel(SketcherModel* model)
 {
     m_cut_copy_manager->setModel(model);
+}
+
+void MoreActionsMenu::showEvent(QShowEvent* event)
+{
+    QMenu::showEvent(event);
+    QTimer::singleShot(0, [this](){
+        window()->activateWindow();
+    });
 }
 
 ConfigureViewMenu::ConfigureViewMenu(QWidget* parent) : QMenu(parent)
