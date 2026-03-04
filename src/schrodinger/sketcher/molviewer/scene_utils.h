@@ -78,8 +78,8 @@ std::tuple<std::vector<QGraphicsItem*>,
            std::unordered_map<const RDKit::Bond*, QGraphicsItem*>,
            std::unordered_map<const RDKit::SubstanceGroup*, SGroupItem*>>
 create_graphics_items_for_mol(const RDKit::ROMol* mol, const Fonts& fonts,
-                              const AtomDisplaySettings& atom_display_settings,
-                              const BondDisplaySettings& bond_display_settings,
+                              const AtomDisplaySettings& atom_display_settings = AtomDisplaySettings(),
+                              const BondDisplaySettings& bond_display_settings = BondDisplaySettings(),
                               const bool draw_attachment_points = true);
 
 /**
