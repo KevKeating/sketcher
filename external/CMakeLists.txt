@@ -174,7 +174,7 @@ set_cmake_arg(
   bimap
   filesystem
   test
-  # crash handler
+  # crash handler for the standalone executable
   stacktrace)
 set_cmake_arg(
   BOOST_CMAKE_PREFIX ${CMAKE_CURRENT_BINARY_DIR}/zlib-${ZLIB_VERSION}

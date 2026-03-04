@@ -40,8 +40,10 @@ std::tm get_local_time()
     return *std::localtime(&now);
 }
 
-/// Return the path where this crash report should be written.
-/// Uses the system temp directory with a timestamped filename.
+/**
+ * Return the path where this crash report should be written. Uses the system
+ * temp directory with a timestamped filename.
+ */
 std::filesystem::path get_crash_report_path(const std::tm& tm)
 {
     auto filename = fmt::format(
@@ -133,8 +135,10 @@ void terminate_handler()
 }
 
 #ifdef _WIN32
-/// Windows Structured Exception Handling (SEH) for access violations etc.
-/// that bypass C++ exception handling.
+/**
+ * Windows Structured Exception Handling (SEH) for access violations etc. that
+ * bypass C++ exception handling.
+ */
 LONG WINAPI unhandled_exception_filter(EXCEPTION_POINTERS* exception_info)
 {
     DWORD code = exception_info->ExceptionRecord->ExceptionCode;
