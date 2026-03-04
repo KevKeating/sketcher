@@ -41,9 +41,6 @@ void MonomerHintFragmentItem::createGraphicsItems()
         }
         m_bond_items.append(kv.second);
     }
-    // for (auto& kv : bond_to_secondary_connection_item) {
-    //     m_bond_items.append(kv.second);
-    // }
 }
 
 }
