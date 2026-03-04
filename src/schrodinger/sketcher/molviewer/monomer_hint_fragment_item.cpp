@@ -49,4 +49,11 @@ void MonomerHintFragmentItem::createGraphicsItems()
     }
 }
 
+void MonomerHintFragmentItem::updateConformer(const RDKit::Conformer& conformer)
+{
+    m_frag.getConformer() = conformer;
+    update_conf_for_mol_graphics_items(m_atom_items, m_bond_items,
+                                       {}, m_frag);
+}
+
 }

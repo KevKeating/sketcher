@@ -30,6 +30,8 @@ class MonomerHintFragmentItem : public QGraphicsItemGroup
     MonomerHintFragmentItem(const RDKit::ROMol& fragment, const Fonts& fonts, const int atom_index_to_hide,
                              QGraphicsItem* parent = nullptr);
 
+    void updateConformer(const RDKit::Conformer& conformer);
+
   protected:
     RDKit::ROMol m_frag;
     const Fonts* m_fonts = nullptr;
