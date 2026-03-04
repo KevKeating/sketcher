@@ -27,12 +27,13 @@ class MonomerHintFragmentItem : public QGraphicsItemGroup
      * must not be destroyed while this graphics item is in use.
      * @param parent The parent graphics item, if any.
      */
-    MonomerHintFragmentItem(const RDKit::ROMol& fragment, const Fonts& fonts,
+    MonomerHintFragmentItem(const RDKit::ROMol& fragment, const Fonts& fonts, const int atom_index_to_hide,
                              QGraphicsItem* parent = nullptr);
 
   protected:
     RDKit::ROMol m_frag;
     const Fonts* m_fonts = nullptr;
+    int m_atom_index_to_hide = -1;
     /// A list of all child AbstractMonomerItems
     QList<QGraphicsItem*> m_atom_items;
     /// A list of all child MonomerConnectortems
