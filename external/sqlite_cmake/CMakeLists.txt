@@ -116,7 +116,6 @@ endif()
 # -- Introspection -------------------------------------------------------------
 
 include(CMakePushCheckState)
-include(CheckCSourceCompiles)
 cmake_push_check_state(RESET)
 
 if(CMAKE_C_COMPILER_ID MATCHES "(GNU|Clang)")
@@ -151,6 +150,7 @@ check_symbol_exists(log10 math.h HAVE_LOG10)
 # -Werror=unguarded-availability-new so the compiler rejects it when the
 # deployment target is too old.
 if(APPLE)
+  include(CheckCSourceCompiles)
   cmake_push_check_state(RESET)
   set(CMAKE_REQUIRED_FLAGS "-Werror=unguarded-availability-new")
   check_c_source_compiles("
