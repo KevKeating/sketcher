@@ -116,6 +116,7 @@ endif()
 # -- Introspection -------------------------------------------------------------
 
 include(CMakePushCheckState)
+include(CheckCSourceCompiles)
 cmake_push_check_state(RESET)
 
 if(CMAKE_C_COMPILER_ID MATCHES "(GNU|Clang)")
