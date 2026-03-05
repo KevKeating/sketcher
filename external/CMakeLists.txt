@@ -173,7 +173,7 @@ set(BOOST_LIBS_TO_INCLUDE
   bimap
   filesystem
   test)
-if(!EMSCRIPTEN)
+if(NOT EMSCRIPTEN)
   # on desktop builds, we use stacktrace to print crash reports
   list(APPEND BOOST_LIBS_TO_INCLUDE stacktrace)
 endif()
