@@ -44,6 +44,20 @@ namespace schrodinger
 namespace sketcher
 {
 
+class SelfActivatingMenu : public QMenu
+{
+  public:
+    SelfActivatingMenu(const QString& title, QWidget* parent = nullptr) : QMenu(title, parent) {}
+  protected:
+    void showEvent(QShowEvent* event) override ;
+};
+
+void SelfActivatingMenu::showEvent(QShowEvent* event)
+{
+    QMenu::showEvent(event);
+    QTimer::singleShot(0, [this]() { window()->activateWindow(); });
+}
+
 ImportMenu::ImportMenu(QWidget* parent) : QMenu(parent)
 {
     m_import_from_file_act = addAction("Import from File...");
@@ -61,7 +75,8 @@ ExportMenu::ExportMenu(QWidget* parent) : QMenu(parent)
 MoreActionsMenu::MoreActionsMenu(SketcherModel* model, QWidget* parent) :
     QMenu(parent)
 {
-    m_modify_structure_menu = addMenu("Modify All");
+    m_modify_structure_menu = new SelfActivatingMenu("Modify All", this);
+    addMenu(m_modify_structure_menu);
     addSeparator();
     m_undo_act = add_action_with_shortcut(this, "Undo", tr("Ctrl+Z"));
     m_redo_act = add_action_with_shortcut(this, "Redo", tr("Shift+Ctrl+Z"));
