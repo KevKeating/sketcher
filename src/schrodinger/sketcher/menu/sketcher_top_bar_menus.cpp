@@ -47,9 +47,13 @@ namespace sketcher
 class SelfActivatingMenu : public QMenu
 {
   public:
-    SelfActivatingMenu(const QString& title, QWidget* parent = nullptr) : QMenu(title, parent) {}
+    SelfActivatingMenu(const QString& title, QWidget* parent = nullptr) :
+        QMenu(title, parent)
+    {
+    }
+
   protected:
-    void showEvent(QShowEvent* event) override ;
+    void showEvent(QShowEvent* event) override;
 };
 
 void SelfActivatingMenu::showEvent(QShowEvent* event)
