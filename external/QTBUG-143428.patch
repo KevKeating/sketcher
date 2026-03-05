@@ -1,0 +1,80 @@
+diff --git a/src/plugins/platforms/wasm/qwasmevent.cpp b/src/plugins/platforms/wasm/qwasmevent.cpp
+index 676d9c8e155..6a9e174aa42 100644
+--- a/src/plugins/platforms/wasm/qwasmevent.cpp
++++ b/src/plugins/platforms/wasm/qwasmevent.cpp
+@@ -101,15 +101,14 @@ Event::Event(EventType type, emscripten::val webEvent)
+ {
+ }
+ 
+-bool Event::isTargetedForQtElement() const
++bool Event::isTargetedForElement(emscripten::val element) const
+ {
+     // Check event target via composedPath, which returns the true path even
+     // if the browser retargets the event for Qt's shadow DOM container. This
+     // is needed to avoid capturing the pointer in cases where foreign html
+     // elements are embedded inside Qt's shadow DOM.
+-    emscripten::val path = webEvent.call<emscripten::val>("composedPath");
+-    QString topElementClassName = QString::fromEcmaString(path[0]["className"]);
+-    return topElementClassName.startsWith("qt-"); // .e.g. qt-window-canvas
++    emscripten::val topTarget = webEvent.call<emscripten::val>("composedPath")[0];
++    return element == topTarget;
+ }
+ 
+ KeyEvent::KeyEvent(EventType type, emscripten::val event) : Event(type, event)
+diff --git a/src/plugins/platforms/wasm/qwasmevent.h b/src/plugins/platforms/wasm/qwasmevent.h
+index 07faee3fe4b..dd8de9ec54f 100644
+--- a/src/plugins/platforms/wasm/qwasmevent.h
++++ b/src/plugins/platforms/wasm/qwasmevent.h
+@@ -55,7 +55,7 @@ struct Event
+ {
+     Event(EventType type, emscripten::val webEvent);
+ 
+-    bool isTargetedForQtElement() const;
++    bool isTargetedForElement(emscripten::val element) const;
+ 
+     emscripten::val webEvent;
+     EventType type;
+diff --git a/src/plugins/platforms/wasm/qwasmwindow.cpp b/src/plugins/platforms/wasm/qwasmwindow.cpp
+index 7f1dd7eb34c..ed325a94384 100644
+--- a/src/plugins/platforms/wasm/qwasmwindow.cpp
++++ b/src/plugins/platforms/wasm/qwasmwindow.cpp
+@@ -121,8 +121,10 @@ QWasmWindow::QWasmWindow(QWindow *w,
+     m_inputElement["style"].set("display", "");
+     m_window.call<void>("appendChild", m_inputElement);
+ 
+-    // Hide the canvas from screen readers.
++    // The canvas displays graphics only, and is not accessible or an event target
+     m_canvas.call<void>("setAttribute", std::string("aria-hidden"), std::string("true"));
++    m_canvas["style"].set("pointerEvents", "none");
++
+     m_window.call<void>("appendChild", m_canvas);
+ 
+     m_a11yContainer["classList"].call<void>("add", emscripten::val("qt-window-a11y-container"));
+@@ -803,10 +805,14 @@ bool QWasmWindow::processPointerEnterLeave(const PointerEvent &event)
+ 
+ void QWasmWindow::processPointer(const PointerEvent &event)
+ {
++    // Process pointer events targeted at the window only, and not
++    // for instance events for the accessibility elements.
++    if (!event.isTargetedForElement(m_window))
++        return;
++
+     switch (event.type) {
+     case EventType::PointerDown:
+-        if (event.isTargetedForQtElement())
+-            m_window.call<void>("setPointerCapture", event.pointerId);
++        m_window.call<void>("setPointerCapture", event.pointerId);
+ 
+         if ((window()->flags() & Qt::WindowDoesNotAcceptFocus)
+                     != Qt::WindowDoesNotAcceptFocus
+@@ -814,9 +820,7 @@ void QWasmWindow::processPointer(const PointerEvent &event)
+                 window()->requestActivate();
+         break;
+     case EventType::PointerUp:
+-        if (event.isTargetedForQtElement())
+-            m_window.call<void>("releasePointerCapture", event.pointerId);
+-        break;
++        m_window.call<void>("releasePointerCapture", event.pointerId);
+     default:
+         break;
+     };
