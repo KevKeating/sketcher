@@ -5,6 +5,7 @@
 #pragma once
 
 #include <QColor>
+#include <QGraphicsItem>
 #include <QString>
 
 #include <rdkit/GraphMol/Depictor/DepictUtils.h>
@@ -423,7 +424,8 @@ enum class ZOrder {
 
 // Type integers for all QGraphicsItem subclasses other than subclasses of
 // AbstractGraphicsItem, which has its own ItemType enum. This ensures that all
-// graphics items have a different type value.
+// graphics items have a different type value. Note that these values should
+// normally be accessed via Classname::Type, not through this enum.
 enum class GraphicsItemType {
     ABSTRACT_GRAPHICS_ITEM_BASE = QGraphicsItem::UserType + 1000,
     // all AbstractGraphicsItem subclasses are numbered consecutively starting
