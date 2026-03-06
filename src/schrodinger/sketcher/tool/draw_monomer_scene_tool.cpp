@@ -30,29 +30,6 @@ namespace schrodinger
 namespace sketcher
 {
 
-namespace
-{
-
-namespace PeptideAP
-{
-enum { N = 1, C = 2, SIDECHAIN = 3 };
-}
-
-namespace NASugarAP
-{
-enum { FIVE_PRIME = 1, THREE_PRIME = 2, ONE_PRIME = 3 };
-}
-
-namespace NAPhosphateAP
-{
-enum { TO_PREV_SUGAR = 1, TO_NEXT_SUGAR = 2 };
-}
-
-constexpr int NA_BASE_AP_N1_9 = 1;
-constexpr std::string_view NA_BASE_AP_PAIR = "pair";
-
-} // namespace
-
 DrawMonomerSceneTool::DrawMonomerSceneTool(
     const std::string& res_name, const rdkit_extensions::ChainType chain_type,
     const Fonts& fonts, Scene* scene, MolModel* mol_model) :
@@ -410,10 +387,11 @@ void DrawMonomerSceneTool::labelAttachmentPointsOnConnector(
     auto end_ap_name = get_attachment_point_name_for_connection(
         end_monomer, connector, is_secondary_connection);
 
-    if (begin_ap_name == "pair" && end_ap_name == "pair") {
+    if (begin_ap_name == NA_BASE_AP_PAIR && end_ap_name == NA_BASE_AP_PAIR) {
         // for nucleic acid base pairs, only have a single "pair" label since
         // the bond is typically too short to fit two separate labels
-        labelCenterOfConnector(begin_monomer, end_monomer, "pair");
+        labelCenterOfConnector(begin_monomer, end_monomer,
+                               QString::fromStdString(NA_BASE_AP_PAIR));
     } else {
         labelBoundAttachmentPoint(begin_monomer, end_monomer,
                                   is_secondary_connection, begin_ap_name);
