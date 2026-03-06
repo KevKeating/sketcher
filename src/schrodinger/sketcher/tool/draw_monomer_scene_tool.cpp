@@ -133,7 +133,7 @@ find_preferred_attachment_point_by_num(
 {
     auto index_of = [&preferred_order](const auto* ap_item) {
         auto it = std::ranges::find(preferred_order,
-                            ap_item->getAttachmentPoint().num);
+                                    ap_item->getAttachmentPoint().num);
         auto dist = std::distance(preferred_order.begin(), it);
         // we know that dist is positive
         return static_cast<std::size_t>(dist);
@@ -183,10 +183,9 @@ find_attachment_point_with_name(
     const std::string& name)
 {
     auto it =
-        std::ranges::find_if(unbound_ap_items,
-                     [&name](const auto* ap_item) {
-                         return (ap_item->getAttachmentPoint().name == name);
-                     });
+        std::ranges::find_if(unbound_ap_items, [&name](const auto* ap_item) {
+            return (ap_item->getAttachmentPoint().name == name);
+        });
     if (it == unbound_ap_items.end()) {
         return nullptr;
     }
@@ -204,10 +203,9 @@ find_attachment_point_with_num(
     const int num)
 {
     auto it =
-        std::ranges::find_if(unbound_ap_items,
-                     [&num](const auto* ap_item) {
-                         return (ap_item->getAttachmentPoint().num == num);
-                     });
+        std::ranges::find_if(unbound_ap_items, [&num](const auto* ap_item) {
+            return (ap_item->getAttachmentPoint().num == num);
+        });
     if (it == unbound_ap_items.end()) {
         return nullptr;
     }

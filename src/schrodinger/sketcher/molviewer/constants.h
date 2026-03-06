@@ -434,7 +434,6 @@ enum class GraphicsItemType {
     UNBOUND_MONOMERIC_ATTACHMENT_POINT_ITEM = QGraphicsItem::UserType + 2000,
 };
 
-
 // Bit flags for specifying subsets of Scene items based on the type of model
 // object they represent
 typedef uint16_t InteractiveItemFlagType;
