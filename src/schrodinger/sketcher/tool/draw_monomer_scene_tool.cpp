@@ -49,7 +49,7 @@ enum { TO_PREV_SUGAR = 1, TO_NEXT_SUGAR = 2 };
 }
 
 constexpr int NA_BASE_AP_N1_9 = 1;
-const std::string NA_BASE_AP_PAIR = "pair";
+constexpr std::string_view NA_BASE_AP_PAIR = "pair";
 
 } // namespace
 
@@ -203,7 +203,7 @@ find_min_attachment_point_by_num(
 [[nodiscard]] static UnboundMonomericAttachmentPointItem*
 find_attachment_point_with_name(
     const std::vector<UnboundMonomericAttachmentPointItem*>& unbound_ap_items,
-    const std::string& name)
+    const std::string_view name)
 {
     auto it =
         std::ranges::find_if(unbound_ap_items, [&name](const auto* ap_item) {

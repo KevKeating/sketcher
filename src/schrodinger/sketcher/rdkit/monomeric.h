@@ -46,7 +46,7 @@ enum class Direction { N, S, E, W, NW, NE, SW, SE };
  */
 struct BoundAttachmentPoint {
     std::string name;
-    int num;
+    int num; // e.g. 3 for "R3"
     const RDKit::Atom* bound_monomer;
     bool is_secondary_connection;
     Direction direction;
@@ -62,7 +62,7 @@ struct BoundAttachmentPoint {
  */
 struct UnboundAttachmentPoint {
     std::string name;
-    int num;
+    int num; // e.g. 3 for "R3"
     Direction direction;
 
     bool operator==(const UnboundAttachmentPoint&) const = default;
