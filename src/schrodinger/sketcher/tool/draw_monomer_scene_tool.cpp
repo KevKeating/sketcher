@@ -167,7 +167,7 @@ find_min_attachment_point_by_num(
         [](const auto* ap_item_left, const auto* ap_item_right) {
             auto left_num = ap_item_left->getAttachmentPoint().num;
             auto right_num = ap_item_right->getAttachmentPoint().num;
-            return right_num < 0 || left_num < right_num;
+            return right_num < 0 || (left_num >= 0 && left_num < right_num);
         });
     return *min_it;
 }
