@@ -421,6 +421,18 @@ enum class ZOrder {
     ROTATION_HANDLE,
 };
 
+// Type integers for all QGraphicsItem subclasses other than subclasses of
+// AbstractGraphicsItem, which has its own ItemType enum. This ensures that all
+// graphics items have a different type value.
+enum class GraphicsItemType {
+    ABSTRACT_GRAPHICS_ITEM_BASE = QGraphicsItem::UserType + 1000,
+    // all AbstractGraphicsItem subclasses are numbered consecutively starting
+    // with ABSTRACT_GRAPHICS_ITEM_BASE, so we skip a bunch of numbers before
+    // the next non-AbstractGraphicsItem subclass
+    UNBOUND_MONOMERIC_ATTACHMENT_POINT_ITEM = QGraphicsItem::UserType + 2000,
+};
+
+
 // Bit flags for specifying subsets of Scene items based on the type of model
 // object they represent
 typedef uint16_t InteractiveItemFlagType;
