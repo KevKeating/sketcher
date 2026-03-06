@@ -30,6 +30,29 @@ namespace schrodinger
 namespace sketcher
 {
 
+namespace
+{
+
+namespace PeptideAP
+{
+enum { N = 1, C = 2, SIDECHAIN = 3 };
+}
+
+namespace NASugarAP
+{
+enum { FIVE_PRIME = 1, THREE_PRIME = 2, ONE_PRIME = 3 };
+}
+
+namespace NAPhosphateAP
+{
+enum { TO_PREV_SUGAR = 1, TO_NEXT_SUGAR = 2 };
+}
+
+constexpr int NA_BASE_AP_N1_9 = 1;
+const std::string NA_BASE_AP_PAIR = "pair";
+
+} // namespace
+
 DrawMonomerSceneTool::DrawMonomerSceneTool(
     const std::string& res_name, const rdkit_extensions::ChainType chain_type,
     const Fonts& fonts, Scene* scene, MolModel* mol_model) :
@@ -222,29 +245,36 @@ UnboundMonomericAttachmentPointItem* get_default_attachment_point(
         return find_min_attachment_point_by_num(unbound_ap_items);
     } else if (hovered_type == MonomerType::PEPTIDE) {
         if (tool_type == MonomerType::PEPTIDE) {
-            return find_preferred_attachment_point_by_num(unbound_ap_items,
-                                                          {2, 1, 3});
+            return find_preferred_attachment_point_by_num(
+                unbound_ap_items,
+                {PeptideAP::C, PeptideAP::N, PeptideAP::SIDECHAIN});
         } else if (tool_type == MonomerType::CHEM) {
-            return find_attachment_point_with_num(unbound_ap_items, 3);
+            return find_attachment_point_with_num(unbound_ap_items,
+                                                  PeptideAP::SIDECHAIN);
         }
     } else if (hovered_type == MonomerType::NA_BASE) {
         if (tool_type == MonomerType::NA_BASE ||
             tool_type == MonomerType::CHEM) {
-            return find_attachment_point_with_name(unbound_ap_items, "pair");
+            return find_attachment_point_with_name(unbound_ap_items,
+                                                   NA_BASE_AP_PAIR);
         } else if (tool_type == MonomerType::NA_SUGAR) {
-            return find_attachment_point_with_num(unbound_ap_items, 1);
+            return find_attachment_point_with_num(unbound_ap_items,
+                                                  NA_BASE_AP_N1_9);
         }
     } else if (hovered_type == MonomerType::NA_SUGAR) {
         if (tool_type == MonomerType::NA_BASE) {
-            return find_attachment_point_with_num(unbound_ap_items, 3);
+            return find_attachment_point_with_num(unbound_ap_items,
+                                                  NASugarAP::ONE_PRIME);
         } else if (tool_type == MonomerType::NA_PHOSPHATE) {
-            return find_preferred_attachment_point_by_num(unbound_ap_items,
-                                                          {2, 1});
+            return find_preferred_attachment_point_by_num(
+                unbound_ap_items,
+                {NASugarAP::THREE_PRIME, NASugarAP::FIVE_PRIME});
         }
     } else if (hovered_type == MonomerType::NA_PHOSPHATE) {
         if (tool_type == MonomerType::NA_SUGAR) {
-            return find_preferred_attachment_point_by_num(unbound_ap_items,
-                                                          {2, 1});
+            return find_preferred_attachment_point_by_num(
+                unbound_ap_items,
+                {NAPhosphateAP::TO_NEXT_SUGAR, NAPhosphateAP::TO_PREV_SUGAR});
         }
     }
     return nullptr;
