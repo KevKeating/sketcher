@@ -241,6 +241,7 @@ if(EMSCRIPTEN)
       -sMODULARIZE=1
       -sEXPORTED_RUNTIME_METHODS=[callMain,FS,JSEvents,specialHTMLTargets,stringToUTF16,UTF16ToString,getExceptionMessage]
       -sASYNCIFY
+      -sSTACK_SIZE=5MB
       -lembind
       -fexceptions
       -sDISABLE_EXCEPTION_CATCHING=0
