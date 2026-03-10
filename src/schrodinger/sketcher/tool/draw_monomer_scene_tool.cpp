@@ -362,46 +362,46 @@ void DrawMonomerSceneTool::drawBoundMonomerHintFor(
     auto new_pos = monomer_pos + offset;
 
     // Create an RWMol fragment with two monomers and a connection between them
-    RDKit::RWMol frag;
+    m_frag = std::make_shared<RDKit::RWMol>();
     // TODO: need to save this molecule so it doesn't get destroyed at the end
     // of this function
-    frag.setProp(HELM_MODEL, true);
+    m_frag->setProp(HELM_MODEL, true);
 
     // First atom: copy of the existing monomer
-    auto first_idx = frag.addAtom(new RDKit::Atom(*monomer), true, true);
+    auto first_idx = m_frag->addAtom(new RDKit::Atom(*monomer), true, true);
 
     // Second atom: new monomer with the tool's residue name and chain type.
     // If the chain types match, let addMonomer determine the chain_id from the
     // first atom.
     size_t second_idx;
     if (m_chain_type == rdkit_extensions::getChainType(*monomer)) {
-        second_idx = rdkit_extensions::addMonomer(frag, m_res_name);
+        second_idx = rdkit_extensions::addMonomer(*m_frag, m_res_name);
     } else {
         auto chain_id = rdkit_extensions::toString(m_chain_type) + "1";
         second_idx =
-            rdkit_extensions::addMonomer(frag, m_res_name, 1, chain_id);
+            rdkit_extensions::addMonomer(*m_frag, m_res_name, 1, chain_id);
     }
 
     // TODO: figure out the right second attachment point
     auto linkage = ap_item->getAttachmentPoint().model_name + "-R2";
-    rdkit_extensions::addConnection(frag, first_idx, second_idx, linkage);
+    rdkit_extensions::addConnection(*m_frag, first_idx, second_idx, linkage);
 
     // flag the atoms as monomeric
-    for (auto* atom : frag.atoms()) {
+    for (auto* atom : m_frag->atoms()) {
         set_atom_monomeric(atom);
     }
 
     // Add a conformer with the atom coordinates
-    auto* frag_conf = new RDKit::Conformer(frag.getNumAtoms());
+    auto* frag_conf = new RDKit::Conformer(m_frag->getNumAtoms());
     frag_conf->set3D(false);
     frag_conf->setAtomPos(first_idx, monomer_pos);
     frag_conf->setAtomPos(second_idx, new_pos);
-    frag.addConformer(frag_conf, true);
+    m_frag->addConformer(frag_conf, true);
 
     // Create the hint fragment, hiding the first atom (the copy of the
     // existing monomer that's already visible in the scene)
     m_hint_fragment_item =
-        new MonomerHintFragmentItem(frag, m_fonts, first_idx);
+        new MonomerHintFragmentItem(*m_frag, m_fonts, first_idx);
     m_scene->addItem(m_hint_fragment_item);
 }
 

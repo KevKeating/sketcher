@@ -91,6 +91,7 @@ class SKETCHER_API DrawMonomerSceneTool : public StandardSceneToolBase
     const UnboundMonomericAttachmentPointItem* m_hovered_ap_item = nullptr;
     std::vector<UnboundMonomericAttachmentPointItem*> m_unbound_ap_items;
     MonomerHintFragmentItem* m_hint_fragment_item = nullptr;
+    std::shared_ptr<RDKit::RWMol> m_frag = nullptr;
 
     QPixmap createDefaultCursorPixmap() const override;
 
