@@ -308,7 +308,6 @@ void DrawMonomerSceneTool::onMouseMove(QGraphicsSceneMouseEvent* const event)
     }
 
     auto* hovered_ap_item = getUnboundAttachmentPointAt(scene_pos);
-    std::cout << "item = " << item << ", hovered_ap_item = " << hovered_ap_item << "\n";
     if (hovered_ap_item != m_hovered_ap_item) {
         // update which attachment point is hovered
         m_hovered_ap_item = hovered_ap_item;
