@@ -25,6 +25,7 @@
 #include "schrodinger/sketcher/molviewer/monomer_connector_item.h"
 #include "schrodinger/sketcher/molviewer/monomer_constants.h"
 #include "schrodinger/sketcher/molviewer/monomer_hint_fragment_item.h"
+#include "schrodinger/sketcher/molviewer/monomer_utils.h"
 #include "schrodinger/sketcher/molviewer/scene.h"
 #include "schrodinger/sketcher/molviewer/scene_utils.h"
 #include "schrodinger/sketcher/molviewer/unbound_monomeric_attachment_point_item.h"
@@ -362,6 +363,8 @@ void DrawMonomerSceneTool::drawBoundMonomerHintFor(
 
     // Create an RWMol fragment with two monomers and a connection between them
     RDKit::RWMol frag;
+    // TODO: need to save this molecule so it doesn't get destroyed at the end
+    // of this function
     frag.setProp(HELM_MODEL, true);
 
     // First atom: copy of the existing monomer
@@ -379,11 +382,14 @@ void DrawMonomerSceneTool::drawBoundMonomerHintFor(
             rdkit_extensions::addMonomer(frag, m_res_name, 1, chain_id);
     }
 
-    // TODO: the first attachment point here is wrong. I want the real
-    //       attachment point name, not the pretty name.
     // TODO: figure out the right second attachment point
-    auto linkage = ap_item->getAttachmentPoint().display_name + "-R2";
+    auto linkage = ap_item->getAttachmentPoint().model_name + "-R2";
     rdkit_extensions::addConnection(frag, first_idx, second_idx, linkage);
+
+    // flag the atoms as monomeric
+    for (auto* atom : frag.atoms()) {
+        set_atom_monomeric(atom);
+    }
 
     // Add a conformer with the atom coordinates
     auto* frag_conf = new RDKit::Conformer(frag.getNumAtoms());
