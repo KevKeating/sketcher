@@ -69,6 +69,17 @@ class NoAvailableDirectionsException : public std::exception
 
 } // namespace
 
+std::ostream& operator<<(std::ostream& os, const BoundAttachmentPoint& ap)
+{
+    os << "{" << ap.model_name << ", " << ap.display_name << ", " << std::to_string(ap.num) << "}";
+    return os;
+}
+std::ostream& operator<<(std::ostream& os, const UnboundAttachmentPoint& ap)
+{
+    os << "{" << ap.model_name << ", " << ap.display_name << ", " << std::to_string(ap.num) << "}";
+    return os;
+}
+
 MonomerType get_monomer_type(const RDKit::Atom* atom)
 {
     const auto* monomer_info = atom->getMonomerInfo();
@@ -348,11 +359,16 @@ get_bound_attachment_points(const RDKit::Atom* monomer)
         if (bond->getPropIfPresent(prop_name, linkage)) {
             const auto& [ap_num, ap_name] =
                 get_attachment_point_for_atom(linkage, is_start_atom);
+            std::string display_name;
             if (ap_num > 0 && !bound_ap_nums.contains(ap_num)) {
                 bound_ap_nums.insert(ap_num);
+                // we don't know the display name yet, so use an empty string
+                // for now
+                display_name = "";
             } else if (ap_num == ATTACHMENT_POINT_WITH_CUSTOM_NAME &&
                        !bound_ap_custom_names.contains(ap_name)) {
                 bound_ap_custom_names.insert(ap_name);
+                display_name = ap_name;
             } else {
                 return;
             }
@@ -360,10 +376,8 @@ get_bound_attachment_points(const RDKit::Atom* monomer)
             bool is_secondary_connection = prop_name == CUSTOM_BOND;
             auto dir = get_bound_attachment_point_cardinal_direction(
                 monomer, bound_monomer, is_secondary_connection);
-            // we don't know the display name yet, so we use an empty string for
-            // that
             bound_aps.emplace_back(
-                ap_name, "", ap_num, bound_monomer, is_secondary_connection, dir);
+                ap_name, display_name, ap_num, bound_monomer, is_secondary_connection, dir);
         }
     };
 
@@ -524,11 +538,13 @@ get_unbound_attachment_points(const RDKit::Atom* monomer,
     // build sets of bound attachment point numbers and custom names
     std::unordered_set<int> bound_ap_nums;
     std::unordered_set<std::string> bound_aps_with_custom_names;
+    std::cout << "In get_unbound_attachment_points\n";
     for (auto cur_ap : bound_aps) {
         if (cur_ap.num > 0) {
             bound_ap_nums.insert(cur_ap.num);
         } else if (cur_ap.num == ATTACHMENT_POINT_WITH_CUSTOM_NAME) {
-            bound_aps_with_custom_names.insert(cur_ap.display_name);
+            std::cout << "\tInserting " << cur_ap.model_name << "\n";
+            bound_aps_with_custom_names.insert(cur_ap.model_name);
         }
     }
 
@@ -570,7 +586,9 @@ get_unbound_attachment_points(const RDKit::Atom* monomer,
         if (EXPECTED_AP_CUSTOM_NAMES.contains(monomer_type)) {
             for (const auto& ap_name :
                  EXPECTED_AP_CUSTOM_NAMES.at(monomer_type)) {
+                std::cout << "\tChecking " << ap_name << "\n";
                 if (!bound_aps_with_custom_names.contains(ap_name)) {
+                    std::cout << "\t\tnot found\n";
                     auto dir = calculate_direction_for_unbound_attachment_point(
                         ATTACHMENT_POINT_WITH_CUSTOM_NAME, ap_name,
                         monomer_type, bound_aps, available_aps,

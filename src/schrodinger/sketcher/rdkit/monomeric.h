@@ -77,6 +77,8 @@ struct BoundAttachmentPoint {
     bool operator==(const BoundAttachmentPoint&) const = default;
 };
 
+SKETCHER_API std::ostream& operator<<(std::ostream& os, const BoundAttachmentPoint& ap);
+
 /**
  * Information about an attachment point on a monomer that's *not* bound to
  * another monomer (i.e. available for bonding). The direction member variable
@@ -91,6 +93,8 @@ struct UnboundAttachmentPoint {
 
     bool operator==(const UnboundAttachmentPoint&) const = default;
 };
+
+SKETCHER_API std::ostream& operator<<(std::ostream& os, const UnboundAttachmentPoint& ap);
 
 /**
  * For both BoundAttachmentPoints and UnboundAttachmentPoints, num will be
