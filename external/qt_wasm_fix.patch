@@ -1,0 +1,45 @@
+diff --git a/src/corelib/platform/wasm/qstdweb.cpp b/src/corelib/platform/wasm/qstdweb.cpp
+index 75e76a6806b..ff5c656d72c 100644
+--- a/src/corelib/platform/wasm/qstdweb.cpp
++++ b/src/corelib/platform/wasm/qstdweb.cpp
+@@ -726,10 +726,20 @@ public:
+     // Special function - addEventListender() allows adding an object with a
+     // handleEvent() function which eceives the event.
+     void handleEvent(emscripten::val event) {
++        if (!m_handler) {
++            std::cerr << "[Qt WASM] Event listener invoked after invalidation."
++                      << " Event type: " << event["type"].as<std::string>()
++                      << std::endl;
++            return;
++        }
+         auto handlerPtr = reinterpret_cast<std::function<void(emscripten::val)> *>(m_handler);
+         (*handlerPtr)(event);
+     }
+ 
++    void invalidate() {
++        m_handler = 0;
++    }
++
+     uintptr_t m_handler;
+ };
+ 
+@@ -737,6 +747,9 @@ public:
+ // name must be the name as returned by the Event.type property: e.g. "load", "error".
+ EventCallback::~EventCallback()
+ {
++    if (!m_eventListener.isUndefined() && !m_eventListener.isNull()) {
++        m_eventListener.call<void>("invalidate");
++    }
+     m_element.call<void>("removeEventListener", m_eventName, m_eventListener);
+ }
+ 
+@@ -753,7 +766,8 @@ EventCallback::EventCallback(emscripten::val element, const std::string &name, c
+ EMSCRIPTEN_BINDINGS(qtStdwebCalback) {
+     emscripten::class_<EventListener>("QtEventListener")
+         .constructor<uintptr_t>()
+-        .function("handleEvent", &EventListener::handleEvent);
++        .function("handleEvent", &EventListener::handleEvent)
++        .function("invalidate", &EventListener::invalidate);
+ }
+ 
+ namespace Promise {

@@ -269,6 +269,14 @@ ExternalProject_Add(
     -DRDK_USE_BOOST_STACKTRACE=OFF
     ${EXTRA_RDKIT_CMAKE_ARGS})
 
+
+set(QT_PATCH_COMMAND git reset --hard HEAD)
+# Prevent RDKit from trying to build shared libs
+if(EMSCRIPTEN)
+  list(APPEND QT_PATCH_COMMAND && cd qtbase && git apply
+    ${CMAKE_CURRENT_SOURCE_DIR}/qt_wasm_fix.patch)
+endif()
+
 # Build Qt library
 if(QT_HOST_BUILD)
   # For WASM builds, we also need a non-WASM build of Qt since some of the Qt
@@ -285,6 +293,7 @@ ExternalProject_Add(
   GIT_TAG v${QT_VERSION}
   GIT_SUBMODULES ${QT_GIT_SUBMODULES}
   GIT_SHALLOW TRUE
+  PATCH_COMMAND ${QT_PATCH_COMMAND}
   CMAKE_ARGS
     ${COMMON_EXTERNAL_PROJECT_CMAKE_ARGS}
     -DCMAKE_INSTALL_PREFIX=${CMAKE_CURRENT_BINARY_DIR}/qt-${QT_VERSION}
