@@ -83,8 +83,8 @@ DrawMonomerSceneTool::getTopMonomericItemAt(const QPointF& scene_pos)
     // check to see if we're over a monomer, monomeric connector, or unbound
     // attachment point item
     for (auto* item : m_scene->items(scene_pos)) {
-        if (item == m_hint_fragment_item ||
-            item->parentItem() == m_hint_fragment_item) {
+        if (m_hint_fragment_item != nullptr && (item == m_hint_fragment_item ||
+            item->parentItem() == m_hint_fragment_item)) {
             // ignore the fragment hint that was drawn by this class
             continue;
         }
@@ -308,12 +308,13 @@ void DrawMonomerSceneTool::onMouseMove(QGraphicsSceneMouseEvent* const event)
     }
 
     auto* hovered_ap_item = getUnboundAttachmentPointAt(scene_pos);
+    std::cout << "item = " << item << ", hovered_ap_item = " << hovered_ap_item << "\n";
     if (hovered_ap_item != m_hovered_ap_item) {
         // update which attachment point is hovered
         m_hovered_ap_item = hovered_ap_item;
         // hide the hovered "nubbin" and draw a hint fragment instead
         for (auto* ap_item : m_unbound_ap_items) {
-            ap_item->setVisible(ap_item != hovered_ap_item);
+            ap_item->setVisible(hovered_ap_item == nullptr || ap_item != hovered_ap_item);
         }
         drawBoundMonomerHintFor(hovered_ap_item);
     }
@@ -700,6 +701,7 @@ void DrawMonomerSceneTool::clearAttachmentPointsLabels()
     m_hovered_ap_item = nullptr;
     delete m_hint_fragment_item;
     m_hint_fragment_item = nullptr;
+    m_frag.reset();
 }
 
 } // namespace sketcher
