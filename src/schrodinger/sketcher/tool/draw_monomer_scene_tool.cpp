@@ -83,14 +83,18 @@ DrawMonomerSceneTool::getTopMonomericItemAt(const QPointF& scene_pos)
     // check to see if we're over a monomer, monomeric connector, or unbound
     // attachment point item
     for (auto* item : m_scene->items(scene_pos)) {
+        if (item == m_hint_fragment_item ||
+            item->parentItem() == m_hint_fragment_item) {
+            // ignore the fragment hint that was drawn by this class
+            continue;
+        }
         if (item_matches_type_flag(item, InteractiveItemFlag::MONOMERIC)) {
             return item;
-        } else if (auto* ap_item =
-                       qgraphicsitem_cast<UnboundMonomericAttachmentPointItem*>(
-                           item)) {
-            if (ap_item->withinHoverArea(scene_pos)) {
-                return item->parentItem();
-            }
+        }
+        auto* ap_item =
+                qgraphicsitem_cast<UnboundMonomericAttachmentPointItem*>(item);
+        if (ap_item && ap_item->withinHoverArea(scene_pos)) {
+            return item->parentItem();
         }
     }
 
@@ -448,7 +452,8 @@ void DrawMonomerSceneTool::labelAttachmentPointsOnMonomer(
     auto [bound_aps, unbound_aps] = get_attachment_points_for_monomer(monomer);
     for (auto& cur_ap : bound_aps) {
         labelBoundAttachmentPoint(monomer, cur_ap.bound_monomer,
-                                  cur_ap.is_secondary_connection, cur_ap.display_name);
+                                  cur_ap.is_secondary_connection,
+                                  cur_ap.display_name);
     }
     for (auto& cur_ap : unbound_aps) {
         auto* item = new UnboundMonomericAttachmentPointItem(
