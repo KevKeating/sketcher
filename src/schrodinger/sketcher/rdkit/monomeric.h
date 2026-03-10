@@ -38,6 +38,24 @@ enum class ConnectorType {
     NA_BACKBONE_TO_BASE
 };
 
+namespace PeptideAP
+{
+enum { N = 1, C = 2, SIDECHAIN = 3 };
+}
+
+namespace NASugarAP
+{
+enum { FIVE_PRIME = 1, THREE_PRIME = 2, ONE_PRIME = 3 };
+}
+
+namespace NAPhosphateAP
+{
+enum { TO_PREV_SUGAR = 1, TO_NEXT_SUGAR = 2 };
+}
+
+constexpr int NA_BASE_AP_N1_9 = 1;
+const std::string NA_BASE_AP_PAIR = "pair";
+
 /**
  * Information about an attachment point on a monomer that's bound to another
  * monomer. The direction member variable represents the direction that the bond
@@ -47,7 +65,7 @@ enum class ConnectorType {
  */
 struct BoundAttachmentPoint {
     std::string name;
-    int num;
+    int num; // e.g. 3 for "R3"
     const RDKit::Atom* bound_monomer;
     bool is_secondary_connection;
     Direction direction;
@@ -63,7 +81,7 @@ struct BoundAttachmentPoint {
  */
 struct UnboundAttachmentPoint {
     std::string name;
-    int num;
+    int num; // e.g. 3 for "R3"
     Direction direction;
 
     bool operator==(const UnboundAttachmentPoint&) const = default;
