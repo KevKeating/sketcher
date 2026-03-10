@@ -52,7 +52,7 @@ calculate_geometry(const UnboundAttachmentPoint& attachment_point,
     }
     auto line_end = dir * (extent + UNBOUND_AP_LINE_LENGTH);
 
-    auto label_text = prep_attachment_point_name(attachment_point.name);
+    auto label_text = prep_attachment_point_name(attachment_point.display_name);
     auto label_rect =
         fonts.m_monomeric_attachment_point_label_fm.boundingRect(label_text);
     position_ap_label_rect(label_rect, {0.0, 0.0}, dir);

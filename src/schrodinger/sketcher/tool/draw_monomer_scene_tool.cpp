@@ -189,7 +189,7 @@ find_attachment_point_with_name(
 {
     auto it =
         std::ranges::find_if(unbound_ap_items, [&name](const auto* ap_item) {
-            return (ap_item->getAttachmentPoint().name == name);
+            return (ap_item->getAttachmentPoint().model_name == name);
         });
     if (it == unbound_ap_items.end()) {
         return nullptr;
@@ -382,7 +382,7 @@ void DrawMonomerSceneTool::drawBoundMonomerHintFor(
     // TODO: the first attachment point here is wrong. I want the real
     //       attachment point name, not the pretty name.
     // TODO: figure out the right second attachment point
-    auto linkage = ap_item->getAttachmentPoint().name + "-R2";
+    auto linkage = ap_item->getAttachmentPoint().display_name + "-R2";
     rdkit_extensions::addConnection(frag, first_idx, second_idx, linkage);
 
     // Add a conformer with the atom coordinates
@@ -442,7 +442,7 @@ void DrawMonomerSceneTool::labelAttachmentPointsOnMonomer(
     auto [bound_aps, unbound_aps] = get_attachment_points_for_monomer(monomer);
     for (auto& cur_ap : bound_aps) {
         labelBoundAttachmentPoint(monomer, cur_ap.bound_monomer,
-                                  cur_ap.is_secondary_connection, cur_ap.name);
+                                  cur_ap.is_secondary_connection, cur_ap.display_name);
     }
     for (auto& cur_ap : unbound_aps) {
         auto* item = new UnboundMonomericAttachmentPointItem(
