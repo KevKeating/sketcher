@@ -345,9 +345,6 @@ BOOST_AUTO_TEST_CASE(test_get_attachment_points)
         exp_bound = {{"R1", "N1/9", 1, sugar, false, Direction::N},
                      {"pair", "pair", ATTACHMENT_POINT_WITH_CUSTOM_NAME, paired_base,
                       false, Direction::S}};
-        std::cout << "bound_aps.size() = " << bound_aps.size() << "\n";
-        std::cout << "bound_aps[0] = " << bound_aps[0] << "\n";
-        std::cout << "bound_aps[1] = " << bound_aps[1] << "\n";
         BOOST_TEST(bound_aps == exp_bound);
         BOOST_TEST(unbound_aps.empty());
     }
