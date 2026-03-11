@@ -242,6 +242,8 @@ if(EMSCRIPTEN)
       -sEXPORTED_RUNTIME_METHODS=[callMain,FS,JSEvents,specialHTMLTargets,stringToUTF16,UTF16ToString,getExceptionMessage]
       -sASYNCIFY
       -sSTACK_SIZE=5MB
+      -sASYNCIFY_STACK_SIZE=98304
+      -sMAX_WEBGL_VERSION=2
       -sWASM_BIGINT=1
       -lembind
       -fexceptions
