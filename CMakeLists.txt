@@ -240,13 +240,14 @@ if(EMSCRIPTEN)
       -sEXPORT_NAME=schrodinger_sketcher_entry
       -sMODULARIZE=1
       -sEXPORTED_RUNTIME_METHODS=[callMain,FS,JSEvents,specialHTMLTargets,stringToUTF16,UTF16ToString,getExceptionMessage]
-      -sJSPI
+      -sASYNCIFY_IMPORTS=qt_asyncify_suspend_js,qt_asyncify_resume_js
+      -sASYNCIFY
       -sSTACK_SIZE=5MB
       -sASYNCIFY_STACK_SIZE=98304
       -sMAX_WEBGL_VERSION=2
       -sWASM_BIGINT=1
       -lembind
-      -fwasm-exceptions
+      -fexceptions
       -sDISABLE_EXCEPTION_CATCHING=0
       -sEXPORT_EXCEPTION_HANDLING_HELPERS)
 endif()
