@@ -247,7 +247,6 @@ if(EMSCRIPTEN)
       -sWASM_BIGINT=1
       -lembind
       -fwasm-exceptions
-      -sDISABLE_EXCEPTION_CATCHING=0
       -sEXPORT_EXCEPTION_HANDLING_HELPERS)
 endif()
 target_link_libraries(
