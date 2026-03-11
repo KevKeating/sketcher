@@ -163,15 +163,15 @@ EMSCRIPTEN_BINDINGS(sketcher)
         .value("PNG", ImageFormat::PNG)
         .value("SVG", ImageFormat::SVG);
 
-    emscripten::function("sketcher_import_text", &sketcher_import_text);
-    emscripten::function("sketcher_export_text", &sketcher_export_text);
-    emscripten::function("sketcher_export_image", &sketcher_export_image);
-    emscripten::function("sketcher_clear", &sketcher_clear);
-    emscripten::function("sketcher_is_empty", &sketcher_is_empty);
-    emscripten::function("sketcher_has_monomers", &sketcher_has_monomers);
-    emscripten::function("sketcher_allow_monomeric", &sketcher_allow_monomeric);
+    emscripten::function("sketcher_import_text", &sketcher_import_text, emscripten::async());
+    emscripten::function("sketcher_export_text", &sketcher_export_text, emscripten::async());
+    emscripten::function("sketcher_export_image", &sketcher_export_image, emscripten::async());
+    emscripten::function("sketcher_clear", &sketcher_clear, emscripten::async());
+    emscripten::function("sketcher_is_empty", &sketcher_is_empty, emscripten::async());
+    emscripten::function("sketcher_has_monomers", &sketcher_has_monomers, emscripten::async());
+    emscripten::function("sketcher_allow_monomeric", &sketcher_allow_monomeric, emscripten::async());
     emscripten::function("_sketcher_get_widget_rect",
-                         &sketcher_get_widget_rect);
+                         &sketcher_get_widget_rect, emscripten::async());
     // see sketcher_changed_callback above
 }
 #endif
