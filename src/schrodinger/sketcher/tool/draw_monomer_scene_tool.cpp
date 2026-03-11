@@ -293,6 +293,8 @@ DrawMonomerSceneTool::getUnboundAttachmentPointAt(const QPointF& scene_pos)
                                         m_unbound_ap_items);
 }
 
+// TODO: turn off predictive highlighting if clicking on the monomer itself
+//       isn't going to do anything.  Also turn it off for connectors?
 void DrawMonomerSceneTool::onMouseMove(QGraphicsSceneMouseEvent* const event)
 {
     StandardSceneToolBase::onMouseMove(event);
