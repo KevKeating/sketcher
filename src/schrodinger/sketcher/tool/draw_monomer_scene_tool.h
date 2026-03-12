@@ -180,8 +180,15 @@ class SKETCHER_API DrawMonomerSceneTool : public StandardSceneToolBase
     UnboundMonomericAttachmentPointItem*
     getUnboundAttachmentPointAt(const QPointF& scene_pos);
 
+    UnboundMonomericAttachmentPointItem*
+    getDefaultUnboundAttachmentPointForHoveredMonomer();
+
     void drawBoundMonomerHintFor(
         UnboundMonomericAttachmentPointItem* const ap_item);
+
+    // bool shouldShowPredictiveHighlighting();
+    // bool clickShouldMutate();
+
 };
 
 } // namespace sketcher

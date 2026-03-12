@@ -44,7 +44,9 @@ DrawMonomerSceneTool::DrawMonomerSceneTool(
     m_chain_type(chain_type),
     m_fonts(fonts)
 {
-    m_highlight_types = InteractiveItemFlag::MONOMERIC;
+    // we handle predictive highlighting manually in onMouseMove, so we disable
+    // StandardSceneToolsBase's predictive highlighting
+    m_highlight_types = InteractiveItemFlag::NONE;
     // make sure that the cursor hint font is more easily readable at small
     // size. (Note that m_fonts is a copy of the Scene's fonts, not a reference,
     // so this change won't affect anything else.)
@@ -278,6 +280,14 @@ DrawMonomerSceneTool::getUnboundAttachmentPointAt(const QPointF& scene_pos)
             return ap_item;
         }
     }
+    return getDefaultUnboundAttachmentPointForHoveredMonomer();
+}
+
+
+UnboundMonomericAttachmentPointItem*
+DrawMonomerSceneTool::getDefaultUnboundAttachmentPointForHoveredMonomer()
+{
+    // TODO: fix duplication of this
     const auto* monomer_item =
         static_cast<const AbstractMonomerItem*>(m_hovered_item);
     auto* monomer = monomer_item->getAtom();
@@ -293,6 +303,28 @@ DrawMonomerSceneTool::getUnboundAttachmentPointAt(const QPointF& scene_pos)
                                         m_unbound_ap_items);
 }
 
+// bool DrawMonomerSceneTool::clickShouldMutate()
+// {
+//     const auto* monomer_item =
+//         static_cast<const AbstractMonomerItem*>(m_hovered_item);
+//     auto* monomer = monomer_item->getAtom();
+//     auto monomer_type = get_monomer_type(monomer);
+//     return (monomer_type == m_monomer_type &&
+//         get_monomer_res_name(monomer) != m_res_name);
+// }
+
+
+// bool DrawMonomerSceneTool::shouldShowPredictiveHighlighting()
+// {
+    
+//     return (item_matches_type_flag(m_hovered_item, InteractiveItemFlag::MONOMER) &&
+//         getDefaultUnboundAttachmentPointForHoveredMonomer() != nullptr);
+//     //     return false;
+//     // }
+//     // const auto* monomer_item = static_cast<const AbstractMonomerItem*>(m_hovered_item);
+//     // const auto* monomer = monomer_item->getAtom();
+// }
+
 // TODO: turn off predictive highlighting if clicking on the monomer itself
 //       isn't going to do anything.  Also turn it off for connectors?
 void DrawMonomerSceneTool::onMouseMove(QGraphicsSceneMouseEvent* const event)
@@ -307,6 +339,12 @@ void DrawMonomerSceneTool::onMouseMove(QGraphicsSceneMouseEvent* const event)
     if (item != m_hovered_item) {
         m_hovered_item = item;
         drawAttachmentPointLabelsFor(item);
+        if (m_hovered_item != nullptr && item_matches_type_flag(m_hovered_item, InteractiveItemFlag::MONOMER) &&
+            getDefaultUnboundAttachmentPointForHoveredMonomer() != nullptr) {
+            m_predictive_highlighting_item.highlightItem(item);
+        } else {
+            m_predictive_highlighting_item.clearHighlightingPath();
+        }
     }
 
     auto* hovered_ap_item = getUnboundAttachmentPointAt(scene_pos);
