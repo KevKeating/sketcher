@@ -82,15 +82,31 @@ QRectF get_bounding_rect_for_unbound_monomer_attachment_point_item(
     return bounding_rect;
 }
 
-QPainterPath calculate_hover_area(const QRectF& ap_bounding_rect, QRectF monomer_bounding_rect, const Direction ap_direction)
+QPainterPath calculate_hover_area(QRectF ap_bounding_rect, QRectF monomer_bounding_rect, const Direction ap_direction)
 {
     // TODO: have a minimum half-width for the ap_bounding_rect - useful for phosphates since there's no label
     
     if (ap_direction == Direction::N || ap_direction == Direction::S) {
+        std::cout << "calculate_hover_area (NS): " << ap_bounding_rect.left() << " " << ap_bounding_rect.right() << "\n";
+        if (ap_bounding_rect.left() > -UNBOUND_AP_MIN_HOVER_HALF_WIDTH) {
+            ap_bounding_rect.setLeft(-UNBOUND_AP_MIN_HOVER_HALF_WIDTH);
+        }
+        if (ap_bounding_rect.right() < UNBOUND_AP_MIN_HOVER_HALF_WIDTH) {
+            ap_bounding_rect.setRight(UNBOUND_AP_MIN_HOVER_HALF_WIDTH);
+        }
         monomer_bounding_rect.adjust(-500, 0, 500, 0);
     } else if (ap_direction == Direction::E || ap_direction == Direction::W) {
+        std::cout << "calculate_hover_area (EW): " << ap_bounding_rect.top() << " " << ap_bounding_rect.bottom() << "\n";
+        if (ap_bounding_rect.top() > -UNBOUND_AP_MIN_HOVER_HALF_WIDTH) {
+            ap_bounding_rect.setTop(-UNBOUND_AP_MIN_HOVER_HALF_WIDTH);
+        }
+        if (ap_bounding_rect.bottom() < UNBOUND_AP_MIN_HOVER_HALF_WIDTH) {
+            ap_bounding_rect.setBottom(UNBOUND_AP_MIN_HOVER_HALF_WIDTH);
+        }
         monomer_bounding_rect.adjust(0, -500, 0, 500);
     }
+    std::cout << "\t" << ap_bounding_rect.top() << " " << ap_bounding_rect.bottom() << " " << ap_bounding_rect.left() << " " << ap_bounding_rect.right() << "\n";
+    std::cout << "\t" << monomer_bounding_rect.top() << " " << monomer_bounding_rect.bottom() << " " << monomer_bounding_rect.left() << " " << monomer_bounding_rect.right() << "\n";
     
     QPainterPath hover_area;
     hover_area.addRect(ap_bounding_rect);
