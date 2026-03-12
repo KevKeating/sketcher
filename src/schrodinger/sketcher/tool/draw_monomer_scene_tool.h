@@ -36,23 +36,6 @@ class MonomerHintFragmentItem;
 class UnboundMonomericAttachmentPointItem;
 
 /**
- * @return the attachment point name to a QString after converting apostrophes
- * to Unicode primes.
- */
-SKETCHER_API QString prep_attachment_point_name(const std::string& name);
-
-/**
- * Position the given rectangle to label a monomer's attachment point
- * @param ap_label_rect The rectangle to position. It should already be sized
- * correctly for the attachment point label.
- * @param monomer_coords The coordinates of the monomer being labeled
- * @param bound_coords The coordinates of the other monomer involved in the bond
- */
-SKETCHER_API void position_ap_label_rect(QRectF& ap_label_rect,
-                                         const QPointF& monomer_coords,
-                                         const QPointF& bound_coords);
-
-/**
  * Return the default unbound attachment point; that is, the attachment point
  * that should be selected when the user hovers over a monomer.
  * @param hovered_type The type of monomer being hovered over

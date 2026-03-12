@@ -6,7 +6,7 @@
 #include "schrodinger/sketcher/molviewer/abstract_monomer_item.h"
 #include "schrodinger/sketcher/molviewer/fonts.h"
 #include "schrodinger/sketcher/molviewer/monomer_constants.h"
-#include "schrodinger/sketcher/tool/draw_monomer_scene_tool.h"
+#include "schrodinger/sketcher/molviewer/monomer_attachment_point_labels.h"
 
 namespace schrodinger
 {
