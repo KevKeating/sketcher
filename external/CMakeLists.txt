@@ -56,12 +56,12 @@ endfunction()
 
 if(EMSCRIPTEN)
   set(EXTRA_BOOST_CMAKE_ARGS
-      -DCMAKE_CXX_FLAGS=-fdeclspec\ -pthread\ -fexceptions\ -sDISABLE_EXCEPTION_CATCHING=0
+      -DCMAKE_CXX_FLAGS=-fdeclspec\ -pthread\ -fwasm-exceptions
   )
   set(EXTRA_QT_CMAKE_ARGS
       -DQT_HOST_PATH=${CMAKE_CURRENT_BINARY_DIR}/host/qt-${QT_VERSION} -DQT_QMAKE_DEVICE_OPTIONS="QT_EMSCRIPTEN_ASYNCIFY=2")
   set(EXTRA_RDKIT_CMAKE_ARGS
-      -DCMAKE_CXX_FLAGS=-fdeclspec\ -pthread\ -fexceptions\ -sDISABLE_EXCEPTION_CATCHING=0
+      -DCMAKE_CXX_FLAGS=-fdeclspec\ -pthread\ -fwasm-exceptions
       -DCMAKE_FIND_ROOT_PATH=${CMAKE_CURRENT_BINARY_DIR})
 else()
   set(EXTRA_QT_CMAKE_ARGS -DINPUT_opengl=no)
