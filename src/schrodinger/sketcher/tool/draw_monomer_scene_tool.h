@@ -153,7 +153,7 @@ class SKETCHER_API DrawMonomerSceneTool : public StandardSceneToolBase
      * over an unbound attachment point once it's drawn.
      * @param scene_pos The position in Scene coordinates
      */
-    QGraphicsItem* getTopMonomericItemAt(const QPointF& scene_pos);
+    QGraphicsItem* getTopMonomericItemAt(const QPointF& scene_pos) const;
 
     /**
      * Clear any existing attachment point labels and draw new ones for the
@@ -178,16 +178,17 @@ class SKETCHER_API DrawMonomerSceneTool : public StandardSceneToolBase
      * have already been drawn for this monomer.
      */
     UnboundMonomericAttachmentPointItem*
-    getUnboundAttachmentPointAt(const QPointF& scene_pos);
+    getUnboundAttachmentPointAt(const QPointF& scene_pos) const;
 
     UnboundMonomericAttachmentPointItem*
-    getDefaultUnboundAttachmentPointForHoveredMonomer();
+    getDefaultUnboundAttachmentPointForHoveredMonomer() const;
 
     void drawBoundMonomerHintFor(
         UnboundMonomericAttachmentPointItem* const ap_item);
 
-    // bool shouldShowPredictiveHighlighting();
-    // bool clickShouldMutate();
+    std::tuple<const RDKit::Atom*, MonomerType> getHoveredMonomerAndType() const;
+    bool shouldShowPredictiveHighlighting() const;
+    bool clickShouldMutate(const RDKit::Atom* monomer, const MonomerType monomer_type) const;
 
 };
 

@@ -80,7 +80,7 @@ std::vector<QGraphicsItem*> DrawMonomerSceneTool::getGraphicsItems()
 }
 
 QGraphicsItem*
-DrawMonomerSceneTool::getTopMonomericItemAt(const QPointF& scene_pos)
+DrawMonomerSceneTool::getTopMonomericItemAt(const QPointF& scene_pos) const 
 {
     // check to see if we're over a monomer, monomeric connector, or unbound
     // attachment point item
@@ -270,7 +270,7 @@ UnboundMonomericAttachmentPointItem* get_default_attachment_point(
 }
 
 UnboundMonomericAttachmentPointItem*
-DrawMonomerSceneTool::getUnboundAttachmentPointAt(const QPointF& scene_pos)
+DrawMonomerSceneTool::getUnboundAttachmentPointAt(const QPointF& scene_pos) const
 {
     if (m_unbound_ap_items.empty()) {
         return nullptr;
@@ -283,47 +283,51 @@ DrawMonomerSceneTool::getUnboundAttachmentPointAt(const QPointF& scene_pos)
     return getDefaultUnboundAttachmentPointForHoveredMonomer();
 }
 
-
-UnboundMonomericAttachmentPointItem*
-DrawMonomerSceneTool::getDefaultUnboundAttachmentPointForHoveredMonomer()
+std::tuple<const RDKit::Atom*, MonomerType> DrawMonomerSceneTool::getHoveredMonomerAndType() const
 {
-    // TODO: fix duplication of this
+    if (!item_matches_type_flag(m_hovered_item, InteractiveItemFlag::MONOMER)) {
+        throw std::runtime_error("No hovered monomer");
+    }
     const auto* monomer_item =
         static_cast<const AbstractMonomerItem*>(m_hovered_item);
     auto* monomer = monomer_item->getAtom();
     auto monomer_type = get_monomer_type(monomer);
-    if (monomer_type == m_monomer_type &&
-        get_monomer_res_name(monomer) != m_res_name) {
-        // a click on this monomer should mutate the residue type of the
-        // monomer, not add a connection, so we don't select an attachment point
-        // when the monomer itself is hovered
+    return {monomer, monomer_type};
+}
+
+
+UnboundMonomericAttachmentPointItem*
+DrawMonomerSceneTool::getDefaultUnboundAttachmentPointForHoveredMonomer() const
+{
+    auto [monomer, monomer_type] = getHoveredMonomerAndType();
+    if (clickShouldMutate(monomer, monomer_type)) {
         return nullptr;
     }
     return get_default_attachment_point(monomer_type, m_monomer_type,
                                         m_unbound_ap_items);
 }
 
-// bool DrawMonomerSceneTool::clickShouldMutate()
-// {
-//     const auto* monomer_item =
-//         static_cast<const AbstractMonomerItem*>(m_hovered_item);
-//     auto* monomer = monomer_item->getAtom();
-//     auto monomer_type = get_monomer_type(monomer);
-//     return (monomer_type == m_monomer_type &&
-//         get_monomer_res_name(monomer) != m_res_name);
-// }
+bool DrawMonomerSceneTool::clickShouldMutate(const RDKit::Atom* monomer, const MonomerType monomer_type) const
+{
+    return (monomer_type == m_monomer_type &&
+        get_monomer_res_name(monomer) != m_res_name);
+}
 
 
-// bool DrawMonomerSceneTool::shouldShowPredictiveHighlighting()
-// {
+bool DrawMonomerSceneTool::shouldShowPredictiveHighlighting() const
+{
     
-//     return (item_matches_type_flag(m_hovered_item, InteractiveItemFlag::MONOMER) &&
-//         getDefaultUnboundAttachmentPointForHoveredMonomer() != nullptr);
-//     //     return false;
-//     // }
-//     // const auto* monomer_item = static_cast<const AbstractMonomerItem*>(m_hovered_item);
-//     // const auto* monomer = monomer_item->getAtom();
-// }
+    if (m_hovered_item == nullptr || !item_matches_type_flag(m_hovered_item, InteractiveItemFlag::MONOMER)) {
+        return false;
+    }
+    auto [monomer, monomer_type] = getHoveredMonomerAndType();
+    if (clickShouldMutate(monomer, monomer_type)) {
+        return true;
+    }
+    return get_default_attachment_point(monomer_type, m_monomer_type,
+                                        m_unbound_ap_items) != nullptr;
+    
+}
 
 // TODO: turn off predictive highlighting if clicking on the monomer itself
 //       isn't going to do anything.  Also turn it off for connectors?
@@ -339,8 +343,7 @@ void DrawMonomerSceneTool::onMouseMove(QGraphicsSceneMouseEvent* const event)
     if (item != m_hovered_item) {
         m_hovered_item = item;
         drawAttachmentPointLabelsFor(item);
-        if (m_hovered_item != nullptr && item_matches_type_flag(m_hovered_item, InteractiveItemFlag::MONOMER) &&
-            getDefaultUnboundAttachmentPointForHoveredMonomer() != nullptr) {
+        if (shouldShowPredictiveHighlighting()) {
             m_predictive_highlighting_item.highlightItem(item);
         } else {
             m_predictive_highlighting_item.clearHighlightingPath();
