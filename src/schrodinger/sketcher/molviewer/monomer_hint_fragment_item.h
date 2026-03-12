@@ -19,8 +19,6 @@ namespace schrodinger::sketcher
 
 class Fonts;
 
-// TODO: bond is visible behind monomer because of transparent background
-// TODO: bond is hidden by predictive highlighting
 // TODO: add attachment point labels for bond
 class MonomerHintFragmentItem : public QGraphicsItemGroup
 {

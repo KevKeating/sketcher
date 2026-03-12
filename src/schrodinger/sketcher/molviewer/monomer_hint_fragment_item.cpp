@@ -18,6 +18,7 @@ MonomerHintFragmentItem::MonomerHintFragmentItem(
     m_atom_index_to_hide(atom_index_to_hide),
     m_monomer_background_color(monomer_background_color)
 {
+    setZValue(static_cast<qreal>(ZOrder::MONOMER_FRAGMENT_HINT));
     createGraphicsItems();
 }
 
