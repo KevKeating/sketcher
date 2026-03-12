@@ -329,8 +329,6 @@ bool DrawMonomerSceneTool::shouldShowPredictiveHighlighting() const
     
 }
 
-// TODO: turn off predictive highlighting if clicking on the monomer itself
-//       isn't going to do anything.  Also turn it off for connectors?
 void DrawMonomerSceneTool::onMouseMove(QGraphicsSceneMouseEvent* const event)
 {
     StandardSceneToolBase::onMouseMove(event);
