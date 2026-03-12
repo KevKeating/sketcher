@@ -125,10 +125,10 @@ DrawMonomerSceneTool::getTopMonomericItemAt(const QPointF& scene_pos) const
         auto [bound_aps, unbound_aps] =
             get_attachment_points_for_monomer(monomer);
         for (auto cur_unbound_ap : unbound_aps) {
-            auto unbound_ap_bounding_rect =
-                get_bounding_rect_for_unbound_monomer_attachment_point_item(
+            auto unbound_ap_hover_area =
+                get_hover_area_for_unbound_monomer_attachment_point_item(
                     cur_unbound_ap, monomer_item, m_fonts);
-            if (unbound_ap_bounding_rect.contains(local_pos)) {
+            if (unbound_ap_hover_area.contains(local_pos)) {
                 return item;
             }
         }
