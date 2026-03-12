@@ -127,9 +127,9 @@ function(setup_target TARGET)
     # We optimize for space in wasm builds because otherwise binaryen (run
     # because of ASYNCIFY) runs out of memory
     target_link_options(${TARGET} PRIVATE -sGL_ENABLE_GET_PROC_ADDRESS
-                        -fexceptions -sDISABLE_EXCEPTION_CATCHING=0 -Os)
-    target_compile_options(${TARGET} PRIVATE -fexceptions
-                                             -sDISABLE_EXCEPTION_CATCHING=0 -Os)
+                        -fwasm-exceptions -Os)
+    target_compile_options(${TARGET} PRIVATE -fwasm-exceptions
+                                             -Os)
   endif()
 endfunction()
 
