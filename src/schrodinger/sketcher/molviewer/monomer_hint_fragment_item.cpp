@@ -56,9 +56,11 @@ void MonomerHintFragmentItem::createGraphicsItems(const Scene* const scene)
             connector_item->setConnectorStyle(CURSOR_HINT_COLOR, 3);
         }
     }
-    std::cout << "m_bond_index_to_label = " << m_bond_index_to_label << "\n";
-    if (m_bond_index_to_label > 0) {
+    
+    // label the attachment points
+    if (m_bond_index_to_label >= 0) {
         auto* bond = m_frag.getBondWithIdx(m_bond_index_to_label);
+        // TODO: color the labels blue
         auto items = create_attachment_point_labels_for_connector(bond, false, *m_fonts, scene);
         for (auto* item : items) {
             addToGroup(item);

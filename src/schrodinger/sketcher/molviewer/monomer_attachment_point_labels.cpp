@@ -243,9 +243,9 @@ create_attachment_point_labels_for_connector(const RDKit::Bond* const connector,
                                   is_secondary_connection, begin_ap_name, fonts, scene);
         auto* item2 = create_label_for_bound_attachment_point(end_monomer, begin_monomer,
                                   is_secondary_connection, end_ap_name, fonts, scene);
-        for (auto* item : std::vector<QGraphicsItem*>{item1, item2}) {
+        for (auto* item : {item1, item2}) {
             if (item != nullptr) {
-                ap_label_items.push_back(item1);
+                ap_label_items.push_back(item);
             }
         }
         
