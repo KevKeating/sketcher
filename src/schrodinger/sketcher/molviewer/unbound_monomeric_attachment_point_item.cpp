@@ -96,10 +96,18 @@ UnboundMonomericAttachmentPointItem::UnboundMonomericAttachmentPointItem(
 
     std::tie(m_line_end, m_label_text, m_label_rect, m_bounding_rect) =
         calculate_geometry(m_attachment_point, parent_monomer, *m_fonts);
+    
+    auto dont_hover_rect = parent_monomer->boundingRect();
+    if (attachment_point.direction == Direction::N || attachment_point.direction == Direction::S) {
+        dont_hover_rect.adjust(-500, 0, 500, 0);
+    } else if (attachment_point.direction == Direction::E || attachment_point.direction == Direction::W) {
+        dont_hover_rect.adjust(0, -500, 0, 500);
+    }
+    
     m_hover_area.addRect(m_bounding_rect);
-    QPainterPath parent_bounds_path;
-    parent_bounds_path.addRect(parent_monomer->boundingRect());
-    m_hover_area -= mapFromParent(parent_bounds_path);
+    QPainterPath dont_hover_path;
+    dont_hover_path.addRect(dont_hover_rect);
+    m_hover_area -= mapFromParent(dont_hover_path);
     updateColors();
 }
 
