@@ -7,6 +7,7 @@
 #include <rdkit/GraphMol/ROMol.h>
 
 #include "schrodinger/rdkit_extensions/definitions.h"
+#include "schrodinger/sketcher/molviewer/constants.h"
 
 namespace RDKit
 {
@@ -30,7 +31,7 @@ class MonomerHintFragmentItem : public QGraphicsItemGroup
      * must not be destroyed while this graphics item is in use.
      * @param parent The parent graphics item, if any.
      */
-    MonomerHintFragmentItem(const RDKit::ROMol& fragment, const Fonts& fonts, const int atom_index_to_hide,
+    MonomerHintFragmentItem(const RDKit::ROMol& fragment, const Fonts& fonts, const int atom_index_to_hide, const QColor monomer_background_color,
                              QGraphicsItem* parent = nullptr);
 
     // TODO: get rid of this method?
@@ -40,6 +41,7 @@ class MonomerHintFragmentItem : public QGraphicsItemGroup
     RDKit::ROMol m_frag;
     const Fonts* m_fonts = nullptr;
     int m_atom_index_to_hide = -1;
+    QColor m_monomer_background_color;
     /// A list of all child AbstractMonomerItems
     QList<QGraphicsItem*> m_atom_items;
     /// A list of all child MonomerConnectortems

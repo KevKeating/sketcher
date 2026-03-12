@@ -80,6 +80,7 @@ class SKETCHER_API DrawMonomerSceneTool : public StandardSceneToolBase
     std::vector<QGraphicsItem*> getGraphicsItems() override;
     void onMouseMove(QGraphicsSceneMouseEvent* const event) override;
     void onLeftButtonClick(QGraphicsSceneMouseEvent* const event) override;
+    void updateColorsAfterBackgroundColorChange(bool is_dark_mode) override;
 
   protected:
     std::string m_res_name;
@@ -92,6 +93,7 @@ class SKETCHER_API DrawMonomerSceneTool : public StandardSceneToolBase
     std::vector<UnboundMonomericAttachmentPointItem*> m_unbound_ap_items;
     MonomerHintFragmentItem* m_hint_fragment_item = nullptr;
     std::shared_ptr<RDKit::RWMol> m_frag = nullptr;
+    QColor m_monomer_background_color;
 
     QPixmap createDefaultCursorPixmap() const override;
 

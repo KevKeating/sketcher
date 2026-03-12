@@ -10,12 +10,13 @@ namespace schrodinger::sketcher
 {
 
 MonomerHintFragmentItem::MonomerHintFragmentItem(
-    const RDKit::ROMol& fragment, const Fonts& fonts, const int atom_index_to_hide,
+    const RDKit::ROMol& fragment, const Fonts& fonts, const int atom_index_to_hide, const QColor monomer_background_color,
     QGraphicsItem* parent) :
     QGraphicsItemGroup(parent),
     m_frag(fragment),
     m_fonts(&fonts),
-    m_atom_index_to_hide(atom_index_to_hide)
+    m_atom_index_to_hide(atom_index_to_hide),
+    m_monomer_background_color(monomer_background_color)
 {
     createGraphicsItems();
 }
@@ -31,7 +32,10 @@ void MonomerHintFragmentItem::createGraphicsItems()
     }
     for (auto& kv : atom_to_atom_item) {
         if (auto* monomer_item = dynamic_cast<AbstractMonomerItem*>(kv.second)) {
-            monomer_item->setMonomerColors(Qt::GlobalColor::transparent,
+            // if we used a transparent monomer background color, then we'd be able to
+            // see the bond behind the letter.  To avoid that, we use the same color as
+            // the Scene's background.
+            monomer_item->setMonomerColors(m_monomer_background_color,
                                    CURSOR_HINT_COLOR, CURSOR_HINT_COLOR);
         }
         // hide the monomer where this fragment connects to the existing

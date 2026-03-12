@@ -42,7 +42,8 @@ DrawMonomerSceneTool::DrawMonomerSceneTool(
     StandardSceneToolBase(scene, mol_model),
     m_res_name(res_name),
     m_chain_type(chain_type),
-    m_fonts(fonts)
+    m_fonts(fonts),
+    m_monomer_background_color(LIGHT_BACKGROUND_COLOR)
 {
     // we handle predictive highlighting manually in onMouseMove, so we disable
     // StandardSceneToolsBase's predictive highlighting
@@ -77,6 +78,11 @@ std::vector<QGraphicsItem*> DrawMonomerSceneTool::getGraphicsItems()
     auto items = StandardSceneToolBase::getGraphicsItems();
     items.push_back(&m_attachment_point_labels_group);
     return items;
+}
+
+void DrawMonomerSceneTool::updateColorsAfterBackgroundColorChange(bool is_dark_mode)
+{
+    m_monomer_background_color = is_dark_mode ? DARK_BACKGROUND_COLOR : LIGHT_BACKGROUND_COLOR;
 }
 
 QGraphicsItem*
@@ -446,7 +452,7 @@ void DrawMonomerSceneTool::drawBoundMonomerHintFor(
     // Create the hint fragment, hiding the first atom (the copy of the
     // existing monomer that's already visible in the scene)
     m_hint_fragment_item =
-        new MonomerHintFragmentItem(*m_frag, m_fonts, first_idx);
+        new MonomerHintFragmentItem(*m_frag, m_fonts, first_idx, m_monomer_background_color);
     m_scene->addItem(m_hint_fragment_item);
 }
 
