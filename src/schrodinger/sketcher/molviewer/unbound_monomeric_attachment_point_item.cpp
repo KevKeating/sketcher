@@ -82,6 +82,24 @@ QRectF get_bounding_rect_for_unbound_monomer_attachment_point_item(
     return bounding_rect;
 }
 
+QPainterPath calculate_hover_area(const QRectF& ap_bounding_rect, QRectF monomer_bounding_rect, const Direction ap_direction)
+{
+    // TODO: have a minimum half-width for the ap_bounding_rect - useful for phosphates since there's no label
+    
+    if (ap_direction == Direction::N || ap_direction == Direction::S) {
+        monomer_bounding_rect.adjust(-500, 0, 500, 0);
+    } else if (ap_direction == Direction::E || ap_direction == Direction::W) {
+        monomer_bounding_rect.adjust(0, -500, 0, 500);
+    }
+    
+    QPainterPath hover_area;
+    hover_area.addRect(ap_bounding_rect);
+    QPainterPath monomer_bounding_path;
+    monomer_bounding_path.addRect(monomer_bounding_rect);
+    hover_area -= monomer_bounding_path;
+    return hover_area;
+}
+
 UnboundMonomericAttachmentPointItem::UnboundMonomericAttachmentPointItem(
     const UnboundAttachmentPoint& attachment_point,
     AbstractMonomerItem* parent_monomer, const Fonts& fonts) :
@@ -96,18 +114,9 @@ UnboundMonomericAttachmentPointItem::UnboundMonomericAttachmentPointItem(
 
     std::tie(m_line_end, m_label_text, m_label_rect, m_bounding_rect) =
         calculate_geometry(m_attachment_point, parent_monomer, *m_fonts);
-    
-    auto dont_hover_rect = parent_monomer->boundingRect();
-    if (attachment_point.direction == Direction::N || attachment_point.direction == Direction::S) {
-        dont_hover_rect.adjust(-500, 0, 500, 0);
-    } else if (attachment_point.direction == Direction::E || attachment_point.direction == Direction::W) {
-        dont_hover_rect.adjust(0, -500, 0, 500);
-    }
-    
-    m_hover_area.addRect(m_bounding_rect);
-    QPainterPath dont_hover_path;
-    dont_hover_path.addRect(dont_hover_rect);
-    m_hover_area -= mapFromParent(dont_hover_path);
+    auto monomer_bounding_rect = parent_monomer->boundingRect();
+    monomer_bounding_rect = mapFromParent(monomer_bounding_rect).boundingRect();
+    m_hover_area = calculate_hover_area(m_bounding_rect, monomer_bounding_rect, attachment_point.direction);
     updateColors();
 }
 
