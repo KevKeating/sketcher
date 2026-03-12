@@ -4,25 +4,29 @@
 
 #include "schrodinger/sketcher/molviewer/abstract_monomer_item.h"
 #include "schrodinger/sketcher/molviewer/monomer_connector_item.h"
+#include "schrodinger/sketcher/molviewer/abstract_bond_or_connector_item.h"
+#include "schrodinger/sketcher/molviewer/scene.h"
 #include "schrodinger/sketcher/molviewer/scene_utils.h"
+#include "schrodinger/sketcher/molviewer/monomer_attachment_point_labels.h"
 
 namespace schrodinger::sketcher
 {
 
 MonomerHintFragmentItem::MonomerHintFragmentItem(
-    const RDKit::ROMol& fragment, const Fonts& fonts, const int atom_index_to_hide, const QColor monomer_background_color,
+    const RDKit::ROMol& fragment, const Fonts& fonts, const int atom_index_to_hide, const int bond_index_to_label, const QColor monomer_background_color, const Scene* const scene,
     QGraphicsItem* parent) :
     QGraphicsItemGroup(parent),
     m_frag(fragment),
     m_fonts(&fonts),
     m_atom_index_to_hide(atom_index_to_hide),
+    m_bond_index_to_label(bond_index_to_label),
     m_monomer_background_color(monomer_background_color)
 {
     setZValue(static_cast<qreal>(ZOrder::MONOMER_FRAGMENT_HINT));
-    createGraphicsItems();
+    createGraphicsItems(scene);
 }
 
-void MonomerHintFragmentItem::createGraphicsItems()
+void MonomerHintFragmentItem::createGraphicsItems(const Scene* const scene)
 {
     auto [all_items, atom_to_atom_item, bond_to_bond_item,
           bond_to_secondary_connection_item, s_group_to_s_group_item] =
@@ -51,7 +55,14 @@ void MonomerHintFragmentItem::createGraphicsItems()
             // TODO: make a constant for the width
             connector_item->setConnectorStyle(CURSOR_HINT_COLOR, 3);
         }
-        m_bond_items.append(kv.second);
+    }
+    std::cout << "m_bond_index_to_label = " << m_bond_index_to_label << "\n";
+    if (m_bond_index_to_label > 0) {
+        auto* bond = m_frag.getBondWithIdx(m_bond_index_to_label);
+        auto items = create_attachment_point_labels_for_connector(bond, false, *m_fonts, scene);
+        for (auto* item : items) {
+            addToGroup(item);
+        }
     }
 }
 

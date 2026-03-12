@@ -18,6 +18,7 @@ namespace schrodinger::sketcher
 {
 
 class Fonts;
+class Scene;
 
 // TODO: add attachment point labels for bond
 class MonomerHintFragmentItem : public QGraphicsItemGroup
@@ -29,7 +30,7 @@ class MonomerHintFragmentItem : public QGraphicsItemGroup
      * must not be destroyed while this graphics item is in use.
      * @param parent The parent graphics item, if any.
      */
-    MonomerHintFragmentItem(const RDKit::ROMol& fragment, const Fonts& fonts, const int atom_index_to_hide, const QColor monomer_background_color,
+    MonomerHintFragmentItem(const RDKit::ROMol& fragment, const Fonts& fonts, const int atom_index_to_hide, const int bond_index_to_label, const QColor monomer_background_color, const Scene* const scene,
                              QGraphicsItem* parent = nullptr);
 
     // TODO: get rid of this method?
@@ -39,6 +40,7 @@ class MonomerHintFragmentItem : public QGraphicsItemGroup
     RDKit::ROMol m_frag;
     const Fonts* m_fonts = nullptr;
     int m_atom_index_to_hide = -1;
+    int m_bond_index_to_label = -1;
     QColor m_monomer_background_color;
     /// A list of all child AbstractMonomerItems
     QList<QGraphicsItem*> m_atom_items;
@@ -48,7 +50,7 @@ class MonomerHintFragmentItem : public QGraphicsItemGroup
     /**
      * Create all graphics items required to represent the fragment
      */
-    void createGraphicsItems();
+    void createGraphicsItems(const Scene* const scene);
 };
 
 }

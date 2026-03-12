@@ -445,6 +445,7 @@ void DrawMonomerSceneTool::drawBoundMonomerHintFor(
     // TODO: figure out the right second attachment point
     auto linkage = ap_item->getAttachmentPoint().model_name + "-R2";
     rdkit_extensions::addConnection(*m_frag, first_idx, second_idx, linkage);
+    auto bond_index_to_label = m_frag->getBondBetweenAtoms(first_idx, second_idx)->getIdx();
 
     // flag the atoms as monomeric
     for (auto* atom : m_frag->atoms()) {
@@ -461,7 +462,7 @@ void DrawMonomerSceneTool::drawBoundMonomerHintFor(
     // Create the hint fragment, hiding the first atom (the copy of the
     // existing monomer that's already visible in the scene)
     m_hint_fragment_item = new MonomerHintFragmentItem(
-        *m_frag, m_fonts, first_idx, m_monomer_background_color);
+        *m_frag, m_fonts, first_idx, bond_index_to_label, m_monomer_background_color, m_scene);
     m_scene->addItem(m_hint_fragment_item);
 }
 
@@ -526,9 +527,7 @@ void DrawMonomerSceneTool::labelAttachmentPointsOnConnector(
 {
     auto ap_label_items = create_attachment_point_labels_for_connector(connector, is_secondary_connection, m_fonts, m_scene);
     for (auto* item : ap_label_items) {
-        if (item != nullptr) {
-            m_attachment_point_labels_group.addToGroup(item);
-        }
+        m_attachment_point_labels_group.addToGroup(item);
     }
 }
 
