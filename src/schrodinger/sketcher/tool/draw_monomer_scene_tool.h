@@ -135,9 +135,9 @@ class SKETCHER_API DrawMonomerSceneTool : public StandardSceneToolBase
      * attachment points have the same label ("pair") and the bond is typically
      * too small to fit two labels.
      */
-    void labelCenterOfConnector(const RDKit::Atom* const begin_monomer,
-                                const RDKit::Atom* const end_monomer,
-                                const QString& label);
+    // void labelCenterOfConnector(const RDKit::Atom* const begin_monomer,
+    //                             const RDKit::Atom* const end_monomer,
+    //                             const QString& label);
 
     void addAttachmentPointLabel(const QString& label,
                                  const QRectF& label_rect);
