@@ -19,6 +19,7 @@ namespace sketcher
 
 class AbstractMonomerItem;
 
+// TODO: update docstring
 /**
  * Return the bounding rect for the UnboundMonomericAttachmentPointItem that
  * corresponds to the given parameters. Note that this graphics item doesn't

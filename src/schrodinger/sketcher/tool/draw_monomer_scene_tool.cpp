@@ -110,9 +110,10 @@ DrawMonomerSceneTool::getTopMonomericItemAt(const QPointF& scene_pos) const
     // we are, check to see whether we'd be over one of its attachment points
     // once they're drawn
     QPainterPath near_scene_pos;
+    // TODO: update this comment
     // the attachment point label can stick out past the attachment point line,
     // so make the circle a bit bigger than just the line length
-    auto radius = 10 * std::max(UNBOUND_AP_LINE_LENGTH, UNBOUND_AP_MIN_HOVER_HALF_WIDTH);
+    auto radius = 2 * std::max(UNBOUND_AP_LINE_LENGTH, UNBOUND_AP_MIN_HOVER_HALF_WIDTH);
     near_scene_pos.addEllipse(scene_pos, radius, radius);
     for (auto* item : m_scene->items(near_scene_pos)) {
         if (!item_matches_type_flag(item, InteractiveItemFlag::MONOMER)) {

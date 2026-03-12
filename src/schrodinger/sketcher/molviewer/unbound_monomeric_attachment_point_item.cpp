@@ -13,31 +13,28 @@ namespace schrodinger
 namespace sketcher
 {
 
+// TODO: add docstring
 static QPainterPath calculate_hover_area(QRectF ap_bounding_rect, QRectF monomer_bounding_rect, const Direction ap_direction)
 {
-    // TODO: have a minimum half-width for the ap_bounding_rect - useful for phosphates since there's no label
-    
+    // TODO: add comments to this function
+    static constexpr int BIG_NUMBER = 500;
     if (ap_direction == Direction::N || ap_direction == Direction::S) {
-        std::cout << "calculate_hover_area (NS): " << ap_bounding_rect.left() << " " << ap_bounding_rect.right() << "\n";
         if (ap_bounding_rect.left() > -UNBOUND_AP_MIN_HOVER_HALF_WIDTH) {
             ap_bounding_rect.setLeft(-UNBOUND_AP_MIN_HOVER_HALF_WIDTH);
         }
         if (ap_bounding_rect.right() < UNBOUND_AP_MIN_HOVER_HALF_WIDTH) {
             ap_bounding_rect.setRight(UNBOUND_AP_MIN_HOVER_HALF_WIDTH);
         }
-        monomer_bounding_rect.adjust(-500, 0, 500, 0);
+        monomer_bounding_rect.adjust(-BIG_NUMBER, 0, BIG_NUMBER, 0);
     } else if (ap_direction == Direction::E || ap_direction == Direction::W) {
-        std::cout << "calculate_hover_area (EW): " << ap_bounding_rect.top() << " " << ap_bounding_rect.bottom() << "\n";
         if (ap_bounding_rect.top() > -UNBOUND_AP_MIN_HOVER_HALF_WIDTH) {
             ap_bounding_rect.setTop(-UNBOUND_AP_MIN_HOVER_HALF_WIDTH);
         }
         if (ap_bounding_rect.bottom() < UNBOUND_AP_MIN_HOVER_HALF_WIDTH) {
             ap_bounding_rect.setBottom(UNBOUND_AP_MIN_HOVER_HALF_WIDTH);
         }
-        monomer_bounding_rect.adjust(0, -500, 0, 500);
+        monomer_bounding_rect.adjust(0, -BIG_NUMBER, 0, BIG_NUMBER);
     }
-    std::cout << "\t" << ap_bounding_rect.top() << " " << ap_bounding_rect.bottom() << " " << ap_bounding_rect.left() << " " << ap_bounding_rect.right() << "\n";
-    std::cout << "\t" << monomer_bounding_rect.top() << " " << monomer_bounding_rect.bottom() << " " << monomer_bounding_rect.left() << " " << monomer_bounding_rect.right() << "\n";
     
     QPainterPath hover_area;
     hover_area.addRect(ap_bounding_rect);
@@ -59,6 +56,7 @@ static QPointF direction_to_qt_unit_vector(Direction dir)
     return QPointF(mol_vec.x, -mol_vec.y);
 }
 
+// TODO: add docstring
 static std::tuple<QPointF, QString, QRectF, QRectF, QPainterPath>
 calculate_geometry(const UnboundAttachmentPoint& attachment_point,
                    const AbstractMonomerItem* const parent_monomer,
@@ -134,13 +132,6 @@ UnboundMonomericAttachmentPointItem::UnboundMonomericAttachmentPointItem(
 
     std::tie(m_line_end, m_label_text, m_label_rect, m_bounding_rect, m_hover_area) =
         calculate_geometry(m_attachment_point, parent_monomer, *m_fonts);
-    // auto monomer_bounding_rect = parent_monomer->boundingRect();
-    // monomer_bounding_rect = mapFromParent(monomer_bounding_rect).boundingRect();
-    // m_hover_area = calculate_hover_area(m_bounding_rect, monomer_bounding_rect, attachment_point.direction);
-    // // make sure that the bounding rect contains the hover area so that this
-    // // graphics item gets returned by Scene::items() for any coordinates that
-    // // are wihtin the hover area
-    // m_bounding_rect |= m_hover_area.boundingRect();
     updateColors();
 }
 
@@ -170,9 +161,6 @@ void UnboundMonomericAttachmentPointItem::paint(
     // Draw the line from center to endpoint
     painter->setPen(m_line_pen);
     painter->drawLine(QPointF(0, 0), m_line_end);
-    
-    painter->setPen(Qt::red);
-    painter->drawPath(m_hover_area);
 
     // Draw the filled circle at the endpoint
     painter->setPen(Qt::NoPen);
