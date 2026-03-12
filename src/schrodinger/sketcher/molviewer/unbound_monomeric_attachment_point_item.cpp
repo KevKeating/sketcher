@@ -133,6 +133,10 @@ UnboundMonomericAttachmentPointItem::UnboundMonomericAttachmentPointItem(
     auto monomer_bounding_rect = parent_monomer->boundingRect();
     monomer_bounding_rect = mapFromParent(monomer_bounding_rect).boundingRect();
     m_hover_area = calculate_hover_area(m_bounding_rect, monomer_bounding_rect, attachment_point.direction);
+    // make sure that the bounding rect contains the hover area so that this
+    // graphics item gets returned by Scene::items() for any coordinates that
+    // are wihtin the hover area
+    m_bounding_rect |= m_hover_area.boundingRect();
     updateColors();
 }
 
@@ -162,6 +166,9 @@ void UnboundMonomericAttachmentPointItem::paint(
     // Draw the line from center to endpoint
     painter->setPen(m_line_pen);
     painter->drawLine(QPointF(0, 0), m_line_end);
+    
+    painter->setPen(Qt::red);
+    painter->drawPath(m_hover_area);
 
     // Draw the filled circle at the endpoint
     painter->setPen(Qt::NoPen);
