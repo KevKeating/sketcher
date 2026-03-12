@@ -61,8 +61,7 @@ if(EMSCRIPTEN)
   set(EXTRA_QT_CMAKE_ARGS
       -DQT_HOST_PATH=${CMAKE_CURRENT_BINARY_DIR}/host/qt-${QT_VERSION}
       -DQT_QMAKE_DEVICE_OPTIONS="QT_EMSCRIPTEN_ASYNCIFY=2"
-      -DCMAKE_CXX_FLAGS=-fwasm-exceptions
-      -DCMAKE_C_FLAGS=-fwasm-exceptions)
+      -DCMAKE_CXX_FLAGS=-fwasm-exceptions)
   set(EXTRA_RDKIT_CMAKE_ARGS
       -DCMAKE_CXX_FLAGS=-fdeclspec\ -pthread\ -fwasm-exceptions
       -DCMAKE_FIND_ROOT_PATH=${CMAKE_CURRENT_BINARY_DIR})
