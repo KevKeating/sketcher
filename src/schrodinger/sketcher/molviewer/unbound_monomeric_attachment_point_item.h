@@ -32,8 +32,6 @@ SKETCHER_API QPainterPath get_hover_area_for_unbound_monomer_attachment_point_it
     const UnboundAttachmentPoint& attachment_point,
     const AbstractMonomerItem* const parent_monomer, const Fonts& fonts);
 
-// TODO: gray color is unreadable in dark mode
-
 /**
  * A graphics item for representing an unbound (available) attachment point
  * on a monomer. Draws a short line extending from the monomer with a text

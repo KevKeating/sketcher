@@ -32,9 +32,6 @@ class MonomerHintFragmentItem : public QGraphicsItemGroup
     MonomerHintFragmentItem(const RDKit::ROMol& fragment, const Fonts& fonts, const int atom_index_to_hide, const int bond_index_to_label, const QColor monomer_background_color, const Scene* const scene,
                              QGraphicsItem* parent = nullptr);
 
-    // TODO: get rid of this method?
-    void updateConformer(const RDKit::Conformer& conformer);
-
   protected:
     RDKit::ROMol m_frag;
     const Fonts* m_fonts = nullptr;

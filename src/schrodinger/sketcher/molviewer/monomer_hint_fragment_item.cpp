@@ -52,8 +52,7 @@ void MonomerHintFragmentItem::createGraphicsItems(const Scene* const scene)
     }
     for (auto& kv : boost::range::join(bond_to_bond_item, bond_to_secondary_connection_item)) {
         if (auto* connector_item = qgraphicsitem_cast<MonomerConnectorItem*>(kv.second)) {
-            // TODO: make a constant for the width
-            connector_item->setConnectorStyle(CURSOR_HINT_COLOR, 3);
+            connector_item->setConnectorStyle(CURSOR_HINT_COLOR, MONOMER_FRAGMENT_HINT_CONNECTOR_WIDTH);
         }
     }
     
@@ -65,13 +64,6 @@ void MonomerHintFragmentItem::createGraphicsItems(const Scene* const scene)
             addToGroup(item);
         }
     }
-}
-
-void MonomerHintFragmentItem::updateConformer(const RDKit::Conformer& conformer)
-{
-    m_frag.getConformer() = conformer;
-    update_conf_for_mol_graphics_items(m_atom_items, m_bond_items,
-                                       {}, m_frag);
 }
 
 }
