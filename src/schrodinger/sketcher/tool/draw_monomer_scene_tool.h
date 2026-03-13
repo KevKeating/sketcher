@@ -159,15 +159,39 @@ class SKETCHER_API DrawMonomerSceneTool : public StandardSceneToolBase
     UnboundMonomericAttachmentPointItem*
     getUnboundAttachmentPointAt(const QPointF& scene_pos) const;
 
+    /**
+     * @return the unbound attachment point that should be active when the user
+     * is hovering over the monomer itself
+     */
     UnboundMonomericAttachmentPointItem*
     getDefaultUnboundAttachmentPointForHoveredMonomer() const;
 
+    /**
+     * Draw a hint structure showing a monomer bound to the specified attachment
+     * point
+     */
     void
     drawBoundMonomerHintFor(UnboundMonomericAttachmentPointItem* const ap_item);
 
     std::tuple<const RDKit::Atom*, MonomerType>
     getHoveredMonomerAndType() const;
+
+    /**
+     * @return whether this tool should show the predictive highlighting outline
+     * for the currently hovered monomer.  The highlighting is shown if the
+     * hovered monomer can be mutated (i.e. its the same monomer type as this
+     * tool but a different residue name) or if there is a reasonable way to
+     * connect this tool's monomer to the hovered monomer (an unreasonable
+     * connection would be, e.g., connecting a nucleic acid base directly to a
+     * phosphate with no intervening sugar.)
+     */
     bool shouldShowPredictiveHighlighting() const;
+
+    /**
+     * Whether clicking on the specified monomer should mutate that monomer. We
+     * only mutate monomers that are the same monomer type as this tool but have
+     * a different residue name.
+     */
     bool clickShouldMutate(const RDKit::Atom* monomer,
                            const MonomerType monomer_type) const;
 };
