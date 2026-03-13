@@ -53,11 +53,11 @@ SKETCHER_API void position_ap_label_rect(QRectF& ap_label_rect,
 
 SKETCHER_API QGraphicsItem* create_label_for_bound_attachment_point(
     const RDKit::Atom* const monomer, const RDKit::Atom* const bound_monomer,
-    const bool is_secondary_connection, const std::string& ap_name, const Fonts& fonts, const Scene* const scene);
+    const bool is_secondary_connection, const std::string& ap_name, const QColor& color, const Fonts& fonts, const Scene* const scene);
 
 SKETCHER_API std::vector<QGraphicsItem*>
 create_attachment_point_labels_for_connector(const RDKit::Bond* const connector,
-                                             const bool is_secondary_connection, const Fonts& fonts, const Scene* const scene);
+                                             const bool is_secondary_connection, const QColor& color, const Fonts& fonts, const Scene* const scene);
 
 
 } // namespace sketcher

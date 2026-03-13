@@ -136,7 +136,7 @@ QGraphicsItem* create_attachment_point_label(const QString& label,
 
 QGraphicsItem* create_label_for_bound_attachment_point(
     const RDKit::Atom* const monomer, const RDKit::Atom* const bound_monomer,
-    const bool is_secondary_connection, const std::string& ap_name, const Fonts& fonts, const Scene* const scene)
+    const bool is_secondary_connection, const std::string& ap_name, const QColor& color, const Fonts& fonts, const Scene* const scene)
 {
     // nothing to do if there's no label (e.g. phosphate attachment points)
     if (ap_name.empty()) {
@@ -161,13 +161,13 @@ QGraphicsItem* create_label_for_bound_attachment_point(
             *monomer_item, to_scene_xy(bound_coords));
         ap_label_rect.translate(0, -arrowhead_offset);
     }
-    return create_attachment_point_label(ap_qname, ap_label_rect, fonts, Qt::GlobalColor::black);
+    return create_attachment_point_label(ap_qname, ap_label_rect, fonts, color);
 }
 
 QGraphicsItem*
 create_label_for_center_of_connector(const RDKit::Atom* const begin_monomer,
                                      const RDKit::Atom* const end_monomer,
-                                     const QString& label,
+                                     const QString& label, const QColor& color,
                                      const Fonts& fonts)
 {
     auto conf = begin_monomer->getOwningMol().getConformer();
@@ -215,14 +215,14 @@ create_label_for_center_of_connector(const RDKit::Atom* const begin_monomer,
         // the left edge on label_pos
         label_rect.moveLeft(label_pos.x());
     }
-    return create_attachment_point_label(label, label_rect, fonts, Qt::GlobalColor::black);
+    return create_attachment_point_label(label, label_rect, fonts, color);
 }
 
 // TODO: take argument for color
 // TODO: make accessible to the MonomerHintFragmentItem
 std::vector<QGraphicsItem*>
 create_attachment_point_labels_for_connector(const RDKit::Bond* const connector,
-                                             const bool is_secondary_connection, const Fonts& fonts, const Scene* const scene)
+                                             const bool is_secondary_connection, const QColor& color, const Fonts& fonts, const Scene* const scene)
 {
     auto begin_monomer = connector->getBeginAtom();
     auto end_monomer = connector->getEndAtom();
@@ -236,13 +236,13 @@ create_attachment_point_labels_for_connector(const RDKit::Bond* const connector,
         // for nucleic acid base pairs, only have a single "pair" label since
         // the bond is typically too short to fit two separate labels
         auto* item = create_label_for_center_of_connector(begin_monomer, end_monomer,
-                               QString::fromStdString(NA_BASE_AP_PAIR), fonts);
+                               QString::fromStdString(NA_BASE_AP_PAIR), color, fonts);
         ap_label_items.push_back(item);
     } else {
         auto* item1 = create_label_for_bound_attachment_point(begin_monomer, end_monomer,
-                                  is_secondary_connection, begin_ap_name, fonts, scene);
+                                  is_secondary_connection, begin_ap_name, color, fonts, scene);
         auto* item2 = create_label_for_bound_attachment_point(end_monomer, begin_monomer,
-                                  is_secondary_connection, end_ap_name, fonts, scene);
+                                  is_secondary_connection, end_ap_name, color, fonts, scene);
         for (auto* item : {item1, item2}) {
             if (item != nullptr) {
                 ap_label_items.push_back(item);

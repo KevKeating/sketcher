@@ -387,12 +387,14 @@ void DrawMonomerSceneTool::drawAttachmentPointLabelsFor(
         auto* monomer_item = static_cast<AbstractMonomerItem*>(item);
         const auto* monomer = monomer_item->getAtom();
         labelAttachmentPointsOnMonomer(monomer, monomer_item);
-    } else {
+    } else if (item_matches_type_flag(item, InteractiveItemFlag::MONOMER_CONNECTOR)) {
         // hovering over a monomeric connector
         auto* connector_item = qgraphicsitem_cast<MonomerConnectorItem*>(item);
         const auto* connector = connector_item->getBond();
         labelAttachmentPointsOnConnector(
             connector, connector_item->isSecondaryConnection());
+    } else {
+        std::cout << "drawAttachmentPointLabelsFor called with incorrect item " << item->type() << "\n";
     }
 }
 
@@ -510,7 +512,7 @@ void DrawMonomerSceneTool::labelAttachmentPointsOnMonomer(
     for (auto& cur_ap : bound_aps) {
         auto* item = create_label_for_bound_attachment_point(monomer, cur_ap.bound_monomer,
                                   cur_ap.is_secondary_connection,
-                                  cur_ap.display_name, m_fonts, m_scene);
+                                  cur_ap.display_name, Qt::GlobalColor::black, m_fonts, m_scene);
         if (item != nullptr) {
             m_attachment_point_labels_group.addToGroup(item);
         }
@@ -525,7 +527,7 @@ void DrawMonomerSceneTool::labelAttachmentPointsOnMonomer(
 void DrawMonomerSceneTool::labelAttachmentPointsOnConnector(
     const RDKit::Bond* const connector, const bool is_secondary_connection)
 {
-    auto ap_label_items = create_attachment_point_labels_for_connector(connector, is_secondary_connection, m_fonts, m_scene);
+    auto ap_label_items = create_attachment_point_labels_for_connector(connector, is_secondary_connection, Qt::GlobalColor::black, m_fonts, m_scene);
     for (auto* item : ap_label_items) {
         m_attachment_point_labels_group.addToGroup(item);
     }

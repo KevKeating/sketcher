@@ -20,7 +20,6 @@ namespace schrodinger::sketcher
 class Fonts;
 class Scene;
 
-// TODO: add attachment point labels for bond
 class MonomerHintFragmentItem : public QGraphicsItemGroup
 {
   public:

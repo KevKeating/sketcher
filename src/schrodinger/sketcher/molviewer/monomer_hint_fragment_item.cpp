@@ -61,7 +61,7 @@ void MonomerHintFragmentItem::createGraphicsItems(const Scene* const scene)
     if (m_bond_index_to_label >= 0) {
         auto* bond = m_frag.getBondWithIdx(m_bond_index_to_label);
         // TODO: color the labels blue
-        auto items = create_attachment_point_labels_for_connector(bond, false, *m_fonts, scene);
+        auto items = create_attachment_point_labels_for_connector(bond, false, STRUCTURE_HINT_COLOR, *m_fonts, scene);
         for (auto* item : items) {
             addToGroup(item);
         }
