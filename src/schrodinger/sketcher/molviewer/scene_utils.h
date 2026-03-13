@@ -54,7 +54,8 @@ class NonMolecularObject;
  * the responsibility of the calling scope.
  */
 SKETCHER_API AbstractMonomerItem*
-get_monomer_graphics_item(const RDKit::Atom* atom, const Fonts& fonts);
+get_monomer_graphics_item(const RDKit::Atom* atom, const Fonts& fonts,
+                          const bool is_dark_mode = false);
 
 /**
  * Create all graphics items needed to represent the given molecule
@@ -82,6 +83,7 @@ std::tuple<std::vector<QGraphicsItem*>,
 create_graphics_items_for_mol(const RDKit::ROMol* mol, const Fonts& fonts,
                               const AtomDisplaySettings& atom_display_settings = AtomDisplaySettings(),
                               const BondDisplaySettings& bond_display_settings = BondDisplaySettings(),
+                              const bool is_dark_mode = false,
                               const bool draw_attachment_points = true);
 
 /**
