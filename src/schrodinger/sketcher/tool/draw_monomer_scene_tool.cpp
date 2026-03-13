@@ -84,7 +84,8 @@ void DrawMonomerSceneTool::updateColorsAfterBackgroundColorChange(
 {
     m_monomer_background_color =
         is_dark_mode ? DARK_BACKGROUND_COLOR : LIGHT_BACKGROUND_COLOR;
-    m_unbound_ap_label_color = is_dark_mode ? UNBOUND_AP_LABEL_COLOR : UNBOUND_AP_LABEL_COLOR_DARK_BG;
+    m_unbound_ap_label_color = is_dark_mode ? UNBOUND_AP_LABEL_COLOR_DARK_BG : UNBOUND_AP_LABEL_COLOR;
+    m_bound_ap_label_color = is_dark_mode ? BOUND_AP_LABEL_COLOR_DARK_BG : BOUND_AP_LABEL_COLOR;
 }
 
 QGraphicsItem*
@@ -508,7 +509,7 @@ void DrawMonomerSceneTool::labelAttachmentPointsOnMonomer(
     for (auto& cur_ap : bound_aps) {
         auto* item = create_label_for_bound_attachment_point(monomer, cur_ap.bound_monomer,
                                   cur_ap.is_secondary_connection,
-                                  cur_ap.display_name, Qt::GlobalColor::black, m_fonts, m_scene);
+                                  cur_ap.display_name, m_bound_ap_label_color, m_fonts, m_scene);
         if (item != nullptr) {
             m_attachment_point_labels_group.addToGroup(item);
         }
@@ -523,7 +524,7 @@ void DrawMonomerSceneTool::labelAttachmentPointsOnMonomer(
 void DrawMonomerSceneTool::labelAttachmentPointsOnConnector(
     const RDKit::Bond* const connector, const bool is_secondary_connection)
 {
-    auto ap_label_items = create_attachment_point_labels_for_connector(connector, is_secondary_connection, Qt::GlobalColor::black, m_fonts, m_scene);
+    auto ap_label_items = create_attachment_point_labels_for_connector(connector, is_secondary_connection, m_bound_ap_label_color, m_fonts, m_scene);
     for (auto* item : ap_label_items) {
         m_attachment_point_labels_group.addToGroup(item);
     }
