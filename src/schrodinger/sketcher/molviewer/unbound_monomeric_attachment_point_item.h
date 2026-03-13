@@ -50,7 +50,7 @@ class SKETCHER_API UnboundMonomericAttachmentPointItem : public QGraphicsItem
      */
     UnboundMonomericAttachmentPointItem(
         const UnboundAttachmentPoint& attachment_point,
-        AbstractMonomerItem* parent_monomer, const Fonts& fonts);
+        AbstractMonomerItem* parent_monomer, const QColor& color, const Fonts& fonts);
 
     enum {
         Type = static_cast<int>(
@@ -62,13 +62,6 @@ class SKETCHER_API UnboundMonomericAttachmentPointItem : public QGraphicsItem
     QRectF boundingRect() const override;
     void paint(QPainter* painter, const QStyleOptionGraphicsItem* option,
                QWidget* widget = nullptr) override;
-
-    /**
-     * Set whether this attachment point indicator is active (black) or
-     * inactive (gray).
-     * @param active true for black coloring, false for gray
-     */
-    void setActive(bool active);
 
     /**
      * @return whether the given scene coordinates are within the attachment
@@ -94,11 +87,6 @@ class SKETCHER_API UnboundMonomericAttachmentPointItem : public QGraphicsItem
     QPen m_line_pen;
     QBrush m_circle_brush{Qt::SolidPattern};
     bool m_is_active = false;
-
-    /**
-     * Update pen and brush colors based on active state.
-     */
-    void updateColors();
 };
 
 } // namespace sketcher

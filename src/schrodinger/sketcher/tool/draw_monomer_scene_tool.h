@@ -6,7 +6,9 @@
 
 #include "schrodinger/sketcher/definitions.h"
 #include "schrodinger/sketcher/model/sketcher_model.h"
+#include "schrodinger/sketcher/molviewer/constants.h"
 #include "schrodinger/sketcher/molviewer/fonts.h"
+#include "schrodinger/sketcher/molviewer/monomer_constants.h"
 #include "schrodinger/sketcher/tool/standard_scene_tool_base.h"
 
 namespace RDKit
@@ -76,7 +78,8 @@ class SKETCHER_API DrawMonomerSceneTool : public StandardSceneToolBase
     std::vector<UnboundMonomericAttachmentPointItem*> m_unbound_ap_items;
     MonomerHintFragmentItem* m_hint_fragment_item = nullptr;
     std::shared_ptr<RDKit::RWMol> m_frag = nullptr;
-    QColor m_monomer_background_color;
+    QColor m_monomer_background_color = LIGHT_BACKGROUND_COLOR;
+    QColor m_unbound_ap_label_color = UNBOUND_AP_LABEL_COLOR;
 
     QPixmap createDefaultCursorPixmap() const override;
 

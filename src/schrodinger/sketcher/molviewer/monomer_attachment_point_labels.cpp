@@ -218,8 +218,6 @@ create_label_for_center_of_connector(const RDKit::Atom* const begin_monomer,
     return create_attachment_point_label(label, label_rect, fonts, color);
 }
 
-// TODO: take argument for color
-// TODO: make accessible to the MonomerHintFragmentItem
 std::vector<QGraphicsItem*>
 create_attachment_point_labels_for_connector(const RDKit::Bond* const connector,
                                              const bool is_secondary_connection, const QColor& color, const Fonts& fonts, const Scene* const scene)

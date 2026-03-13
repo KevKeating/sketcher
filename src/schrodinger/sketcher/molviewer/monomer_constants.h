@@ -212,8 +212,8 @@ const qreal UNBOUND_AP_LINE_LENGTH = 8.0;
 const qreal UNBOUND_AP_LINE_THICKNESS = 1.5;
 const qreal UNBOUND_AP_CIRCLE_DIAMETER = 5.0;
 const qreal UNBOUND_AP_MIN_HOVER_HALF_WIDTH = 12;
-const QColor UNBOUND_AP_ACTIVE_COLOR = QColor("#000000");
-const QColor UNBOUND_AP_INACTIVE_COLOR = QColor("#888888");
+const QColor UNBOUND_AP_LABEL_COLOR = QColor("#000000");
+const QColor UNBOUND_AP_LABEL_COLOR_DARK_BG = QColor("#eeeeee");
 
 const QColor AA_LINEAR_CONNECTOR_COLOR =
     MONOMER_COLOR_MAP.at(MonomerColorType::GRAY4);

@@ -46,7 +46,7 @@ struct TestMonomer {
         // model name for that
         auto name = "R" + std::to_string(num);
         UnboundAttachmentPoint ap{name, name, num, Direction::N};
-        return new UnboundMonomericAttachmentPointItem(ap, item.get(), fonts);
+        return new UnboundMonomericAttachmentPointItem(ap, item.get(), UNBOUND_AP_LABEL_COLOR, fonts);
     }
 
     /// Create an attachment point item with a custom name (num = -1)
@@ -54,7 +54,7 @@ struct TestMonomer {
     {
         UnboundAttachmentPoint ap{name, name, ATTACHMENT_POINT_WITH_CUSTOM_NAME,
                                   Direction::N};
-        return new UnboundMonomericAttachmentPointItem(ap, item.get(), fonts);
+        return new UnboundMonomericAttachmentPointItem(ap, item.get(), UNBOUND_AP_LABEL_COLOR, fonts);
     }
 };
 

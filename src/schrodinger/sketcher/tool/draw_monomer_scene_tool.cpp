@@ -21,11 +21,9 @@
 #include "schrodinger/rdkit_extensions/monomer_mol.h"
 #include "schrodinger/sketcher/molviewer/abstract_graphics_item.h"
 #include "schrodinger/sketcher/molviewer/abstract_monomer_item.h"
-#include "schrodinger/sketcher/molviewer/constants.h"
 #include "schrodinger/sketcher/molviewer/coord_utils.h"
 #include "schrodinger/sketcher/molviewer/monomer_attachment_point_labels.h"
 #include "schrodinger/sketcher/molviewer/monomer_connector_item.h"
-#include "schrodinger/sketcher/molviewer/monomer_constants.h"
 #include "schrodinger/sketcher/molviewer/monomer_hint_fragment_item.h"
 #include "schrodinger/sketcher/molviewer/monomer_utils.h"
 #include "schrodinger/sketcher/molviewer/scene.h"
@@ -44,8 +42,7 @@ DrawMonomerSceneTool::DrawMonomerSceneTool(
     StandardSceneToolBase(scene, mol_model),
     m_res_name(res_name),
     m_chain_type(chain_type),
-    m_fonts(fonts),
-    m_monomer_background_color(LIGHT_BACKGROUND_COLOR)
+    m_fonts(fonts)
 {
     // we handle predictive highlighting manually in onMouseMove, so we disable
     // StandardSceneToolsBase's predictive highlighting
@@ -87,6 +84,7 @@ void DrawMonomerSceneTool::updateColorsAfterBackgroundColorChange(
 {
     m_monomer_background_color =
         is_dark_mode ? DARK_BACKGROUND_COLOR : LIGHT_BACKGROUND_COLOR;
+    m_unbound_ap_label_color = is_dark_mode ? UNBOUND_AP_LABEL_COLOR : UNBOUND_AP_LABEL_COLOR_DARK_BG;
 }
 
 QGraphicsItem*
@@ -425,8 +423,6 @@ void DrawMonomerSceneTool::drawBoundMonomerHintFor(
 
     // Create an RWMol fragment with two monomers and a connection between them
     m_frag = std::make_shared<RDKit::RWMol>();
-    // TODO: need to save this molecule so it doesn't get destroyed at the end
-    // of this function
     m_frag->setProp(HELM_MODEL, true);
 
     // First atom: copy of the existing monomer
@@ -444,7 +440,7 @@ void DrawMonomerSceneTool::drawBoundMonomerHintFor(
             rdkit_extensions::addMonomer(*m_frag, m_res_name, 1, chain_id);
     }
 
-    // TODO: figure out the right second attachment point
+    // TODO: figure out the correct second attachment point
     auto linkage = ap_item->getAttachmentPoint().model_name + "-R2";
     rdkit_extensions::addConnection(*m_frag, first_idx, second_idx, linkage);
     auto bond_index_to_label = m_frag->getBondBetweenAtoms(first_idx, second_idx)->getIdx();
@@ -519,7 +515,7 @@ void DrawMonomerSceneTool::labelAttachmentPointsOnMonomer(
     }
     for (auto& cur_ap : unbound_aps) {
         auto* item = new UnboundMonomericAttachmentPointItem(
-            cur_ap, monomer_item, m_fonts);
+            cur_ap, monomer_item, m_unbound_ap_label_color, m_fonts);
         m_unbound_ap_items.push_back(item);
     }
 }

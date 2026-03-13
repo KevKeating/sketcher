@@ -120,7 +120,7 @@ QPainterPath get_hover_area_for_unbound_monomer_attachment_point_item(
 
 UnboundMonomericAttachmentPointItem::UnboundMonomericAttachmentPointItem(
     const UnboundAttachmentPoint& attachment_point,
-    AbstractMonomerItem* parent_monomer, const Fonts& fonts) :
+    AbstractMonomerItem* parent_monomer, const QColor& color, const Fonts& fonts) :
     QGraphicsItem(parent_monomer),
     m_attachment_point(attachment_point),
     m_fonts(&fonts)
@@ -129,23 +129,16 @@ UnboundMonomericAttachmentPointItem::UnboundMonomericAttachmentPointItem(
 
     m_line_pen.setWidthF(UNBOUND_AP_LINE_THICKNESS);
     m_line_pen.setCapStyle(Qt::RoundCap);
+    m_line_pen.setColor(color);
+    m_circle_brush.setColor(color);
 
     std::tie(m_line_end, m_label_text, m_label_rect, m_bounding_rect, m_hover_area) =
         calculate_geometry(m_attachment_point, parent_monomer, *m_fonts);
-    updateColors();
 }
 
 int UnboundMonomericAttachmentPointItem::type() const
 {
     return Type;
-}
-
-void UnboundMonomericAttachmentPointItem::setActive(bool active)
-{
-    if (m_is_active != active) {
-        m_is_active = active;
-        updateColors();
-    }
 }
 
 QRectF UnboundMonomericAttachmentPointItem::boundingRect() const
@@ -174,15 +167,6 @@ void UnboundMonomericAttachmentPointItem::paint(
     painter->drawText(m_label_rect, Qt::AlignCenter, m_label_text);
 
     painter->restore();
-}
-
-void UnboundMonomericAttachmentPointItem::updateColors()
-{
-    QColor color =
-        m_is_active ? UNBOUND_AP_ACTIVE_COLOR : UNBOUND_AP_INACTIVE_COLOR;
-    m_line_pen.setColor(color);
-    m_circle_brush.setColor(color);
-    update();
 }
 
 bool UnboundMonomericAttachmentPointItem::withinHoverArea(
