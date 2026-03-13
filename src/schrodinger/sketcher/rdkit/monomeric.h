@@ -56,9 +56,6 @@ enum { TO_PREV_SUGAR = 1, TO_NEXT_SUGAR = 2 };
 constexpr int NA_BASE_AP_N1_9 = 1;
 const std::string NA_BASE_AP_PAIR = "pair";
 
-// TODO: create an AbstractAttachmentPoint struct to avoid duplicating the
-//       parameters?  Will that break the default == operator?
-
 /**
  * Information about an attachment point on a monomer that's bound to another
  * monomer. The direction member variable represents the direction that the bond
@@ -67,9 +64,18 @@ const std::string NA_BASE_AP_PAIR = "pair";
  * below the monomer).
  */
 struct BoundAttachmentPoint {
+    /// The attachment point name stored in the model. Typically "R" followed by
+    /// a positive, non-zero integer
     std::string model_name;
+    /// The attachment point name that is displayed in the Sketcher. E.g. "C"
+    /// instead of "R2" for a peptide monomer.  Note that, for an attachment
+    /// point with a custom name, this will be identical to model_name.
     std::string display_name;
-    int num; // e.g. 3 for "R3"
+    /// The attachment point number. For attachment points with model names of
+    /// an "R" followed by a number, this will be the number that appears after
+    /// the "R" (e.g. 3 for "R3"). For attachment points with a custom name,
+    /// this will be ATTACHMENT_POINT_WITH_CUSTOM_NAME.
+    int num;
     const RDKit::Atom* bound_monomer;
     bool is_secondary_connection;
     Direction direction;
@@ -81,12 +87,13 @@ struct BoundAttachmentPoint {
  * Information about an attachment point on a monomer that's *not* bound to
  * another monomer (i.e. available for bonding). The direction member variable
  * represents the direction we should draw the connection "nubbin" when the user
- * hovers over the monomer.
+ * hovers over the monomer. See BoundAttachmentPoint for documentation of member
+ * variables.
  */
 struct UnboundAttachmentPoint {
     std::string model_name;
     std::string display_name;
-    int num; // e.g. 3 for "R3"
+    int num;
     Direction direction;
 
     bool operator==(const UnboundAttachmentPoint&) const = default;

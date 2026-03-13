@@ -14,15 +14,6 @@ namespace schrodinger
 namespace sketcher
 {
 
-QString prep_attachment_point_name(const std::string& name)
-{
-    auto qname = QString::fromStdString(name);
-    // convert apostrophes in nucleic acid attachment point names to Unicode
-    // primes
-    qname.replace('\'', "′");
-    return qname;
-}
-
 void position_ap_label_rect(QRectF& ap_label_rect,
                             const QPointF& monomer_coords,
                             const QPointF& bound_coords)
@@ -124,7 +115,16 @@ attachment_point_is_drawn_with_arrowhead(const RDKit::Atom* const monomer,
     }
 }
 
-QGraphicsItem* create_attachment_point_label(const QString& label,
+QString prep_attachment_point_name(const std::string& name)
+{
+    auto qname = QString::fromStdString(name);
+    // convert apostrophes in nucleic acid attachment point names to Unicode
+    // primes
+    qname.replace('\'', "′");
+    return qname;
+}
+
+static QGraphicsItem* create_attachment_point_label(const QString& label,
                                              const QRectF& label_rect,
                                              const Fonts& fonts,
                                              const QColor& color)

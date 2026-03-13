@@ -53,9 +53,7 @@ class MonomerHintFragmentItem : public QGraphicsItemGroup
     int m_atom_index_to_hide = -1;
     int m_bond_index_to_label = -1;
     QColor m_monomer_background_color;
-    /// A list of all child AbstractMonomerItems
     QList<QGraphicsItem*> m_atom_items;
-    /// A list of all child MonomerConnectortems
     QList<QGraphicsItem*> m_bond_items;
 
     /**

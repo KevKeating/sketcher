@@ -77,9 +77,6 @@ static QPointF direction_to_qt_unit_vector(Direction dir)
 
 /**
  * Calculate the geometry required to draw the attachment point
- * @param attachment_point
- * @param parent_monomer
- * @param fonts
  * @return A tuple of
  *   - coordinates for the end of the attachment point's line
  *   - the text to display for the label

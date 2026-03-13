@@ -69,8 +69,7 @@ void MonomerHintFragmentItem::createGraphicsItems()
         //       offset. These would normally be retrieved using the Scene, but
         //       that won't work for hint structures since they're not included
         //       in the Scene's bookkeeping. For now, we just pass nullptr for
-        //       Scene and avoid fragments with arrowheads (which would trigger
-        //       a crash even if we passed the real Scene).
+        //       Scene and avoid fragments with arrowheads.
         auto items = create_attachment_point_labels_for_connector(
             bond, false, STRUCTURE_HINT_COLOR, *m_fonts, nullptr);
         for (auto* item : items) {
