@@ -155,8 +155,11 @@ QGraphicsItem* create_label_for_bound_attachment_point(
     // disulfide bonds or branching monomers), offset the label to account for
     // the arrowhead
     if (attachment_point_is_drawn_with_arrowhead(monomer, bound_monomer,
-                                                 is_secondary_connection)) {
-        // TODO: this won't work for hint structures
+                                                 is_secondary_connection) && scene != nullptr) {
+        // TODO: update this so we don't need the scene, since we can't use it
+        //       for hint structures (since it doesn't have the hint's atoms in
+        //       its bookkeeping, which is why the hint passes a nullptr for
+        //       scene)
         const auto* monomer_item = scene->getGraphicsItemForAtom(monomer);
         auto arrowhead_offset = get_monomer_arrowhead_offset(
             *monomer_item, to_scene_xy(bound_coords));

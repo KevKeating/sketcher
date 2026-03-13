@@ -464,7 +464,7 @@ void DrawMonomerSceneTool::drawBoundMonomerHintFor(
     // Create the hint fragment, hiding the first atom (the copy of the
     // existing monomer that's already visible in the scene)
     m_hint_fragment_item = new MonomerHintFragmentItem(
-        *m_frag, m_fonts, first_idx, bond_index_to_label, m_monomer_background_color, m_scene);
+        *m_frag, m_fonts, first_idx, bond_index_to_label, m_monomer_background_color);
     m_scene->addItem(m_hint_fragment_item);
 }
 
