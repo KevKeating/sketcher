@@ -82,6 +82,7 @@ std::vector<QGraphicsItem*> DrawMonomerSceneTool::getGraphicsItems()
 void DrawMonomerSceneTool::updateColorsAfterBackgroundColorChange(
     bool is_dark_mode)
 {
+    StandardSceneToolBase::updateColorsAfterBackgroundColorChange(is_dark_mode);
     m_monomer_background_color =
         is_dark_mode ? DARK_BACKGROUND_COLOR : LIGHT_BACKGROUND_COLOR;
     m_unbound_ap_label_color = is_dark_mode ? UNBOUND_AP_LABEL_COLOR_DARK_BG : UNBOUND_AP_LABEL_COLOR;
@@ -96,7 +97,7 @@ DrawMonomerSceneTool::getTopMonomericItemAt(const QPointF& scene_pos) const
     for (auto* item : m_scene->items(scene_pos)) {
         if (m_hint_fragment_item != nullptr &&
             (item == m_hint_fragment_item ||
-             item->parentItem() == m_hint_fragment_item)) {
+             item->group() == m_hint_fragment_item)) {
             // ignore the fragment hint that was drawn by this class
             continue;
         }
