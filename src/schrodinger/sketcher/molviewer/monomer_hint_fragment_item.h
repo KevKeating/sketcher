@@ -41,8 +41,11 @@ class MonomerHintFragmentItem : public QGraphicsItemGroup
      * connections will be visible behind the monomer outlines and labels.
      * @param parent The parent graphics item, if any.
      */
-    MonomerHintFragmentItem(const RDKit::ROMol& fragment, const Fonts& fonts, const int atom_index_to_hide, const int bond_index_to_label, const QColor monomer_background_color,
-                             QGraphicsItem* parent = nullptr);
+    MonomerHintFragmentItem(const RDKit::ROMol& fragment, const Fonts& fonts,
+                            const int atom_index_to_hide,
+                            const int bond_index_to_label,
+                            const QColor monomer_background_color,
+                            QGraphicsItem* parent = nullptr);
 
   protected:
     RDKit::ROMol m_frag;
@@ -61,4 +64,4 @@ class MonomerHintFragmentItem : public QGraphicsItemGroup
     void createGraphicsItems();
 };
 
-}
+} // namespace schrodinger::sketcher

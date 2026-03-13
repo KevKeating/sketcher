@@ -172,13 +172,14 @@ class SKETCHER_API DrawMonomerSceneTool : public StandardSceneToolBase
     UnboundMonomericAttachmentPointItem*
     getDefaultUnboundAttachmentPointForHoveredMonomer() const;
 
-    void drawBoundMonomerHintFor(
-        UnboundMonomericAttachmentPointItem* const ap_item);
+    void
+    drawBoundMonomerHintFor(UnboundMonomericAttachmentPointItem* const ap_item);
 
-    std::tuple<const RDKit::Atom*, MonomerType> getHoveredMonomerAndType() const;
+    std::tuple<const RDKit::Atom*, MonomerType>
+    getHoveredMonomerAndType() const;
     bool shouldShowPredictiveHighlighting() const;
-    bool clickShouldMutate(const RDKit::Atom* monomer, const MonomerType monomer_type) const;
-
+    bool clickShouldMutate(const RDKit::Atom* monomer,
+                           const MonomerType monomer_type) const;
 };
 
 } // namespace sketcher

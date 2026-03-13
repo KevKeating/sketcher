@@ -81,14 +81,16 @@ BOOST_AUTO_TEST_CASE(test_get_attachment_points)
         std::tie(bound_aps, unbound_aps) =
             get_attachment_points_for_monomer(atom0);
         exp_bound = {{"R2", "C", 2, atom1, false, Direction::E}};
-        exp_available = {{"R1", "N", 1, Direction::W}, {"R3", "X", 3, Direction::N}};
+        exp_available = {{"R1", "N", 1, Direction::W},
+                         {"R3", "X", 3, Direction::N}};
         BOOST_TEST(bound_aps == exp_bound);
         BOOST_TEST(unbound_aps == exp_available);
 
         std::tie(bound_aps, unbound_aps) =
             get_attachment_points_for_monomer(atom1);
         exp_bound = {{"R1", "N", 1, atom0, false, Direction::W}};
-        exp_available = {{"R2", "C", 2, Direction::E}, {"R3", "X", 3, Direction::N}};
+        exp_available = {{"R2", "C", 2, Direction::E},
+                         {"R3", "X", 3, Direction::N}};
         BOOST_TEST(bound_aps == exp_bound);
         BOOST_TEST(unbound_aps == exp_available);
     }
@@ -201,10 +203,11 @@ BOOST_AUTO_TEST_CASE(test_get_attachment_points)
         std::tie(bound_aps, unbound_aps) =
             get_attachment_points_for_monomer(atom1);
         exp_bound = {{"R11", "R11", 11, atom0, false, Direction::N}};
-        exp_available = {{"R1", "R1", 1, Direction::W},  {"R2", "R2", 2, Direction::E},
-                         {"R3", "R3", 3, Direction::S},  {"R4", "R4", 4, Direction::NW},
-                         {"R5", "R5", 5, Direction::NE}, {"R6", "R6", 6, Direction::SE},
-                         {"R7", "R7", 7, Direction::SW}};
+        exp_available = {
+            {"R1", "R1", 1, Direction::W},  {"R2", "R2", 2, Direction::E},
+            {"R3", "R3", 3, Direction::S},  {"R4", "R4", 4, Direction::NW},
+            {"R5", "R5", 5, Direction::NE}, {"R6", "R6", 6, Direction::SE},
+            {"R7", "R7", 7, Direction::SW}};
         BOOST_TEST(bound_aps == exp_bound);
         BOOST_TEST(unbound_aps == exp_available);
     }
@@ -268,7 +271,7 @@ BOOST_AUTO_TEST_CASE(test_get_attachment_points)
 
         std::tie(bound_aps, unbound_aps) =
             get_attachment_points_for_monomer(term_phos_chain_3);
-        exp_bound = {{"R1",  "", 1, term_phos_chain_2, false, Direction::W}};
+        exp_bound = {{"R1", "", 1, term_phos_chain_2, false, Direction::W}};
         exp_available = {{"R2", "5'", 2, Direction::E}};
         BOOST_TEST(bound_aps == exp_bound);
         BOOST_TEST(unbound_aps == exp_available);
@@ -282,7 +285,8 @@ BOOST_AUTO_TEST_CASE(test_get_attachment_points)
         atom0 = mol->getAtomWithIdx(0);
         std::tie(bound_aps, unbound_aps) =
             get_attachment_points_for_monomer(atom0);
-        exp_available = {{"R1", "", 1, Direction::W}, {"R2", "", 2, Direction::E}};
+        exp_available = {{"R1", "", 1, Direction::W},
+                         {"R2", "", 2, Direction::E}};
         BOOST_TEST(bound_aps.empty());
         BOOST_TEST(unbound_aps == exp_available);
     }
@@ -307,7 +311,8 @@ BOOST_AUTO_TEST_CASE(test_get_attachment_points)
             get_attachment_points_for_monomer(atom1);
         exp_bound = {{"R1", "N", 1, atom0, false, Direction::W},
                      {"R4", "R4", 4, atom0, true, Direction::W}};
-        exp_available = {{"R2", "C", 2, Direction::E}, {"R3", "X", 3, Direction::N}};
+        exp_available = {{"R2", "C", 2, Direction::E},
+                         {"R3", "X", 3, Direction::N}};
         BOOST_TEST(bound_aps == exp_bound);
         BOOST_TEST(unbound_aps == exp_available);
     }
@@ -343,8 +348,8 @@ BOOST_AUTO_TEST_CASE(test_get_attachment_points)
         std::tie(bound_aps, unbound_aps) =
             get_attachment_points_for_monomer(base);
         exp_bound = {{"R1", "N1/9", 1, sugar, false, Direction::N},
-                     {"pair", "pair", ATTACHMENT_POINT_WITH_CUSTOM_NAME, paired_base,
-                      false, Direction::S}};
+                     {"pair", "pair", ATTACHMENT_POINT_WITH_CUSTOM_NAME,
+                      paired_base, false, Direction::S}};
         BOOST_TEST(bound_aps == exp_bound);
         BOOST_TEST(unbound_aps.empty());
     }

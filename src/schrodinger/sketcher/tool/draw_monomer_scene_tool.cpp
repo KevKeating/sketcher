@@ -85,8 +85,10 @@ void DrawMonomerSceneTool::updateColorsAfterBackgroundColorChange(
     StandardSceneToolBase::updateColorsAfterBackgroundColorChange(is_dark_mode);
     m_monomer_background_color =
         is_dark_mode ? DARK_BACKGROUND_COLOR : LIGHT_BACKGROUND_COLOR;
-    m_unbound_ap_label_color = is_dark_mode ? UNBOUND_AP_LABEL_COLOR_DARK_BG : UNBOUND_AP_LABEL_COLOR;
-    m_bound_ap_label_color = is_dark_mode ? BOUND_AP_LABEL_COLOR_DARK_BG : BOUND_AP_LABEL_COLOR;
+    m_unbound_ap_label_color =
+        is_dark_mode ? UNBOUND_AP_LABEL_COLOR_DARK_BG : UNBOUND_AP_LABEL_COLOR;
+    m_bound_ap_label_color =
+        is_dark_mode ? BOUND_AP_LABEL_COLOR_DARK_BG : BOUND_AP_LABEL_COLOR;
 }
 
 QGraphicsItem*
@@ -389,14 +391,16 @@ void DrawMonomerSceneTool::drawAttachmentPointLabelsFor(
         auto* monomer_item = static_cast<AbstractMonomerItem*>(item);
         const auto* monomer = monomer_item->getAtom();
         labelAttachmentPointsOnMonomer(monomer, monomer_item);
-    } else if (item_matches_type_flag(item, InteractiveItemFlag::MONOMER_CONNECTOR)) {
+    } else if (item_matches_type_flag(item,
+                                      InteractiveItemFlag::MONOMER_CONNECTOR)) {
         // hovering over a monomeric connector
         auto* connector_item = qgraphicsitem_cast<MonomerConnectorItem*>(item);
         const auto* connector = connector_item->getBond();
         labelAttachmentPointsOnConnector(
             connector, connector_item->isSecondaryConnection());
     } else {
-        std::cout << "drawAttachmentPointLabelsFor called with incorrect item " << item->type() << "\n";
+        std::cout << "drawAttachmentPointLabelsFor called with incorrect item "
+                  << item->type() << "\n";
     }
 }
 
@@ -447,7 +451,8 @@ void DrawMonomerSceneTool::drawBoundMonomerHintFor(
     // TODO: figure out the correct second attachment point
     auto linkage = ap_item->getAttachmentPoint().model_name + "-R2";
     rdkit_extensions::addConnection(*m_frag, first_idx, second_idx, linkage);
-    auto bond_index_to_label = m_frag->getBondBetweenAtoms(first_idx, second_idx)->getIdx();
+    auto bond_index_to_label =
+        m_frag->getBondBetweenAtoms(first_idx, second_idx)->getIdx();
 
     // flag the atoms as monomeric
     for (auto* atom : m_frag->atoms()) {
@@ -464,7 +469,8 @@ void DrawMonomerSceneTool::drawBoundMonomerHintFor(
     // Create the hint fragment, hiding the first atom (the copy of the
     // existing monomer that's already visible in the scene)
     m_hint_fragment_item = new MonomerHintFragmentItem(
-        *m_frag, m_fonts, first_idx, bond_index_to_label, m_monomer_background_color);
+        *m_frag, m_fonts, first_idx, bond_index_to_label,
+        m_monomer_background_color);
     m_scene->addItem(m_hint_fragment_item);
 }
 
@@ -510,9 +516,9 @@ void DrawMonomerSceneTool::labelAttachmentPointsOnMonomer(
 {
     auto [bound_aps, unbound_aps] = get_attachment_points_for_monomer(monomer);
     for (auto& cur_ap : bound_aps) {
-        auto* item = create_label_for_bound_attachment_point(monomer, cur_ap.bound_monomer,
-                                  cur_ap.is_secondary_connection,
-                                  cur_ap.display_name, m_bound_ap_label_color, m_fonts, m_scene);
+        auto* item = create_label_for_bound_attachment_point(
+            monomer, cur_ap.bound_monomer, cur_ap.is_secondary_connection,
+            cur_ap.display_name, m_bound_ap_label_color, m_fonts, m_scene);
         if (item != nullptr) {
             m_attachment_point_labels_group.addToGroup(item);
         }
@@ -527,7 +533,9 @@ void DrawMonomerSceneTool::labelAttachmentPointsOnMonomer(
 void DrawMonomerSceneTool::labelAttachmentPointsOnConnector(
     const RDKit::Bond* const connector, const bool is_secondary_connection)
 {
-    auto ap_label_items = create_attachment_point_labels_for_connector(connector, is_secondary_connection, m_bound_ap_label_color, m_fonts, m_scene);
+    auto ap_label_items = create_attachment_point_labels_for_connector(
+        connector, is_secondary_connection, m_bound_ap_label_color, m_fonts,
+        m_scene);
     for (auto* item : ap_label_items) {
         m_attachment_point_labels_group.addToGroup(item);
     }
@@ -548,7 +556,6 @@ void DrawMonomerSceneTool::clearAttachmentPointsLabels()
     m_hint_fragment_item = nullptr;
     m_frag.reset();
 }
-
 
 } // namespace sketcher
 } // namespace schrodinger

@@ -20,7 +20,9 @@ namespace sketcher
  * side of the line, and the label, but excludes any coordinates within the
  * bounding rect of the parent monomer.
  */
-static QPainterPath calculate_hover_area(QRectF ap_bounding_rect, QRectF monomer_bounding_rect, const Direction ap_direction)
+static QPainterPath calculate_hover_area(QRectF ap_bounding_rect,
+                                         QRectF monomer_bounding_rect,
+                                         const Direction ap_direction)
 {
     static constexpr int BIG_NUMBER = 500;
     if (ap_direction == Direction::N || ap_direction == Direction::S) {
@@ -52,7 +54,7 @@ static QPainterPath calculate_hover_area(QRectF ap_bounding_rect, QRectF monomer
         // monomer_bounding_rect winds up wider than ap_bounding_rect.
         monomer_bounding_rect.adjust(0, -BIG_NUMBER, 0, BIG_NUMBER);
     }
-    
+
     QPainterPath hover_area;
     hover_area.addRect(ap_bounding_rect);
     QPainterPath monomer_bounding_path;
@@ -75,9 +77,9 @@ static QPointF direction_to_qt_unit_vector(Direction dir)
 
 /**
  * Calculate the geometry required to draw the attachment point
- * @param attachment_point 
- * @param parent_monomer 
- * @param fonts 
+ * @param attachment_point
+ * @param parent_monomer
+ * @param fonts
  * @return A tuple of
  *   - coordinates for the end of the attachment point's line
  *   - the text to display for the label
@@ -129,7 +131,8 @@ calculate_geometry(const UnboundAttachmentPoint& attachment_point,
                          UNBOUND_AP_CIRCLE_DIAMETER,
                          UNBOUND_AP_CIRCLE_DIAMETER);
     auto bounding_rect = line_bounds.united(circle_bounds).united(label_rect);
-    auto hover_area = calculate_hover_area(bounding_rect, parent_bounds, attachment_point.direction);
+    auto hover_area = calculate_hover_area(bounding_rect, parent_bounds,
+                                           attachment_point.direction);
     return {line_end, label_text, label_rect, bounding_rect, hover_area};
 }
 
@@ -142,11 +145,10 @@ QPainterPath get_hover_area_for_unbound_monomer_attachment_point_item(
     return hover_area;
 }
 
-
-
 UnboundMonomericAttachmentPointItem::UnboundMonomericAttachmentPointItem(
     const UnboundAttachmentPoint& attachment_point,
-    AbstractMonomerItem* parent_monomer, const QColor& color, const Fonts& fonts) :
+    AbstractMonomerItem* parent_monomer, const QColor& color,
+    const Fonts& fonts) :
     QGraphicsItem(parent_monomer),
     m_attachment_point(attachment_point),
     m_fonts(&fonts)
@@ -158,7 +160,8 @@ UnboundMonomericAttachmentPointItem::UnboundMonomericAttachmentPointItem(
     m_line_pen.setColor(color);
     m_circle_brush.setColor(color);
 
-    std::tie(m_line_end, m_label_text, m_label_rect, m_bounding_rect, m_hover_area) =
+    std::tie(m_line_end, m_label_text, m_label_rect, m_bounding_rect,
+             m_hover_area) =
         calculate_geometry(m_attachment_point, parent_monomer, *m_fonts);
 }
 

@@ -29,7 +29,8 @@ class AbstractMonomerItem;
  * Parameter are the same as the UnboundMonomericAttachmentPointItem
  * constructor, other than color, which is excluded.
  */
-SKETCHER_API QPainterPath get_hover_area_for_unbound_monomer_attachment_point_item(
+SKETCHER_API QPainterPath
+get_hover_area_for_unbound_monomer_attachment_point_item(
     const UnboundAttachmentPoint& attachment_point,
     const AbstractMonomerItem* const parent_monomer, const Fonts& fonts);
 
@@ -50,7 +51,8 @@ class SKETCHER_API UnboundMonomericAttachmentPointItem : public QGraphicsItem
      */
     UnboundMonomericAttachmentPointItem(
         const UnboundAttachmentPoint& attachment_point,
-        AbstractMonomerItem* parent_monomer, const QColor& color, const Fonts& fonts);
+        AbstractMonomerItem* parent_monomer, const QColor& color,
+        const Fonts& fonts);
 
     enum {
         Type = static_cast<int>(

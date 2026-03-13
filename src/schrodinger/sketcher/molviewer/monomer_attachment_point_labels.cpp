@@ -125,7 +125,9 @@ attachment_point_is_drawn_with_arrowhead(const RDKit::Atom* const monomer,
 }
 
 QGraphicsItem* create_attachment_point_label(const QString& label,
-                                                   const QRectF& label_rect, const Fonts& fonts, const QColor& color)
+                                             const QRectF& label_rect,
+                                             const Fonts& fonts,
+                                             const QColor& color)
 {
     auto* label_item = new QGraphicsSimpleTextItem(label);
     label_item->setFont(fonts.m_monomeric_attachment_point_label_font);
@@ -136,7 +138,8 @@ QGraphicsItem* create_attachment_point_label(const QString& label,
 
 QGraphicsItem* create_label_for_bound_attachment_point(
     const RDKit::Atom* const monomer, const RDKit::Atom* const bound_monomer,
-    const bool is_secondary_connection, const std::string& ap_name, const QColor& color, const Fonts& fonts, const Scene* const scene)
+    const bool is_secondary_connection, const std::string& ap_name,
+    const QColor& color, const Fonts& fonts, const Scene* const scene)
 {
     // nothing to do if there's no label (e.g. phosphate attachment points)
     if (ap_name.empty()) {
@@ -155,7 +158,8 @@ QGraphicsItem* create_label_for_bound_attachment_point(
     // disulfide bonds or branching monomers), offset the label to account for
     // the arrowhead
     if (attachment_point_is_drawn_with_arrowhead(monomer, bound_monomer,
-                                                 is_secondary_connection) && scene != nullptr) {
+                                                 is_secondary_connection) &&
+        scene != nullptr) {
         // TODO: update this so we don't need the scene, since we can't use it
         //       for hint structures (since it doesn't have the hint's atoms in
         //       its bookkeeping, which is why the hint passes a nullptr for
@@ -222,9 +226,9 @@ create_label_for_center_of_connector(const RDKit::Atom* const begin_monomer,
     return create_attachment_point_label(label, label_rect, fonts, color);
 }
 
-std::vector<QGraphicsItem*>
-create_attachment_point_labels_for_connector(const RDKit::Bond* const connector,
-                                             const bool is_secondary_connection, const QColor& color, const Fonts& fonts, const Scene* const scene)
+std::vector<QGraphicsItem*> create_attachment_point_labels_for_connector(
+    const RDKit::Bond* const connector, const bool is_secondary_connection,
+    const QColor& color, const Fonts& fonts, const Scene* const scene)
 {
     auto begin_monomer = connector->getBeginAtom();
     auto end_monomer = connector->getEndAtom();
@@ -237,24 +241,25 @@ create_attachment_point_labels_for_connector(const RDKit::Bond* const connector,
     if (begin_ap_name == NA_BASE_AP_PAIR && end_ap_name == NA_BASE_AP_PAIR) {
         // for nucleic acid base pairs, only have a single "pair" label since
         // the bond is typically too short to fit two separate labels
-        auto* item = create_label_for_center_of_connector(begin_monomer, end_monomer,
-                               QString::fromStdString(NA_BASE_AP_PAIR), color, fonts);
+        auto* item = create_label_for_center_of_connector(
+            begin_monomer, end_monomer, QString::fromStdString(NA_BASE_AP_PAIR),
+            color, fonts);
         ap_label_items.push_back(item);
     } else {
-        auto* item1 = create_label_for_bound_attachment_point(begin_monomer, end_monomer,
-                                  is_secondary_connection, begin_ap_name, color, fonts, scene);
-        auto* item2 = create_label_for_bound_attachment_point(end_monomer, begin_monomer,
-                                  is_secondary_connection, end_ap_name, color, fonts, scene);
+        auto* item1 = create_label_for_bound_attachment_point(
+            begin_monomer, end_monomer, is_secondary_connection, begin_ap_name,
+            color, fonts, scene);
+        auto* item2 = create_label_for_bound_attachment_point(
+            end_monomer, begin_monomer, is_secondary_connection, end_ap_name,
+            color, fonts, scene);
         for (auto* item : {item1, item2}) {
             if (item != nullptr) {
                 ap_label_items.push_back(item);
             }
         }
-        
     }
     return ap_label_items;
 }
-
 
 } // namespace sketcher
 } // namespace schrodinger
