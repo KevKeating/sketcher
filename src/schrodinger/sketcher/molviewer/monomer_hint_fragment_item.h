@@ -20,16 +20,28 @@ namespace schrodinger::sketcher
 class Fonts;
 class Scene;
 
+/**
+ * A graphics item showing a blue hint structure for monomeric models.
+ */
 class MonomerHintFragmentItem : public QGraphicsItemGroup
 {
   public:
     /**
      * @param fragment The fragment to display
-     * @param fonts The fonts to use for displaying the fragment.  This object
+     * @param fonts The fonts to use for displaying the fragment. This object
      * must not be destroyed while this graphics item is in use.
+     * @param atom_index_to_hide If >= 0, the graphics item for this atom will
+     * be hidden. Normally used to hide the atom that overlaps the existing
+     * Sketcher structure.
+     * @param bond_index_to_label If >= 0, the attachment points for this
+     * connector will be labeled.
+     * @param monomer_background_color The color to use for the monomer
+     * background. This should normally be the same as the Scene background.
+     * Using a transparent color is not recommended, as the lines for monomeric
+     * connections will be visible behind the monomer outlines and labels.
      * @param parent The parent graphics item, if any.
      */
-    MonomerHintFragmentItem(const RDKit::ROMol& fragment, const Fonts& fonts, const int atom_index_to_hide, const int bond_index_to_label, const QColor monomer_background_color, const Scene* const scene,
+    MonomerHintFragmentItem(const RDKit::ROMol& fragment, const Fonts& fonts, const int atom_index_to_hide, const int bond_index_to_label, const QColor monomer_background_color,
                              QGraphicsItem* parent = nullptr);
 
   protected:
@@ -46,7 +58,7 @@ class MonomerHintFragmentItem : public QGraphicsItemGroup
     /**
      * Create all graphics items required to represent the fragment
      */
-    void createGraphicsItems(const Scene* const scene);
+    void createGraphicsItems();
 };
 
 }

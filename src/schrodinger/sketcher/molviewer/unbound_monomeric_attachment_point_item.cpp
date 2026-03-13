@@ -13,26 +13,43 @@ namespace schrodinger
 namespace sketcher
 {
 
-// TODO: add docstring
+/**
+ * Calculate and return the hover area of an attachment point. The hover area is
+ * the area that the cursor can click/hover on to draw/hint a connection to the
+ * attachment point. It includes the line, a small amount of space on either
+ * side of the line, and the label, but excludes any coordinates within the
+ * bounding rect of the parent monomer.
+ */
 static QPainterPath calculate_hover_area(QRectF ap_bounding_rect, QRectF monomer_bounding_rect, const Direction ap_direction)
 {
-    // TODO: add comments to this function
     static constexpr int BIG_NUMBER = 500;
     if (ap_direction == Direction::N || ap_direction == Direction::S) {
+        // make sure we have at least a little space to the left and right of
+        // the attachment point's line
         if (ap_bounding_rect.left() > -UNBOUND_AP_MIN_HOVER_HALF_WIDTH) {
             ap_bounding_rect.setLeft(-UNBOUND_AP_MIN_HOVER_HALF_WIDTH);
         }
         if (ap_bounding_rect.right() < UNBOUND_AP_MIN_HOVER_HALF_WIDTH) {
             ap_bounding_rect.setRight(UNBOUND_AP_MIN_HOVER_HALF_WIDTH);
         }
+        // make sure that the hover area doesn't extend above or below the
+        // parent monomer. To do this, we extend the monomer's bounding rect in
+        // the Y direction. We don't care how far we extend it, so long as
+        // monomer_bounding_rect winds up taller than ap_bounding_rect.
         monomer_bounding_rect.adjust(-BIG_NUMBER, 0, BIG_NUMBER, 0);
     } else if (ap_direction == Direction::E || ap_direction == Direction::W) {
+        // make sure we have at least a little space above and below the
+        // attachment point's line
         if (ap_bounding_rect.top() > -UNBOUND_AP_MIN_HOVER_HALF_WIDTH) {
             ap_bounding_rect.setTop(-UNBOUND_AP_MIN_HOVER_HALF_WIDTH);
         }
         if (ap_bounding_rect.bottom() < UNBOUND_AP_MIN_HOVER_HALF_WIDTH) {
             ap_bounding_rect.setBottom(UNBOUND_AP_MIN_HOVER_HALF_WIDTH);
         }
+        // make sure that the hover area doesn't extend to the left or right of
+        // the parent monomer. To do this, we extend the monomer's bounding rect
+        // in the X direction. We don't care how far we extend it, so long as
+        // monomer_bounding_rect winds up wider than ap_bounding_rect.
         monomer_bounding_rect.adjust(0, -BIG_NUMBER, 0, BIG_NUMBER);
     }
     
@@ -56,7 +73,20 @@ static QPointF direction_to_qt_unit_vector(Direction dir)
     return QPointF(mol_vec.x, -mol_vec.y);
 }
 
-// TODO: add docstring
+/**
+ * Calculate the geometry required to draw the attachment point
+ * @param attachment_point 
+ * @param parent_monomer 
+ * @param fonts 
+ * @return A tuple of
+ *   - coordinates for the end of the attachment point's line
+ *   - the text to display for the label
+ *   - the rectangle to draw the label in
+ *   - the bounding rect of the attachment point
+ *   - the hover area for the attachment point  (See the
+ *     get_hover_area_for_unbound_monomer_attachment_point_item docstring for an
+ *     explanation of hover area)
+ */
 static std::tuple<QPointF, QString, QRectF, QRectF, QPainterPath>
 calculate_geometry(const UnboundAttachmentPoint& attachment_point,
                    const AbstractMonomerItem* const parent_monomer,
@@ -90,7 +120,6 @@ calculate_geometry(const UnboundAttachmentPoint& attachment_point,
     position_ap_label_rect(label_rect, {0.0, 0.0}, dir);
 
     qreal half_line_width = UNBOUND_AP_LINE_THICKNESS / 2.0;
-
     QRectF line_bounds = QRectF(QPointF(0, 0), line_end).normalized();
     line_bounds.adjust(-half_line_width, -half_line_width, half_line_width,
                        half_line_width);
@@ -99,11 +128,8 @@ calculate_geometry(const UnboundAttachmentPoint& attachment_point,
     QRectF circle_bounds(line_end.x() - radius, line_end.y() - radius,
                          UNBOUND_AP_CIRCLE_DIAMETER,
                          UNBOUND_AP_CIRCLE_DIAMETER);
-
     auto bounding_rect = line_bounds.united(circle_bounds).united(label_rect);
-    
     auto hover_area = calculate_hover_area(bounding_rect, parent_bounds, attachment_point.direction);
-
     return {line_end, label_text, label_rect, bounding_rect, hover_area};
 }
 

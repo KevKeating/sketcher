@@ -14,6 +14,15 @@ namespace schrodinger
 namespace sketcher
 {
 
+QString prep_attachment_point_name(const std::string& name)
+{
+    auto qname = QString::fromStdString(name);
+    // convert apostrophes in nucleic acid attachment point names to Unicode
+    // primes
+    qname.replace('\'', "′");
+    return qname;
+}
+
 void position_ap_label_rect(QRectF& ap_label_rect,
                             const QPointF& monomer_coords,
                             const QPointF& bound_coords)
@@ -115,15 +124,6 @@ attachment_point_is_drawn_with_arrowhead(const RDKit::Atom* const monomer,
     }
 }
 
-QString prep_attachment_point_name(const std::string& name)
-{
-    auto qname = QString::fromStdString(name);
-    // convert apostrophes in nucleic acid attachment point names to Unicode
-    // primes
-    qname.replace('\'', "′");
-    return qname;
-}
-
 QGraphicsItem* create_attachment_point_label(const QString& label,
                                                    const QRectF& label_rect, const Fonts& fonts, const QColor& color)
 {
@@ -156,6 +156,7 @@ QGraphicsItem* create_label_for_bound_attachment_point(
     // the arrowhead
     if (attachment_point_is_drawn_with_arrowhead(monomer, bound_monomer,
                                                  is_secondary_connection)) {
+        // TODO: this won't work for hint structures
         const auto* monomer_item = scene->getGraphicsItemForAtom(monomer);
         auto arrowhead_offset = get_monomer_arrowhead_offset(
             *monomer_item, to_scene_xy(bound_coords));

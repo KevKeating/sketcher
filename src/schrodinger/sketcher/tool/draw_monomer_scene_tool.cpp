@@ -115,9 +115,11 @@ DrawMonomerSceneTool::getTopMonomericItemAt(const QPointF& scene_pos) const
     // we are, check to see whether we'd be over one of its attachment points
     // once they're drawn
     QPainterPath near_scene_pos;
-    // TODO: update this comment
-    // the attachment point label can stick out past the attachment point line,
-    // so make the circle a bit bigger than just the line length
+    // We want a circle radius that will definitely include the relevant monomer
+    // if we're over an attachment point hover area, but we don't care if it's
+    // too large since we'll do further filtering below.  Instead of trying to
+    // take the font size, etc. into account, we just pick a number that's close
+    // to correct and then double it.
     auto radius =
         2 * std::max(UNBOUND_AP_LINE_LENGTH, UNBOUND_AP_MIN_HOVER_HALF_WIDTH);
     near_scene_pos.addEllipse(scene_pos, radius, radius);
