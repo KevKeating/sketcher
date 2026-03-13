@@ -125,9 +125,9 @@ QString prep_attachment_point_name(const std::string& name)
 }
 
 static QGraphicsItem* create_attachment_point_label(const QString& label,
-                                             const QRectF& label_rect,
-                                             const Fonts& fonts,
-                                             const QColor& color)
+                                                    const QRectF& label_rect,
+                                                    const Fonts& fonts,
+                                                    const QColor& color)
 {
     auto* label_item = new QGraphicsSimpleTextItem(label);
     label_item->setFont(fonts.m_monomeric_attachment_point_label_font);
