@@ -18,18 +18,8 @@ class Atom;
 class Bond;
 } // namespace RDKit
 
-namespace RDGeom
-{
-class Point3D;
-} // namespace RDGeom
-
 namespace schrodinger
 {
-
-namespace rdkit_extensions
-{
-enum class ChainType;
-} // namespace rdkit_extensions
 
 namespace sketcher
 {
