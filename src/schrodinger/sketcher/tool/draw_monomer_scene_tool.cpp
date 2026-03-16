@@ -5,6 +5,7 @@
 #include <memory>
 #include <vector>
 
+#include <QtAssert>
 #include <QtMath>
 #include <QGraphicsItem>
 #include <QGraphicsSimpleTextItem>
@@ -286,6 +287,45 @@ UnboundMonomericAttachmentPointItem* get_default_attachment_point(
     return nullptr;
 }
 
+std::string get_attachment_point_for_new_monomer(
+    const MonomerType existing_monomer_type, const std::string& existing_monomer_ap, const MonomerType new_monomer_type)
+{
+    switch (new_monomer_type) {
+        case MonomerType::CHEM:
+            return "R1";
+        case MonomerType::PEPTIDE:
+            if (existing_monomer_type == MonomerType::PEPTIDE) {
+                if (existing_monomer_ap == ap_model_name_for(PeptideAP::N)) {
+                    return ap_model_name_for(PeptideAP::C);
+                } else if (existing_monomer_ap == ap_model_name_for(PeptideAP::C)) {
+                    return ap_model_name_for(PeptideAP::N);
+                }
+            }
+            return ap_model_name_for(PeptideAP::SIDECHAIN);
+        case MonomerType::NA_BASE:
+            if (existing_monomer_type == MonomerType::NA_SUGAR && existing_monomer_ap == ap_model_name_for(NASugarAP::ONE_PRIME)) {
+                return ap_model_name_for(NA_BASE_AP_N1_9);
+            }
+            return NA_BASE_AP_PAIR;
+        case MonomerType::NA_SUGAR:
+            if (existing_monomer_type == MonomerType::NA_PHOSPHATE) {
+                if (existing_monomer_ap == ap_model_name_for(NAPhosphateAP::TO_PREV_SUGAR)) {
+                    return ap_model_name_for(NASugarAP::THREE_PRIME);
+                } else if (existing_monomer_ap == ap_model_name_for(NAPhosphateAP::TO_NEXT_SUGAR)) {
+                    return ap_model_name_for(NASugarAP::FIVE_PRIME);
+                }
+            }
+            return ap_model_name_for(NASugarAP::ONE_PRIME);
+        case MonomerType::NA_PHOSPHATE:
+            if (existing_monomer_type == MonomerType::NA_SUGAR && existing_monomer_ap == ap_model_name_for(NASugarAP::THREE_PRIME)) {
+                return ap_model_name_for(NAPhosphateAP::TO_PREV_SUGAR);
+            }
+            return ap_model_name_for(NAPhosphateAP::TO_NEXT_SUGAR);
+        default:
+            Q_UNREACHABLE_RETURN("");
+    }
+}
+
 UnboundMonomericAttachmentPointItem*
 DrawMonomerSceneTool::getUnboundAttachmentPointAt(
     const QPointF& scene_pos) const
@@ -415,8 +455,7 @@ void DrawMonomerSceneTool::drawBoundMonomerHintFor(
         return;
     }
 
-    const auto* monomer =
-        static_cast<const AbstractMonomerItem*>(m_hovered_item)->getAtom();
+    auto [monomer, monomer_type] = getHoveredMonomerAndType();
 
     // Get the existing monomer's position from its molecule's conformer
     auto& conf = monomer->getOwningMol().getConformer();
@@ -448,8 +487,9 @@ void DrawMonomerSceneTool::drawBoundMonomerHintFor(
             rdkit_extensions::addMonomer(*m_frag, m_res_name, 1, chain_id);
     }
 
-    // TODO: figure out the correct second attachment point
-    auto linkage = ap_item->getAttachmentPoint().model_name + "-R2";
+    auto linkage_start = ap_item->getAttachmentPoint().model_name;
+    auto linkage_end = get_attachment_point_for_new_monomer(monomer_type, linkage_start, m_monomer_type);
+    auto linkage = linkage_start + "-" + linkage_end;
     rdkit_extensions::addConnection(*m_frag, first_idx, second_idx, linkage);
     auto bond_index_to_label =
         m_frag->getBondBetweenAtoms(first_idx, second_idx)->getIdx();
