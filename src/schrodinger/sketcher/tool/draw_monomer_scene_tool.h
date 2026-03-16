@@ -50,6 +50,12 @@ SKETCHER_API UnboundMonomericAttachmentPointItem* get_default_attachment_point(
     const MonomerType hovered_type, const MonomerType tool_type,
     const std::vector<UnboundMonomericAttachmentPointItem*>& unbound_ap_items);
 
+// TODO: add unit tests for this
+SKETCHER_API std::string
+get_attachment_point_for_new_monomer(const MonomerType existing_monomer_type,
+                                     const std::string& existing_monomer_ap,
+                                     const MonomerType new_monomer_type)
+
 /**
  * A scene tools that draws a monomer
  */
