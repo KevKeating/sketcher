@@ -538,16 +538,26 @@ void DrawMonomerSceneTool::onLeftButtonClick(
 {
     StandardSceneToolBase::onLeftButtonClick(event);
     QPointF scene_pos = event->scenePos();
-    auto* item = m_scene->getTopInteractiveItemAt(
-        scene_pos, InteractiveItemFlag::MONOMERIC);
+    auto* item = getTopMonomericItemAt(scene_pos);
+    
     if (item == nullptr) {
         // the click was on empty space, so create a new monomer here
         auto mol_pos = to_mol_xy(scene_pos);
         m_mol_model->addMonomer(m_res_name, m_chain_type, mol_pos);
-    } else if (item_matches_type_flag(item, InteractiveItemFlag::MONOMER)) {
-        // TODO: mutate monomer, or add a new monomer with a connection
-        // auto* monomer_item = dynamic_cast<AbstractMonomerItem*>(item);
-        // const auto* monomer = monomer_item->getAtom();
+    } else {
+        // TODO: use the click coordinates here
+        auto [monomer, monomer_type] = getHoveredMonomerAndType();
+        std::optional<UnboundAttachmentPoint> clicked_ap;
+        auto ap_item = getUnboundAttachmentPointAt(scene_pos);
+        if (ap_item != nullptr) {
+            clicked_ap = ap_item->getAttachmentPoint();
+        }
+        if (clicked_ap.has_value() && ) {
+             
+        } else if (clickShouldMutate(monomer, monomer_type)) {
+            // TODO: uncomment after SKETCH-2631 is pushed
+            //m_mol_model->mutateMonomers({monomer}, m_res_name, m_monomer_type);
+        }
     }
 }
 
