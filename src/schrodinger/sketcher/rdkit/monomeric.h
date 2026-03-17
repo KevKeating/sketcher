@@ -61,6 +61,11 @@ const std::string NA_BASE_AP_PAIR = "pair";
 template <typename T>
 concept IntegralOrEnum = std::integral<T> || std::is_enum_v<T>;
 
+/**
+ * Convert any of the above attachment point enums (or NA_BASE_AP_N1_9) to the
+ * equivalent model name, which is simply "R" followed by the attachment point
+ * number.
+ */
 template <IntegralOrEnum T>
 SKETCHER_API constexpr std::string ap_model_name_for(T ap) {
     auto num = static_cast<int>(ap);

@@ -350,6 +350,14 @@ DrawMonomerSceneTool::getUnboundAttachmentPointAt(
     return getDefaultUnboundAttachmentPointForHoveredMonomer();
 }
 
+static std::tuple<const RDKit::Atom*, MonomerType>
+get_monomer_and_type(const AbstractMonomerItem* const monomer_item)
+{
+    auto* monomer = monomer_item->getAtom();
+    auto monomer_type = get_monomer_type(monomer);
+    return {monomer, monomer_type};
+}
+
 std::tuple<const RDKit::Atom*, MonomerType>
 DrawMonomerSceneTool::getHoveredMonomerAndType() const
 {
@@ -358,9 +366,7 @@ DrawMonomerSceneTool::getHoveredMonomerAndType() const
     }
     const auto* monomer_item =
         static_cast<const AbstractMonomerItem*>(m_hovered_item);
-    auto* monomer = monomer_item->getAtom();
-    auto monomer_type = get_monomer_type(monomer);
-    return {monomer, monomer_type};
+    return get_monomer_and_type(monomer_item);
 }
 
 UnboundMonomericAttachmentPointItem*
@@ -467,6 +473,10 @@ static RDGeom::Point3D get_coords_for_monomer(const RDKit::Atom* const monomer)
     return conf.getAtomPos(monomer->getIdx());
 }
 
+/**
+ * @return coordinates that are BOND_LENGTH units away from the given monomer in
+ * the specified direction
+ */
 static RDGeom::Point3D
 get_default_coords_for_bound_monomer(const RDKit::Atom* const monomer,
                                      const Direction dir)
@@ -477,7 +487,6 @@ get_default_coords_for_bound_monomer(const RDKit::Atom* const monomer,
     return monomer_pos + offset;
 }
 
-// TODO: add note to docstring (and update method name?) about updating tooltip
 // should only be called when hovering over a monomer
 void DrawMonomerSceneTool::drawBoundMonomerHintFor(
     UnboundMonomericAttachmentPointItem* const ap_item)
@@ -553,8 +562,7 @@ void DrawMonomerSceneTool::onLeftButtonClick(
         auto mol_pos = to_mol_xy(scene_pos);
         m_mol_model->addMonomer(m_res_name, m_chain_type, mol_pos);
     } else {
-        // TODO: use the click coordinates here
-        auto [monomer, monomer_type] = getHoveredMonomerAndType();
+        auto [monomer, monomer_type] = get_monomer_and_type(static_cast<AbstractMonomerItem*>(item));
         std::optional<UnboundAttachmentPoint> clicked_ap;
         auto ap_item = getUnboundAttachmentPointAt(scene_pos);
         if (ap_item != nullptr) {

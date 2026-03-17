@@ -52,7 +52,10 @@ SKETCHER_API QGraphicsItem* create_label_for_bound_attachment_point(
     const bool is_secondary_connection, const std::string& ap_name,
     const QColor& color, const Fonts& fonts, const Scene* const scene);
 
-QGraphicsItem* create_label_for_bound_attachment_point(
+/**
+ * @overload accepts the graphics item for monomer in place of the scene
+ */
+SKETCHER_API QGraphicsItem* create_label_for_bound_attachment_point(
     const RDKit::Atom* const monomer, const RDKit::Atom* const bound_monomer,
     const bool is_secondary_connection, const std::string& ap_name,
     const QColor& color, const Fonts& fonts,
@@ -71,7 +74,11 @@ create_attachment_point_labels_for_connector(const RDKit::Bond* const connector,
                                              const Fonts& fonts,
                                              const Scene* const scene);
 
-std::vector<QGraphicsItem*> create_attachment_point_labels_for_connector(
+/**
+ * @overload accepts the graphics items for the monomers involved in the
+ * connection in place of the scene
+ */
+SKETCHER_API std::vector<QGraphicsItem*> create_attachment_point_labels_for_connector(
     const RDKit::Bond* const connector, const bool is_secondary_connection,
     const QColor& color, const Fonts& fonts,
     const QGraphicsItem* const begin_monomer_item,
