@@ -67,7 +67,8 @@ void MonomerHintFragmentItem::createGraphicsItems()
         auto* begin_monomer_item = atom_to_atom_item.at(bond->getBeginAtom());
         auto* end_monomer_item = atom_to_atom_item.at(bond->getEndAtom());
         auto items = create_attachment_point_labels_for_connector(
-            bond, false, STRUCTURE_HINT_COLOR, *m_fonts, begin_monomer_item, end_monomer_item);
+            bond, false, STRUCTURE_HINT_COLOR, *m_fonts, begin_monomer_item,
+            end_monomer_item);
         for (auto* item : items) {
             addToGroup(item);
         }

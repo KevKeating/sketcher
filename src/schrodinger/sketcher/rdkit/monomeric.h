@@ -67,7 +67,8 @@ concept IntegralOrEnum = std::integral<T> || std::is_enum_v<T>;
  * number.
  */
 template <IntegralOrEnum T>
-SKETCHER_API constexpr std::string ap_model_name_for(T ap) {
+SKETCHER_API constexpr std::string ap_model_name_for(T ap)
+{
     auto num = static_cast<int>(ap);
     return "R" + std::to_string(num);
 }

@@ -562,7 +562,8 @@ void DrawMonomerSceneTool::onLeftButtonClick(
         auto mol_pos = to_mol_xy(scene_pos);
         m_mol_model->addMonomer(m_res_name, m_chain_type, mol_pos);
     } else {
-        auto [monomer, monomer_type] = get_monomer_and_type(static_cast<AbstractMonomerItem*>(item));
+        auto [monomer, monomer_type] =
+            get_monomer_and_type(static_cast<AbstractMonomerItem*>(item));
         std::optional<UnboundAttachmentPoint> clicked_ap;
         auto ap_item = getUnboundAttachmentPointAt(scene_pos);
         if (ap_item != nullptr) {
