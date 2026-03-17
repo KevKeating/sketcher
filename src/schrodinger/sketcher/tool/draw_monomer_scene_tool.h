@@ -140,6 +140,7 @@ class SKETCHER_API DrawMonomerSceneTool : public StandardSceneToolBase
      * @param scene_pos The position in Scene coordinates
      */
     QGraphicsItem* getTopMonomericItemAt(const QPointF& scene_pos) const;
+    std::pair<QGraphicsItem*, std::optional<UnboundAttachmentPoint>> getTopMonomericItemAndAPAt(const QPointF& scene_pos) const;
 
     /**
      * Clear any existing attachment point labels and draw new ones for the
