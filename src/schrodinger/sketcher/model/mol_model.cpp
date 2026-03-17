@@ -651,9 +651,10 @@ void MolModel::addAttachmentPoint(const RDGeom::Point3D& coords,
 }
 
 // TODO: add bound_to_atom param
+// TODO: add linkage param
 void MolModel::addMonomer(const std::string_view res_name,
                           const rdkit_extensions::ChainType chain_type,
-                          const RDGeom::Point3D& coords)
+                          const RDGeom::Point3D& coords, const RDKit::Atom* const bound_to_monomer)
 {
     // we'll renumber the chains in assignChains, so for now we just need
     // something with the correct prefix and a unique number
@@ -666,7 +667,7 @@ void MolModel::addMonomer(const std::string_view res_name,
         set_atom_monomeric(monomer.get());
         return monomer;
     };
-    auto bound_to_atom_tag = getTagForAtom(nullptr, true);
+    auto bound_to_atom_tag = getTagForAtom(bound_to_monomer, true);
     auto cmd_func = [this, create_atom, coords, bound_to_atom_tag]() {
         addAtomChainCommandFunc(create_atom, {coords}, make_new_single_bond,
                                 bound_to_atom_tag);
