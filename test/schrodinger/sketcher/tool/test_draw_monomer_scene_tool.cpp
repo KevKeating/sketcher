@@ -25,6 +25,8 @@ namespace schrodinger
 namespace sketcher
 {
 
+MAKE_ENUM_LOGGABLE(MonomerType);
+
 /**
  * Helper that owns a monomer atom and its graphics item, and creates
  * UnboundMonomericAttachmentPointItem children for testing. The attachment
