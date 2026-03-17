@@ -50,7 +50,6 @@ SKETCHER_API UnboundMonomericAttachmentPointItem* get_default_attachment_point(
     const MonomerType hovered_type, const MonomerType tool_type,
     const std::vector<UnboundMonomericAttachmentPointItem*>& unbound_ap_items);
 
-// TODO: add unit tests for this
 /**
  * When adding a new monomer bound to an existing monomer, determine the
  * appropriate attach point to use for the new-monomer-end of the connection.
