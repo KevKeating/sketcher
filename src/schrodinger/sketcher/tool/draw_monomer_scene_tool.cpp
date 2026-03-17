@@ -454,14 +454,22 @@ void DrawMonomerSceneTool::drawAttachmentPointLabelsFor(
     }
 }
 
+// TODO: add note to docstring (and update method name?) about updating tooltip
 // should only be called when hovering over a monomer
 void DrawMonomerSceneTool::drawBoundMonomerHintFor(
     UnboundMonomericAttachmentPointItem* const ap_item)
 {
+    bool had_hint_fragment = m_hint_fragment_item != nullptr;
     delete m_hint_fragment_item;
     m_hint_fragment_item = nullptr;
 
     if (ap_item == nullptr) {
+        if (had_hint_fragment) {
+        std::cout << "emitting newCursorHintRequested(QPixmap())\n";
+            emit newCursorHintRequested(QPixmap());
+        } else {
+            std::cout << "not emitting newCursorHintRequested(QPixmap())\n";
+        }
         return;
     }
 
@@ -523,6 +531,13 @@ void DrawMonomerSceneTool::drawBoundMonomerHintFor(
         *m_frag, m_fonts, first_idx, bond_index_to_label,
         m_monomer_background_color);
     m_scene->addItem(m_hint_fragment_item);
+    if (!had_hint_fragment) {
+        std::cout << "emitting newCursorHintRequested(getDefaultCursorPixmap())\n";
+        emit newCursorHintRequested(getDefaultCursorPixmap());
+    } else {
+        std::cout << "not emitting newCursorHintRequested(getDefaultCursorPixmap())\n";
+    }
+    
 }
 
 void DrawMonomerSceneTool::onLeftButtonClick(
