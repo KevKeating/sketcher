@@ -461,6 +461,22 @@ void DrawMonomerSceneTool::drawAttachmentPointLabelsFor(
     }
 }
 
+static RDGeom::Point3D get_coords_for_monomer(const RDKit::Atom* const monomer)
+{
+    auto& conf = monomer->getOwningMol().getConformer();
+    return conf.getAtomPos(monomer->getIdx());
+}
+
+static RDGeom::Point3D
+get_default_coords_for_bound_monomer(const RDKit::Atom* const monomer,
+                                     const Direction dir)
+{
+    auto monomer_pos = get_coords_for_monomer(monomer);
+    auto offset = rdkit_extensions::direction_to_unit_vector(dir);
+    offset *= BOND_LENGTH;
+    return monomer_pos + offset;
+}
+
 // TODO: add note to docstring (and update method name?) about updating tooltip
 // should only be called when hovering over a monomer
 void DrawMonomerSceneTool::drawBoundMonomerHintFor(
@@ -474,17 +490,9 @@ void DrawMonomerSceneTool::drawBoundMonomerHintFor(
     }
 
     auto [monomer, monomer_type] = getHoveredMonomerAndType();
-
-    // Get the existing monomer's position from its molecule's conformer
-    auto& conf = monomer->getOwningMol().getConformer();
-    auto monomer_pos = conf.getAtomPos(monomer->getIdx());
-
-    // Compute the new monomer's position: BOND_LENGTH away in the given
-    // direction
     auto direction = ap_item->getAttachmentPoint().direction;
-    auto offset = rdkit_extensions::direction_to_unit_vector(direction);
-    offset *= BOND_LENGTH;
-    auto new_pos = monomer_pos + offset;
+    auto monomer_pos = get_coords_for_monomer(monomer);
+    auto new_pos = get_default_coords_for_bound_monomer(monomer, direction);
 
     // Create an RWMol fragment with two monomers and a connection between them
     m_frag = std::make_shared<RDKit::RWMol>();
@@ -539,7 +547,7 @@ void DrawMonomerSceneTool::onLeftButtonClick(
     StandardSceneToolBase::onLeftButtonClick(event);
     QPointF scene_pos = event->scenePos();
     auto* item = getTopMonomericItemAt(scene_pos);
-    
+
     if (item == nullptr) {
         // the click was on empty space, so create a new monomer here
         auto mol_pos = to_mol_xy(scene_pos);
@@ -552,11 +560,24 @@ void DrawMonomerSceneTool::onLeftButtonClick(
         if (ap_item != nullptr) {
             clicked_ap = ap_item->getAttachmentPoint();
         }
-        if (clicked_ap.has_value() && ) {
-             
+
+        if (clicked_ap.has_value()) {
+            // the user clicked on an attachment point or this monomer has a
+            // default attachment point for this tool, so add a new monomer
+            // bound to that attachment point
+            auto new_monomer_ap_name = get_attachment_point_for_new_monomer(
+                monomer_type, clicked_ap->model_name, m_monomer_type);
+            auto new_pos = get_default_coords_for_bound_monomer(
+                monomer, clicked_ap->direction);
+            // TODO: implement this in MolModel
+            // m_mol_model->addBoundMonomer(m_res_name, m_chain_type, new_pos,
+            //                              new_monomer_ap_name, monomer,
+            //                              clicked_ap->model_name);
+
         } else if (clickShouldMutate(monomer, monomer_type)) {
             // TODO: uncomment after SKETCH-2631 is pushed
-            //m_mol_model->mutateMonomers({monomer}, m_res_name, m_monomer_type);
+            // m_mol_model->mutateMonomers({monomer}, m_res_name,
+            // m_monomer_type);
         }
     }
 }
