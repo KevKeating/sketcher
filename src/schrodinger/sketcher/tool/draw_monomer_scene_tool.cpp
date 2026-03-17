@@ -396,6 +396,7 @@ bool DrawMonomerSceneTool::shouldShowPredictiveHighlighting() const
                                         m_unbound_ap_items) != nullptr;
 }
 
+// TODO: hide cursor hint when there's a hint structure shown?
 void DrawMonomerSceneTool::onMouseMove(QGraphicsSceneMouseEvent* const event)
 {
     StandardSceneToolBase::onMouseMove(event);
