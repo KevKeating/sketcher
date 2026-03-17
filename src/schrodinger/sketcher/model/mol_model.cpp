@@ -650,22 +650,11 @@ void MolModel::addAttachmentPoint(const RDGeom::Point3D& coords,
                             WhatChanged::MOLECULE);
 }
 
-// TODO: add linkage param
+// TODO: add bound_to_atom param
 void MolModel::addMonomer(const std::string_view res_name,
                           const rdkit_extensions::ChainType chain_type,
-                          const RDGeom::Point3D& coords, const RDKit::Atom* const bound_to_monomer)
+                          const RDGeom::Point3D& coords)
 {
-    // TODO: create separate addMonomer and addBoundMonomer methods?  Other than
-    //       create_atom function, they won't actually overlap much
-    // TODO: need to worry about adding whole fragment at once for nucleotide
-    //       tools (need to tag all incoming monomers and connections)
-    // TODO: if this is going to be bound to an existing monomer, get chain_id
-    //       from that monomer and figure out the correct residue number
-    // TODO: if bound, need to add tag to new bond
-    // TODO: may need to swap linkage and bond direction so that the higher
-    //       number attachment point is first
-    
-    
     // we'll renumber the chains in assignChains, so for now we just need
     // something with the correct prefix and a unique number
     auto chain_id = rdkit_extensions::toString(chain_type) + "999999";
@@ -677,10 +666,10 @@ void MolModel::addMonomer(const std::string_view res_name,
         set_atom_monomeric(monomer.get());
         return monomer;
     };
-    auto bound_to_atom_tag = getTagForAtom(bound_to_monomer, true);
+    auto bound_to_atom_tag = getTagForAtom(nullptr, true);
     auto cmd_func = [this, create_atom, coords, bound_to_atom_tag]() {
         addAtomChainCommandFunc(create_atom, {coords}, make_new_single_bond,
-                                AtomTag(-1));
+                                bound_to_atom_tag);
         rdkit_extensions::assignChains(m_mol);
     };
     doCommandUsingSnapshots(cmd_func, "Add monomer", WhatChanged::MOLECULE);

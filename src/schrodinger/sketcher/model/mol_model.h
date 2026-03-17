@@ -409,7 +409,7 @@ class SKETCHER_API MolModel : public AbstractUndoableModel
      */
     void addMonomer(const std::string_view res_name,
                     const rdkit_extensions::ChainType chain_type,
-                    const RDGeom::Point3D& coords, const RDKit::Atom* const bound_to_monomer=nullptr);
+                    const RDGeom::Point3D& coords);
 
     /**
      * Undoably add a chain of atoms, where each atom is bound to the previous
