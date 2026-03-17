@@ -396,7 +396,6 @@ bool DrawMonomerSceneTool::shouldShowPredictiveHighlighting() const
                                         m_unbound_ap_items) != nullptr;
 }
 
-// TODO: hide cursor hint when there's a hint structure shown?
 void DrawMonomerSceneTool::onMouseMove(QGraphicsSceneMouseEvent* const event)
 {
     StandardSceneToolBase::onMouseMove(event);
@@ -426,6 +425,14 @@ void DrawMonomerSceneTool::onMouseMove(QGraphicsSceneMouseEvent* const event)
                                 ap_item != hovered_ap_item);
         }
         drawBoundMonomerHintFor(hovered_ap_item);
+    }
+
+    // we want to show either the hint fragment or the cursor hint, but not both
+    bool drew_hint_fragment = hovered_ap_item != nullptr;
+    if (drew_hint_fragment == m_cursor_hint_shown) {
+        emit newCursorHintRequested(
+            drew_hint_fragment ? QPixmap() : getDefaultCursorPixmap());
+        m_cursor_hint_shown = !drew_hint_fragment;
     }
 }
 
@@ -459,17 +466,10 @@ void DrawMonomerSceneTool::drawAttachmentPointLabelsFor(
 void DrawMonomerSceneTool::drawBoundMonomerHintFor(
     UnboundMonomericAttachmentPointItem* const ap_item)
 {
-    bool had_hint_fragment = m_hint_fragment_item != nullptr;
     delete m_hint_fragment_item;
     m_hint_fragment_item = nullptr;
 
     if (ap_item == nullptr) {
-        if (had_hint_fragment) {
-        std::cout << "emitting newCursorHintRequested(QPixmap())\n";
-            emit newCursorHintRequested(QPixmap());
-        } else {
-            std::cout << "not emitting newCursorHintRequested(QPixmap())\n";
-        }
         return;
     }
 
@@ -531,13 +531,6 @@ void DrawMonomerSceneTool::drawBoundMonomerHintFor(
         *m_frag, m_fonts, first_idx, bond_index_to_label,
         m_monomer_background_color);
     m_scene->addItem(m_hint_fragment_item);
-    if (!had_hint_fragment) {
-        std::cout << "emitting newCursorHintRequested(getDefaultCursorPixmap())\n";
-        emit newCursorHintRequested(getDefaultCursorPixmap());
-    } else {
-        std::cout << "not emitting newCursorHintRequested(getDefaultCursorPixmap())\n";
-    }
-    
 }
 
 void DrawMonomerSceneTool::onLeftButtonClick(

@@ -87,6 +87,7 @@ class SKETCHER_API DrawMonomerSceneTool : public StandardSceneToolBase
     QColor m_monomer_background_color = LIGHT_BACKGROUND_COLOR;
     QColor m_unbound_ap_label_color = UNBOUND_AP_LABEL_COLOR;
     QColor m_bound_ap_label_color = UNBOUND_AP_LABEL_COLOR;
+    bool m_cursor_hint_shown = true;
 
     QPixmap createDefaultCursorPixmap() const override;
 
