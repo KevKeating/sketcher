@@ -482,7 +482,7 @@ get_default_coords_for_bound_monomer(const RDKit::Atom* const monomer,
                                      const Direction dir)
 {
     auto monomer_pos = get_coords_for_monomer(monomer);
-    auto offset = rdkit_extensions::direction_to_unit_vector(dir);
+    auto offset = rdkit_extensions::direction_to_vector(dir);
     offset *= BOND_LENGTH;
     return monomer_pos + offset;
 }
