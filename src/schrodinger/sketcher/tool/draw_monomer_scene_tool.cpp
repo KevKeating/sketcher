@@ -575,6 +575,9 @@ void DrawMonomerSceneTool::onLeftButtonClick(
             //                              clicked_ap->model_name);
 
         } else if (clickShouldMutate(monomer, monomer_type)) {
+            // the user clicked directly on the monomer and the clicked
+            // monomer's residue name is different than the tool's, so we mutate
+            // the clicked monomer
             // TODO: uncomment after SKETCH-2631 is pushed
             // m_mol_model->mutateMonomers({monomer}, m_res_name,
             // m_monomer_type);
