@@ -95,12 +95,6 @@ void DrawMonomerSceneTool::updateColorsAfterBackgroundColorChange(
 QGraphicsItem*
 DrawMonomerSceneTool::getTopMonomericItemAt(const QPointF& scene_pos) const
 {
-    return getTopMonomericItemAndAPAt().first;
-}
-
-std::pair<QGraphicsItem*, std::optional<UnboundAttachmentPoint>>
-DrawMonomerSceneTool::getTopMonomericItemAndAPAt(const QPointF& scene_pos) const
-{
     // check to see if we're over a monomer, monomeric connector, or unbound
     // attachment point item
     for (auto* item : m_scene->items(scene_pos)) {
@@ -111,12 +105,12 @@ DrawMonomerSceneTool::getTopMonomericItemAndAPAt(const QPointF& scene_pos) const
             continue;
         }
         if (item_matches_type_flag(item, InteractiveItemFlag::MONOMERIC)) {
-            return {item, std::nullopt};
+            return item;
         }
         auto* ap_item =
             qgraphicsitem_cast<UnboundMonomericAttachmentPointItem*>(item);
         if (ap_item && ap_item->withinHoverArea(scene_pos)) {
-            return {item->parentItem(), ap_item->getAttachmentPoint()};
+            return item->parentItem();
         }
     }
 
@@ -147,12 +141,12 @@ DrawMonomerSceneTool::getTopMonomericItemAndAPAt(const QPointF& scene_pos) const
                 get_hover_area_for_unbound_monomer_attachment_point_item(
                     cur_unbound_ap, monomer_item, m_fonts);
             if (unbound_ap_hover_area.contains(local_pos)) {
-                return {item, cur_unbound_ap};
+                return item;
             }
         }
     }
 
-    return {nullptr, std::nullopt};
+    return nullptr;
 }
 
 /**
@@ -544,13 +538,12 @@ void DrawMonomerSceneTool::onLeftButtonClick(
 {
     StandardSceneToolBase::onLeftButtonClick(event);
     QPointF scene_pos = event->scenePos();
-    auto [item, maybe_ap] = getTopMonomericItemAndAPAt(scene_pos);
-    
+    auto* item = m_scene->getTopInteractiveItemAt(
+        scene_pos, InteractiveItemFlag::MONOMERIC);
     if (item == nullptr) {
         // the click was on empty space, so create a new monomer here
         auto mol_pos = to_mol_xy(scene_pos);
         m_mol_model->addMonomer(m_res_name, m_chain_type, mol_pos);
-    }
     } else if (item_matches_type_flag(item, InteractiveItemFlag::MONOMER)) {
         // TODO: mutate monomer, or add a new monomer with a connection
         // auto* monomer_item = dynamic_cast<AbstractMonomerItem*>(item);
