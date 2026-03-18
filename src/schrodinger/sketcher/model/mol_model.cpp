@@ -708,15 +708,35 @@ void MolModel::addBoundMonomer(const std::string_view res_name,
     
     auto new_monomer_ap_num = ap_name_to_num(new_monomer_ap_name);
     auto bound_to_monomer_ap_num = ap_name_to_num(bound_to_monomer_ap_name);
-    bool new_monomer_listed_first_in_linkage = (new_monomer_ap_num > 0 && bound_to_monomer_ap_num > 0 && new_monomer_ap_num < bound_to_monomer_ap_num) || (new_monomer_ap_num > 0 && bound_to_monomer_ap_num < 0);
-    std::string linkage = new_monomer_listed_first_in_linkage ? new_monomer_ap_name + "-" + bound_to_monomer_ap_name : bound_to_monomer_ap_name + "-" + new_monomer_ap_name;
+    std::string linkage;
+    size_t bond_start_idx;
+    size_t bond_end_idx;
+    if ((new_monomer_ap_num > 0 && bound_to_monomer_ap_num > 0 && new_monomer_ap_num < bound_to_monomer_ap_num) || (new_monomer_ap_num > 0 && bound_to_monomer_ap_num < 0)) {
+        // list the new monomer first in the linkage string
+        bond_start_idx = m_mol.getNumAtoms();
+        bond_end_idx = bound_to_monomer->getIdx();
+        linkage = new_monomer_ap_name + "-" + bound_to_monomer_ap_name;
+    } else {
+        // list the existing monomer first in the linkage string
+        bond_start_idx = bound_to_monomer->getIdx();
+        bond_end_idx = m_mol.getNumAtoms();
+        linkage = bound_to_monomer_ap_name + "-" + new_monomer_ap_name;
+    }
+    // TODO: figure out the correct value for is_custom_bond
+    bool is_custom_bond = true;
     
-    // TODO: make sure that the lower numbered monomer comes first in the linkage
-    auto cmd_func = [this, create_atom, coords, linkage, new_monomer_listed_first_in_linkage]() {
+    auto cmd_func = [this, create_atom, coords, linkage, bond_start_idx, bond_end_idx, is_custom_bond]() {
         addAtomChainCommandFunc(create_atom, {coords}, make_new_single_bond,
                                 AtomTag(-1));
         // we took the chain id from the bound monomer, so we don't need to call
         // assignChains
+        // TODO: modify addConnection to return a pointer to the bond representing the new connection and a bool of whether it existed already
+        auto [bond, bond_is_newly_created] = rdkit_extensions::addConnection(m_mol, bond_start_idx, bond_end_idx, linkage, is_custom_bond);
+        if (bond_is_newly_created) {
+            setTagForBond(bond, m_next_bond_tag++);
+        } else {
+            setSecondaryConnectionTagForBond(bond, m_next_bond_tag++);
+        }
         
     };
 }
