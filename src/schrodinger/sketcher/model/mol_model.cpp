@@ -25,6 +25,7 @@
 #include "schrodinger/rdkit_extensions/helm.h"
 #include "schrodinger/rdkit_extensions/helm/monomer_coordgen.h"
 
+#include "schrodinger/rdkit_extensions/helm.h"
 #include "schrodinger/rdkit_extensions/molops.h"
 #include "schrodinger/rdkit_extensions/monomer_mol.h"
 #include "schrodinger/rdkit_extensions/rgroup.h"
@@ -705,7 +706,30 @@ static int get_residue_number_for_new_monomer(const std::string_view res_name,
         }
     }
     return rdkit_extensions::get_residue_number(bound_to_monomer) + res_num_offset;
-    
+}
+
+static bool get_is_custom_bond(const std::string_view res_name,
+                     const rdkit_extensions::ChainType chain_type,
+                     const RDKit::Atom* const bound_to_monomer,
+                     const std::string_view linkage)
+{
+    using rdkit_extensions::ChainType;
+    auto bound_to_monomer_chain_type = rdkit_extensions::getChainType(*bound_to_monomer);
+    if (chain_type == ChainType::PEPTIDE && bound_to_monomer_chain_type == ChainType::PEPTIDE && linkage == BACKBONE_LINKAGE) {
+        return true;
+    } else if (chain_type == ChainType::RNA && bound_to_monomer_chain_type == ChainType::RNA) {
+        auto new_monomer_type = get_na_monomer_type_from_res_name(res_name);
+        auto bound_to_monomer_type = get_monomer_type(bound_to_monomer);
+        std::unordered_set<MonomerType> monomer_types = {new_monomer_type, bound_to_monomer_type};
+        if (monomer_types == std::unordered_set<MonomerType>{MonomerType::NA_SUGAR, MonomerType::NA_BASE} && linkage == ap_model_name_for(NASugarAP::THREE_PRIME) + "-" + ap_model_name_for(NA_BASE_AP_N1_9)) {
+            // standard sugar to base linkage
+            return true;
+        } else if (monomer_types == std::unordered_set<MonomerType>{MonomerType::NA_SUGAR, MonomerType::NA_PHOSPHATE} && linkage == "R2-R1") {
+            // sugar to next or previous phosphate linkage
+            return true;
+        }
+    }
+    return false;
 }
 
 void MolModel::addBoundMonomer(const std::string_view res_name,
@@ -734,8 +758,7 @@ void MolModel::addBoundMonomer(const std::string_view res_name,
         bond_end_idx = m_mol.getNumAtoms();
         linkage = bound_to_monomer_ap_name + "-" + new_monomer_ap_name;
     }
-    // TODO: figure out the correct value for is_custom_bond
-    bool is_custom_bond = true;
+    bool is_custom_bond = get_is_custom_bond(res_name, chain_type, bound_to_monomer, linkage);
     
     auto cmd_func = [this, create_atom, coords, linkage, bond_start_idx, bond_end_idx, is_custom_bond]() {
         addAtomChainCommandFunc(create_atom, {coords}, make_new_single_bond,
