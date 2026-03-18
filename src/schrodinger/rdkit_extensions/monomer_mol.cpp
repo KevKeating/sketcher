@@ -362,11 +362,10 @@ std::tuple<RDKit::Bond*, bool> addConnection(RDKit::RWMol& monomer_mol, size_t m
     switch (connection_type) {
         case ConnectionType::FORWARD:
             return addConnection(monomer_mol, monomer1, monomer2, BACKBONE_LINKAGE);
-            break;
         case ConnectionType::SIDECHAIN:
             return addConnection(monomer_mol, monomer1, monomer2, BRANCH_LINKAGE);
-            break;
     }
+    throw std::runtime_error("Invalid connection type");
 }
 
 std::unique_ptr<Monomer> makeMonomer(const std::string_view name,

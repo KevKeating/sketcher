@@ -778,8 +778,6 @@ void MolModel::addBoundMonomer(const std::string_view res_name,
     auto cmd_func = [this, create_atom, coords, bond_start_idx, bond_end_idx, linkage, is_custom_bond]() {
         addAtomChainCommandFunc(create_atom, {coords}, make_new_single_bond,
                                 AtomTag(-1));
-        // we took the chain id from the bound monomer, so we don't need to call
-        // assignChains
         addMonomericConnectionCommandFunc(bond_start_idx, bond_end_idx, linkage, is_custom_bond);
     };
     doCommandUsingSnapshots(cmd_func, "Add bound monomer", WhatChanged::MOLECULE);
@@ -793,7 +791,6 @@ void MolModel::addMonomericConnectionCommandFunc(const size_t bond_start_idx, co
     } else {
         setSecondaryConnectionTagForBond(bond, m_next_bond_tag++);
     }
-    
 }
 
 void MolModel::addMonomericConnection(const RDKit::Atom* const monomer_one, const std::string& ap_name_one,
