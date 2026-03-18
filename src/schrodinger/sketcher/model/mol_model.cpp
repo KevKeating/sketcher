@@ -671,10 +671,6 @@ void MolModel::addMonomer(const std::string_view res_name,
     auto chain_id = rdkit_extensions::toString(chain_type) + "999999";
     auto create_atom = std::bind(create_monomer, res_name, chain_id, 1);
     auto cmd_func = [this, create_atom, coords]() {
-        // TODO: add default values for the last two arguments of
-        //       addAtomChainCommandFunc and omit them here and in
-        //       addBoundMonomer (since they don't matter at all and could be
-        //       confusing, especially the bond function)
         addAtomChainCommandFunc(create_atom, {coords}, make_new_single_bond,
                                 AtomTag(-1));
         rdkit_extensions::assignChains(m_mol);
