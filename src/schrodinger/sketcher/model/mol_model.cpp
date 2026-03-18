@@ -681,29 +681,31 @@ void MolModel::addMonomer(const std::string_view res_name,
     doCommandUsingSnapshots(cmd_func, "Add monomer", WhatChanged::MOLECULE);
 }
 
+// doesn't check whether residue number exists already - for
+// non-straight-forward cases will need to renumber after the molecule is
+// completed
 static int get_residue_number_for_new_monomer(const std::string_view res_name,
                      const rdkit_extensions::ChainType chain_type,
                      const std::string& new_monomer_ap_name,
                      const RDKit::Atom* const bound_to_monomer)
 {
-    // TODO
     using rdkit_extensions::ChainType;
-    int ideal_res_num_offset = 1;
+    int res_num_offset = 1;
     auto bound_to_monomer_chain_type = rdkit_extensions::getChainType(*bound_to_monomer);
     if (chain_type == ChainType::PEPTIDE && bound_to_monomer_chain_type == ChainType::PEPTIDE && new_monomer_ap_name == ap_model_name_for(PeptideAP::N)) {
-        ideal_res_num_offset = -1;
+        res_num_offset = -1;
     } else if (chain_type == ChainType::RNA && bound_to_monomer_chain_type == ChainType::RNA) {
         auto monomer_type = get_na_monomer_type_from_res_name(res_name);
         if (monomer_type == MonomerType::NA_SUGAR && new_monomer_ap_name == ap_model_name_for(NASugarAP::THREE_PRIME)) {
             // sugars can link to the previous residue
-            ideal_res_num_offset = -1;
-        } else if  (!(monomer_type == MonomerType::NA_PHOSPHATE && new_monomer_ap_name == ap_model_name_for(NAPhosphateAP::TO_NEXT_SUGAR) || monomer_type == MonomerType::NA_BASE && new_monomer_ap_name == NA_BASE_AP_PAIR)) {
+            res_num_offset = -1;
+        } else if  (!(monomer_type == MonomerType::NA_PHOSPHATE && new_monomer_ap_name == ap_model_name_for(NAPhosphateAP::TO_NEXT_SUGAR) || (monomer_type == MonomerType::NA_BASE && new_monomer_ap_name == NA_BASE_AP_PAIR))) {
             // phosphates and bases can link to the next residue, but all other linkages are probably within the same residue
-            ideal_res_num_offset = 0;
+            res_num_offset = 0;
         }
     }
-    auto bound_monomer_res_num = rdkit_extensions::get_residue_number(bound_to_monomer);
-    return 9999;
+    return rdkit_extensions::get_residue_number(bound_to_monomer) + res_num_offset;
+    
 }
 
 void MolModel::addBoundMonomer(const std::string_view res_name,
