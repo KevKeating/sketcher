@@ -695,7 +695,7 @@ static int get_residue_number_for_new_monomer(const std::string_view res_name,
     return 9999;
 }
 
-void addBoundMonomer(const std::string_view res_name,
+void MolModel::addBoundMonomer(const std::string_view res_name,
                      const rdkit_extensions::ChainType chain_type,
                      const RDGeom::Point3D& coords,
                      const std::string& new_monomer_ap_name,
@@ -705,6 +705,20 @@ void addBoundMonomer(const std::string_view res_name,
     auto chain_id = rdkit_extensions::get_polymer_id(bound_to_monomer);
     auto res_num = get_residue_number_for_new_monomer(res_name, chain_type, new_monomer_ap_name, bound_to_monomer);
     auto create_atom = std::bind(create_monomer, res_name, chain_id, res_num);
+    
+    auto new_monomer_ap_num = ap_name_to_num(new_monomer_ap_name);
+    auto bound_to_monomer_ap_num = ap_name_to_num(bound_to_monomer_ap_name);
+    bool new_monomer_listed_first_in_linkage = (new_monomer_ap_num > 0 && bound_to_monomer_ap_num > 0 && new_monomer_ap_num < bound_to_monomer_ap_num) || (new_monomer_ap_num > 0 && bound_to_monomer_ap_num < 0);
+    std::string linkage = new_monomer_listed_first_in_linkage ? new_monomer_ap_name + "-" + bound_to_monomer_ap_name : bound_to_monomer_ap_name + "-" + new_monomer_ap_name;
+    
+    // TODO: make sure that the lower numbered monomer comes first in the linkage
+    auto cmd_func = [this, create_atom, coords, linkage, new_monomer_listed_first_in_linkage]() {
+        addAtomChainCommandFunc(create_atom, {coords}, make_new_single_bond,
+                                AtomTag(-1));
+        // we took the chain id from the bound monomer, so we don't need to call
+        // assignChains
+        
+    };
 }
 
 void MolModel::addAtomChain(const Element& element,

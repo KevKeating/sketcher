@@ -232,6 +232,21 @@ qreal get_monomer_arrowhead_offset(const QGraphicsItem& monomer_item,
     return offset;
 }
 
+int ap_name_to_num(const std::string& attachment_point_name)
+{
+    if (attachment_point_name[0] != 'R') {
+        return ATTACHMENT_POINT_WITH_CUSTOM_NAME;
+    }
+    // remove the leading 'R' now that we've confirmed it exists
+    auto num_part_of_name = attachment_point_name.substr(1);
+    try {
+        return std::stoi(num_part_of_name);
+    } catch (const std::logic_error&) {
+        // it's not an integer
+        return ATTACHMENT_POINT_WITH_CUSTOM_NAME;
+    }
+}
+
 /**
  * Return the name and number of the attachment point specified in the given
  * linkage string.
@@ -260,18 +275,7 @@ get_attachment_point_for_atom(std::string linkage, bool is_begin_atom)
     std::string attachment_point_name = is_begin_atom
                                             ? linkage.substr(0, dash_pos)
                                             : linkage.substr(dash_pos + 1);
-    if (attachment_point_name[0] != 'R') {
-        return {ATTACHMENT_POINT_WITH_CUSTOM_NAME, attachment_point_name};
-    }
-    // remove the leading 'R' now that we've confirmed it exists
-    auto num_part_of_name = attachment_point_name.substr(1);
-    int ap_num;
-    try {
-        ap_num = std::stoi(num_part_of_name);
-    } catch (const std::logic_error&) {
-        // it's not an integer
-        ap_num = ATTACHMENT_POINT_WITH_CUSTOM_NAME;
-    }
+    auto ap_num = ap_name_to_num(attachment_point_name);
     return {ap_num, attachment_point_name};
 }
 
