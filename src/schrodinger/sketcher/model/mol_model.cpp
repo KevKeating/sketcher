@@ -711,13 +711,12 @@ void MolModel::addBoundMonomer(const std::string_view res_name,
     std::string linkage;
     size_t bond_start_idx;
     size_t bond_end_idx;
-    if ((new_monomer_ap_num > 0 && bound_to_monomer_ap_num > 0 && new_monomer_ap_num < bound_to_monomer_ap_num) || (new_monomer_ap_num > 0 && bound_to_monomer_ap_num < 0)) {
-        // list the new monomer first in the linkage string
+    // standardized linkage names place the higher number attachment point first
+    if (new_monomer_ap_num > bound_to_monomer_ap_num) {
         bond_start_idx = m_mol.getNumAtoms();
         bond_end_idx = bound_to_monomer->getIdx();
         linkage = new_monomer_ap_name + "-" + bound_to_monomer_ap_name;
     } else {
-        // list the existing monomer first in the linkage string
         bond_start_idx = bound_to_monomer->getIdx();
         bond_end_idx = m_mol.getNumAtoms();
         linkage = bound_to_monomer_ap_name + "-" + new_monomer_ap_name;
