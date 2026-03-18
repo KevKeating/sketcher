@@ -665,15 +665,6 @@ void MolModel::addMonomer(const std::string_view res_name,
                           const rdkit_extensions::ChainType chain_type,
                           const RDGeom::Point3D& coords)
 {
-    // TODO: need to worry about adding whole fragment at once for nucleotide
-    //       tools (need to tag all incoming monomers and connections)
-    // TODO: if this is going to be bound to an existing monomer, get chain_id
-    //       from that monomer and figure out the correct residue number
-    // TODO: if bound, need to add tag to new bond
-    // TODO: may need to swap linkage and bond direction so that the higher
-    //       number attachment point is first
-    
-    
     // we'll renumber the chains in assignChains, so for now we just need
     // something with the correct prefix and a unique number
     auto chain_id = rdkit_extensions::toString(chain_type) + "999999";
