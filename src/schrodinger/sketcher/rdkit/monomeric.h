@@ -136,7 +136,7 @@ SKETCHER_API MonomerType get_monomer_type(const RDKit::Atom* atom);
  * represents
  */
 SKETCHER_API MonomerType
-get_na_monomer_type_from_res_name(const std::string& res_name);
+get_na_monomer_type_from_res_name(const std::string_view res_name);
 
 /**
  * Determine the text to use for the name of the given monomer

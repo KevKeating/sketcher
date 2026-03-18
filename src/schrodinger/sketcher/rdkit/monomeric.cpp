@@ -90,7 +90,7 @@ MonomerType get_monomer_type(const RDKit::Atom* atom)
     return MonomerType::CHEM;
 }
 
-MonomerType get_na_monomer_type_from_res_name(const std::string& res_name)
+MonomerType get_na_monomer_type_from_res_name(const std::string_view res_name)
 {
     if (res_name.empty()) {
         return MonomerType::NA_BASE;
