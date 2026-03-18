@@ -729,7 +729,7 @@ static bool get_is_custom_bond(const std::string_view res_name,
     if (chain_type == ChainType::PEPTIDE &&
         bound_to_monomer_chain_type == ChainType::PEPTIDE &&
         linkage == BACKBONE_LINKAGE) {
-        return true;
+        return false;
     } else if (chain_type == ChainType::RNA &&
                bound_to_monomer_chain_type == ChainType::RNA) {
         auto new_monomer_type = get_na_monomer_type_from_res_name(res_name);
@@ -742,16 +742,16 @@ static bool get_is_custom_bond(const std::string_view res_name,
             linkage == ap_model_name_for(NASugarAP::THREE_PRIME) + "-" +
                            ap_model_name_for(NA_BASE_AP_N1_9)) {
             // standard sugar to base linkage
-            return true;
+            return false;
         } else if (monomer_types ==
                        std::unordered_set<MonomerType>{
                            MonomerType::NA_SUGAR, MonomerType::NA_PHOSPHATE} &&
                    linkage == "R2-R1") {
             // sugar to next or previous phosphate linkage
-            return true;
+            return false;
         }
     }
-    return false;
+    return true;
 }
 
 static bool get_is_custom_bond(const RDKit::Atom* const monomer_one,
@@ -802,6 +802,7 @@ void MolModel::addBoundMonomer(const std::string_view res_name,
     }
     bool is_custom_bond =
         get_is_custom_bond(res_name, chain_type, bound_to_monomer, linkage);
+    std::cout << "In addBoundMonomer, is_custom_bond = " << is_custom_bond << "\n";
 
     auto cmd_func = [this, create_atom, coords, bond_start_idx, bond_end_idx,
                      linkage, is_custom_bond]() {

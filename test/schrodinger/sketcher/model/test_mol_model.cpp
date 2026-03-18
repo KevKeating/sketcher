@@ -4322,10 +4322,7 @@ BOOST_AUTO_TEST_CASE(test_addBoundMonomer)
 
     // Verify HELM export contains the two monomers and connection
     auto helm = get_mol_text(&model, Format::HELM);
-    BOOST_TEST(helm.find("PEPTIDE1{A.G}") != std::string::npos);
-    // TODO: expected "PEPTIDE1{A.G}$$$$V2.0" but got
-    // "PEPTIDE1{A.G}$PEPTIDE1,PEPTIDE1,1:R2-1:R1$$$V2.0"
-    // BOOST_TEST(helm == "PEPTIDE1{A.G}$$$$V2.0");
+    BOOST_TEST(helm == "PEPTIDE1{A.G}$$$$V2.0");
 
     // Verify undo restores original state
     undo_stack.undo();
@@ -4339,8 +4336,7 @@ BOOST_AUTO_TEST_CASE(test_addBoundMonomer)
     BOOST_TEST(mol->getNumAtoms() == 2);
     BOOST_TEST(mol->getNumBonds() == 1);
     helm = get_mol_text(&model, Format::HELM);
-    BOOST_TEST(helm.find("PEPTIDE1{A.G}") != std::string::npos);
-    // BOOST_TEST(helm == "PEPTIDE1{A.G}$$$$V2.0");
+    BOOST_TEST(helm == "PEPTIDE1{A.G}$$$$V2.0");
 }
 
 BOOST_AUTO_TEST_CASE(test_addMonomericConnection)
