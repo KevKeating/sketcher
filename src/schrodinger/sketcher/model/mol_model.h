@@ -94,7 +94,7 @@ struct HighlightingInfo {
                      const QColor& color) :
         atom_tags(atom_tags),
         bond_tags(bond_tags),
-        color(color){};
+        color(color) {};
     std::unordered_set<AtomTag> atom_tags;
     std::unordered_set<BondTag> bond_tags;
     QColor color;
@@ -409,7 +409,14 @@ class SKETCHER_API MolModel : public AbstractUndoableModel
      */
     void addMonomer(const std::string_view res_name,
                     const rdkit_extensions::ChainType chain_type,
-                    const RDGeom::Point3D& coords, const RDKit::Atom* const bound_to_monomer=nullptr);
+                    const RDGeom::Point3D& coords);
+
+    9 void addBoundMonomer(const std::string_view res_name,
+                           const rdkit_extensions::ChainType chain_type,
+                           const RDGeom::Point3D& coords,
+                           const std::string& new_monomer_ap_name,
+                           const RDKit::Atom* const bound_to_monomer,
+                           const std::string& bound_to_monomer_ap_name);
 
     /**
      * Undoably add a chain of atoms, where each atom is bound to the previous
