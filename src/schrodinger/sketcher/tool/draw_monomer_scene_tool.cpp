@@ -577,6 +577,9 @@ void DrawMonomerSceneTool::onLeftButtonClick(
                 monomer_type, clicked_ap->model_name, m_monomer_type);
             auto new_pos = get_default_coords_for_bound_monomer(
                 monomer, clicked_ap->direction);
+            // the attachment point labels won't be valid once the new monomer
+            // is added, so clear them now (otherwise we risk a crash)
+            clearAttachmentPointsLabels();
             m_mol_model->addBoundMonomer(m_res_name, m_chain_type, new_pos,
                                          new_monomer_ap_name, monomer,
                                          clicked_ap->model_name);
