@@ -109,12 +109,12 @@ RDKIT_EXTENSIONS_API void mutateMonomer(RDKit::ROMol& monomer_mol,
  * @param monomer2 The index of the second monomer
  * @param connection_type The type of connection to add
  */
-RDKIT_EXTENSIONS_API void
+RDKIT_EXTENSIONS_API std::tuple<RDKit::Bond*, bool>
 addConnection(RDKit::RWMol& mol, size_t monomer1, size_t monomer2,
               ConnectionType connection_type = ConnectionType::FORWARD);
 
 // overload for helm writer
-RDKIT_EXTENSIONS_API void addConnection(RDKit::RWMol& mol, size_t monomer1,
+RDKIT_EXTENSIONS_API std::tuple<RDKit::Bond*, bool> addConnection(RDKit::RWMol& mol, size_t monomer1,
                                         size_t monomer2,
                                         const std::string& linkage,
                                         const bool is_custom_bond = false);

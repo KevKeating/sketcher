@@ -261,12 +261,14 @@ std::string toString(ChainType chain_type)
     }
 }
 
-void addConnection(RDKit::RWMol& monomer_mol, size_t monomer1, size_t monomer2,
+std::tuple<RDKit::Bond*, bool> addConnection(RDKit::RWMol& monomer_mol, size_t monomer1, size_t monomer2,
                    const std::string& linkage, const bool is_custom_bond)
 {
+    bool bond_is_newly_created = true;
+    RDKit::Bond* bond = monomer_mol.getBondBetweenAtoms(monomer1, monomer2);
     // if bond already exists, extend linkage information
-    if (auto bond = monomer_mol.getBondBetweenAtoms(monomer1, monomer2);
-        bond && is_custom_bond) {
+    if (bond && is_custom_bond) {
+        bond_is_newly_created = false;
         std::string old_linkage;
 
         // If the linkage property isn't set, something went wrong
@@ -316,6 +318,7 @@ void addConnection(RDKit::RWMol& monomer_mol, size_t monomer1, size_t monomer2,
             if (is_custom_bond) {
                 bond->setProp(CUSTOM_BOND, linkage_prop);
             }
+            return bond;
         };
 
         // Connections that use specific and different attachment points (such
@@ -328,12 +331,12 @@ void addConnection(RDKit::RWMol& monomer_mol, size_t monomer1, size_t monomer2,
         if (linkage.front() != 'p' && linkage.find('?') == std::string::npos) {
             auto [begin_attchpt, end_attchpt] = getAttchpts(linkage);
             if (begin_attchpt > end_attchpt) {
-                create_bond(monomer1, monomer2, ::RDKit::Bond::DATIVE, linkage);
+                bond = create_bond(monomer1, monomer2, ::RDKit::Bond::DATIVE, linkage);
                 set_directional_bond = true;
             } else if (begin_attchpt < end_attchpt) {
                 auto new_linkage =
                     fmt::format("R{}-R{}", end_attchpt, begin_attchpt);
-                create_bond(monomer2, monomer1, ::RDKit::Bond::DATIVE,
+                bond = create_bond(monomer2, monomer1, ::RDKit::Bond::DATIVE,
                             new_linkage);
                 set_directional_bond = true;
             }
@@ -342,7 +345,7 @@ void addConnection(RDKit::RWMol& monomer_mol, size_t monomer1, size_t monomer2,
         if (!set_directional_bond) {
             auto bond_type = (linkage.front() == 'p' ? ::RDKit::Bond::ZERO
                                                      : ::RDKit::Bond::SINGLE);
-            create_bond(monomer1, monomer2, bond_type, linkage);
+            bond = create_bond(monomer1, monomer2, bond_type, linkage);
         }
     }
 
@@ -350,17 +353,18 @@ void addConnection(RDKit::RWMol& monomer_mol, size_t monomer1, size_t monomer2,
         // monomer2 is a branch monomer
         monomer_mol.getAtomWithIdx(monomer2)->setProp(BRANCH_MONOMER, true);
     }
+    return {bond, bond_is_newly_created};
 }
 
-void addConnection(RDKit::RWMol& monomer_mol, size_t monomer1, size_t monomer2,
+std::tuple<RDKit::Bond*, bool> addConnection(RDKit::RWMol& monomer_mol, size_t monomer1, size_t monomer2,
                    ConnectionType connection_type)
 {
     switch (connection_type) {
         case ConnectionType::FORWARD:
-            addConnection(monomer_mol, monomer1, monomer2, BACKBONE_LINKAGE);
+            return addConnection(monomer_mol, monomer1, monomer2, BACKBONE_LINKAGE);
             break;
         case ConnectionType::SIDECHAIN:
-            addConnection(monomer_mol, monomer1, monomer2, BRANCH_LINKAGE);
+            return addConnection(monomer_mol, monomer1, monomer2, BRANCH_LINKAGE);
             break;
     }
 }
