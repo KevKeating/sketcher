@@ -232,7 +232,7 @@ qreal get_monomer_arrowhead_offset(const QGraphicsItem& monomer_item,
     return offset;
 }
 
-int ap_name_to_num(const std::string& attachment_point_name)
+int ap_name_to_num(const std::string_view attachment_point_name)
 {
     if (attachment_point_name[0] != 'R') {
         return ATTACHMENT_POINT_WITH_CUSTOM_NAME;
@@ -240,7 +240,7 @@ int ap_name_to_num(const std::string& attachment_point_name)
     // remove the leading 'R' now that we've confirmed it exists
     auto num_part_of_name = attachment_point_name.substr(1);
     try {
-        return std::stoi(num_part_of_name);
+        return std::stoi(std::string(num_part_of_name));
     } catch (const std::logic_error&) {
         // it's not an integer
         return ATTACHMENT_POINT_WITH_CUSTOM_NAME;

@@ -233,7 +233,7 @@ get_attachment_point_name_for_connection(const RDKit::Atom* monomer,
                                          const RDKit::Bond* connector,
                                          const bool is_secondary_connection);
 
-SKETCHER_API int ap_name_to_num(const std::string& attachment_point_name);
+SKETCHER_API int ap_name_to_num(const std::string_view attachment_point_name);
 
 } // namespace sketcher
 } // namespace schrodinger

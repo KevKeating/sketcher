@@ -732,6 +732,16 @@ static bool get_is_custom_bond(const std::string_view res_name,
     return false;
 }
 
+std::tuple<std::string, bool> build_linkage_string(const std::string_view ap_name_one, const std::string_view ap_name_two)
+{
+    auto ap_num_one = ap_name_to_num(ap_name_one);
+    auto ap_num_two = ap_name_to_num(ap_name_two);
+    bool flip = ap_num_one < ap_num_two;
+    std::string linkage = flip ? ap_name_two + "-" + ap_name_one : ap_name_two + "-" + ap_name_one;
+    return {linkage, flip};
+}
+
+// TODO: use string views?
 void MolModel::addBoundMonomer(const std::string_view res_name,
                      const rdkit_extensions::ChainType chain_type,
                      const RDGeom::Point3D& coords,
@@ -743,20 +753,16 @@ void MolModel::addBoundMonomer(const std::string_view res_name,
     auto res_num = get_residue_number_for_new_monomer(res_name, chain_type, new_monomer_ap_name, bound_to_monomer);
     auto create_atom = std::bind(create_monomer, res_name, chain_id, res_num);
     
-    auto new_monomer_ap_num = ap_name_to_num(new_monomer_ap_name);
-    auto bound_to_monomer_ap_num = ap_name_to_num(bound_to_monomer_ap_name);
-    std::string linkage;
+    auto [linkage, flip_monomer_order] = build_linkage_string(new_monomer_ap_name, bound_to_monomer_ap_name);
     size_t bond_start_idx;
     size_t bond_end_idx;
-    // standardized linkage names place the higher number attachment point first
-    if (new_monomer_ap_num > bound_to_monomer_ap_num) {
-        bond_start_idx = m_mol.getNumAtoms();
-        bond_end_idx = bound_to_monomer->getIdx();
-        linkage = new_monomer_ap_name + "-" + bound_to_monomer_ap_name;
-    } else {
+    // standardize the linkage name by placing the higher number attachment point first
+    if (flip_monomer_order) {
         bond_start_idx = bound_to_monomer->getIdx();
         bond_end_idx = m_mol.getNumAtoms();
-        linkage = bound_to_monomer_ap_name + "-" + new_monomer_ap_name;
+    } else {
+        bond_start_idx = m_mol.getNumAtoms();
+        bond_end_idx = bound_to_monomer->getIdx();
     }
     bool is_custom_bond = get_is_custom_bond(res_name, chain_type, bound_to_monomer, linkage);
     
@@ -765,7 +771,6 @@ void MolModel::addBoundMonomer(const std::string_view res_name,
                                 AtomTag(-1));
         // we took the chain id from the bound monomer, so we don't need to call
         // assignChains
-        // TODO: modify addConnection to return a pointer to the bond representing the new connection and a bool of whether it existed already
         auto [bond, bond_is_newly_created] = rdkit_extensions::addConnection(m_mol, bond_start_idx, bond_end_idx, linkage, is_custom_bond);
         if (bond_is_newly_created) {
             setTagForBond(bond, m_next_bond_tag++);
@@ -774,6 +779,13 @@ void MolModel::addBoundMonomer(const std::string_view res_name,
         }
         
     };
+}
+
+void MolModel::addMonomericConnection(const RDKit::Atom* const monomer_one, const std::string& ap_name_one,
+                     const RDKit::Atom* const monomer_two,
+                     const std::string& ap_name_two)
+{
+    
 }
 
 void MolModel::addAtomChain(const Element& element,
