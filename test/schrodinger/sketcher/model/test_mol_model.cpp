@@ -4289,5 +4289,123 @@ BOOST_AUTO_TEST_CASE(test_stereo_labels_update_on_atom_movement)
                    << initial_label);
 }
 
+BOOST_AUTO_TEST_CASE(test_addBoundMonomer)
+{
+    QUndoStack undo_stack;
+    TestMolModel model(&undo_stack);
+
+    // Start with a single peptide monomer
+    add_text_to_mol_model(model, "PEPTIDE1{A}$$$$V2.0");
+    const auto* mol = model.getMol();
+    BOOST_TEST(mol->getNumAtoms() == 1);
+    BOOST_TEST(mol->getNumBonds() == 0);
+    BOOST_TEST(is_atom_monomeric(mol->getAtomWithIdx(0)));
+
+    // Add a bound monomer "G" connected via R2 (C-terminus) of A -> R1
+    // (N-terminus) of G
+    auto* existing_monomer = mol->getAtomWithIdx(0);
+    RDGeom::Point3D coords(3.0, 0.0, 0.0);
+    model.addBoundMonomer("G", rdkit_extensions::ChainType::PEPTIDE, coords,
+                          "R1", existing_monomer, "R2");
+
+    mol = model.getMol();
+    BOOST_TEST(mol->getNumAtoms() == 2);
+    BOOST_TEST(mol->getNumBonds() == 1);
+    BOOST_TEST(is_atom_monomeric(mol->getAtomWithIdx(1)));
+
+    // Verify the bond has a linkage property
+    auto* bond = mol->getBondWithIdx(0);
+    BOOST_TEST(bond->hasProp(LINKAGE));
+    std::string linkage;
+    bond->getProp(LINKAGE, linkage);
+    BOOST_TEST(linkage == BACKBONE_LINKAGE);
+
+    // Verify undo restores original state
+    undo_stack.undo();
+    mol = model.getMol();
+    BOOST_TEST(mol->getNumAtoms() == 1);
+    BOOST_TEST(mol->getNumBonds() == 0);
+
+    // Verify redo re-applies the change
+    undo_stack.redo();
+    mol = model.getMol();
+    BOOST_TEST(mol->getNumAtoms() == 2);
+    BOOST_TEST(mol->getNumBonds() == 1);
+}
+
+BOOST_AUTO_TEST_CASE(test_addMonomericConnection)
+{
+    QUndoStack undo_stack;
+    TestMolModel model(&undo_stack);
+
+    // Start with two unconnected peptide monomers on separate chains
+    add_text_to_mol_model(model, "PEPTIDE1{C}|PEPTIDE2{C}$$$$V2.0");
+    const auto* mol = model.getMol();
+    BOOST_TEST(mol->getNumAtoms() == 2);
+    BOOST_TEST(mol->getNumBonds() == 0);
+
+    // Add a sidechain connection between the two monomers via R3
+    auto* monomer1 = mol->getAtomWithIdx(0);
+    auto* monomer2 = mol->getAtomWithIdx(1);
+    model.addMonomericConnection(monomer1, "R3", monomer2, "R3");
+
+    mol = model.getMol();
+    BOOST_TEST(mol->getNumAtoms() == 2);
+    BOOST_TEST(mol->getNumBonds() == 1);
+
+    // Verify the new bond has the expected linkage
+    auto* new_bond = mol->getBondWithIdx(0);
+    BOOST_TEST(new_bond->hasProp(LINKAGE));
+    std::string linkage;
+    new_bond->getProp(LINKAGE, linkage);
+    BOOST_TEST(linkage.find("R3") != std::string::npos);
+
+    // Verify undo removes the connection
+    undo_stack.undo();
+    mol = model.getMol();
+    BOOST_TEST(mol->getNumBonds() == 0);
+
+    // Verify redo re-applies
+    undo_stack.redo();
+    mol = model.getMol();
+    BOOST_TEST(mol->getNumBonds() == 1);
+}
+
+BOOST_AUTO_TEST_CASE(test_addMonomericConnection_between_chains)
+{
+    QUndoStack undo_stack;
+    TestMolModel model(&undo_stack);
+
+    // Start with two peptide chains, each with one monomer
+    add_text_to_mol_model(model, "PEPTIDE1{C.C}|PEPTIDE2{C}$$$$V2.0");
+    const auto* mol = model.getMol();
+    BOOST_TEST(mol->getNumAtoms() == 3);
+    // backbone bond between first two monomers on PEPTIDE1
+    BOOST_TEST(mol->getNumBonds() == 1);
+
+    // Add a cross-chain connection between monomer 0 and monomer 2
+    auto* monomer1 = mol->getAtomWithIdx(0);
+    auto* monomer3 = mol->getAtomWithIdx(2);
+    model.addMonomericConnection(monomer1, "R3", monomer3, "R3");
+
+    mol = model.getMol();
+    BOOST_TEST(mol->getNumBonds() == 2);
+
+    // Verify the cross-chain bond has linkage property
+    auto* cross_bond = mol->getBondBetweenAtoms(0, 2);
+    BOOST_REQUIRE(cross_bond != nullptr);
+    BOOST_TEST(cross_bond->hasProp(LINKAGE));
+
+    // Verify undo removes the cross-chain connection
+    undo_stack.undo();
+    mol = model.getMol();
+    BOOST_TEST(mol->getNumBonds() == 1);
+
+    // Verify redo re-applies
+    undo_stack.redo();
+    mol = model.getMol();
+    BOOST_TEST(mol->getNumBonds() == 2);
+}
+
 } // namespace sketcher
 } // namespace schrodinger
