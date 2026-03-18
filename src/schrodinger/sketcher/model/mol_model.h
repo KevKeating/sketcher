@@ -94,7 +94,7 @@ struct HighlightingInfo {
                      const QColor& color) :
         atom_tags(atom_tags),
         bond_tags(bond_tags),
-        color(color) {};
+        color(color){};
     std::unordered_set<AtomTag> atom_tags;
     std::unordered_set<BondTag> bond_tags;
     QColor color;
@@ -418,9 +418,10 @@ class SKETCHER_API MolModel : public AbstractUndoableModel
                          const RDKit::Atom* const bound_to_monomer,
                          const std::string& bound_to_monomer_ap_name);
 
-    void addMonomericConnection(const RDKit::Atom* const monomer_one, const std::string& ap_name_one,
-                     const RDKit::Atom* const monomer_two,
-                     const std::string& ap_name_two);
+    void addMonomericConnection(const RDKit::Atom* const monomer_one,
+                                const std::string& ap_name_one,
+                                const RDKit::Atom* const monomer_two,
+                                const std::string& ap_name_two);
 
     /**
      * Undoably add a chain of atoms, where each atom is bound to the previous
@@ -1323,7 +1324,10 @@ class SKETCHER_API MolModel : public AbstractUndoableModel
                                  const BondFunc create_bond,
                                  const AtomTag bound_to_atom_tag);
 
-    void addMonomericConnectionCommandFunc(const size_t bond_start_idx, const size_t bond_end_idx, const std::string& linkage, const bool is_custom_bond);
+    void addMonomericConnectionCommandFunc(const size_t bond_start_idx,
+                                           const size_t bond_end_idx,
+                                           const std::string& linkage,
+                                           const bool is_custom_bond);
 
     /**
      * Add a non-molecular object (a plus sign or a reaction arrow).  This

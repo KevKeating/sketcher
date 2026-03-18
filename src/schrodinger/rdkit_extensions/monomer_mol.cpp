@@ -261,8 +261,10 @@ std::string toString(ChainType chain_type)
     }
 }
 
-std::tuple<RDKit::Bond*, bool> addConnection(RDKit::RWMol& monomer_mol, size_t monomer1, size_t monomer2,
-                   const std::string& linkage, const bool is_custom_bond)
+std::tuple<RDKit::Bond*, bool> addConnection(RDKit::RWMol& monomer_mol,
+                                             size_t monomer1, size_t monomer2,
+                                             const std::string& linkage,
+                                             const bool is_custom_bond)
 {
     bool bond_is_newly_created = true;
     RDKit::Bond* bond = monomer_mol.getBondBetweenAtoms(monomer1, monomer2);
@@ -331,13 +333,14 @@ std::tuple<RDKit::Bond*, bool> addConnection(RDKit::RWMol& monomer_mol, size_t m
         if (linkage.front() != 'p' && linkage.find('?') == std::string::npos) {
             auto [begin_attchpt, end_attchpt] = getAttchpts(linkage);
             if (begin_attchpt > end_attchpt) {
-                bond = create_bond(monomer1, monomer2, ::RDKit::Bond::DATIVE, linkage);
+                bond = create_bond(monomer1, monomer2, ::RDKit::Bond::DATIVE,
+                                   linkage);
                 set_directional_bond = true;
             } else if (begin_attchpt < end_attchpt) {
                 auto new_linkage =
                     fmt::format("R{}-R{}", end_attchpt, begin_attchpt);
                 bond = create_bond(monomer2, monomer1, ::RDKit::Bond::DATIVE,
-                            new_linkage);
+                                   new_linkage);
                 set_directional_bond = true;
             }
         }
@@ -356,14 +359,17 @@ std::tuple<RDKit::Bond*, bool> addConnection(RDKit::RWMol& monomer_mol, size_t m
     return {bond, bond_is_newly_created};
 }
 
-std::tuple<RDKit::Bond*, bool> addConnection(RDKit::RWMol& monomer_mol, size_t monomer1, size_t monomer2,
-                   ConnectionType connection_type)
+std::tuple<RDKit::Bond*, bool> addConnection(RDKit::RWMol& monomer_mol,
+                                             size_t monomer1, size_t monomer2,
+                                             ConnectionType connection_type)
 {
     switch (connection_type) {
         case ConnectionType::FORWARD:
-            return addConnection(monomer_mol, monomer1, monomer2, BACKBONE_LINKAGE);
+            return addConnection(monomer_mol, monomer1, monomer2,
+                                 BACKBONE_LINKAGE);
         case ConnectionType::SIDECHAIN:
-            return addConnection(monomer_mol, monomer1, monomer2, BRANCH_LINKAGE);
+            return addConnection(monomer_mol, monomer1, monomer2,
+                                 BRANCH_LINKAGE);
     }
     throw std::runtime_error("Invalid connection type");
 }

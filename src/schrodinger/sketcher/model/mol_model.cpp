@@ -652,7 +652,9 @@ void MolModel::addAttachmentPoint(const RDGeom::Point3D& coords,
                             WhatChanged::MOLECULE);
 }
 
-static std::shared_ptr<RDKit::Atom> create_monomer(const std::string_view res_name, const std::string_view chain_id, const int residue_number)
+static std::shared_ptr<RDKit::Atom>
+create_monomer(const std::string_view res_name, const std::string_view chain_id,
+               const int residue_number)
 {
     auto monomer_unique_ptr =
         rdkit_extensions::makeMonomer(res_name, chain_id, 1, false);
@@ -681,46 +683,70 @@ void MolModel::addMonomer(const std::string_view res_name,
 // doesn't check whether residue number exists already - for
 // non-straight-forward cases will need to renumber after the molecule is
 // completed
-static int get_residue_number_for_new_monomer(const std::string_view res_name,
-                     const rdkit_extensions::ChainType chain_type,
-                     const std::string& new_monomer_ap_name,
-                     const RDKit::Atom* const bound_to_monomer)
+static int
+get_residue_number_for_new_monomer(const std::string_view res_name,
+                                   const rdkit_extensions::ChainType chain_type,
+                                   const std::string& new_monomer_ap_name,
+                                   const RDKit::Atom* const bound_to_monomer)
 {
     using rdkit_extensions::ChainType;
     int res_num_offset = 1;
-    auto bound_to_monomer_chain_type = rdkit_extensions::getChainType(*bound_to_monomer);
-    if (chain_type == ChainType::PEPTIDE && bound_to_monomer_chain_type == ChainType::PEPTIDE && new_monomer_ap_name == ap_model_name_for(PeptideAP::N)) {
+    auto bound_to_monomer_chain_type =
+        rdkit_extensions::getChainType(*bound_to_monomer);
+    if (chain_type == ChainType::PEPTIDE &&
+        bound_to_monomer_chain_type == ChainType::PEPTIDE &&
+        new_monomer_ap_name == ap_model_name_for(PeptideAP::N)) {
         res_num_offset = -1;
-    } else if (chain_type == ChainType::RNA && bound_to_monomer_chain_type == ChainType::RNA) {
+    } else if (chain_type == ChainType::RNA &&
+               bound_to_monomer_chain_type == ChainType::RNA) {
         auto monomer_type = get_na_monomer_type_from_res_name(res_name);
-        if (monomer_type == MonomerType::NA_SUGAR && new_monomer_ap_name == ap_model_name_for(NASugarAP::THREE_PRIME)) {
+        if (monomer_type == MonomerType::NA_SUGAR &&
+            new_monomer_ap_name == ap_model_name_for(NASugarAP::THREE_PRIME)) {
             // sugars can link to the previous residue
             res_num_offset = -1;
-        } else if  (!(monomer_type == MonomerType::NA_PHOSPHATE && new_monomer_ap_name == ap_model_name_for(NAPhosphateAP::TO_NEXT_SUGAR) || (monomer_type == MonomerType::NA_BASE && new_monomer_ap_name == NA_BASE_AP_PAIR))) {
-            // phosphates and bases can link to the next residue, but all other linkages are probably within the same residue
+        } else if (!(monomer_type == MonomerType::NA_PHOSPHATE &&
+                         new_monomer_ap_name ==
+                             ap_model_name_for(NAPhosphateAP::TO_NEXT_SUGAR) ||
+                     (monomer_type == MonomerType::NA_BASE &&
+                      new_monomer_ap_name == NA_BASE_AP_PAIR))) {
+            // phosphates and bases can link to the next residue, but all other
+            // linkages are probably within the same residue
             res_num_offset = 0;
         }
     }
-    return rdkit_extensions::get_residue_number(bound_to_monomer) + res_num_offset;
+    return rdkit_extensions::get_residue_number(bound_to_monomer) +
+           res_num_offset;
 }
 
 static bool get_is_custom_bond(const std::string_view res_name,
-                     const rdkit_extensions::ChainType chain_type,
-                     const RDKit::Atom* const bound_to_monomer,
-                     const std::string_view linkage)
+                               const rdkit_extensions::ChainType chain_type,
+                               const RDKit::Atom* const bound_to_monomer,
+                               const std::string_view linkage)
 {
     using rdkit_extensions::ChainType;
-    auto bound_to_monomer_chain_type = rdkit_extensions::getChainType(*bound_to_monomer);
-    if (chain_type == ChainType::PEPTIDE && bound_to_monomer_chain_type == ChainType::PEPTIDE && linkage == BACKBONE_LINKAGE) {
+    auto bound_to_monomer_chain_type =
+        rdkit_extensions::getChainType(*bound_to_monomer);
+    if (chain_type == ChainType::PEPTIDE &&
+        bound_to_monomer_chain_type == ChainType::PEPTIDE &&
+        linkage == BACKBONE_LINKAGE) {
         return true;
-    } else if (chain_type == ChainType::RNA && bound_to_monomer_chain_type == ChainType::RNA) {
+    } else if (chain_type == ChainType::RNA &&
+               bound_to_monomer_chain_type == ChainType::RNA) {
         auto new_monomer_type = get_na_monomer_type_from_res_name(res_name);
         auto bound_to_monomer_type = get_monomer_type(bound_to_monomer);
-        std::unordered_set<MonomerType> monomer_types = {new_monomer_type, bound_to_monomer_type};
-        if (monomer_types == std::unordered_set<MonomerType>{MonomerType::NA_SUGAR, MonomerType::NA_BASE} && linkage == ap_model_name_for(NASugarAP::THREE_PRIME) + "-" + ap_model_name_for(NA_BASE_AP_N1_9)) {
+        std::unordered_set<MonomerType> monomer_types = {new_monomer_type,
+                                                         bound_to_monomer_type};
+        if (monomer_types ==
+                std::unordered_set<MonomerType>{MonomerType::NA_SUGAR,
+                                                MonomerType::NA_BASE} &&
+            linkage == ap_model_name_for(NASugarAP::THREE_PRIME) + "-" +
+                           ap_model_name_for(NA_BASE_AP_N1_9)) {
             // standard sugar to base linkage
             return true;
-        } else if (monomer_types == std::unordered_set<MonomerType>{MonomerType::NA_SUGAR, MonomerType::NA_PHOSPHATE} && linkage == "R2-R1") {
+        } else if (monomer_types ==
+                       std::unordered_set<MonomerType>{
+                           MonomerType::NA_SUGAR, MonomerType::NA_PHOSPHATE} &&
+                   linkage == "R2-R1") {
             // sugar to next or previous phosphate linkage
             return true;
         }
@@ -729,15 +755,18 @@ static bool get_is_custom_bond(const std::string_view res_name,
 }
 
 static bool get_is_custom_bond(const RDKit::Atom* const monomer_one,
-                     const RDKit::Atom* const monomer_two,
-                     const std::string_view linkage)
+                               const RDKit::Atom* const monomer_two,
+                               const std::string_view linkage)
 {
     auto monomer_one_res_name = get_monomer_res_name(monomer_one);
     auto monomer_one_chain_type = rdkit_extensions::getChainType(*monomer_one);
-    return get_is_custom_bond(monomer_one_res_name, monomer_one_chain_type, monomer_two, linkage);
+    return get_is_custom_bond(monomer_one_res_name, monomer_one_chain_type,
+                              monomer_two, linkage);
 }
 
-std::tuple<std::string, bool> build_linkage_string(const std::string_view ap_name_one, const std::string_view ap_name_two)
+std::tuple<std::string, bool>
+build_linkage_string(const std::string_view ap_name_one,
+                     const std::string_view ap_name_two)
 {
     auto ap_num_one = ap_name_to_num(ap_name_one);
     auto ap_num_two = ap_name_to_num(ap_name_two);
@@ -753,35 +782,45 @@ std::tuple<std::string, bool> build_linkage_string(const std::string_view ap_nam
 
 // TODO: use string views?
 void MolModel::addBoundMonomer(const std::string_view res_name,
-                     const rdkit_extensions::ChainType chain_type,
-                     const RDGeom::Point3D& coords,
-                     const std::string& new_monomer_ap_name,
-                     const RDKit::Atom* const bound_to_monomer,
-                     const std::string& bound_to_monomer_ap_name)
+                               const rdkit_extensions::ChainType chain_type,
+                               const RDGeom::Point3D& coords,
+                               const std::string& new_monomer_ap_name,
+                               const RDKit::Atom* const bound_to_monomer,
+                               const std::string& bound_to_monomer_ap_name)
 {
     auto chain_id = rdkit_extensions::get_polymer_id(bound_to_monomer);
-    auto res_num = get_residue_number_for_new_monomer(res_name, chain_type, new_monomer_ap_name, bound_to_monomer);
+    auto res_num = get_residue_number_for_new_monomer(
+        res_name, chain_type, new_monomer_ap_name, bound_to_monomer);
     auto create_atom = std::bind(create_monomer, res_name, chain_id, res_num);
-    
-    auto [linkage, flip_monomer_order] = build_linkage_string(bound_to_monomer_ap_name, new_monomer_ap_name);
+
+    auto [linkage, flip_monomer_order] =
+        build_linkage_string(bound_to_monomer_ap_name, new_monomer_ap_name);
     size_t bond_start_idx = bound_to_monomer->getIdx();
     size_t bond_end_idx = m_mol.getNumAtoms();
     if (flip_monomer_order) {
         std::swap(bond_start_idx, bond_end_idx);
     }
-    bool is_custom_bond = get_is_custom_bond(res_name, chain_type, bound_to_monomer, linkage);
-    
-    auto cmd_func = [this, create_atom, coords, bond_start_idx, bond_end_idx, linkage, is_custom_bond]() {
+    bool is_custom_bond =
+        get_is_custom_bond(res_name, chain_type, bound_to_monomer, linkage);
+
+    auto cmd_func = [this, create_atom, coords, bond_start_idx, bond_end_idx,
+                     linkage, is_custom_bond]() {
         addAtomChainCommandFunc(create_atom, {coords}, make_new_single_bond,
                                 AtomTag(-1));
-        addMonomericConnectionCommandFunc(bond_start_idx, bond_end_idx, linkage, is_custom_bond);
+        addMonomericConnectionCommandFunc(bond_start_idx, bond_end_idx, linkage,
+                                          is_custom_bond);
     };
-    doCommandUsingSnapshots(cmd_func, "Add bound monomer", WhatChanged::MOLECULE);
+    doCommandUsingSnapshots(cmd_func, "Add bound monomer",
+                            WhatChanged::MOLECULE);
 }
 
-void MolModel::addMonomericConnectionCommandFunc(const size_t bond_start_idx, const size_t bond_end_idx, const std::string& linkage, const bool is_custom_bond)
+void MolModel::addMonomericConnectionCommandFunc(const size_t bond_start_idx,
+                                                 const size_t bond_end_idx,
+                                                 const std::string& linkage,
+                                                 const bool is_custom_bond)
 {
-    auto [bond, bond_is_newly_created] = rdkit_extensions::addConnection(m_mol, bond_start_idx, bond_end_idx, linkage, is_custom_bond);
+    auto [bond, bond_is_newly_created] = rdkit_extensions::addConnection(
+        m_mol, bond_start_idx, bond_end_idx, linkage, is_custom_bond);
     if (bond_is_newly_created) {
         setTagForBond(bond, m_next_bond_tag++);
     } else {
@@ -789,19 +828,24 @@ void MolModel::addMonomericConnectionCommandFunc(const size_t bond_start_idx, co
     }
 }
 
-void MolModel::addMonomericConnection(const RDKit::Atom* const monomer_one, const std::string& ap_name_one,
-                     const RDKit::Atom* const monomer_two,
-                     const std::string& ap_name_two)
+void MolModel::addMonomericConnection(const RDKit::Atom* const monomer_one,
+                                      const std::string& ap_name_one,
+                                      const RDKit::Atom* const monomer_two,
+                                      const std::string& ap_name_two)
 {
-    auto [linkage, flip_monomer_order] = build_linkage_string(ap_name_one, ap_name_two);
+    auto [linkage, flip_monomer_order] =
+        build_linkage_string(ap_name_one, ap_name_two);
     size_t bond_start_idx = monomer_one->getIdx();
     size_t bond_end_idx = monomer_two->getIdx();
     if (flip_monomer_order) {
         std::swap(bond_start_idx, bond_end_idx);
     }
     bool is_custom_bond = get_is_custom_bond(monomer_one, monomer_two, linkage);
-    auto cmd_func = std::bind(&MolModel::addMonomericConnectionCommandFunc, this, bond_start_idx, bond_end_idx, linkage, is_custom_bond);
-    doCommandUsingSnapshots(cmd_func, "Add monomeric connection", WhatChanged::MOLECULE);
+    auto cmd_func =
+        std::bind(&MolModel::addMonomericConnectionCommandFunc, this,
+                  bond_start_idx, bond_end_idx, linkage, is_custom_bond);
+    doCommandUsingSnapshots(cmd_func, "Add monomeric connection",
+                            WhatChanged::MOLECULE);
 }
 
 void MolModel::addAtomChain(const Element& element,
