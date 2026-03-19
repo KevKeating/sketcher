@@ -886,13 +886,16 @@ void MolModel::addMonomericConnection(const RDKit::Atom* const monomer_one,
 
     auto cmd_func = [this, bond_start_idx, bond_end_idx, linkage,
                      is_custom_bond, maybe_chains_to_merge]() {
-        addMonomericConnectionCommandFunc(bond_start_idx, bond_end_idx, linkage,
-                                          is_custom_bond);
-        std::cout << "after adding connection: " << rdkit_extensions::to_string(*getMolForExport(), rdkit_extensions::Format::HELM) << "\n";
+        // If we need to merge the chains, we have to do it before we add the
+        // bond. Otherwise, the bond will be flagged as custom bond even if
+        // is_custom_bond is false.
         if (maybe_chains_to_merge.has_value()) {
             auto [merge_from, merge_to] = *maybe_chains_to_merge;
             merge_chains(m_mol, merge_from, merge_to);
         }
+        addMonomericConnectionCommandFunc(bond_start_idx, bond_end_idx, linkage,
+                                          is_custom_bond);
+        std::cout << "after adding connection: " << rdkit_extensions::to_string(*getMolForExport(), rdkit_extensions::Format::HELM) << "\n";
     };
     doCommandUsingSnapshots(cmd_func, "Add monomeric connection",
                             WhatChanged::MOLECULE);

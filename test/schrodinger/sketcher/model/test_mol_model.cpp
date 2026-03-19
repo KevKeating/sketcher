@@ -4365,6 +4365,7 @@ BOOST_AUTO_TEST_CASE(test_addMonomericConnection)
     std::string linkage;
     new_bond->getProp(LINKAGE, linkage);
     BOOST_TEST(linkage == "R2-R1");
+    BOOST_TEST(!new_bond->hasProp(CUSTOM_BOND));
     // BOOST_TEST(linkage.find("R3") != std::string::npos);
 
     // Verify HELM export shows the connection
