@@ -261,16 +261,15 @@ std::string toString(ChainType chain_type)
     }
 }
 
-std::tuple<RDKit::Bond*, bool> addConnection(RDKit::RWMol& monomer_mol,
+std::tuple<RDKit::Bond*, ConnectionAdded> addConnection(RDKit::RWMol& monomer_mol,
                                              size_t monomer1, size_t monomer2,
                                              const std::string& linkage,
                                              const bool is_custom_bond)
 {
-    bool bond_is_newly_created = true;
+    auto bond_creation = ConnectionAdded::NEW_BOND_ADDED;
     RDKit::Bond* bond = monomer_mol.getBondBetweenAtoms(monomer1, monomer2);
     // if bond already exists, extend linkage information
-    if (bond && is_custom_bond) {
-        bond_is_newly_created = false;
+    if (bond) {
         std::string old_linkage;
 
         // If the linkage property isn't set, something went wrong
@@ -297,17 +296,31 @@ std::tuple<RDKit::Bond*, bool> addConnection(RDKit::RWMol& monomer_mol,
                             monomer1, monomer2));
         }
 
-        // FIXME: For now, don't allow multiple custom bonds between the same
-        // two atoms
-        if (bond->hasProp(CUSTOM_BOND)) {
-            throw std::runtime_error(
-                fmt::format("Multiple custom bonds not supported for "
-                            "bond between atom={} and atom={}",
-                            monomer1, monomer2));
-        }
 
-        // Update the linkage property
-        bond->setProp(CUSTOM_BOND, linkage);
+        if (is_custom_bond) {
+            // FIXME: For now, don't allow multiple custom bonds between the same
+            // two atoms
+            if (bond->hasProp(CUSTOM_BOND)) {
+                throw std::runtime_error(
+                    fmt::format("Multiple custom bonds not supported for "
+                                "bond between atom={} and atom={}",
+                                monomer1, monomer2));
+            }
+
+            // Update the linkage property
+            bond->setProp(CUSTOM_BOND, linkage);
+            bond_creation = ConnectionAdded::CUSTOM_CONNECTION_ADDED_TO_EXISTING_BOND;
+        } else {
+            if (!bond->hasProp(CUSTOM_BOND) || bond->getProp<std::string>(CUSTOM_BOND) != old_linkage) {
+                throw std::runtime_error(
+                    fmt::format("More than two connections not supported for "
+                                "bond between atom={} and atom={}",
+                                monomer1, monomer2));
+            }
+            // Update the linkage property
+            bond->setProp(LINKAGE, linkage);
+            bond_creation = ConnectionAdded::STANDARD_CONNECTION_ADDED_TO_EXISTING_BOND;
+        }
     } else {
         auto create_bond = [&](unsigned int first_monomer,
                                unsigned int second_monomer,
@@ -356,10 +369,10 @@ std::tuple<RDKit::Bond*, bool> addConnection(RDKit::RWMol& monomer_mol,
         // monomer2 is a branch monomer
         monomer_mol.getAtomWithIdx(monomer2)->setProp(BRANCH_MONOMER, true);
     }
-    return {bond, bond_is_newly_created};
+    return {bond, bond_creation};
 }
 
-std::tuple<RDKit::Bond*, bool> addConnection(RDKit::RWMol& monomer_mol,
+std::tuple<RDKit::Bond*, ConnectionAdded> addConnection(RDKit::RWMol& monomer_mol,
                                              size_t monomer1, size_t monomer2,
                                              ConnectionType connection_type)
 {

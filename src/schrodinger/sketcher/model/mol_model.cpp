@@ -15,6 +15,7 @@
 
 #include <QObject>
 #include <QUndoStack>
+#include <QtAssert>
 #include <QtGlobal>
 #include <boost/algorithm/string.hpp>
 #include <boost/range/combine.hpp>
@@ -821,12 +822,23 @@ void MolModel::addMonomericConnectionCommandFunc(const size_t bond_start_idx,
                                                  const std::string& linkage,
                                                  const bool is_custom_bond)
 {
-    auto [bond, bond_is_newly_created] = rdkit_extensions::addConnection(
+    using rdkit_extensions::ConnectionAdded;
+    auto [bond, bond_creation] = rdkit_extensions::addConnection(
         m_mol, bond_start_idx, bond_end_idx, linkage, is_custom_bond);
-    if (bond_is_newly_created) {
-        setTagForBond(bond, m_next_bond_tag++);
-    } else {
-        setSecondaryConnectionTagForBond(bond, m_next_bond_tag++);
+    switch (bond_creation) {
+        case ConnectionAdded::NEW_BOND_ADDED:
+            setTagForBond(bond, m_next_bond_tag++);
+            break;
+        case ConnectionAdded::CUSTOM_CONNECTION_ADDED_TO_EXISTING_BOND:
+            setSecondaryConnectionTagForBond(bond, m_next_bond_tag++);
+            break;
+        case ConnectionAdded::STANDARD_CONNECTION_ADDED_TO_EXISTING_BOND: {
+            // move the current tag to the secondary connection
+            auto current_tag = getTagForBond(bond);
+            setSecondaryConnectionTagForBond(bond, current_tag);
+            setTagForBond(bond, m_next_bond_tag++);
+            break;
+        }
     }
     rdkit_extensions::assignChains(m_mol);
 }
