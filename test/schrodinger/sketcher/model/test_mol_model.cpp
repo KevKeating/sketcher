@@ -4425,5 +4425,8 @@ BOOST_AUTO_TEST_CASE(test_addMonomericConnection_between_chains)
     BOOST_TEST(mol->getNumBonds() == 2);
 }
 
+// TODO: make sure that I can add a side-chain linkage when a backbone linkage already exists
+// TODO: make sure that I can add a backbone linkage when a side-chain linkage already exists
+
 } // namespace sketcher
 } // namespace schrodinger

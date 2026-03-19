@@ -749,12 +749,17 @@ get_attachment_point_name_for_connection(const RDKit::Atom* monomer,
     return "";
 }
 
-void merge_connected_chains(RDKit::ROMol& mol)
+void merge_chains(RDKit::ROMol& mol, const std::string_view merge_from, const std::string_view merge_to)
 {
-    for (auto* connector : mol.bonds()) {
-        auto start_monomer = connector->getBeginAtom();
-        auto end_monomer = connector->getEndAtom();
-    }
+    // TODO: get the highest numbered residue in merge_to and use that to renumber the residues in merge_from
+    auto polymer = rdkit_extensions::get_polymer(mol, merge_from)
+    // TODO: iterate through the monomers, change their polymer ID, and renumber their residues
+    // TODO: do I need to do anything to the polymers' S-groups?
+    // for (auto* monomer : mol.atoms()) {
+    //     if (rdkit_extensions::get_polymer_id(monomer) == merge_from) {
+    //         monomer
+    //     }
+    // }
 }
 
 } // namespace sketcher
