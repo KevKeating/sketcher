@@ -756,7 +756,7 @@ void merge_chains(RDKit::ROMol& mol, const std::string_view merge_from,
     auto to_polymer = rdkit_extensions::get_polymer(mol, merge_to);
     auto max_res_num_in_to_polymer = std::transform_reduce(
         to_polymer.atoms.begin(), to_polymer.atoms.end(),
-        0u, [](auto a, auto b) {return std::max(a, b);}, [&mol](size_t atom_idx) {
+        0u, static_cast<const unsigned int&(*)(const unsigned int&, const unsigned int&)>(&std::max), [&mol](size_t atom_idx) {
             return rdkit_extensions::get_residue_number(
                 mol.getAtomWithIdx(atom_idx));
         });
