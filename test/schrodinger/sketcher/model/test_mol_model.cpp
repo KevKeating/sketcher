@@ -4435,8 +4435,51 @@ BOOST_AUTO_TEST_CASE(test_addMonomericConnection_sidechain_interaction_between_c
     BOOST_TEST(mol->getNumBonds() == 2);
 }
 
-// TODO: make sure that I can add a side-chain linkage when a backbone linkage already exists
-// TODO: make sure that I can add a backbone linkage when a side-chain linkage already exists
+BOOST_AUTO_TEST_CASE(test_addMonomericConnection_adding_sidechain_interaction_to_backbone_connection)
+{
+    QUndoStack undo_stack;
+    TestMolModel model(&undo_stack);
+
+    add_text_to_mol_model(model, "PEPTIDE1{C.C}$$$$V2.0");
+    const auto* mol = model.getMol();
+
+    // Add a side-chain interaction
+    auto* monomer1 = mol->getAtomWithIdx(0);
+    auto* monomer2 = mol->getAtomWithIdx(1);
+    model.addMonomericConnection(monomer1, "R3", monomer2, "R3");
+
+    mol = model.getMol();
+    // we should still only have one bond, but it now represents two connections
+    BOOST_TEST(mol->getNumBonds() == 1);
+
+
+    auto helm = get_mol_text(&model, Format::HELM);
+    BOOST_TEST(helm == "PEPTIDE1{C.C}$PEPTIDE1,PEPTIDE1,1:R3-2:R3$$$V2.0");
+}
+
+BOOST_AUTO_TEST_CASE(test_addMonomericConnection_adding_backbone_connection_to_sidechain_interaction)
+{
+    QUndoStack undo_stack;
+    TestMolModel model(&undo_stack);
+
+    // Start with two peptide chains, each with one monomer
+    add_text_to_mol_model(model, "PEPTIDE1{C}|PEPTIDE2{C}$PEPTIDE1,PEPTIDE2,1:R3-1:R3$$$V2.0");
+    const auto* mol = model.getMol();
+
+    // Add a side-chain interaction
+    auto* monomer1 = mol->getAtomWithIdx(0);
+    auto* monomer2 = mol->getAtomWithIdx(1);
+    model.addMonomericConnection(monomer1, "R2", monomer2, "R1");
+
+    mol = model.getMol();
+    // we should still only have one bond, but it now represents two connections
+    BOOST_TEST(mol->getNumBonds() == 1);
+
+
+    auto helm = get_mol_text(&model, Format::HELM);
+    BOOST_TEST(helm == "PEPTIDE1{C.C}$PEPTIDE1,PEPTIDE1,1:R3-2:R3$$$V2.0");
+}
+
 // TODO: some form of RNA something or other
 
 } // namespace sketcher
