@@ -755,17 +755,14 @@ void merge_chains(RDKit::ROMol& mol, const std::string_view merge_from,
 {
     auto to_polymer = rdkit_extensions::get_polymer(mol, merge_to);
     auto max_res_num_in_to_polymer = std::transform_reduce(
-        to_polymer.atoms.begin(), to_polymer.atoms.end(),
-        0u, static_cast<const unsigned int&(*)(const unsigned int&, const unsigned int&)>(&std::max), [&mol](size_t atom_idx) {
+        to_polymer.atoms.begin(), to_polymer.atoms.end(), 0u,
+        static_cast<const unsigned int& (*)(const unsigned int&,
+                                            const unsigned int&)>(&std::max),
+        [&mol](size_t atom_idx) {
             return rdkit_extensions::get_residue_number(
                 mol.getAtomWithIdx(atom_idx));
         });
-    // TODO: get the highest numbered residue in merge_to and use that to
-    // renumber the residues in merge_from
     auto from_polymer = rdkit_extensions::get_polymer(mol, merge_from);
-    // TODO: iterate through the monomers, change their polymer ID, and renumber
-    // their residues
-    // TODO: do I need to do anything to the polymers' S-groups?
     int new_res_num = max_res_num_in_to_polymer;
     for (auto atom_idx : from_polymer.atoms) {
         auto* monomer = mol.getAtomWithIdx(atom_idx);
