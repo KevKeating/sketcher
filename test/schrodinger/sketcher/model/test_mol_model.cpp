@@ -4371,7 +4371,29 @@ BOOST_AUTO_TEST_CASE(test_addBoundMonomer_RNA)
     helm = get_mol_text(&model, Format::HELM);
     BOOST_TEST(helm == "RNA1{R(A)P.R(G)P}$$$$V2.0");
     
-    // build 
+    // Build the previous nucleotide. Start by adding the phosphate
+    auto* original_sugar = mol->getAtomWithIdx(0);
+    coords = {-3.0, 0.0, 0.0};
+    model.addBoundMonomer("P", rdkit_extensions::ChainType::RNA, coords,
+                          "R2", original_sugar, "R1");
+    helm = get_mol_text(&model, Format::HELM);
+    BOOST_TEST(helm == "RNA1{P.R(A)P.R(G)P}$$$$V2.0");
+    
+    // add the sugar
+    auto* prev_res_phosphate = mol->getAtomWithIdx(6);
+    coords = {-6.0, 0.0, 0.0};
+    model.addBoundMonomer("R", rdkit_extensions::ChainType::RNA, coords,
+                          "R2", prev_res_phosphate, "R1");
+    helm = get_mol_text(&model, Format::HELM);
+    BOOST_TEST(helm == "RNA1{R.P.R(A)P.R(G)P}$$$$V2.0");
+
+    // add the base
+    auto* prev_res_sugar = mol->getAtomWithIdx(7);
+    coords = {-6.0, 3.0, 0.0};
+    model.addBoundMonomer("C", rdkit_extensions::ChainType::RNA, coords,
+                          "R1", prev_res_sugar, "R3");
+    helm = get_mol_text(&model, Format::HELM);
+    BOOST_TEST(helm == "RNA1{R(C)P.R(A)P.R(G)P}$$$$V2.0");
 }
 
 /**
