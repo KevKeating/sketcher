@@ -4339,6 +4339,41 @@ BOOST_AUTO_TEST_CASE(test_addBoundMonomer)
     BOOST_TEST(helm == "PEPTIDE1{A.G}$$$$V2.0");
 }
 
+BOOST_AUTO_TEST_CASE(test_addBoundMonomer_RNA)
+{
+    QUndoStack undo_stack;
+    TestMolModel model(&undo_stack);
+
+    add_text_to_mol_model(model, "RNA1{R(A)P}$$$$V2.0");
+    const auto* mol = model.getMol();
+
+    // Build the next nucleotide. Start by adding the sugar to the phosphate
+    auto* existing_phosphate = mol->getAtomWithIdx(2);
+    RDGeom::Point3D coords(3.0, 0.0, 0.0);
+    model.addBoundMonomer("R", rdkit_extensions::ChainType::RNA, coords,
+                          "R1", existing_phosphate, "R2");
+    auto helm = get_mol_text(&model, Format::HELM);
+    BOOST_TEST(helm == "RNA1{R(A)P.R}$$$$V2.0");
+    
+    // add a base onto the sugar
+    auto* newly_added_sugar = mol->getAtomWithIdx(3);
+    coords = {3.0, 3.0, 0.0};
+    model.addBoundMonomer("G", rdkit_extensions::ChainType::RNA, coords,
+                          "R1", newly_added_sugar, "R3");
+    helm = get_mol_text(&model, Format::HELM);
+    BOOST_TEST(helm == "RNA1{R(A)P.R(G)}$$$$V2.0");
+
+    // add a phosphate onto the sugar
+    newly_added_sugar = mol->getAtomWithIdx(3);
+    coords = {6.0, 3.0, 0.0};
+    model.addBoundMonomer("P", rdkit_extensions::ChainType::RNA, coords,
+                          "R1", newly_added_sugar, "R2");
+    helm = get_mol_text(&model, Format::HELM);
+    BOOST_TEST(helm == "RNA1{R(A)P.R(G)P}$$$$V2.0");
+    
+    // build 
+}
+
 /**
  * Confirm that combining two peptide chains via a standard backbone connection
  * produces HELM output with only a single chain

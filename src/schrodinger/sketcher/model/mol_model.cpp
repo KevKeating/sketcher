@@ -740,7 +740,7 @@ static bool get_is_custom_bond(const std::string_view res_name,
         if (monomer_types ==
                 std::unordered_set<MonomerType>{MonomerType::NA_SUGAR,
                                                 MonomerType::NA_BASE} &&
-            linkage == ap_model_name_for(NASugarAP::THREE_PRIME) + "-" +
+            linkage == ap_model_name_for(NASugarAP::ONE_PRIME) + "-" +
                            ap_model_name_for(NA_BASE_AP_N1_9)) {
             // standard sugar to base linkage
             return false;
