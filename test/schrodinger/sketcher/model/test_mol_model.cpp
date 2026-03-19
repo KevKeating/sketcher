@@ -4339,7 +4339,11 @@ BOOST_AUTO_TEST_CASE(test_addBoundMonomer)
     BOOST_TEST(helm == "PEPTIDE1{A.G}$$$$V2.0");
 }
 
-BOOST_AUTO_TEST_CASE(test_addMonomericConnection)
+/**
+ * Confirm that combining two peptide chains via a standard backbone connection
+ * produces HELM output with only a single chain
+ */
+BOOST_AUTO_TEST_CASE(test_addMonomericConnection_combining_two_chains)
 {
     QUndoStack undo_stack;
     TestMolModel model(&undo_stack);
@@ -4359,7 +4363,7 @@ BOOST_AUTO_TEST_CASE(test_addMonomericConnection)
     BOOST_TEST(mol->getNumAtoms() == 2);
     BOOST_TEST(mol->getNumBonds() == 1);
 
-    // Verify the new bond has the expected linkage
+    // Verify the new bond has the expected linkage and isn't flagged as custom
     auto* new_bond = mol->getBondWithIdx(0);
     BOOST_TEST(new_bond->hasProp(LINKAGE));
     std::string linkage;
@@ -4385,7 +4389,11 @@ BOOST_AUTO_TEST_CASE(test_addMonomericConnection)
     BOOST_TEST(mol->getNumBonds() == 1);
 }
 
-BOOST_AUTO_TEST_CASE(test_addMonomericConnection_between_chains)
+/**
+ * Confirm that linking two peptide chains via a sidechain interaction produces
+ * HELM output that shows a custom bond between two chains
+ */
+BOOST_AUTO_TEST_CASE(test_addMonomericConnection_sidechain_interaction_between_chains)
 {
     QUndoStack undo_stack;
     TestMolModel model(&undo_stack);
@@ -4412,7 +4420,8 @@ BOOST_AUTO_TEST_CASE(test_addMonomericConnection_between_chains)
 
     // Verify HELM export shows the cross-chain connection
     // TODO: get_mol_text returns a HELM string that doesn't contain "R3"
-    // auto helm = get_mol_text(&model, Format::HELM);
+    auto helm = get_mol_text(&model, Format::HELM);
+    BOOST_TEST(helm == "PEPTIDE1{C.C}|PEPTIDE2{C}$PEPTIDE1,PEPTIDE2,1:R3-1:R3$$$V2.0");
     // BOOST_TEST(helm.find("R3") != std::string::npos);
 
     // Verify undo removes the cross-chain connection
@@ -4428,6 +4437,7 @@ BOOST_AUTO_TEST_CASE(test_addMonomericConnection_between_chains)
 
 // TODO: make sure that I can add a side-chain linkage when a backbone linkage already exists
 // TODO: make sure that I can add a backbone linkage when a side-chain linkage already exists
+// TODO: some form of RNA something or other
 
 } // namespace sketcher
 } // namespace schrodinger
