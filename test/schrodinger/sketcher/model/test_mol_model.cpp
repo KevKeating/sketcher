@@ -4537,7 +4537,24 @@ BOOST_AUTO_TEST_CASE(test_addMonomericConnection_adding_backbone_connection_to_s
     BOOST_TEST(helm == "PEPTIDE1{C.C}$PEPTIDE1,PEPTIDE1,1:R3-2:R3$$$V2.0");
 }
 
-// TODO: some form of RNA something or other
+BOOST_AUTO_TEST_CASE(test_addMonomericConnection_combining_two_nucleotides)
+{
+    QUndoStack undo_stack;
+    TestMolModel model(&undo_stack);
+
+    // Start with two peptide chains, each with one monomer
+    add_text_to_mol_model(model, "RNA1{R(A)P}|RNA2{R(C)P}$$$$V2.0");
+    const auto* mol = model.getMol();
+
+    // Add a side-chain interaction
+    auto* phosphate = mol->getAtomWithIdx(2);
+    auto* ribose = mol->getAtomWithIdx(3);
+    model.addMonomericConnection(phosphate, "R2", ribose, "R1");
+
+    mol = model.getMol();
+    auto helm = get_mol_text(&model, Format::HELM);
+    BOOST_TEST(helm == "RNA1{R(A)P.R(C)P}$$$$V2.0");
+}
 
 } // namespace sketcher
 } // namespace schrodinger
