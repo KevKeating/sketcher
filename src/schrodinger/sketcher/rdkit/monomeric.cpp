@@ -1,6 +1,8 @@
 #include "schrodinger/sketcher/rdkit/monomeric.h"
 
+#include <algorithm>
 #include <functional>
+#include <numeric>
 #include <optional>
 
 #include <boost/range/join.hpp>
@@ -13,7 +15,6 @@
 #include <rdkit/GraphMol/Atom.h>
 #include <rdkit/GraphMol/Bond.h>
 #include <rdkit/GraphMol/MonomerInfo.h>
-#include <rdkit/GraphMol/ROMol.h>
 #include <rdkit/GraphMol/ROMol.h>
 
 #include "schrodinger/rdkit_extensions/helm.h"
@@ -749,17 +750,30 @@ get_attachment_point_name_for_connection(const RDKit::Atom* monomer,
     return "";
 }
 
-void merge_chains(RDKit::ROMol& mol, const std::string_view merge_from, const std::string_view merge_to)
+void merge_chains(RDKit::ROMol& mol, const std::string_view merge_from,
+                  const std::string& merge_to)
 {
-    // TODO: get the highest numbered residue in merge_to and use that to renumber the residues in merge_from
-    auto polymer = rdkit_extensions::get_polymer(mol, merge_from)
-    // TODO: iterate through the monomers, change their polymer ID, and renumber their residues
+    auto to_polymer = rdkit_extensions::get_polymer(mol, merge_to);
+    auto max_res_num_in_to_polymer = std::transform_reduce(
+        to_polymer.atoms.begin(), to_polymer.atoms.end(),
+        0u, [](auto a, auto b) {return std::max(a, b);}, [&mol](size_t atom_idx) {
+            return rdkit_extensions::get_residue_number(
+                mol.getAtomWithIdx(atom_idx));
+        });
+    // TODO: get the highest numbered residue in merge_to and use that to
+    // renumber the residues in merge_from
+    auto from_polymer = rdkit_extensions::get_polymer(mol, merge_from);
+    // TODO: iterate through the monomers, change their polymer ID, and renumber
+    // their residues
     // TODO: do I need to do anything to the polymers' S-groups?
-    // for (auto* monomer : mol.atoms()) {
-    //     if (rdkit_extensions::get_polymer_id(monomer) == merge_from) {
-    //         monomer
-    //     }
-    // }
+    int new_res_num = max_res_num_in_to_polymer;
+    for (auto atom_idx : from_polymer.atoms) {
+        auto* monomer = mol.getAtomWithIdx(atom_idx);
+        auto monomer_info = monomer->getMonomerInfo();
+        auto* res_info = static_cast<RDKit::AtomPDBResidueInfo*>(monomer_info);
+        res_info->setChainId(merge_to);
+        res_info->setResidueNumber(++new_res_num);
+    }
 }
 
 } // namespace sketcher

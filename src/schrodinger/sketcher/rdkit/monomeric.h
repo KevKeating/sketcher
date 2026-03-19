@@ -18,6 +18,7 @@ namespace RDKit
 {
 class Atom;
 class Bond;
+class ROMol;
 } // namespace RDKit
 
 namespace schrodinger
@@ -235,7 +236,7 @@ get_attachment_point_name_for_connection(const RDKit::Atom* monomer,
 
 SKETCHER_API int ap_name_to_num(const std::string_view attachment_point_name);
 
-SKETCHER_API void merge_chains(RDKit::RWMol& mol, const std::string_view merge_from, const std::string_view merge_to);
+SKETCHER_API void merge_chains(RDKit::ROMol& mol, const std::string_view merge_from, const std::string& merge_to);
 
 } // namespace sketcher
 } // namespace schrodinger
