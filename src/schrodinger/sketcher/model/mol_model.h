@@ -414,9 +414,9 @@ class SKETCHER_API MolModel : public AbstractUndoableModel
     void addBoundMonomer(const std::string_view res_name,
                          const rdkit_extensions::ChainType chain_type,
                          const RDGeom::Point3D& coords,
-                         const std::string& new_monomer_ap_name,
+                         const std::string_view new_monomer_ap_name,
                          const RDKit::Atom* const bound_to_monomer,
-                         const std::string& bound_to_monomer_ap_name);
+                         const std::string_view bound_to_monomer_ap_name);
 
     void addMonomericConnection(const RDKit::Atom* const monomer_one,
                                 const std::string& ap_name_one,

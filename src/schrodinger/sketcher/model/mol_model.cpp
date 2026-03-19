@@ -653,6 +653,9 @@ void MolModel::addAttachmentPoint(const RDGeom::Point3D& coords,
                             WhatChanged::MOLECULE);
 }
 
+/**
+ * Create a monomeric atom with the specified residue name, chain, and number.
+ */
 static std::shared_ptr<RDKit::Atom>
 create_monomer(const std::string_view res_name, const std::string_view chain_id,
                const int residue_number)
@@ -681,13 +684,23 @@ void MolModel::addMonomer(const std::string_view res_name,
     doCommandUsingSnapshots(cmd_func, "Add monomer", WhatChanged::MOLECULE);
 }
 
-// doesn't check whether residue number exists already - for
-// non-straight-forward cases will need to renumber after the molecule is
-// completed
+/**
+ * Determine the appropriate residue number to use for a new monomer that will
+ * be connected to an existing monomer.  Note that this function does *not*
+ * check for duplicate residue numbers; the new residue number is based entirely
+ * off of the residue number from bound_to_monomer (and possibly incremented or
+ * decremented).
+ * @param res_name The residue name of the monomer to be added
+ * @param chain_type The type of the monomer to be added
+ * @param new_monomer_ap_name The new monomer's attachment point that will be
+ * used to connect it to bound_to_monomer
+ * @param bound_to_monomer The existing monomer that the new monomer will be
+ * bound to
+ */
 static int
 get_residue_number_for_new_monomer(const std::string_view res_name,
                                    const rdkit_extensions::ChainType chain_type,
-                                   const std::string& new_monomer_ap_name,
+                                   const std::string_view new_monomer_ap_name,
                                    const RDKit::Atom* const bound_to_monomer)
 {
     using rdkit_extensions::ChainType;
@@ -719,6 +732,11 @@ get_residue_number_for_new_monomer(const std::string_view res_name,
            res_num_offset;
 }
 
+/**
+ * Determine whether the described linkage is a standard bond (i.e. does not
+ * need the CUSTOM_BOND property) or a custom bond (which requires the
+ * CUSTOM_BOND) property
+ */
 static bool get_is_custom_bond(const std::string_view res_name,
                                const rdkit_extensions::ChainType chain_type,
                                const RDKit::Atom* const bound_to_monomer,
@@ -755,6 +773,9 @@ static bool get_is_custom_bond(const std::string_view res_name,
     return true;
 }
 
+/**
+ * @overload
+ */
 static bool get_is_custom_bond(const RDKit::Atom* const monomer_one,
                                const RDKit::Atom* const monomer_two,
                                const std::string_view linkage)
@@ -765,6 +786,13 @@ static bool get_is_custom_bond(const RDKit::Atom* const monomer_one,
                               monomer_two, linkage);
 }
 
+/**
+ * Combine the two attachment point names to form a standardized linkage string.
+ * For example, attachment points "R2" and "R1" would form the linkage string
+ * "R2-R1". Note that, in a standardized linkage string, higher numbered
+ * attachment points are listed before lower numbered one, and numbered
+ * attachment points are listed before attachment points with custom names.
+ */
 std::tuple<std::string, bool>
 build_linkage_string(const std::string_view ap_name_one,
                      const std::string_view ap_name_two)
@@ -781,13 +809,12 @@ build_linkage_string(const std::string_view ap_name_one,
     return {linkage, flip};
 }
 
-// TODO: use string views?
 void MolModel::addBoundMonomer(const std::string_view res_name,
                                const rdkit_extensions::ChainType chain_type,
                                const RDGeom::Point3D& coords,
-                               const std::string& new_monomer_ap_name,
+                               const std::string_view new_monomer_ap_name,
                                const RDKit::Atom* const bound_to_monomer,
-                               const std::string& bound_to_monomer_ap_name)
+                               const std::string_view bound_to_monomer_ap_name)
 {
     auto chain_id = rdkit_extensions::get_polymer_id(bound_to_monomer);
     auto res_num = get_residue_number_for_new_monomer(
@@ -803,8 +830,6 @@ void MolModel::addBoundMonomer(const std::string_view res_name,
     }
     bool is_custom_bond =
         get_is_custom_bond(res_name, chain_type, bound_to_monomer, linkage);
-    std::cout << "In addBoundMonomer, is_custom_bond = " << is_custom_bond
-              << "\n";
 
     auto cmd_func = [this, create_atom, coords, bond_start_idx, bond_end_idx,
                      linkage, is_custom_bond]() {
@@ -823,6 +848,7 @@ void MolModel::addMonomericConnectionCommandFunc(const size_t bond_start_idx,
                                                  const bool is_custom_bond)
 {
     using rdkit_extensions::ConnectionAdded;
+    Q_ASSERT(m_allow_edits);
     auto [bond, bond_creation] = rdkit_extensions::addConnection(
         m_mol, bond_start_idx, bond_end_idx, linkage, is_custom_bond);
     switch (bond_creation) {
@@ -843,6 +869,10 @@ void MolModel::addMonomericConnectionCommandFunc(const size_t bond_start_idx,
     rdkit_extensions::assignChains(m_mol);
 }
 
+/**
+ * Determine whether a connection between the two monomers means that we'll need
+ * to merge the chains.
+ */
 static std::optional<std::tuple<std::string, std::string>>
 determine_if_merge_needed(const RDKit::Atom* const monomer_one,
                           const RDKit::Atom* const monomer_two,
@@ -889,11 +919,8 @@ void MolModel::addMonomericConnection(const RDKit::Atom* const monomer_one,
     bool is_custom_bond = get_is_custom_bond(monomer_one, monomer_two, linkage);
     auto maybe_chains_to_merge =
         determine_if_merge_needed(monomer_one, monomer_two, is_custom_bond);
-    std::cout << "is_custom_bond = "  << is_custom_bond << "\n";
-    std::cout << "maybe_chains_to_merge.has_value() = "  << maybe_chains_to_merge.has_value() << "\n";
     if (maybe_chains_to_merge.has_value()) {
         auto [merge_from, merge_to] = *maybe_chains_to_merge;
-        std::cout << "\t" << merge_from << "\n\t" << merge_to << "\n";
     }
 
     auto cmd_func = [this, bond_start_idx, bond_end_idx, linkage,
@@ -907,7 +934,6 @@ void MolModel::addMonomericConnection(const RDKit::Atom* const monomer_one,
         }
         addMonomericConnectionCommandFunc(bond_start_idx, bond_end_idx, linkage,
                                           is_custom_bond);
-        std::cout << "after adding connection: " << rdkit_extensions::to_string(*getMolForExport(), rdkit_extensions::Format::HELM) << "\n";
     };
     doCommandUsingSnapshots(cmd_func, "Add monomeric connection",
                             WhatChanged::MOLECULE);
