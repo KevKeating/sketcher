@@ -4345,7 +4345,7 @@ BOOST_AUTO_TEST_CASE(test_addMonomericConnection)
     TestMolModel model(&undo_stack);
 
     // Start with two unconnected peptide monomers on separate chains
-    add_text_to_mol_model(model, "PEPTIDE1{C}|PEPTIDE2{C}$$$$V2.0");
+    add_text_to_mol_model(model, "PEPTIDE1{A}|PEPTIDE2{A}$$$$V2.0");
     const auto* mol = model.getMol();
     BOOST_TEST(mol->getNumAtoms() == 2);
     BOOST_TEST(mol->getNumBonds() == 0);
@@ -4353,7 +4353,7 @@ BOOST_AUTO_TEST_CASE(test_addMonomericConnection)
     // Add a sidechain connection between the two monomers via R3
     auto* monomer1 = mol->getAtomWithIdx(0);
     auto* monomer2 = mol->getAtomWithIdx(1);
-    model.addMonomericConnection(monomer1, "R3", monomer2, "R3");
+    model.addMonomericConnection(monomer1, "R2", monomer2, "R1");
 
     mol = model.getMol();
     BOOST_TEST(mol->getNumAtoms() == 2);
@@ -4364,11 +4364,13 @@ BOOST_AUTO_TEST_CASE(test_addMonomericConnection)
     BOOST_TEST(new_bond->hasProp(LINKAGE));
     std::string linkage;
     new_bond->getProp(LINKAGE, linkage);
-    BOOST_TEST(linkage.find("R3") != std::string::npos);
+    BOOST_TEST(linkage == "R2-R1");
+    // BOOST_TEST(linkage.find("R3") != std::string::npos);
 
     // Verify HELM export shows the connection
     // TODO: get_mol_text returns a HELM string that doesn't contain "R3"
-    // auto helm = get_mol_text(&model, Format::HELM);
+    auto helm = get_mol_text(&model, Format::HELM);
+    BOOST_TEST(helm == "PEPTIDE1{A.A}$$$$V2.0");
     // BOOST_TEST(helm.find("R3") != std::string::npos);
 
     // Verify undo removes the connection

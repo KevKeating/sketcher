@@ -827,6 +827,33 @@ void MolModel::addMonomericConnectionCommandFunc(const size_t bond_start_idx,
     } else {
         setSecondaryConnectionTagForBond(bond, m_next_bond_tag++);
     }
+    rdkit_extensions::assignChains(m_mol);
+}
+
+static std::optional<std::tuple<std::string, std::string>> determine_if_merge_needed(const RDKit::Atom* const monomer_one, const RDKit::Atom* const monomer_two, const bool is_custom_bond)
+{
+    if (is_custom_bond) {
+        return std::nullopt;
+    }
+    auto chain_type_one = rdkit_extensions::getChainType(*monomer_one);
+    auto chain_type_two = rdkit_extensions::getChainType(*monomer_two);
+    if (chain_type_one != chain_type_two) {
+        return std::nullopt;
+    }
+    auto polymer_id_one = rdkit_extensions::get_polymer_id(monomer_one);
+    auto polymer_id_two = rdkit_extensions::get_polymer_id(monomer_two);
+    if (polymer_id_one == polymer_id_two) {
+        return std::nullopt;
+    }
+    auto chain_type_name = rdkit_extensions::toString(chain_type_one);
+    auto polymer_num_one = std::stoi(polymer_id_one.substr(chain_type_name.size()));
+    auto polymer_num_two = std::stoi(polymer_id_two.substr(chain_type_name.size()));
+    auto merge_from = polymer_id_two;
+    auto merge_to = polymer_id_one;
+    if (polymer_num_two < polymer_num_one) {
+        std::swap(merge_from, merge_to);
+    }
+    return {merge_from, merge_to};
 }
 
 void MolModel::addMonomericConnection(const RDKit::Atom* const monomer_one,
@@ -842,6 +869,18 @@ void MolModel::addMonomericConnection(const RDKit::Atom* const monomer_one,
         std::swap(bond_start_idx, bond_end_idx);
     }
     bool is_custom_bond = get_is_custom_bond(monomer_one, monomer_two, linkage);
+    if (!is_custom_bond) {
+        auto chain_type_one = rdkit_extensions::getChainType(monomer_one);
+        auto chain_type_two = rdkit_extensions::getChainType(monomer_two);
+        if (chain_type_one == chain_type_two) {
+            
+        }
+        auto polymer_id_one = rdkit_extensions::get_polymer_id(monomer_one);
+        auto polymer_id_two = rdkit_extensions::get_polymer_id(monomer_two);
+        if (polymer_id_one != polymer_id_two) {
+            
+        }
+    }
     auto cmd_func =
         std::bind(&MolModel::addMonomericConnectionCommandFunc, this,
                   bond_start_idx, bond_end_idx, linkage, is_custom_bond);

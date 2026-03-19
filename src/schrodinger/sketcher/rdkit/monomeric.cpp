@@ -14,6 +14,7 @@
 #include <rdkit/GraphMol/Bond.h>
 #include <rdkit/GraphMol/MonomerInfo.h>
 #include <rdkit/GraphMol/ROMol.h>
+#include <rdkit/GraphMol/ROMol.h>
 
 #include "schrodinger/rdkit_extensions/helm.h"
 #include "schrodinger/sketcher/molviewer/monomer_constants.h"
@@ -746,6 +747,14 @@ get_attachment_point_name_for_connection(const RDKit::Atom* monomer,
         }
     }
     return "";
+}
+
+void merge_connected_chains(RDKit::ROMol& mol)
+{
+    for (auto* connector : mol.bonds()) {
+        auto start_monomer = connector->getBeginAtom();
+        auto end_monomer = connector->getEndAtom();
+    }
 }
 
 } // namespace sketcher
