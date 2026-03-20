@@ -748,6 +748,7 @@ static bool get_is_custom_bond(const std::string_view res_name,
     if (chain_type == ChainType::PEPTIDE &&
         bound_to_monomer_chain_type == ChainType::PEPTIDE &&
         linkage == BACKBONE_LINKAGE) {
+        // peptide backbone linkage
         return false;
     } else if (chain_type == ChainType::RNA &&
                bound_to_monomer_chain_type == ChainType::RNA) {
