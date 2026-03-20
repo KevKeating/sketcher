@@ -109,6 +109,11 @@ RDKIT_EXTENSIONS_API void mutateMonomer(RDKit::ROMol& monomer_mol,
  * @param monomer1 The index of the first monomer
  * @param monomer2 The index of the second monomer
  * @param connection_type The type of connection to add
+ * 
+ * @return A tuple of
+ *   - the bond representing the new monomeric connection
+ *   - a flag indicated whether the bond was newly created, or whether a new
+ *     connection was added to an existing bond
  */
 RDKIT_EXTENSIONS_API std::tuple<RDKit::Bond*, ConnectionAdded>
 addConnection(RDKit::RWMol& mol, size_t monomer1, size_t monomer2,
