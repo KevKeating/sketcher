@@ -4289,6 +4289,9 @@ BOOST_AUTO_TEST_CASE(test_stereo_labels_update_on_atom_movement)
                    << initial_label);
 }
 
+/**
+ * Use addBoundMonomer to extend a peptide chain
+ */
 BOOST_AUTO_TEST_CASE(test_addBoundMonomer)
 {
     QUndoStack undo_stack;
@@ -4339,6 +4342,10 @@ BOOST_AUTO_TEST_CASE(test_addBoundMonomer)
     BOOST_TEST(helm == "PEPTIDE1{A.G}$$$$V2.0");
 }
 
+/**
+ * Use addBoundMonomer to build two full nucleotides: one 3' to an existing
+ * nucleotide and one 5' to the same existing nucleotide.
+ */
 BOOST_AUTO_TEST_CASE(test_addBoundMonomer_RNA)
 {
     QUndoStack undo_stack;
@@ -4427,13 +4434,10 @@ BOOST_AUTO_TEST_CASE(test_addMonomericConnection_combining_two_chains)
     new_bond->getProp(LINKAGE, linkage);
     BOOST_TEST(linkage == "R2-R1");
     BOOST_TEST(!new_bond->hasProp(CUSTOM_BOND));
-    // BOOST_TEST(linkage.find("R3") != std::string::npos);
 
-    // Verify HELM export shows the connection
-    // TODO: get_mol_text returns a HELM string that doesn't contain "R3"
+    // Verify HELM export shows a single chain
     auto helm = get_mol_text(&model, Format::HELM);
     BOOST_TEST(helm == "PEPTIDE1{A.A}$$$$V2.0");
-    // BOOST_TEST(helm.find("R3") != std::string::npos);
 
     // Verify undo removes the connection
     undo_stack.undo();
@@ -4476,10 +4480,8 @@ BOOST_AUTO_TEST_CASE(test_addMonomericConnection_sidechain_interaction_between_c
     BOOST_TEST(cross_bond->hasProp(LINKAGE));
 
     // Verify HELM export shows the cross-chain connection
-    // TODO: get_mol_text returns a HELM string that doesn't contain "R3"
     auto helm = get_mol_text(&model, Format::HELM);
     BOOST_TEST(helm == "PEPTIDE1{C.C}|PEPTIDE2{C}$PEPTIDE1,PEPTIDE2,1:R3-1:R3$$$V2.0");
-    // BOOST_TEST(helm.find("R3") != std::string::npos);
 
     // Verify undo removes the cross-chain connection
     undo_stack.undo();
@@ -4492,6 +4494,11 @@ BOOST_AUTO_TEST_CASE(test_addMonomericConnection_sidechain_interaction_between_c
     BOOST_TEST(mol->getNumBonds() == 2);
 }
 
+/**
+ * Make sure that we can add a custom connection to a bond that already contains
+ * a standard connection. In other words, take two cysteines with a backbone
+ * bond and add a disulfide bond.
+ */
 BOOST_AUTO_TEST_CASE(test_addMonomericConnection_adding_sidechain_interaction_to_backbone_connection)
 {
     QUndoStack undo_stack;
@@ -4514,6 +4521,11 @@ BOOST_AUTO_TEST_CASE(test_addMonomericConnection_adding_sidechain_interaction_to
     BOOST_TEST(helm == "PEPTIDE1{C.C}$PEPTIDE1,PEPTIDE1,1:R3-2:R3$$$V2.0");
 }
 
+/**
+ * Make sure that we can add a standard connection to a bond that already
+ * contains a custom connection. In other words, take two cysteines with a
+ * disulfide bond and add a backbone bond.
+ */
 BOOST_AUTO_TEST_CASE(test_addMonomericConnection_adding_backbone_connection_to_sidechain_interaction)
 {
     QUndoStack undo_stack;
@@ -4537,7 +4549,11 @@ BOOST_AUTO_TEST_CASE(test_addMonomericConnection_adding_backbone_connection_to_s
     BOOST_TEST(helm == "PEPTIDE1{C.C}$PEPTIDE1,PEPTIDE1,1:R3-2:R3$$$V2.0");
 }
 
-BOOST_AUTO_TEST_CASE(test_addMonomericConnection_combining_two_nucleotides)
+/**
+ * Join two nucleotides with a backbone connection and confirm that the HELM
+ * output contains a single chain.
+ */
+BOOST_AUTO_TEST_CASE(test_addMonomericConnection_joining_two_nucleotides)
 {
     QUndoStack undo_stack;
     TestMolModel model(&undo_stack);
@@ -4551,9 +4567,30 @@ BOOST_AUTO_TEST_CASE(test_addMonomericConnection_combining_two_nucleotides)
     auto* ribose = mol->getAtomWithIdx(3);
     model.addMonomericConnection(phosphate, "R2", ribose, "R1");
 
-    mol = model.getMol();
     auto helm = get_mol_text(&model, Format::HELM);
     BOOST_TEST(helm == "RNA1{R(A)P.R(C)P}$$$$V2.0");
+}
+
+/**
+ * Add a base pair between two nucleotides from different chains and confirm
+ * that the HELM output still contains two separate chain.
+ */
+BOOST_AUTO_TEST_CASE(test_addMonomericConnection_pairing_two_nucleotides)
+{
+    QUndoStack undo_stack;
+    TestMolModel model(&undo_stack);
+
+    // Start with two peptide chains, each with one monomer
+    add_text_to_mol_model(model, "RNA1{R(A)P}|RNA2{R(C)P}$$$$V2.0");
+    const auto* mol = model.getMol();
+
+    // Add a side-chain interaction
+    auto* base_one = mol->getAtomWithIdx(1);
+    auto* base_two = mol->getAtomWithIdx(4);
+    model.addMonomericConnection(base_one, "pair", base_two, "pair");
+
+    auto helm = get_mol_text(&model, Format::HELM);
+    BOOST_TEST(helm == "RNA1{R(A)P}|RNA2{R(C)P}$RNA1,RNA2,2:pair-2:pair$$$V2.0");
 }
 
 } // namespace sketcher
