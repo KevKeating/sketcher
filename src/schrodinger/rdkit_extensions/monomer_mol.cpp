@@ -261,7 +261,7 @@ std::string toString(ChainType chain_type)
     }
 }
 
-std::tuple<RDKit::Bond*, ConnectionAdded>
+std::pair<RDKit::Bond*, ConnectionAdded>
 addConnection(RDKit::RWMol& monomer_mol, size_t monomer1, size_t monomer2,
               const std::string& linkage, const bool is_custom_bond)
 {
@@ -373,7 +373,7 @@ addConnection(RDKit::RWMol& monomer_mol, size_t monomer1, size_t monomer2,
     return {bond, bond_creation};
 }
 
-std::tuple<RDKit::Bond*, ConnectionAdded>
+std::pair<RDKit::Bond*, ConnectionAdded>
 addConnection(RDKit::RWMol& monomer_mol, size_t monomer1, size_t monomer2,
               ConnectionType connection_type)
 {

@@ -20,6 +20,7 @@
 #include <memory>
 #include <string>
 #include <string_view>
+#include <utility>
 
 #include "schrodinger/rdkit_extensions/definitions.h"
 
@@ -114,17 +115,17 @@ RDKIT_EXTENSIONS_API void mutateMonomer(RDKit::ROMol& monomer_mol,
  * @param monomer2 The index of the second monomer
  * @param connection_type The type of connection to add
  *
- * @return A tuple of
+ * @return A pair of
  *   - the bond representing the new monomeric connection
  *   - a flag indicated whether the bond was newly created, or whether a new
  *     connection was added to an existing bond
  */
-RDKIT_EXTENSIONS_API std::tuple<RDKit::Bond*, ConnectionAdded>
+RDKIT_EXTENSIONS_API std::pair<RDKit::Bond*, ConnectionAdded>
 addConnection(RDKit::RWMol& mol, size_t monomer1, size_t monomer2,
               ConnectionType connection_type = ConnectionType::FORWARD);
 
 // overload for helm writer
-RDKIT_EXTENSIONS_API std::tuple<RDKit::Bond*, ConnectionAdded>
+RDKIT_EXTENSIONS_API std::pair<RDKit::Bond*, ConnectionAdded>
 addConnection(RDKit::RWMol& mol, size_t monomer1, size_t monomer2,
               const std::string& linkage, const bool is_custom_bond = false);
 
