@@ -261,10 +261,9 @@ std::string toString(ChainType chain_type)
     }
 }
 
-std::tuple<RDKit::Bond*, ConnectionAdded> addConnection(RDKit::RWMol& monomer_mol,
-                                             size_t monomer1, size_t monomer2,
-                                             const std::string& linkage,
-                                             const bool is_custom_bond)
+std::tuple<RDKit::Bond*, ConnectionAdded>
+addConnection(RDKit::RWMol& monomer_mol, size_t monomer1, size_t monomer2,
+              const std::string& linkage, const bool is_custom_bond)
 {
     auto bond_creation = ConnectionAdded::NEW_BOND_ADDED;
     RDKit::Bond* bond = monomer_mol.getBondBetweenAtoms(monomer1, monomer2);
@@ -296,10 +295,9 @@ std::tuple<RDKit::Bond*, ConnectionAdded> addConnection(RDKit::RWMol& monomer_mo
                             monomer1, monomer2));
         }
 
-
         if (is_custom_bond) {
-            // FIXME: For now, don't allow multiple custom bonds between the same
-            // two atoms
+            // FIXME: For now, don't allow multiple custom bonds between the
+            // same two atoms
             if (bond->hasProp(CUSTOM_BOND)) {
                 throw std::runtime_error(
                     fmt::format("Multiple custom bonds not supported for "
@@ -309,9 +307,11 @@ std::tuple<RDKit::Bond*, ConnectionAdded> addConnection(RDKit::RWMol& monomer_mo
 
             // Update the linkage property
             bond->setProp(CUSTOM_BOND, linkage);
-            bond_creation = ConnectionAdded::CUSTOM_CONNECTION_ADDED_TO_EXISTING_BOND;
+            bond_creation =
+                ConnectionAdded::CUSTOM_CONNECTION_ADDED_TO_EXISTING_BOND;
         } else {
-            if (!bond->hasProp(CUSTOM_BOND) || bond->getProp<std::string>(CUSTOM_BOND) != old_linkage) {
+            if (!bond->hasProp(CUSTOM_BOND) ||
+                bond->getProp<std::string>(CUSTOM_BOND) != old_linkage) {
                 throw std::runtime_error(
                     fmt::format("More than two connections not supported for "
                                 "bond between atom={} and atom={}",
@@ -319,7 +319,8 @@ std::tuple<RDKit::Bond*, ConnectionAdded> addConnection(RDKit::RWMol& monomer_mo
             }
             // Update the linkage property
             bond->setProp(LINKAGE, linkage);
-            bond_creation = ConnectionAdded::STANDARD_CONNECTION_ADDED_TO_EXISTING_BOND;
+            bond_creation =
+                ConnectionAdded::STANDARD_CONNECTION_ADDED_TO_EXISTING_BOND;
         }
     } else {
         auto create_bond = [&](unsigned int first_monomer,
@@ -372,9 +373,9 @@ std::tuple<RDKit::Bond*, ConnectionAdded> addConnection(RDKit::RWMol& monomer_mo
     return {bond, bond_creation};
 }
 
-std::tuple<RDKit::Bond*, ConnectionAdded> addConnection(RDKit::RWMol& monomer_mol,
-                                             size_t monomer1, size_t monomer2,
-                                             ConnectionType connection_type)
+std::tuple<RDKit::Bond*, ConnectionAdded>
+addConnection(RDKit::RWMol& monomer_mol, size_t monomer1, size_t monomer2,
+              ConnectionType connection_type)
 {
     switch (connection_type) {
         case ConnectionType::FORWARD:

@@ -245,7 +245,9 @@ SKETCHER_API int ap_name_to_num(const std::string_view attachment_point_name);
  * Take all monomers in the merge_from chain/polymer, and add them to the
  * merge_to chain/polymer.
  */
-SKETCHER_API void merge_chains(RDKit::ROMol& mol, const std::string_view merge_from, const std::string& merge_to);
+SKETCHER_API void merge_chains(RDKit::ROMol& mol,
+                               const std::string_view merge_from,
+                               const std::string& merge_to);
 
 } // namespace sketcher
 } // namespace schrodinger

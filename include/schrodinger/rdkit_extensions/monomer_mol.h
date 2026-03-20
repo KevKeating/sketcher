@@ -42,7 +42,11 @@ using Monomer = RDKit::Atom;
 enum class ChainType { PEPTIDE, RNA, DNA, CHEM };
 enum class ConnectionType { FORWARD, SIDECHAIN };
 enum class MonomerType { REGULAR, /* LIST, WILDCARD, */ SMILES };
-enum class ConnectionAdded {NEW_BOND_ADDED, CUSTOM_CONNECTION_ADDED_TO_EXISTING_BOND, STANDARD_CONNECTION_ADDED_TO_EXISTING_BOND};
+enum class ConnectionAdded {
+    NEW_BOND_ADDED,
+    CUSTOM_CONNECTION_ADDED_TO_EXISTING_BOND,
+    STANDARD_CONNECTION_ADDED_TO_EXISTING_BOND
+};
 
 RDKIT_EXTENSIONS_API ChainType toChainType(std::string_view chain_type);
 
@@ -109,7 +113,7 @@ RDKIT_EXTENSIONS_API void mutateMonomer(RDKit::ROMol& monomer_mol,
  * @param monomer1 The index of the first monomer
  * @param monomer2 The index of the second monomer
  * @param connection_type The type of connection to add
- * 
+ *
  * @return A tuple of
  *   - the bond representing the new monomeric connection
  *   - a flag indicated whether the bond was newly created, or whether a new

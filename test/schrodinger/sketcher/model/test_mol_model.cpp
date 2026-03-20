@@ -4542,48 +4542,48 @@ BOOST_AUTO_TEST_CASE(test_addBoundMonomer_RNA)
     // Build the next nucleotide. Start by adding the sugar to the phosphate
     auto* existing_phosphate = mol->getAtomWithIdx(2);
     RDGeom::Point3D coords(3.0, 0.0, 0.0);
-    model.addBoundMonomer("R", rdkit_extensions::ChainType::RNA, coords,
-                          "R1", existing_phosphate, "R2");
+    model.addBoundMonomer("R", rdkit_extensions::ChainType::RNA, coords, "R1",
+                          existing_phosphate, "R2");
     auto helm = get_mol_text(&model, Format::HELM);
     BOOST_TEST(helm == "RNA1{R(A)P.R}$$$$V2.0");
-    
+
     // add a base onto the sugar
     auto* newly_added_sugar = mol->getAtomWithIdx(3);
     coords = {3.0, 3.0, 0.0};
-    model.addBoundMonomer("G", rdkit_extensions::ChainType::RNA, coords,
-                          "R1", newly_added_sugar, "R3");
+    model.addBoundMonomer("G", rdkit_extensions::ChainType::RNA, coords, "R1",
+                          newly_added_sugar, "R3");
     helm = get_mol_text(&model, Format::HELM);
     BOOST_TEST(helm == "RNA1{R(A)P.R(G)}$$$$V2.0");
 
     // add a phosphate onto the sugar
     newly_added_sugar = mol->getAtomWithIdx(3);
     coords = {6.0, 3.0, 0.0};
-    model.addBoundMonomer("P", rdkit_extensions::ChainType::RNA, coords,
-                          "R1", newly_added_sugar, "R2");
+    model.addBoundMonomer("P", rdkit_extensions::ChainType::RNA, coords, "R1",
+                          newly_added_sugar, "R2");
     helm = get_mol_text(&model, Format::HELM);
     BOOST_TEST(helm == "RNA1{R(A)P.R(G)P}$$$$V2.0");
-    
+
     // Build the previous nucleotide. Start by adding the phosphate
     auto* original_sugar = mol->getAtomWithIdx(0);
     coords = {-3.0, 0.0, 0.0};
-    model.addBoundMonomer("P", rdkit_extensions::ChainType::RNA, coords,
-                          "R2", original_sugar, "R1");
+    model.addBoundMonomer("P", rdkit_extensions::ChainType::RNA, coords, "R2",
+                          original_sugar, "R1");
     helm = get_mol_text(&model, Format::HELM);
     BOOST_TEST(helm == "RNA1{P.R(A)P.R(G)P}$$$$V2.0");
-    
+
     // add the sugar
     auto* prev_res_phosphate = mol->getAtomWithIdx(6);
     coords = {-6.0, 0.0, 0.0};
-    model.addBoundMonomer("R", rdkit_extensions::ChainType::RNA, coords,
-                          "R2", prev_res_phosphate, "R1");
+    model.addBoundMonomer("R", rdkit_extensions::ChainType::RNA, coords, "R2",
+                          prev_res_phosphate, "R1");
     helm = get_mol_text(&model, Format::HELM);
     BOOST_TEST(helm == "RNA1{R.P.R(A)P.R(G)P}$$$$V2.0");
 
     // add the base
     auto* prev_res_sugar = mol->getAtomWithIdx(7);
     coords = {-6.0, 3.0, 0.0};
-    model.addBoundMonomer("C", rdkit_extensions::ChainType::RNA, coords,
-                          "R1", prev_res_sugar, "R3");
+    model.addBoundMonomer("C", rdkit_extensions::ChainType::RNA, coords, "R1",
+                          prev_res_sugar, "R3");
     helm = get_mol_text(&model, Format::HELM);
     BOOST_TEST(helm == "RNA1{R(C)P.R(A)P.R(G)P}$$$$V2.0");
 }
@@ -4639,7 +4639,8 @@ BOOST_AUTO_TEST_CASE(test_addMonomericConnection_combining_two_chains)
  * Confirm that linking two peptide chains via a sidechain interaction produces
  * HELM output that shows a custom bond between two chains
  */
-BOOST_AUTO_TEST_CASE(test_addMonomericConnection_sidechain_interaction_between_chains)
+BOOST_AUTO_TEST_CASE(
+    test_addMonomericConnection_sidechain_interaction_between_chains)
 {
     QUndoStack undo_stack;
     TestMolModel model(&undo_stack);
@@ -4666,7 +4667,8 @@ BOOST_AUTO_TEST_CASE(test_addMonomericConnection_sidechain_interaction_between_c
 
     // Verify HELM export shows the cross-chain connection
     auto helm = get_mol_text(&model, Format::HELM);
-    BOOST_TEST(helm == "PEPTIDE1{C.C}|PEPTIDE2{C}$PEPTIDE1,PEPTIDE2,1:R3-1:R3$$$V2.0");
+    BOOST_TEST(helm ==
+               "PEPTIDE1{C.C}|PEPTIDE2{C}$PEPTIDE1,PEPTIDE2,1:R3-1:R3$$$V2.0");
 
     // Verify undo removes the cross-chain connection
     undo_stack.undo();
@@ -4684,7 +4686,8 @@ BOOST_AUTO_TEST_CASE(test_addMonomericConnection_sidechain_interaction_between_c
  * a standard connection. In other words, take two cysteines with a backbone
  * bond and add a disulfide bond.
  */
-BOOST_AUTO_TEST_CASE(test_addMonomericConnection_adding_sidechain_interaction_to_backbone_connection)
+BOOST_AUTO_TEST_CASE(
+    test_addMonomericConnection_adding_sidechain_interaction_to_backbone_connection)
 {
     QUndoStack undo_stack;
     TestMolModel model(&undo_stack);
@@ -4701,7 +4704,6 @@ BOOST_AUTO_TEST_CASE(test_addMonomericConnection_adding_sidechain_interaction_to
     // we should still only have one bond, but it now represents two connections
     BOOST_TEST(mol->getNumBonds() == 1);
 
-
     auto helm = get_mol_text(&model, Format::HELM);
     BOOST_TEST(helm == "PEPTIDE1{C.C}$PEPTIDE1,PEPTIDE1,1:R3-2:R3$$$V2.0");
 }
@@ -4711,13 +4713,15 @@ BOOST_AUTO_TEST_CASE(test_addMonomericConnection_adding_sidechain_interaction_to
  * contains a custom connection. In other words, take two cysteines with a
  * disulfide bond and add a backbone bond.
  */
-BOOST_AUTO_TEST_CASE(test_addMonomericConnection_adding_backbone_connection_to_sidechain_interaction)
+BOOST_AUTO_TEST_CASE(
+    test_addMonomericConnection_adding_backbone_connection_to_sidechain_interaction)
 {
     QUndoStack undo_stack;
     TestMolModel model(&undo_stack);
 
     // Start with two peptide chains, each with one monomer
-    add_text_to_mol_model(model, "PEPTIDE1{C}|PEPTIDE2{C}$PEPTIDE1,PEPTIDE2,1:R3-1:R3$$$V2.0");
+    add_text_to_mol_model(
+        model, "PEPTIDE1{C}|PEPTIDE2{C}$PEPTIDE1,PEPTIDE2,1:R3-1:R3$$$V2.0");
     const auto* mol = model.getMol();
 
     // Add a side-chain interaction
@@ -4728,7 +4732,6 @@ BOOST_AUTO_TEST_CASE(test_addMonomericConnection_adding_backbone_connection_to_s
     mol = model.getMol();
     // we should still only have one bond, but it now represents two connections
     BOOST_TEST(mol->getNumBonds() == 1);
-
 
     auto helm = get_mol_text(&model, Format::HELM);
     BOOST_TEST(helm == "PEPTIDE1{C.C}$PEPTIDE1,PEPTIDE1,1:R3-2:R3$$$V2.0");
@@ -4775,7 +4778,8 @@ BOOST_AUTO_TEST_CASE(test_addMonomericConnection_pairing_two_nucleotides)
     model.addMonomericConnection(base_one, "pair", base_two, "pair");
 
     auto helm = get_mol_text(&model, Format::HELM);
-    BOOST_TEST(helm == "RNA1{R(A)P}|RNA2{R(C)P}$RNA1,RNA2,2:pair-2:pair$$$V2.0");
+    BOOST_TEST(helm ==
+               "RNA1{R(A)P}|RNA2{R(C)P}$RNA1,RNA2,2:pair-2:pair$$$V2.0");
 }
 
 } // namespace sketcher

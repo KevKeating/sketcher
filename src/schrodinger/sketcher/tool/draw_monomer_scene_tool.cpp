@@ -589,8 +589,7 @@ void DrawMonomerSceneTool::onLeftButtonClick(
             // monomer's residue name is different than the tool's, so we mutate
             // the clicked monomer
             clearAttachmentPointsLabels();
-            m_mol_model->mutateMonomers({monomer}, m_res_name,
-            m_monomer_type);
+            m_mol_model->mutateMonomers({monomer}, m_res_name, m_monomer_type);
         }
     }
 }
