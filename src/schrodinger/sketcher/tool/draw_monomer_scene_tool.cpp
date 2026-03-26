@@ -93,7 +93,7 @@ void DrawMonomerSceneTool::updateColorsAfterBackgroundColorChange(
 }
 
 QGraphicsItem*
-DrawMonomerSceneTool::getTopMonomericItemAt(const QPointF& scene_pos) const
+DrawMonomerSceneTool::getTopMonomerItemAt(const QPointF& scene_pos) const
 {
     // check to see if we're over a monomer, monomeric connector, or unbound
     // attachment point item
@@ -104,7 +104,7 @@ DrawMonomerSceneTool::getTopMonomericItemAt(const QPointF& scene_pos) const
             // ignore the fragment hint that was drawn by this class
             continue;
         }
-        if (item_matches_type_flag(item, InteractiveItemFlag::MONOMERIC)) {
+        if (item_matches_type_flag(item, InteractiveItemFlag::MONOMER)) {
             return item;
         }
         auto* ap_item =
@@ -410,7 +410,7 @@ void DrawMonomerSceneTool::onMouseMove(QGraphicsSceneMouseEvent* const event)
         return;
     }
     QPointF scene_pos = event->scenePos();
-    auto* item = getTopMonomericItemAt(scene_pos);
+    auto* item = getTopMonomerItemAt(scene_pos);
     if (item != m_hovered_item) {
         m_hovered_item = item;
         drawAttachmentPointLabelsFor(item);
@@ -554,7 +554,7 @@ void DrawMonomerSceneTool::onLeftButtonClick(
 {
     StandardSceneToolBase::onLeftButtonClick(event);
     QPointF scene_pos = event->scenePos();
-    auto* item = getTopMonomericItemAt(scene_pos);
+    auto* item = getTopMonomerItemAt(scene_pos);
 
     if (item == nullptr) {
         // the click was on empty space, so create a new monomer here

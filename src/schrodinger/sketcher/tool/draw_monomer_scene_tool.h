@@ -135,14 +135,14 @@ class SKETCHER_API DrawMonomerSceneTool : public StandardSceneToolBase
     void clearAttachmentPointsLabels();
 
     /**
-     * Return the top graphics item representing a monomer or monomeric
-     * connector at the given coordinates. Note that this method will consider
-     * the cursor to be over a monomer if the cursor is over an unbound
-     * attachment point belonging to that monomer, or if the cursor *would be*
-     * over an unbound attachment point once it's drawn.
+     * Return the top graphics item representing a monomer at the given
+     * coordinates. If there's no such graphics item, return nullptr.  Note that
+     * this method will consider the cursor to be over a monomer if the cursor
+     * is over an unbound attachment point belonging to that monomer, or if the
+     * cursor *would be* over an unbound attachment point once it's drawn.
      * @param scene_pos The position in Scene coordinates
      */
-    QGraphicsItem* getTopMonomericItemAt(const QPointF& scene_pos) const;
+    QGraphicsItem* getTopMonomerItemAt(const QPointF& scene_pos) const;
 
     /**
      * Clear any existing attachment point labels and draw new ones for the
