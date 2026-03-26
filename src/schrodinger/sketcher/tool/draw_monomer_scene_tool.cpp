@@ -520,6 +520,7 @@ void DrawMonomerSceneTool::drawBoundMonomerHintFor(
     createHintFragmentItem(copy_of_monomer, linkage_start, monomer_pos, new_monomer.release(), linkage_end, new_pos, true);
 }
 
+// TODO: will need to update this function and MonomerHitnFragmentItem to allow hiding more than one atom for cases where the user drags from one existing atom to another existing atonm
 void DrawMonomerSceneTool::createHintFragmentItem(RDKit::Atom* monomer_one, const std::string_view ap_one, const RDGeom::Point3D& pos_one,
     RDKit::Atom* monomer_two, const std::string_view ap_two, const RDGeom::Point3D& pos_two, const bool hide_monomer_one)
 {
@@ -558,8 +559,8 @@ void DrawMonomerSceneTool::createHintFragmentItem(RDKit::Atom* monomer_one, cons
     m_scene->addItem(m_hint_fragment_item);
 }
 
-// TODO: remove duplication
 // TODO: separate method to update drag hint
+// TODO: will need to recreate the hint fragment when the user starts or stops mousing over an existing monomer
 void DrawMonomerSceneTool::createDragHintFor(
     const UnboundAttachmentPoint& ap, const Direction initial_dir)
 {
