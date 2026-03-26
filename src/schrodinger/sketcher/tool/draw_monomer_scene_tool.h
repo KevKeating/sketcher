@@ -74,6 +74,10 @@ class SKETCHER_API DrawMonomerSceneTool : public StandardSceneToolBase
     std::vector<QGraphicsItem*> getGraphicsItems() override;
     void onMouseMove(QGraphicsSceneMouseEvent* const event) override;
     void onLeftButtonClick(QGraphicsSceneMouseEvent* const event) override;
+    void onLeftButtonDragStart(QGraphicsSceneMouseEvent* const event) override;
+    void onLeftButtonDragMove(QGraphicsSceneMouseEvent* const event) override;
+    void
+    onLeftButtonDragRelease(QGraphicsSceneMouseEvent* const event) override;
     void updateColorsAfterBackgroundColorChange(bool is_dark_mode) override;
 
   protected:
@@ -204,6 +208,9 @@ class SKETCHER_API DrawMonomerSceneTool : public StandardSceneToolBase
      */
     bool clickShouldMutate(const RDKit::Atom* monomer,
                            const MonomerType monomer_type) const;
+    
+    void createHintFragmentItem(RDKit::Atom* monomer_one, const std::string_view ap_one, const RDGeom::Point3D& pos_one,
+    RDKit::Atom* monomer_two, const std::string_view ap_two, const RDGeom::Point3D& pos_two, const bool hide_monomer_one);
 };
 
 } // namespace sketcher
