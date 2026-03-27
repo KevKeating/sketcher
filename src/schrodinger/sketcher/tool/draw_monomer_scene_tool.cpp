@@ -564,7 +564,8 @@ void DrawMonomerSceneTool::createHintFragmentItem(RDKit::Atom* monomer_one, cons
 
 // TODO: will need to recreate the hint fragment when the user starts or stops mousing over an existing monomer
 // TODO: need method to create a drag hint that doesn't start over a monomer
-// TODO: use "monomer" instead of "atom" in method and param names
+// TODO: use "monomer" instead of "atom" in param names
+// TODO: use "toDirection" in method name, to match DragState naming
 void DrawMonomerSceneTool::createDragHintToNewAtom(const AbstractMonomerItem* const start_atom_item,
     const UnboundAttachmentPoint& ap, const Direction direction)
 {
@@ -709,42 +710,43 @@ void DrawMonomerSceneTool::onLeftButtonDragMove(
     QGraphicsSceneMouseEvent* const event)
 {
     StandardSceneToolBase::onLeftButtonDragMove(event);
-    // TODO: update conformer
-    // auto [should_drag, start_pos, start_atom] = getDragStartInfo();
-    // if (should_drag) {
-    //     auto [end_pos, end_atom] = getBondEndInMousedDirection(
-    //         start_pos, start_atom, event->scenePos());
-    //     updateHintBondPath(start_pos, end_pos);
-    // }
+    if (m_drag_state == DragState::DRAG_IGNORED) {
+        return;
+    }
+    auto scene_pos = event->scenePos();
+    auto* item = getTopMonomerItemAt(scene_pos);
+    if (item != nullptr) {
+        // TODO: figure out whether this monomer has available attachment points
+        // TODO: draw available attachment points if it's not already m_drag_end_monomer
+    } 
+    
+    auto drag_direction = getDragDirection(scene_pos);
+    if (m_drag_state == DragState::DRAGGING_TO_DIRECTION) {
+        if (item != nullptr) {
+            // TODO: create a new drag hint to the monomer
+        } else if (m_drag_direction != drag_direction) {
+            updateDragHintDirection(drag_direction);
+            m_drag_direction = drag_direction;
+        }   
+    } else { // DRAGGING_TO_MONOMER
+        if (item == nullptr) {
+            // TODO: create a new drag hint to the direction
+        } else if (item != m_drag_end_monomer_item || ap != m_drag_end_ap) {
+            // update the drag hint
+        }
+    }
 }
 
 void DrawMonomerSceneTool::onLeftButtonDragRelease(
     QGraphicsSceneMouseEvent* const event)
 {
     StandardSceneToolBase::onLeftButtonDragRelease(event);
-    auto [should_drag, start_pos, start_atom] = getDragStartInfo();
-    if (should_drag) {
-        auto [end_pos, end_atom] = getBondEndInMousedDirection(
-            start_pos, start_atom, event->scenePos());
-        if (start_atom && end_atom) {
-            auto* mol = m_mol_model->getMol();
-            auto* existing_bond = mol->getBondBetweenAtoms(start_atom->getIdx(),
-                                                           end_atom->getIdx());
-            if (existing_bond == nullptr) {
-                addBond(start_atom, end_atom);
-            } else {
-                // The user dragged along an existing bond, so we respond as if
-                // that bond was clicked
-                onBondClicked(existing_bond);
-            }
-        } else if (start_atom) {
-            addAtom(to_mol_xy(end_pos), start_atom);
-        } else if (end_atom) {
-            addAtom(to_mol_xy(start_pos), end_atom);
-        } else {
-            addTwoBoundAtoms(to_mol_xy(start_pos), to_mol_xy(end_pos));
-        }
+    if (m_drag_state == DragState::DRAG_IGNORED) {
+        return;
     }
+    delete m_hint_fragment_item;
+    m_hint_fragment_item = nullptr;
+    // TODO: add monomer(s) and bond to MolModel
 }
 
 QPixmap DrawMonomerSceneTool::createDefaultCursorPixmap() const
