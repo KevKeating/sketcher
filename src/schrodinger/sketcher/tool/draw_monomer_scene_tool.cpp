@@ -37,6 +37,8 @@ namespace schrodinger
 namespace sketcher
 {
 
+using rdkit_extensions::Direction;
+
 DrawMonomerSceneTool::DrawMonomerSceneTool(
     const std::string& res_name, const rdkit_extensions::ChainType chain_type,
     const Fonts& fonts, Scene* scene, MolModel* mol_model) :
@@ -672,7 +674,26 @@ void DrawMonomerSceneTool::onLeftButtonDragStart(
 
 Direction DrawMonomerSceneTool::getDragDirection(const QPointF& cur_scene_pos) const
 {
-    
+    const qreal dx = cur_scene_pos.x() - m_mouse_press_scene_pos.x();
+    const qreal dy = cur_scene_pos.y() - m_mouse_press_scene_pos.y();
+    const qreal abs_dx = std::fabs(dx);
+    const qreal abs_dy = std::fabs(dy);
+    const qreal sqrt2_plus_1 = std::sqrt(2.0) + 1.0;
+
+    if (abs_dy * sqrt2_plus_1 <= abs_dx) {
+        // Within 22.5 degrees of horizontal
+        return dx >= 0 ? Direction::E : Direction::W;
+    } else if (abs_dy >= abs_dx * sqrt2_plus_1) {
+        // Within 22.5 degrees of vertical (Qt +Y is down = South)
+        return dy >= 0 ? Direction::S : Direction::N;
+    } else {
+        // Diagonal
+        if (dx >= 0) {
+            return dy >= 0 ? Direction::SE : Direction::NE;
+        } else {
+            return dy >= 0 ? Direction::SW : Direction::NW;
+        }
+    }
 }
 
 void DrawMonomerSceneTool::onLeftButtonDragMove(
