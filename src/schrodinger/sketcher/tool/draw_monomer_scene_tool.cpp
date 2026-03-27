@@ -646,6 +646,7 @@ void DrawMonomerSceneTool::onLeftButtonDragStart(
 {
     StandardSceneToolBase::onLeftButtonDragStart(event);
     auto* item = getTopMonomerItemAt(m_mouse_press_scene_pos);
+    auto drag_direction = getDragDirection(event->scenePos());
     if (item ==  nullptr) {
         // we're not over a monomer
         if (m_monomer_type == MonomerType::PEPTIDE || m_monomer_type == MonomerType::NA_BASE) {
@@ -665,8 +666,13 @@ void DrawMonomerSceneTool::onLeftButtonDragStart(
         }
     }
     
-    auto [should_drag, start_pos, start_atom] = getDragStartInfo();
-    setHintBondVisible(should_drag);
+    // auto [should_drag, start_pos, start_atom] = getDragStartInfo();
+    // setHintBondVisible(should_drag);
+}
+
+Direction DrawMonomerSceneTool::getDragDirection(const QPointF& cur_scene_pos) const
+{
+    
 }
 
 void DrawMonomerSceneTool::onLeftButtonDragMove(

@@ -213,8 +213,9 @@ class SKETCHER_API DrawMonomerSceneTool : public StandardSceneToolBase
     RDKit::Atom* monomer_two, const std::string_view ap_two, const RDGeom::Point3D& pos_two, const bool hide_monomer_one);
     
     void createDragHintToNewAtom(const AbstractMonomerItem* const start_atom_item,
-    const UnboundAttachmentPoint& ap, const Direction direction);
-    void DrawMonomerSceneTool::updateDragHintDirection(const Direction direction)
+        const UnboundAttachmentPoint& ap, const Direction direction);
+    void updateDragHintDirection(const Direction direction);
+    Direction getDragDirection(const QPointF& cur_scene_pos) const;
 };
 
 } // namespace sketcher
