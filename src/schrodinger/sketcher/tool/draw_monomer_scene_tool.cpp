@@ -562,8 +562,9 @@ void DrawMonomerSceneTool::createHintFragmentItem(RDKit::Atom* monomer_one, cons
     m_scene->addItem(m_hint_fragment_item);
 }
 
-// TODO: separate method to update drag hint direction
 // TODO: will need to recreate the hint fragment when the user starts or stops mousing over an existing monomer
+// TODO: need method to create a drag hint that doesn't start over a monomer
+// TODO: use "monomer" instead of "atom" in method and param names
 void DrawMonomerSceneTool::createDragHintToNewAtom(const AbstractMonomerItem* const start_atom_item,
     const UnboundAttachmentPoint& ap, const Direction direction)
 {
@@ -647,16 +648,22 @@ void DrawMonomerSceneTool::onLeftButtonDragStart(
     QGraphicsSceneMouseEvent* const event)
 {
     StandardSceneToolBase::onLeftButtonDragStart(event);
+    // TODO: this could return AbstractMonomerItem*
     auto* item = getTopMonomerItemAt(m_mouse_press_scene_pos);
     auto drag_direction = getDragDirection(event->scenePos());
+    m_drag_state = DragState::DRAG_IGNORED;
     if (item ==  nullptr) {
         // we're not over a monomer
         if (m_monomer_type == MonomerType::PEPTIDE || m_monomer_type == MonomerType::NA_BASE) {
-            // If it makes sense to connect this monomer type to itself, we'll
-            // draw one monomer where the mouse press was and one where the drag
-            // goes. If we'd be drawing something that doesn't make any
-            // biological sense (e.g., two linked sugars without a phosphate in
-            // between), we instead do nothing.
+            // This monomer type makes biological sense when connected to
+            // itself, so we'll start a drag that creates a new monomer at the
+            // start position
+            
+            // we haven't moved far enough to get over a new monomer, so we always
+            // start with a drag to direction
+            m_drag_state = DragState::DRAGGING_TO_DIRECTION;
+            // TODO: create drag hint
+            
         }
     } else {
         // we're over a monomer
@@ -664,7 +671,9 @@ void DrawMonomerSceneTool::onLeftButtonDragStart(
         if (hovered_ap_item != nullptr) {
             // if hovered_ap_item is nullptr, then this monomer has no available
             // attachment points, so there's nothing for us to do
-            
+            m_drag_state = DragState::DRAGGING_TO_DIRECTION;
+            // TODO: have function that creates the drag hint update m_drag_state?
+            createDragHintToNewAtom(item, hovered_ap_item->getAttachmentPoint(), drag_direction);
         }
     }
     

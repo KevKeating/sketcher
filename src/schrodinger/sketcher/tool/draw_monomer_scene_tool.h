@@ -38,6 +38,12 @@ enum class MonomerType;
 class MonomerHintFragmentItem;
 class UnboundMonomericAttachmentPointItem;
 
+enum class DragState {
+    DRAG_IGNORED,
+    DRAGGING_TO_DIRECTION,
+    DRAGGING_TO_MONOMER,
+};
+
 /**
  * Return the default unbound attachment point; that is, the attachment point
  * that should be selected when the user hovers over a monomer.
@@ -96,6 +102,14 @@ class SKETCHER_API DrawMonomerSceneTool : public StandardSceneToolBase
     QColor m_unbound_ap_label_color = UNBOUND_AP_LABEL_COLOR;
     QColor m_bound_ap_label_color = BOUND_AP_LABEL_COLOR;
     bool m_cursor_hint_shown = true;
+    
+    DragState m_drag_state;
+    rdkit_extensions::Direction m_drag_direction;
+    const AbstractMonomerItem* m_drag_start_monomer;
+    UnboundAttachmentPoint m_drag_start_ap;
+    const AbstractMonomerItem* m_drag_end_monomer;
+    UnboundAttachmentPoint m_drag_end_ap;
+    
 
     QPixmap createDefaultCursorPixmap() const override;
 
