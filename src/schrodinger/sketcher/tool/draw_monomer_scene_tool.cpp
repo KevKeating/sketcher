@@ -92,6 +92,7 @@ void DrawMonomerSceneTool::updateColorsAfterBackgroundColorChange(
         is_dark_mode ? BOUND_AP_LABEL_COLOR_DARK_BG : BOUND_AP_LABEL_COLOR;
 }
 
+// TODO: cast return value to AbstractMonomerItem
 QGraphicsItem*
 DrawMonomerSceneTool::getTopMonomerItemAt(const QPointF& scene_pos) const
 {
@@ -559,14 +560,40 @@ void DrawMonomerSceneTool::createHintFragmentItem(RDKit::Atom* monomer_one, cons
     m_scene->addItem(m_hint_fragment_item);
 }
 
-// TODO: separate method to update drag hint
+// TODO: separate method to update drag hint direction
 // TODO: will need to recreate the hint fragment when the user starts or stops mousing over an existing monomer
-void DrawMonomerSceneTool::createDragHintFor(
-    const UnboundAttachmentPoint& ap, const Direction initial_dir)
+void DrawMonomerSceneTool::createDragHintToNewAtom(const AbstractMonomerItem* const start_atom_item,
+    const UnboundAttachmentPoint& ap, const Direction direction)
 {
     delete m_hint_fragment_item;
     m_hint_fragment_item = nullptr;
+    
+    auto [monomer, monomer_type] = get_monomer_and_type(start_atom_item);
+    auto monomer_pos = get_coords_for_monomer(monomer);
+    auto new_pos = get_default_coords_for_bound_monomer(monomer, direction);
+    auto* copy_of_monomer = new RDKit::Atom(*monomer);
+    auto linkage_start = ap.model_name;
+    auto linkage_end = get_attachment_point_for_new_monomer(
+        monomer_type, linkage_start, m_monomer_type);
+    int new_monomer_res_num;
+    std::string new_monomer_chain_id;
+    if (m_chain_type == rdkit_extensions::getChainType(*monomer)) {
+        new_monomer_chain_id = rdkit_extensions::get_polymer_id(monomer);
+        new_monomer_res_num = rdkit_extensions::get_residue_number(monomer) + 1;
+    } else {
+        new_monomer_chain_id = rdkit_extensions::toString(m_chain_type) + "1";
+        new_monomer_res_num = 1;
+    }
+    auto new_monomer = rdkit_extensions::makeMonomer(m_res_name, new_monomer_chain_id, new_monomer_res_num,
+                               false);
+    createHintFragmentItem(copy_of_monomer, linkage_start, monomer_pos, new_monomer.release(), linkage_end, new_pos, true);
 
+}
+
+void DrawMonomerSceneTool::updateDragHintDirection(const Direction direction)
+{
+    auto new_pos = get_default_coords_for_bound_monomer(m_frag->getAtomWithIdx(1), direction);
+    m_frag->getConformer().setAtomPos(2, new_pos);
 }
 
 void DrawMonomerSceneTool::onLeftButtonClick(
