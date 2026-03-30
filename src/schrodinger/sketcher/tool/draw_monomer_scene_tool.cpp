@@ -132,8 +132,8 @@ DrawMonomerSceneTool::getTopMonomerItemAt(const QPointF& scene_pos) const
         if (!item_matches_type_flag(item, InteractiveItemFlag::MONOMER)) {
             continue;
         }
-        const auto* monomer_item =
-            dynamic_cast<const AbstractMonomerItem*>(item);
+        auto* monomer_item =
+            static_cast<AbstractMonomerItem*>(item);
         auto local_pos = monomer_item->mapFromScene(scene_pos);
         auto* monomer = monomer_item->getAtom();
         auto [bound_aps, unbound_aps] =
@@ -143,11 +143,10 @@ DrawMonomerSceneTool::getTopMonomerItemAt(const QPointF& scene_pos) const
                 get_hover_area_for_unbound_monomer_attachment_point_item(
                     cur_unbound_ap, monomer_item, m_fonts);
             if (unbound_ap_hover_area.contains(local_pos)) {
-                return item;
+                return monomer_item;
             }
         }
     }
-
     return nullptr;
 }
 
@@ -724,7 +723,9 @@ void DrawMonomerSceneTool::onLeftButtonDragMove(
     auto drag_direction = getDragDirection(scene_pos);
     if (m_drag_state == DragState::DRAGGING_TO_DIRECTION) {
         if (item != nullptr) {
-            // TODO: create a new drag hint to the monomer
+            // TODO: label available attachment points on the monomer
+            // TODO: create a new drag hint to the monomer if it has available
+            //       attachment points, otherwise use direction
         } else if (m_drag_direction != drag_direction) {
             updateDragHintDirection(drag_direction);
             m_drag_direction = drag_direction;
