@@ -228,8 +228,12 @@ class SKETCHER_API DrawMonomerSceneTool : public StandardSceneToolBase
     void createHintFragmentItem(RDKit::Atom* monomer_one, const std::string_view ap_one, const RDGeom::Point3D& pos_one,
     RDKit::Atom* monomer_two, const std::string_view ap_two, const RDGeom::Point3D& pos_two, const bool hide_monomer_one);
     
-    void createDragHintToNewAtom(const AbstractMonomerItem* const start_atom_item,
+    void createDragHintToDirection(const QPointF scene_pos, const Direction direction);
+    void createDragHintToDirection(const AbstractMonomerItem* const start_monomer_item,
         const UnboundAttachmentPoint& ap, const rdkit_extensions::Direction direction);
+    void createDragHintToDirection(RDKit::Atom* const monomer, const MonomerType monomer_type, const RDGeom::Point3D monomer_pos,
+    const std::string_view linkage_start, const Direction direction);
+        
     void updateDragHintDirection(const rdkit_extensions::Direction direction);
     rdkit_extensions::Direction getDragDirection(const QPointF& cur_scene_pos) const;
 };

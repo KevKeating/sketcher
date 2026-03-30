@@ -291,7 +291,7 @@ UnboundMonomericAttachmentPointItem* get_default_attachment_point(
 
 std::string
 get_attachment_point_for_new_monomer(const MonomerType existing_monomer_type,
-                                     const std::string& existing_monomer_ap,
+                                     const std::string_view existing_monomer_ap,
                                      const MonomerType new_monomer_type)
 {
     switch (new_monomer_type) {
@@ -561,21 +561,28 @@ void DrawMonomerSceneTool::createHintFragmentItem(RDKit::Atom* monomer_one, cons
     m_scene->addItem(m_hint_fragment_item);
 }
 
+void DrawMonomerSceneTool::createDragHintToDirection(const QPointF scene_pos, const Direction direction) {
+    auto chain_id = rdkit_extensions::toString(m_chain_type) + "1";
+    auto monomer = rdkit_extensions::makeMonomer(m_res_name, chain_id, 1,
+                               false);
+    auto monomer_pos = to_mol_xy(scene_pos);
+    auto linkage_start = m_monomer_type == MonomerType::NA_BASE ? NA_BASE_AP_PAIR : ap_model_name_for(PeptideAP::C);
+    createDragHintToDirection(monomer.release(), m_monomer_type, monomer_pos, linkage_start, direction);
+}
+
 // TODO: will need to recreate the hint fragment when the user starts or stops mousing over an existing monomer
-// TODO: need method to create a drag hint that doesn't start over a monomer
-// TODO: use "monomer" instead of "atom" in param names
-// TODO: use "toDirection" in method name, to match DragState naming
-void DrawMonomerSceneTool::createDragHintToNewAtom(const AbstractMonomerItem* const start_atom_item,
+void DrawMonomerSceneTool::createDragHintToDirection(const AbstractMonomerItem* const start_monomer_item,
     const UnboundAttachmentPoint& ap, const Direction direction)
 {
-    delete m_hint_fragment_item;
-    m_hint_fragment_item = nullptr;
-    
-    auto [monomer, monomer_type] = get_monomer_and_type(start_atom_item);
+    auto [monomer, monomer_type] = get_monomer_and_type(start_monomer_item);
     auto monomer_pos = get_coords_for_monomer(monomer);
+    createDragHintToDirection(new RDKit::Atom(*monomer), monomer_type, monomer_pos, ap.model_name, direction);
+}
+
+void DrawMonomerSceneTool::createDragHintToDirection(RDKit::Atom* const monomer, const MonomerType monomer_type, const RDGeom::Point3D monomer_pos,
+    const std::string_view linkage_start, const Direction direction)
+{
     auto new_pos = get_default_coords_for_bound_monomer(monomer, direction);
-    auto* copy_of_monomer = new RDKit::Atom(*monomer);
-    auto linkage_start = ap.model_name;
     auto linkage_end = get_attachment_point_for_new_monomer(
         monomer_type, linkage_start, m_monomer_type);
     int new_monomer_res_num;
@@ -589,7 +596,11 @@ void DrawMonomerSceneTool::createDragHintToNewAtom(const AbstractMonomerItem* co
     }
     auto new_monomer = rdkit_extensions::makeMonomer(m_res_name, new_monomer_chain_id, new_monomer_res_num,
                                false);
-    createHintFragmentItem(copy_of_monomer, linkage_start, monomer_pos, new_monomer.release(), linkage_end, new_pos, true);
+
+    m_drag_state = DragState::DRAGGING_TO_DIRECTION;
+    delete m_hint_fragment_item;
+    m_hint_fragment_item = nullptr;
+    createHintFragmentItem(monomer, linkage_start, monomer_pos, new_monomer.release(), linkage_end, new_pos, true);
 
 }
 
@@ -657,12 +668,7 @@ void DrawMonomerSceneTool::onLeftButtonDragStart(
             // This monomer type makes biological sense when connected to
             // itself, so we'll start a drag that creates a new monomer at the
             // start position
-            
-            // we haven't moved far enough to get over a new monomer, so we always
-            // start with a drag to direction
-            m_drag_state = DragState::DRAGGING_TO_DIRECTION;
-            // TODO: create drag hint
-            
+            createDragHintToDirection(m_drag_start_scene_pos, drag_direction);
         }
     } else {
         // we're over a monomer
@@ -670,9 +676,7 @@ void DrawMonomerSceneTool::onLeftButtonDragStart(
         if (hovered_ap_item != nullptr) {
             // if hovered_ap_item is nullptr, then this monomer has no available
             // attachment points, so there's nothing for us to do
-            m_drag_state = DragState::DRAGGING_TO_DIRECTION;
-            // TODO: have function that creates the drag hint update m_drag_state?
-            createDragHintToNewAtom(item, hovered_ap_item->getAttachmentPoint(), drag_direction);
+            createDragHintToDirection(item, hovered_ap_item->getAttachmentPoint(), drag_direction);
         }
     }
     
