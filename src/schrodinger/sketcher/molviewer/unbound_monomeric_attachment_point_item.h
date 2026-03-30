@@ -79,6 +79,8 @@ class SKETCHER_API UnboundMonomericAttachmentPointItem : public QGraphicsItem
      * @return the attachment point represented by this graphics item
      */
     const UnboundAttachmentPoint& getAttachmentPoint() const;
+    
+    QPointF getLineEnd() const;
 
   private:
     UnboundAttachmentPoint m_attachment_point;

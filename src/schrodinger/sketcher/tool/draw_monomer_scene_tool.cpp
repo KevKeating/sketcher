@@ -566,7 +566,7 @@ void DrawMonomerSceneTool::createDragHintToDirection(const QPointF scene_pos, co
                                false);
     auto monomer_pos = to_mol_xy(scene_pos);
     auto linkage_start = m_monomer_type == MonomerType::NA_BASE ? NA_BASE_AP_PAIR : ap_model_name_for(PeptideAP::C);
-    createDragHintToDirection(monomer.release(), m_monomer_type, monomer_pos, linkage_start, direction);
+    createDragHintToDirection(monomer.release(), m_monomer_type, monomer_pos, linkage_start, direction, false);
 }
 
 // TODO: will need to recreate the hint fragment when the user starts or stops mousing over an existing monomer
@@ -575,11 +575,11 @@ void DrawMonomerSceneTool::createDragHintToDirection(const AbstractMonomerItem* 
 {
     auto [monomer, monomer_type] = get_monomer_and_type(start_monomer_item);
     auto monomer_pos = get_coords_for_monomer(monomer);
-    createDragHintToDirection(new RDKit::Atom(*monomer), monomer_type, monomer_pos, ap.model_name, direction);
+    createDragHintToDirection(new RDKit::Atom(*monomer), monomer_type, monomer_pos, ap.model_name, direction, true);
 }
 
 void DrawMonomerSceneTool::createDragHintToDirection(RDKit::Atom* const monomer, const MonomerType monomer_type, const RDGeom::Point3D monomer_pos,
-    const std::string_view linkage_start, const Direction direction)
+    const std::string_view linkage_start, const Direction direction, const bool hide_monomer_one)
 {
     auto new_pos = get_default_coords_for_bound_monomer(monomer, direction);
     auto linkage_end = get_attachment_point_for_new_monomer(
@@ -600,6 +600,23 @@ void DrawMonomerSceneTool::createDragHintToDirection(RDKit::Atom* const monomer,
     delete m_hint_fragment_item;
     m_hint_fragment_item = nullptr;
     createHintFragmentItem(monomer, linkage_start, monomer_pos, new_monomer.release(), linkage_end, new_pos, true);
+
+}
+
+void DrawMonomerSceneTool::createDragHintToExistingMonomer(RDKit::Atom* const monomer, const MonomerType monomer_type, const RDGeom::Point3D monomer_pos,
+    const std::string_view linkage_start, const bool hide_monomer_one, AbstractMonomerItem* drag_end_monomer_item, UnboundMonomericAttachmentPointItem* drag_end_ap_item)
+{
+    // TODO: need mol pos for end of nubbin
+    auto new_pos = to_mol_xy(drag_end_ap_item->getLineEnd());
+    auto linkage_end = drag_end_ap_item->getAttachmentPoint().model_name;
+    auto new_monomer_orig = drag_end_monomer_item->getAtom();
+    auto new_monomer_copy = new RDKit::Atom(new_monomer_orig);
+
+    m_drag_state = DragState::DRAGGING_TO_MONOMER;
+    delete m_hint_fragment_item;
+    m_hint_fragment_item = nullptr;
+    // TODO: always hide the second atom
+    createHintFragmentItem(monomer, linkage_start, monomer_pos, new_monomer_copy, linkage_end, new_pos, hide_monomer_one);
 
 }
 
@@ -661,18 +678,22 @@ void DrawMonomerSceneTool::onLeftButtonDragStart(
     auto scene_pos = event->scenePos();
     
     // TODO: split this off to separate method, call it whenever drag switches
-    //       from direction to monomer or vice versa?
+    //       from direction to monomer or vice versa?  initializeDragHint?
     m_drag_start_monomer_item = getTopMonomerItemAt(m_mouse_press_scene_pos);
+
+
     // auto* cur_item = getTopMonomerItemAt(scene_pos);
-    // if (cur_item == start_item) {
-    //     // we can't connect a monomer to itself, so hovering over the current item should trigger a drag to direction
+    // if (cur_item == m_drag_start_monomer_item) {
+    //     // we can't connect a monomer to itself
     //     cur_item = nullptr;
     // }
     
+    // TODO: split this off to createDragHintToDirectionFromScenePos()
     auto drag_direction = getDragDirection(scene_pos);
     // if we call createDragHintToDirection below, that method will update
     // m_drag_state. If we don't call it, then we should ignore this drag.
     m_drag_state = DragState::DRAG_IGNORED;
+    // if (cur_item)
     if (m_drag_start_monomer_item == nullptr) {
         // we're not over a monomer
         if (m_monomer_type == MonomerType::PEPTIDE || m_monomer_type == MonomerType::NA_BASE) {
@@ -750,6 +771,7 @@ void DrawMonomerSceneTool::onLeftButtonDragMove(
             if (drag_end_ap_item != m_drag_end_ap_item) {
                 // we're dragging to a new attachment point, so update the hint
                 // connection
+                createDragHintToMonomer(drag_end_ap_item);
                 // TODO: create new drag hint to the AP
                 // TODO: m_drag_end_ap_item = hovered_ap_item;
                 // TODO: clear drag direction
@@ -759,7 +781,10 @@ void DrawMonomerSceneTool::onLeftButtonDragMove(
     }
     
     auto drag_direction = getDragDirection(scene_pos);
-    if (m_drag_direction != drag_direction) {
+    
+    if (!m_drag_direction.has_value()) {
+        // TODO: create new direction drag hint
+    } else if (m_drag_direction != drag_direction) {
         // TODO: updateDragHintDirection could update m_drag_direction
         updateDragHintDirection(drag_direction);
         m_drag_direction = drag_direction;

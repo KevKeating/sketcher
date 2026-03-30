@@ -105,7 +105,7 @@ class SKETCHER_API DrawMonomerSceneTool : public StandardSceneToolBase
     bool m_cursor_hint_shown = true;
     
     DragState m_drag_state;
-    rdkit_extensions::Direction m_drag_direction;
+    std::optional<rdkit_extensions::Direction> m_drag_direction;
     const AbstractMonomerItem* m_drag_start_monomer_item;
     UnboundAttachmentPoint m_drag_start_ap;
     const AbstractMonomerItem* m_drag_end_monomer_item;
@@ -232,7 +232,7 @@ class SKETCHER_API DrawMonomerSceneTool : public StandardSceneToolBase
     void createDragHintToDirection(const AbstractMonomerItem* const start_monomer_item,
         const UnboundAttachmentPoint& ap, const rdkit_extensions::Direction direction);
     void createDragHintToDirection(RDKit::Atom* const monomer, const MonomerType monomer_type, const RDGeom::Point3D monomer_pos,
-    const std::string_view linkage_start, const Direction direction);
+    const std::string_view linkage_start, const Direction direction, const bool hide_monomer_one);
         
     void updateDragHintDirection(const rdkit_extensions::Direction direction);
     rdkit_extensions::Direction getDragDirection(const QPointF& cur_scene_pos) const;

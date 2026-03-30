@@ -207,5 +207,10 @@ UnboundMonomericAttachmentPointItem::getAttachmentPoint() const
     return m_attachment_point;
 }
 
+QPointF UnboundMonomericAttachmentPointItem::getLineEnd() const
+{
+    return m_line_end;
+}
+
 } // namespace sketcher
 } // namespace schrodinger
