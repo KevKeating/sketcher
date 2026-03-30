@@ -658,12 +658,22 @@ void DrawMonomerSceneTool::onLeftButtonDragStart(
     QGraphicsSceneMouseEvent* const event)
 {
     StandardSceneToolBase::onLeftButtonDragStart(event);
-    auto* item = getTopMonomerItemAt(m_mouse_press_scene_pos);
-    auto drag_direction = getDragDirection(event->scenePos());
+    auto scene_pos = event->scenePos();
+    
+    // TODO: split this off to separate method, call it whenever drag switches
+    //       from direction to monomer or vice versa?
+    m_drag_start_monomer_item = getTopMonomerItemAt(m_mouse_press_scene_pos);
+    // auto* cur_item = getTopMonomerItemAt(scene_pos);
+    // if (cur_item == start_item) {
+    //     // we can't connect a monomer to itself, so hovering over the current item should trigger a drag to direction
+    //     cur_item = nullptr;
+    // }
+    
+    auto drag_direction = getDragDirection(scene_pos);
     // if we call createDragHintToDirection below, that method will update
     // m_drag_state. If we don't call it, then we should ignore this drag.
     m_drag_state = DragState::DRAG_IGNORED;
-    if (item ==  nullptr) {
+    if (m_drag_start_monomer_item == nullptr) {
         // we're not over a monomer
         if (m_monomer_type == MonomerType::PEPTIDE || m_monomer_type == MonomerType::NA_BASE) {
             // This monomer type makes biological sense when connected to
@@ -677,7 +687,7 @@ void DrawMonomerSceneTool::onLeftButtonDragStart(
         if (hovered_ap_item != nullptr) {
             // if hovered_ap_item is nullptr, then this monomer has no available
             // attachment points, so there's nothing for us to do
-            createDragHintToDirection(item, hovered_ap_item->getAttachmentPoint(), drag_direction);
+            createDragHintToDirection(m_drag_start_monomer_item, hovered_ap_item->getAttachmentPoint(), drag_direction);
         }
     }
 }
@@ -715,27 +725,44 @@ void DrawMonomerSceneTool::onLeftButtonDragMove(
     }
     auto scene_pos = event->scenePos();
     auto* item = getTopMonomerItemAt(scene_pos);
+    if (item != m_drag_start_monomer_item) {
+        // we can't drag from a monomer to itself
+        item = nullptr;
+    }
+    if (item != nullptr && item != m_drag_end_monomer_item) {
+        if (m_drag_end_monomer_item != nullptr) {
+            m_drag_end_ap_item = nullptr;
+            // TODO: clear labels on drag end monomer
+        }
+        m_drag_end_monomer_item = item;
+        labelAttachmentPointsOnMonomer(item->getAtom(), item);
+    }
+    
     if (item != nullptr) {
-        // TODO: figure out whether this monomer has available attachment points
-        // TODO: draw available attachment points if it's not already m_drag_end_monomer
-    } 
+        // TODO: this needs to be restricted to drag end monomers
+        auto* drag_end_ap_item = getUnboundAttachmentPointAt(scene_pos);
+        if (drag_end_ap_item->parentItem() != m_drag_end_monomer_item) {
+            // the user is over an attachment point belonging to the monomer
+            // where the drag started
+            drag_end_ap_item = nullptr;
+        }
+        if (drag_end_ap_item != nullptr) {
+            if (drag_end_ap_item != m_drag_end_ap_item) {
+                // we're dragging to a new attachment point, so update the hint
+                // connection
+                // TODO: create new drag hint to the AP
+                // TODO: m_drag_end_ap_item = hovered_ap_item;
+                // TODO: clear drag direction
+            }
+            return;
+        }
+    }
     
     auto drag_direction = getDragDirection(scene_pos);
-    if (m_drag_state == DragState::DRAGGING_TO_DIRECTION) {
-        if (item != nullptr) {
-            // TODO: label available attachment points on the monomer
-            // TODO: create a new drag hint to the monomer if it has available
-            //       attachment points, otherwise use direction
-        } else if (m_drag_direction != drag_direction) {
-            updateDragHintDirection(drag_direction);
-            m_drag_direction = drag_direction;
-        }   
-    } else { // DRAGGING_TO_MONOMER
-        if (item == nullptr) {
-            // TODO: create a new drag hint to the direction
-        } else if (item != m_drag_end_monomer_item || ap != m_drag_end_ap) {
-            // update the drag hint
-        }
+    if (m_drag_direction != drag_direction) {
+        // TODO: updateDragHintDirection could update m_drag_direction
+        updateDragHintDirection(drag_direction);
+        m_drag_direction = drag_direction;
     }
 }
 
@@ -770,6 +797,7 @@ QPixmap DrawMonomerSceneTool::createDefaultCursorPixmap() const
     return cursor_hint_from_graphics_item(monomer_item.get(), min_scene_size);
 }
 
+// TODO: create separate storage for labels for "normal" hovered monomer, and labels for drag destination hovers?
 void DrawMonomerSceneTool::labelAttachmentPointsOnMonomer(
     const RDKit::Atom* const monomer, AbstractMonomerItem* const monomer_item)
 {

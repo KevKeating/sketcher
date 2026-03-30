@@ -109,7 +109,7 @@ class SKETCHER_API DrawMonomerSceneTool : public StandardSceneToolBase
     const AbstractMonomerItem* m_drag_start_monomer_item;
     UnboundAttachmentPoint m_drag_start_ap;
     const AbstractMonomerItem* m_drag_end_monomer_item;
-    UnboundAttachmentPoint m_drag_end_ap;
+    UnboundMonomericAttachmentPointItem* m_drag_end_ap_item;
     
 
     QPixmap createDefaultCursorPixmap() const override;
