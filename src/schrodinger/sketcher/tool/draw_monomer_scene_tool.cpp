@@ -606,7 +606,12 @@ void DrawMonomerSceneTool::createDragHintToDirection(RDKit::Atom* const monomer,
 void DrawMonomerSceneTool::createDragHintToExistingMonomer(RDKit::Atom* const monomer, const MonomerType monomer_type, const RDGeom::Point3D monomer_pos,
     const std::string_view linkage_start, const bool hide_monomer_one, AbstractMonomerItem* drag_end_monomer_item, UnboundMonomericAttachmentPointItem* drag_end_ap_item)
 {
-    // TODO: need mol pos for end of nubbin
+    // TODO: create two functions that return createHintFragmentItem params
+    //       related to monomer one: one for starting from an existing monomer
+    //       and one for starting from empty space.  Also create two functions
+    //       for monomer two: one for dragging to a direction and one for
+    //       dragging to an existing monomer AP.  Then mix and match those to
+    //       call params for actual call to createHintFragmentItem.
     auto new_pos = to_mol_xy(drag_end_ap_item->getLineEnd());
     auto linkage_end = drag_end_ap_item->getAttachmentPoint().model_name;
     auto new_monomer_orig = drag_end_monomer_item->getAtom();
