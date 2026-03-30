@@ -94,8 +94,7 @@ void DrawMonomerSceneTool::updateColorsAfterBackgroundColorChange(
         is_dark_mode ? BOUND_AP_LABEL_COLOR_DARK_BG : BOUND_AP_LABEL_COLOR;
 }
 
-// TODO: cast return value to AbstractMonomerItem
-QGraphicsItem*
+AbstractMonomerItem*
 DrawMonomerSceneTool::getTopMonomerItemAt(const QPointF& scene_pos) const
 {
     // check to see if we're over a monomer, monomeric connector, or unbound
@@ -108,12 +107,12 @@ DrawMonomerSceneTool::getTopMonomerItemAt(const QPointF& scene_pos) const
             continue;
         }
         if (item_matches_type_flag(item, InteractiveItemFlag::MONOMER)) {
-            return item;
+            return static_cast<AbstractMonomerItem*>(item);
         }
         auto* ap_item =
             qgraphicsitem_cast<UnboundMonomericAttachmentPointItem*>(item);
         if (ap_item && ap_item->withinHoverArea(scene_pos)) {
-            return item->parentItem();
+            return static_cast<AbstractMonomerItem*>(item->parentItem());
         }
     }
 
@@ -613,7 +612,7 @@ void DrawMonomerSceneTool::onLeftButtonClick(
         m_mol_model->addMonomer(m_res_name, m_chain_type, mol_pos);
     } else {
         auto [monomer, monomer_type] =
-            get_monomer_and_type(static_cast<AbstractMonomerItem*>(item));
+            get_monomer_and_type(item);
         std::optional<UnboundAttachmentPoint> clicked_ap;
         auto ap_item = getUnboundAttachmentPointAt(scene_pos);
         if (ap_item != nullptr) {
@@ -649,7 +648,6 @@ void DrawMonomerSceneTool::onLeftButtonDragStart(
     QGraphicsSceneMouseEvent* const event)
 {
     StandardSceneToolBase::onLeftButtonDragStart(event);
-    // TODO: this could return AbstractMonomerItem*
     auto* item = getTopMonomerItemAt(m_mouse_press_scene_pos);
     auto drag_direction = getDragDirection(event->scenePos());
     m_drag_state = DragState::DRAG_IGNORED;

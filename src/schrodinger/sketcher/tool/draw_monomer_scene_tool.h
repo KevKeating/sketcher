@@ -37,6 +37,7 @@ namespace sketcher
 enum class MonomerType;
 class MonomerHintFragmentItem;
 class UnboundMonomericAttachmentPointItem;
+class UnboundAttachmentPoint;
 
 enum class DragState {
     DRAG_IGNORED,
@@ -161,7 +162,7 @@ class SKETCHER_API DrawMonomerSceneTool : public StandardSceneToolBase
      * cursor *would be* over an unbound attachment point once it's drawn.
      * @param scene_pos The position in Scene coordinates
      */
-    QGraphicsItem* getTopMonomerItemAt(const QPointF& scene_pos) const;
+    AbstractMonomerItem* getTopMonomerItemAt(const QPointF& scene_pos) const;
 
     /**
      * Clear any existing attachment point labels and draw new ones for the
