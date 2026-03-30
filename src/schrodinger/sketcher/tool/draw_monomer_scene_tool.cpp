@@ -661,6 +661,8 @@ void DrawMonomerSceneTool::onLeftButtonDragStart(
     StandardSceneToolBase::onLeftButtonDragStart(event);
     auto* item = getTopMonomerItemAt(m_mouse_press_scene_pos);
     auto drag_direction = getDragDirection(event->scenePos());
+    // if we call createDragHintToDirection below, that method will update
+    // m_drag_state. If we don't call it, then we should ignore this drag.
     m_drag_state = DragState::DRAG_IGNORED;
     if (item ==  nullptr) {
         // we're not over a monomer
@@ -679,9 +681,6 @@ void DrawMonomerSceneTool::onLeftButtonDragStart(
             createDragHintToDirection(item, hovered_ap_item->getAttachmentPoint(), drag_direction);
         }
     }
-    
-    // auto [should_drag, start_pos, start_atom] = getDragStartInfo();
-    // setHintBondVisible(should_drag);
 }
 
 Direction DrawMonomerSceneTool::getDragDirection(const QPointF& cur_scene_pos) const
