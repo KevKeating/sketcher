@@ -104,8 +104,8 @@ class SKETCHER_API DrawMonomerSceneTool : public StandardSceneToolBase
     bool m_cursor_hint_shown = true;
     
     bool m_drag_ignored;
-    const AbstractMonomerItem* m_drag_start_monomer_item;
-    const AbstractMonomerItem* m_drag_end_monomer_item;
+    AbstractMonomerItem* m_drag_start_monomer_item;
+    AbstractMonomerItem* m_drag_end_monomer_item;
     DragEndInfo m_drag_end_info;
     QGraphicsItemGroup m_drag_end_attachment_point_labels_group;
     std::vector<UnboundMonomericAttachmentPointItem*> m_drag_end_unbound_ap_items;

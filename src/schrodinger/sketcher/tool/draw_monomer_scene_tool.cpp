@@ -730,20 +730,13 @@ bool DrawMonomerSceneTool::createDragHint(const DragEndInfo& drag_end_info)
 std::pair<DragEndInfo, AbstractMonomerItem*> DrawMonomerSceneTool::getDragEndInfo(const QPointF& scene_pos)
 {
     auto* hovered_monomer_item = getTopMonomerItemAt(scene_pos);
+    // std::cout << "comparing " << hovered_monomer_item << "  -  " << m_drag_start_monomer_item << "\n";
     if (hovered_monomer_item == m_drag_start_monomer_item) {
         // we can't drag from a monomer to itself
+        // std::cout << "\tcan't drag from monomer to itself\n";
         hovered_monomer_item = nullptr;
     }
-    UnboundMonomericAttachmentPointItem* drag_end_ap_item = nullptr;
-    if (hovered_monomer_item != nullptr) {
-        drag_end_ap_item = getUnboundAttachmentPointAt(scene_pos);
-        // TODO: once drag hover is stored separately, won't need this check
-        if (hovered_monomer_item->parentItem() != m_drag_end_monomer_item) {
-            // the user is over an attachment point belonging to the monomer
-            // where the drag started
-            drag_end_ap_item = nullptr;
-        }
-    }
+    UnboundMonomericAttachmentPointItem* drag_end_ap_item = (hovered_monomer_item == nullptr) ? nullptr : getUnboundDragEndAttachmentPointAt(scene_pos);
     
     DragEndInfo direction_or_attachment_point;
     if (drag_end_ap_item == nullptr) {
