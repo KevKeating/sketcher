@@ -662,10 +662,11 @@ bool DrawMonomerSceneTool::createDragHint(const DragEndInfo& drag_end_info)
     if (m_drag_start_monomer_item == nullptr) {
         // the drag started over empty space
         if (m_monomer_type == MonomerType::PEPTIDE || m_monomer_type == MonomerType::NA_BASE) {
-            // the monomer type makes biological sense when connected to itself,
-            // so start a drag that creates a new monomer at the start position
             hint_start_monomer_info = createHintFragmentMonomerInfoForHintFromEmptySpace(m_mouse_press_scene_pos);
         } else {
+            // it doesn't make much biological sense to connect this monomer
+            // type to itself, which is what would typically happen when
+            // dragging from empty space, so don't start the drag
             return false;
         }
     } else {
@@ -674,6 +675,8 @@ bool DrawMonomerSceneTool::createDragHint(const DragEndInfo& drag_end_info)
         if (hovered_ap_item != nullptr) {
             hint_start_monomer_info = createHintFragmentMonomerInfoForHintToOrFromExistingMonomer(m_drag_start_monomer_item, hovered_ap_item);
         } else {
+            // this monomer has no available unbound attachment points, so we
+            // can't drag from it
             return false;
         }
     }
@@ -688,6 +691,7 @@ bool DrawMonomerSceneTool::createDragHint(const DragEndInfo& drag_end_info)
         hint_end_monomer_info = createHintFragmentMonomerInfoForHintToOrFromExistingMonomer(hovered_monomer_item, drag_end_ap_item);
     }
     createHintFragmentItem(hint_start_monomer_info, hint_end_monomer_info);
+    return true;
 }
 
 std::pair<DragEndInfo, AbstractMonomerItem*> DrawMonomerSceneTool::getDragEndInfo(const QPointF& scene_pos)
@@ -697,9 +701,9 @@ std::pair<DragEndInfo, AbstractMonomerItem*> DrawMonomerSceneTool::getDragEndInf
         // we can't drag from a monomer to itself
         hovered_monomer_item = nullptr;
     }
-    const UnboundMonomericAttachmentPointItem* drag_end_ap_item = nullptr;
+    UnboundMonomericAttachmentPointItem* drag_end_ap_item = nullptr;
     if (hovered_monomer_item != nullptr) {
-        auto* drag_end_ap_item = getUnboundAttachmentPointAt(scene_pos);
+        drag_end_ap_item = getUnboundAttachmentPointAt(scene_pos);
         // TODO: once drag hover is stored separately, won't need this check
         if (hovered_monomer_item->parentItem() != m_drag_end_monomer_item) {
             // the user is over an attachment point belonging to the monomer
@@ -746,7 +750,7 @@ void DrawMonomerSceneTool::onLeftButtonDragMove(
     QGraphicsSceneMouseEvent* const event)
 {
     StandardSceneToolBase::onLeftButtonDragMove(event);
-    if (m_drag_state == DragState::DRAG_IGNORED) {
+    if (m_drag_ignored) {
         return;
     }
     auto [drag_end_info, hovered_monomer_item] = getDragEndInfo(event->scenePos());

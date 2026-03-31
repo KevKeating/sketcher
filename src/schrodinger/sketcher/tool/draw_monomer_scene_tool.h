@@ -63,7 +63,7 @@ SKETCHER_API UnboundMonomericAttachmentPointItem* get_default_attachment_point(
  */
 SKETCHER_API std::string
 get_attachment_point_for_new_monomer(const MonomerType existing_monomer_type,
-                                     const std::string& existing_monomer_ap,
+                                     const std::string_view existing_monomer_ap,
                                      const MonomerType new_monomer_type);
 
 /**
@@ -228,7 +228,7 @@ class SKETCHER_API DrawMonomerSceneTool : public StandardSceneToolBase
     HintFragmentMonomerInfo createHintFragmentMonomerInfoForHintFromEmptySpace(const QPointF& scene_pos) const;
     HintFragmentMonomerInfo createHintFragmentMonomerInfoForHintToOrFromExistingMonomer(const AbstractMonomerItem* const monomer_item,
     const UnboundMonomericAttachmentPointItem* const ap_item) const;
-    HintFragmentMonomerInfo createHintFragmentMonomerInfoForHintToDirection(const HintFragmentMonomerInfo& start_monomer_info, const Direction direction) const;
+    HintFragmentMonomerInfo createHintFragmentMonomerInfoForHintToDirection(const HintFragmentMonomerInfo& start_monomer_info, const rdkit_extensions::Direction direction) const;
     std::pair<DragEndInfo, AbstractMonomerItem*> getDragEndInfo(const QPointF& scene_pos);
 
     rdkit_extensions::Direction getDragDirection(const QPointF& cur_scene_pos) const;
