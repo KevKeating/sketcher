@@ -106,12 +106,14 @@ void DrawMonomerSceneTool::updateColorsAfterBackgroundColorChange(
 AbstractMonomerItem*
 DrawMonomerSceneTool::getTopMonomerItemAt(const QPointF& scene_pos) const
 {
+    auto is_item_part_of_hint_fragment = [this](QGraphicsItem* item) {return m_hint_fragment_item != nullptr &&
+            (item == m_hint_fragment_item ||
+             item->group() == m_hint_fragment_item);};
+    
     // check to see if we're over a monomer, monomeric connector, or unbound
     // attachment point item
     for (auto* item : m_scene->items(scene_pos)) {
-        if (m_hint_fragment_item != nullptr &&
-            (item == m_hint_fragment_item ||
-             item->group() == m_hint_fragment_item)) {
+        if (is_item_part_of_hint_fragment(item)) {
             // ignore the fragment hint that was drawn by this class
             continue;
         }
@@ -138,7 +140,7 @@ DrawMonomerSceneTool::getTopMonomerItemAt(const QPointF& scene_pos) const
         2 * std::max(UNBOUND_AP_LINE_LENGTH, UNBOUND_AP_MIN_HOVER_HALF_WIDTH);
     near_scene_pos.addEllipse(scene_pos, radius, radius);
     for (auto* item : m_scene->items(near_scene_pos)) {
-        if (!item_matches_type_flag(item, InteractiveItemFlag::MONOMER)) {
+        if (!item_matches_type_flag(item, InteractiveItemFlag::MONOMER) || is_item_part_of_hint_fragment(item)) {
             continue;
         }
         auto* monomer_item =
@@ -678,9 +680,9 @@ void DrawMonomerSceneTool::onLeftButtonDragStart(
     m_drag_start_monomer_item = getTopMonomerItemAt(m_mouse_press_scene_pos);
     
     // delete the hover hint structure
-    delete m_hint_fragment_item;
-    m_hint_fragment_item = nullptr;
-    m_frag.reset();
+    // delete m_hint_fragment_item;
+    // m_hint_fragment_item = nullptr;
+    // m_frag.reset();
     
     auto handled = createDragHint(dir);
     if (!handled) {
@@ -690,7 +692,11 @@ void DrawMonomerSceneTool::onLeftButtonDragStart(
 }
     
 bool DrawMonomerSceneTool::createDragHint(const DragEndInfo& drag_end_info)
-{   
+{
+    delete m_hint_fragment_item;
+    m_hint_fragment_item = nullptr;
+    m_frag.reset();
+
     HintFragmentMonomerInfo hint_start_monomer_info;
     if (m_drag_start_monomer_item == nullptr) {
         // the drag started over empty space
@@ -730,10 +736,8 @@ bool DrawMonomerSceneTool::createDragHint(const DragEndInfo& drag_end_info)
 std::pair<DragEndInfo, AbstractMonomerItem*> DrawMonomerSceneTool::getDragEndInfo(const QPointF& scene_pos)
 {
     auto* hovered_monomer_item = getTopMonomerItemAt(scene_pos);
-    // std::cout << "comparing " << hovered_monomer_item << "  -  " << m_drag_start_monomer_item << "\n";
     if (hovered_monomer_item == m_drag_start_monomer_item) {
         // we can't drag from a monomer to itself
-        // std::cout << "\tcan't drag from monomer to itself\n";
         hovered_monomer_item = nullptr;
     }
     UnboundMonomericAttachmentPointItem* drag_end_ap_item = (hovered_monomer_item == nullptr) ? nullptr : getUnboundDragEndAttachmentPointAt(scene_pos);
