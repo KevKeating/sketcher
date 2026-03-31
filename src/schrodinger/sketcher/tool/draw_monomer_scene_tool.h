@@ -107,6 +107,8 @@ class SKETCHER_API DrawMonomerSceneTool : public StandardSceneToolBase
     const AbstractMonomerItem* m_drag_start_monomer_item;
     const AbstractMonomerItem* m_drag_end_monomer_item;
     DragEndInfo m_drag_end_info;
+    QGraphicsItemGroup m_drag_end_attachment_point_labels_group;
+    std::vector<UnboundMonomericAttachmentPointItem*> m_drag_end_unbound_ap_items;
     
 
     QPixmap createDefaultCursorPixmap() const override;
@@ -115,8 +117,17 @@ class SKETCHER_API DrawMonomerSceneTool : public StandardSceneToolBase
      * Label all attachment points on the given monomer
      */
     void
-    labelAttachmentPointsOnMonomer(const RDKit::Atom* const monomer,
+    labelAttachmentPointsOnHoveredMonomer(const RDKit::Atom* const monomer,
                                    AbstractMonomerItem* const monomer_item);
+
+    void
+    labelAttachmentPointsOnDragEndMonomer(const RDKit::Atom* const monomer,
+                                   AbstractMonomerItem* const monomer_item);
+
+    void
+    labelAttachmentPointsOnMonomer(const RDKit::Atom* const monomer,
+                                   AbstractMonomerItem* const monomer_item, QGraphicsItemGroup& attachment_point_labels_group,
+    std::vector<UnboundMonomericAttachmentPointItem*>& unbound_ap_items);
 
     /**
      * Label both attachment points for the given monomeric connector

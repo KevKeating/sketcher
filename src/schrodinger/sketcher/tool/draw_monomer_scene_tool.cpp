@@ -87,6 +87,7 @@ std::vector<QGraphicsItem*> DrawMonomerSceneTool::getGraphicsItems()
 {
     auto items = StandardSceneToolBase::getGraphicsItems();
     items.push_back(&m_attachment_point_labels_group);
+    items.push_back(&m_drag_end_attachment_point_labels_group);
     return items;
 }
 
@@ -462,7 +463,7 @@ void DrawMonomerSceneTool::drawAttachmentPointLabelsFor(
         // hovering over a monomer
         auto* monomer_item = static_cast<AbstractMonomerItem*>(item);
         const auto* monomer = monomer_item->getAtom();
-        labelAttachmentPointsOnMonomer(monomer, monomer_item);
+        labelAttachmentPointsOnHoveredMonomer(monomer, monomer_item);
     } else if (item_matches_type_flag(item,
                                       InteractiveItemFlag::MONOMER_CONNECTOR)) {
         // hovering over a monomeric connector
@@ -645,14 +646,19 @@ void DrawMonomerSceneTool::onLeftButtonDragStart(
     QGraphicsSceneMouseEvent* const event)
 {
     StandardSceneToolBase::onLeftButtonDragStart(event);
-    auto scene_pos = event->scenePos();
-    // m_drag_state = DragState::DRAG_IGNORED;
-    m_drag_start_monomer_item = getTopMonomerItemAt(m_mouse_press_scene_pos);
-    // since the drag just started, we can safely asssume that we're not over a
+    // TODO: make a method for these three lines?
+    delete m_hint_fragment_item;
+    m_hint_fragment_item = nullptr;
+    m_frag.reset();
+    // since the drag just started, we can safely assume that we're not over a
     // different monomer than m_drag_start_monomer_item, which means we want a
     // drag to direction
     auto dir = getDragDirection(event->scenePos());
+    m_drag_start_monomer_item = getTopMonomerItemAt(m_mouse_press_scene_pos);
     auto handled = createDragHint(dir);
+    if (!handled) {
+        m_drag_start_monomer_item = nullptr;
+    }
     m_drag_ignored = !handled;
 }
     
@@ -761,7 +767,7 @@ void DrawMonomerSceneTool::onLeftButtonDragMove(
         }
         m_drag_end_monomer_item = hovered_monomer_item;
         if (hovered_monomer_item != nullptr) {
-            labelAttachmentPointsOnMonomer(hovered_monomer_item->getAtom(), hovered_monomer_item);
+            labelAttachmentPointsOnDragEndMonomer(hovered_monomer_item->getAtom(), hovered_monomer_item);
         }
     }
 
@@ -806,8 +812,19 @@ QPixmap DrawMonomerSceneTool::createDefaultCursorPixmap() const
 }
 
 // TODO: create separate storage for labels for "normal" hovered monomer, and labels for drag destination hovers?
-void DrawMonomerSceneTool::labelAttachmentPointsOnMonomer(
+void DrawMonomerSceneTool::labelAttachmentPointsOnHoveredMonomer(
     const RDKit::Atom* const monomer, AbstractMonomerItem* const monomer_item)
+{
+    labelAttachmentPointsOnMonomer(monomer, monomer_item, m_attachment_point_labels_group, m_unbound_ap_items);
+}
+void DrawMonomerSceneTool::labelAttachmentPointsOnDragEndMonomer(
+    const RDKit::Atom* const monomer, AbstractMonomerItem* const monomer_item)
+{
+    labelAttachmentPointsOnMonomer(monomer, monomer_item, m_drag_end_attachment_point_labels_group, m_drag_end_unbound_ap_items);
+}
+
+void DrawMonomerSceneTool::labelAttachmentPointsOnMonomer(const RDKit::Atom* const monomer, AbstractMonomerItem* const monomer_item, QGraphicsItemGroup& attachment_point_labels_group,
+    std::vector<UnboundMonomericAttachmentPointItem*>& unbound_ap_items)
 {
     auto [bound_aps, unbound_aps] = get_attachment_points_for_monomer(monomer);
     for (auto& cur_ap : bound_aps) {
@@ -815,13 +832,13 @@ void DrawMonomerSceneTool::labelAttachmentPointsOnMonomer(
             monomer, cur_ap.bound_monomer, cur_ap.is_secondary_connection,
             cur_ap.display_name, m_bound_ap_label_color, m_fonts, m_scene);
         if (item != nullptr) {
-            m_attachment_point_labels_group.addToGroup(item);
+            attachment_point_labels_group.addToGroup(item);
         }
     }
     for (auto& cur_ap : unbound_aps) {
         auto* item = new UnboundMonomericAttachmentPointItem(
             cur_ap, monomer_item, m_unbound_ap_label_color, m_fonts);
-        m_unbound_ap_items.push_back(item);
+        unbound_ap_items.push_back(item);
     }
 }
 
