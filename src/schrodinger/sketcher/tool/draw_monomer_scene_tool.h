@@ -3,6 +3,7 @@
 #include <string>
 #include <tuple>
 #include <utility>
+#include <variant>
 
 #include "schrodinger/sketcher/definitions.h"
 #include "schrodinger/sketcher/model/sketcher_model.h"
@@ -39,6 +40,8 @@ class MonomerHintFragmentItem;
 class UnboundMonomericAttachmentPointItem;
 class UnboundAttachmentPoint;
 class HintFragmentMonomerInfo;
+
+using DragEndInfo = std::variant<Direction, std::pair<const AbstractMonomerItem*, const UnboundMonomericAttachmentPointItem*>>;
 
 enum class DragState {
     DRAG_IGNORED,
@@ -112,6 +115,7 @@ class SKETCHER_API DrawMonomerSceneTool : public StandardSceneToolBase
     UnboundAttachmentPoint m_drag_start_ap;
     const AbstractMonomerItem* m_drag_end_monomer_item;
     UnboundMonomericAttachmentPointItem* m_drag_end_ap_item;
+    std::variant<Direction, std::pair<const AbstractMonomerItem*, const UnboundMonomericAttachmentPointItem*>> m_drag_end_info;
     
 
     QPixmap createDefaultCursorPixmap() const override;
@@ -241,6 +245,7 @@ class SKETCHER_API DrawMonomerSceneTool : public StandardSceneToolBase
     HintFragmentMonomerInfo createHintFragmentMonomerInfoForHintToOrFromExistingMonomer(const AbstractMonomerItem* const monomer_item,
     const UnboundMonomericAttachmentPointItem* const ap_item) const;
     HintFragmentMonomerInfo createHintFragmentMonomerInfoForHintToDirection(const HintFragmentMonomerInfo& start_monomer_info, const QPointF& scene_pos) const;
+    std::pair<std::variant<Direction, std::pair<const AbstractMonomerItem*, const UnboundMonomericAttachmentPointItem*>>, const AbstractMonomerItem*> getDragEndInfo(const QPointF& scene_pos);
 
     void updateDragHintDirection(const rdkit_extensions::Direction direction);
     rdkit_extensions::Direction getDragDirection(const QPointF& cur_scene_pos) const;

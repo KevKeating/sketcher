@@ -784,6 +784,34 @@ bool DrawMonomerSceneTool::initializeDragHint(const QPointF& scene_pos)
     
 }
 
+std::pair<std::variant<Direction, std::pair<const AbstractMonomerItem*, const UnboundMonomericAttachmentPointItem*>>, const AbstractMonomerItem*> DrawMonomerSceneTool::getDragEndInfo(const QPointF& scene_pos)
+{
+    auto* hovered_monomer_item = getTopMonomerItemAt(scene_pos);
+    if (hovered_monomer_item == m_drag_start_monomer_item) {
+        // we can't drag from a monomer to itself
+        hovered_monomer_item = nullptr;
+    }
+    const UnboundMonomericAttachmentPointItem* drag_end_ap_item = nullptr
+    if (hovered_monomer_item != nullptr) {
+        auto* drag_end_ap_item = getUnboundAttachmentPointAt(scene_pos);
+        // TODO: once drag hover is stored separately, won't need this check
+        if (hovered_monomer_item->parentItem() != m_drag_end_monomer_item) {
+            // the user is over an attachment point belonging to the monomer
+            // where the drag started
+            drag_end_ap_item = nullptr;
+        }
+    }
+    
+    std::variant<Direction, std::pair<const AbstractMonomerItem*, const UnboundMonomericAttachmentPointItem*>> direction_or_attachment_point;
+    if (drag_end_ap_item == nullptr) {
+        // there's no available attachment point at the cursor, so we drag the drag hint in a direction
+        direction_or_attachment_point = getDragDirection(scene_pos);
+    } else {
+        direction_or_attachment_point = {hovered_monomer_item, hovered_monomer_item};
+    }
+    return {direction_or_attachment_point, hovered_monomer_item};
+}
+
 Direction DrawMonomerSceneTool::getDragDirection(const QPointF& cur_scene_pos) const
 {
     const qreal dx = cur_scene_pos.x() - m_mouse_press_scene_pos.x();
@@ -855,6 +883,7 @@ void DrawMonomerSceneTool::onLeftButtonDragMove(
         // direction.
         hint_needs_reinitializing = !m_drag_direction.has_value();
         if (!hint_needs_reinitializing && direction != m_drag_direction) {
+            // TODO: is it worth it to special case this?
             updateDragHintDirection(direction);
         }
         // m_drag_end_ap_item = nullptr;
