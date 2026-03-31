@@ -196,7 +196,7 @@ class SKETCHER_API DrawMonomerSceneTool : public StandardSceneToolBase
      * have already been drawn for this monomer.
      */
     UnboundMonomericAttachmentPointItem*
-    getUnboundAttachmentPointAt(const QPointF& scene_pos) const;
+    getUnboundAttachmentPointAt(const QPointF& scene_pos, const bool no_default_if_click_should_mutate) const;
 
     UnboundMonomericAttachmentPointItem*
     getUnboundDragEndAttachmentPointAt(
@@ -207,7 +207,7 @@ class SKETCHER_API DrawMonomerSceneTool : public StandardSceneToolBase
      * is hovering over the monomer itself
      */
     UnboundMonomericAttachmentPointItem*
-    getDefaultUnboundAttachmentPointForHoveredMonomer() const;
+    getDefaultUnboundAttachmentPointForHoveredMonomer(const bool no_default_if_click_should_mutate) const;
 
     /**
      * Draw a hint structure showing a monomer bound to the specified attachment

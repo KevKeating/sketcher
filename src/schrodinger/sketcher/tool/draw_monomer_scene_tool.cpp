@@ -347,10 +347,9 @@ get_attachment_point_for_new_monomer(const MonomerType existing_monomer_type,
     }
 }
 
-// TODO: need version of this method that uses drag end variables - getDefaultUnboundAttachmentPointForHoveredMonomer will need different monomer type
 UnboundMonomericAttachmentPointItem*
 DrawMonomerSceneTool::getUnboundAttachmentPointAt(
-    const QPointF& scene_pos) const
+    const QPointF& scene_pos, const bool no_default_if_click_should_mutate) const
 {
     if (m_unbound_ap_items.empty()) {
         return nullptr;
@@ -360,7 +359,7 @@ DrawMonomerSceneTool::getUnboundAttachmentPointAt(
             return ap_item;
         }
     }
-    return getDefaultUnboundAttachmentPointForHoveredMonomer();
+    return getDefaultUnboundAttachmentPointForHoveredMonomer(no_default_if_click_should_mutate);
 } 
 
 static std::tuple<const RDKit::Atom*, MonomerType>
@@ -403,10 +402,10 @@ DrawMonomerSceneTool::getHoveredMonomerAndType() const
 }
 
 UnboundMonomericAttachmentPointItem*
-DrawMonomerSceneTool::getDefaultUnboundAttachmentPointForHoveredMonomer() const
+DrawMonomerSceneTool::getDefaultUnboundAttachmentPointForHoveredMonomer(const bool no_default_if_click_should_mutate) const
 {
     auto [monomer, monomer_type] = getHoveredMonomerAndType();
-    if (clickShouldMutate(monomer, monomer_type)) {
+    if (no_default_if_click_should_mutate && clickShouldMutate(monomer, monomer_type)) {
         return nullptr;
     }
     return get_default_attachment_point(monomer_type, m_monomer_type,
@@ -454,7 +453,7 @@ void DrawMonomerSceneTool::onMouseMove(QGraphicsSceneMouseEvent* const event)
         }
     }
 
-    auto* hovered_ap_item = getUnboundAttachmentPointAt(scene_pos);
+    auto* hovered_ap_item = getUnboundAttachmentPointAt(scene_pos, true);
     if (hovered_ap_item != m_hovered_ap_item) {
         // update which attachment point is hovered
         m_hovered_ap_item = hovered_ap_item;
@@ -635,7 +634,7 @@ void DrawMonomerSceneTool::onLeftButtonClick(
         auto [monomer, monomer_type] =
             get_monomer_and_type(item);
         std::optional<UnboundAttachmentPoint> clicked_ap;
-        auto ap_item = getUnboundAttachmentPointAt(scene_pos);
+        auto ap_item = getUnboundAttachmentPointAt(scene_pos, true);
         if (ap_item != nullptr) {
             clicked_ap = ap_item->getAttachmentPoint();
         }
@@ -679,11 +678,6 @@ void DrawMonomerSceneTool::onLeftButtonDragStart(
     auto dir = getDragDirection(event->scenePos());
     m_drag_start_monomer_item = getTopMonomerItemAt(m_mouse_press_scene_pos);
     
-    // delete the hover hint structure
-    // delete m_hint_fragment_item;
-    // m_hint_fragment_item = nullptr;
-    // m_frag.reset();
-    
     auto handled = createDragHint(dir);
     if (!handled) {
         m_drag_start_monomer_item = nullptr;
@@ -710,8 +704,8 @@ bool DrawMonomerSceneTool::createDragHint(const DragEndInfo& drag_end_info)
         }
     } else {
         // the drag started over a monomer
-        auto* hovered_ap_item = getUnboundAttachmentPointAt(m_mouse_press_scene_pos);
-        std::cout << "drag started over monomer: " << hovered_ap_item << "\n";
+        auto* hovered_ap_item = getUnboundAttachmentPointAt(m_mouse_press_scene_pos, false);
+        // std::cout << "drag started over monomer: " << hovered_ap_item << "\n";
         if (hovered_ap_item != nullptr) {
             hint_start_monomer_info = createHintFragmentMonomerInfoForHintToOrFromExistingMonomer(m_drag_start_monomer_item, hovered_ap_item);
         } else {
