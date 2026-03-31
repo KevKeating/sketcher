@@ -42,7 +42,7 @@ class MonomerHintFragmentItem : public QGraphicsItemGroup
      * @param parent The parent graphics item, if any.
      */
     MonomerHintFragmentItem(const RDKit::ROMol& fragment, const Fonts& fonts,
-                            const int atom_index_to_hide,
+                            const std::vector<size_t>& atom_indices_to_hide,
                             const int bond_index_to_label,
                             const QColor monomer_background_color,
                             QGraphicsItem* parent = nullptr);
@@ -50,7 +50,7 @@ class MonomerHintFragmentItem : public QGraphicsItemGroup
   protected:
     RDKit::ROMol m_frag;
     const Fonts* m_fonts = nullptr;
-    int m_atom_index_to_hide = -1;
+    std::vector<size_t> m_atom_indices_to_hide;
     int m_bond_index_to_label = -1;
     QColor m_monomer_background_color;
     QList<QGraphicsItem*> m_atom_items;

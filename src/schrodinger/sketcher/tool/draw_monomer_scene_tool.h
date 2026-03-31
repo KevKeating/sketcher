@@ -41,7 +41,7 @@ class UnboundMonomericAttachmentPointItem;
 class UnboundAttachmentPoint;
 class HintFragmentMonomerInfo;
 
-using DragEndInfo = std::variant<Direction, std::pair<const AbstractMonomerItem*, const UnboundMonomericAttachmentPointItem*>>;
+using DragEndInfo = std::variant<std::monostate, rdkit_extensions::Direction, std::pair<AbstractMonomerItem*, UnboundMonomericAttachmentPointItem*>>;
 
 enum class DragState {
     DRAG_IGNORED,
@@ -115,7 +115,7 @@ class SKETCHER_API DrawMonomerSceneTool : public StandardSceneToolBase
     UnboundAttachmentPoint m_drag_start_ap;
     const AbstractMonomerItem* m_drag_end_monomer_item;
     UnboundMonomericAttachmentPointItem* m_drag_end_ap_item;
-    std::variant<Direction, std::pair<const AbstractMonomerItem*, const UnboundMonomericAttachmentPointItem*>> m_drag_end_info;
+    DragEndInfo m_drag_end_info;
     
 
     QPixmap createDefaultCursorPixmap() const override;
@@ -231,26 +231,24 @@ class SKETCHER_API DrawMonomerSceneTool : public StandardSceneToolBase
     bool clickShouldMutate(const RDKit::Atom* monomer,
                            const MonomerType monomer_type) const;
     
-    void createHintFragmentItem(RDKit::Atom* monomer_one, const std::string_view ap_one, const RDGeom::Point3D& pos_one,
-    RDKit::Atom* monomer_two, const std::string_view ap_two, const RDGeom::Point3D& pos_two, const bool hide_monomer_one);
+    void createHintFragmentItem(const HintFragmentMonomerInfo& monomer_one, const HintFragmentMonomerInfo& monomer_two);
     
-    void createDragHintToDirection(const QPointF scene_pos, const Direction direction);
-    void createDragHintToDirection(const AbstractMonomerItem* const start_monomer_item,
-        const UnboundAttachmentPoint& ap, const rdkit_extensions::Direction direction);
-    void createDragHintToDirection(RDKit::Atom* const monomer, const MonomerType monomer_type, const RDGeom::Point3D monomer_pos,
-    const std::string_view linkage_start, const Direction direction, const bool hide_monomer_one);
+    // void createDragHintToDirection(const QPointF scene_pos, const Direction direction);
+    // void createDragHintToDirection(const AbstractMonomerItem* const start_monomer_item,
+    //     const UnboundAttachmentPoint& ap, const rdkit_extensions::Direction direction);
+    // void createDragHintToDirection(RDKit::Atom* const monomer, const MonomerType monomer_type, const RDGeom::Point3D monomer_pos,
+    // const std::string_view linkage_start, const Direction direction, const bool hide_monomer_one);
 
     bool initializeDragHint(const QPointF& scene_pos);
     HintFragmentMonomerInfo createHintFragmentMonomerInfoForHintFromEmptySpace(const QPointF& scene_pos) const;
     HintFragmentMonomerInfo createHintFragmentMonomerInfoForHintToOrFromExistingMonomer(const AbstractMonomerItem* const monomer_item,
     const UnboundMonomericAttachmentPointItem* const ap_item) const;
     HintFragmentMonomerInfo createHintFragmentMonomerInfoForHintToDirection(const HintFragmentMonomerInfo& start_monomer_info, const QPointF& scene_pos) const;
-    std::pair<std::variant<Direction, std::pair<const AbstractMonomerItem*, const UnboundMonomericAttachmentPointItem*>>, const AbstractMonomerItem*> getDragEndInfo(const QPointF& scene_pos);
+    std::pair<DragEndInfo, AbstractMonomerItem*> getDragEndInfo(const QPointF& scene_pos);
 
-    void updateDragHintDirection(const rdkit_extensions::Direction direction);
+    // void updateDragHintDirection(const rdkit_extensions::Direction direction);
     rdkit_extensions::Direction getDragDirection(const QPointF& cur_scene_pos) const;
 };
 
 } // namespace sketcher
 } // namespace schrodinger
-HintFragmentMonomerInfo

@@ -14,12 +14,12 @@ namespace schrodinger::sketcher
 
 MonomerHintFragmentItem::MonomerHintFragmentItem(
     const RDKit::ROMol& fragment, const Fonts& fonts,
-    const int atom_index_to_hide, const int bond_index_to_label,
+    const std::vector<size_t>& atom_indices_to_hide, const int bond_index_to_label,
     const QColor monomer_background_color, QGraphicsItem* parent) :
     QGraphicsItemGroup(parent),
     m_frag(fragment),
     m_fonts(&fonts),
-    m_atom_index_to_hide(atom_index_to_hide),
+    m_atom_indices_to_hide(atom_indices_to_hide),
     m_bond_index_to_label(bond_index_to_label),
     m_monomer_background_color(monomer_background_color)
 {
@@ -47,7 +47,8 @@ void MonomerHintFragmentItem::createGraphicsItems()
         }
         // hide the monomer where this fragment connects to the existing
         // structure
-        if (static_cast<int>(kv.first->getIdx()) == m_atom_index_to_hide) {
+        auto atom_idx = kv.first->getIdx();
+        if (std::ranges::find(m_atom_indices_to_hide, atom_idx) != m_atom_indices_to_hide.end()) {
             kv.second->setVisible(false);
         }
         m_atom_items.append(kv.second);
