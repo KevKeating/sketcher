@@ -161,6 +161,7 @@ class SKETCHER_API DrawMonomerSceneTool : public StandardSceneToolBase
      * Clear all attachment point labels drawn by this scene tool
      */
     void clearAttachmentPointsLabels();
+    void clearDragEndAttachmentPointsLabels();
 
     /**
      * Return the top graphics item representing a monomer at the given
@@ -196,6 +197,10 @@ class SKETCHER_API DrawMonomerSceneTool : public StandardSceneToolBase
      */
     UnboundMonomericAttachmentPointItem*
     getUnboundAttachmentPointAt(const QPointF& scene_pos) const;
+
+    UnboundMonomericAttachmentPointItem*
+    getUnboundDragEndAttachmentPointAt(
+    const QPointF& scene_pos) const;
 
     /**
      * @return the unbound attachment point that should be active when the user

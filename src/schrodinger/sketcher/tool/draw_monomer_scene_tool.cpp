@@ -345,6 +345,7 @@ get_attachment_point_for_new_monomer(const MonomerType existing_monomer_type,
     }
 }
 
+// TODO: need version of this method that uses drag end variables - getDefaultUnboundAttachmentPointForHoveredMonomer will need different monomer type
 UnboundMonomericAttachmentPointItem*
 DrawMonomerSceneTool::getUnboundAttachmentPointAt(
     const QPointF& scene_pos) const
@@ -358,7 +359,7 @@ DrawMonomerSceneTool::getUnboundAttachmentPointAt(
         }
     }
     return getDefaultUnboundAttachmentPointForHoveredMonomer();
-}
+} 
 
 static std::tuple<const RDKit::Atom*, MonomerType>
 get_monomer_and_type(const AbstractMonomerItem* const monomer_item)
@@ -367,6 +368,26 @@ get_monomer_and_type(const AbstractMonomerItem* const monomer_item)
     auto monomer_type = get_monomer_type(monomer);
     return {monomer, monomer_type};
 }
+
+UnboundMonomericAttachmentPointItem*
+DrawMonomerSceneTool::getUnboundDragEndAttachmentPointAt(
+    const QPointF& scene_pos) const
+{
+    // TODO: remove duplication
+    if (m_drag_end_unbound_ap_items.empty()) {
+        return nullptr;
+    }
+    for (auto* ap_item : m_drag_end_unbound_ap_items) {
+        if (ap_item->withinHoverArea(scene_pos)) {
+            return ap_item;
+        }
+    }
+    auto [drag_start_monomer, drag_start_monomer_type] = get_monomer_and_type(m_drag_start_monomer_item);
+    auto [drag_end_monomer, drag_end_monomer_type] = get_monomer_and_type(m_drag_end_monomer_item);
+    return get_default_attachment_point(drag_end_monomer_type, drag_start_monomer_type,
+                                        m_drag_end_unbound_ap_items);
+}
+
 
 std::tuple<const RDKit::Atom*, MonomerType>
 DrawMonomerSceneTool::getHoveredMonomerAndType() const
@@ -655,6 +676,12 @@ void DrawMonomerSceneTool::onLeftButtonDragStart(
     // drag to direction
     auto dir = getDragDirection(event->scenePos());
     m_drag_start_monomer_item = getTopMonomerItemAt(m_mouse_press_scene_pos);
+    
+    // delete the hover hint structure
+    delete m_hint_fragment_item;
+    m_hint_fragment_item = nullptr;
+    m_frag.reset();
+    
     auto handled = createDragHint(dir);
     if (!handled) {
         m_drag_start_monomer_item = nullptr;
@@ -677,7 +704,7 @@ bool DrawMonomerSceneTool::createDragHint(const DragEndInfo& drag_end_info)
         }
     } else {
         // the drag started over a monomer
-        auto* hovered_ap_item = getUnboundAttachmentPointAt(m_mouse_press_scene_pos);
+        auto* hovered_ap_item = getUnboundDragEndAttachmentPointAt(m_mouse_press_scene_pos);
         if (hovered_ap_item != nullptr) {
             hint_start_monomer_info = createHintFragmentMonomerInfoForHintToOrFromExistingMonomer(m_drag_start_monomer_item, hovered_ap_item);
         } else {
@@ -688,7 +715,6 @@ bool DrawMonomerSceneTool::createDragHint(const DragEndInfo& drag_end_info)
     }
     
     HintFragmentMonomerInfo hint_end_monomer_info;
-    // TODO: update state variables here
     if (std::holds_alternative<Direction>(drag_end_info)) {
         auto dir = std::get<Direction>(drag_end_info);
         hint_end_monomer_info = createHintFragmentMonomerInfoForHintToDirection(hint_start_monomer_info, dir);
@@ -763,7 +789,7 @@ void DrawMonomerSceneTool::onLeftButtonDragMove(
 
     if (hovered_monomer_item != m_drag_end_monomer_item) {
         if (m_drag_end_monomer_item) {
-            // TODO: clear drag end monomer labels
+            clearDragEndAttachmentPointsLabels();
         }
         m_drag_end_monomer_item = hovered_monomer_item;
         if (hovered_monomer_item != nullptr) {
@@ -788,7 +814,7 @@ void DrawMonomerSceneTool::onLeftButtonDragRelease(
     m_hint_fragment_item = nullptr;
     m_drag_end_monomer_item = nullptr;
     m_drag_end_info = std::monostate{};
-    // TODO: clear labels
+    clearDragEndAttachmentPointsLabels();
     // TODO: add monomer(s) and bond to MolModel
 }
 
@@ -867,6 +893,19 @@ void DrawMonomerSceneTool::clearAttachmentPointsLabels()
     delete m_hint_fragment_item;
     m_hint_fragment_item = nullptr;
     m_frag.reset();
+}
+
+// TODO: fix duplication
+void DrawMonomerSceneTool::clearDragEndAttachmentPointsLabels()
+{
+    for (auto* item : m_drag_end_attachment_point_labels_group.childItems()) {
+        m_attachment_point_labels_group.removeFromGroup(item);
+        delete item;
+    }
+    for (auto* item : m_drag_end_unbound_ap_items) {
+        delete item;
+    }
+    m_drag_end_unbound_ap_items.clear();
 }
 
 } // namespace sketcher
