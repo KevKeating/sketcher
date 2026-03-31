@@ -605,6 +605,7 @@ HintFragmentMonomerInfo DrawMonomerSceneTool::createHintFragmentMonomerInfoForHi
     return HintFragmentMonomerInfo(copy_of_monomer, monomer_type, monomer_pos, ap_model_name, false);
 }
 
+// returned monomer is owned by calling scope
 HintFragmentMonomerInfo DrawMonomerSceneTool::createHintFragmentMonomerInfoForHintToDirection(const HintFragmentMonomerInfo& start_monomer_info, const QPointF& scene_pos) const
 {
     auto direction = getDragDirection(scene_pos);
