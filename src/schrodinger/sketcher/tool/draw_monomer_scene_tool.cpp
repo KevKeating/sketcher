@@ -513,34 +513,15 @@ void DrawMonomerSceneTool::drawBoundMonomerHintFor(
     if (ap_item == nullptr) {
         return;
     }
-
-    auto [monomer, monomer_type] = getHoveredMonomerAndType();
+    const auto* monomer_item =
+        static_cast<const AbstractMonomerItem*>(m_hovered_item);
+    auto hovered_monomer_info = createHintFragmentMonomerInfoForHintToOrFromExistingMonomer(monomer_item, ap_item);
     auto direction = ap_item->getAttachmentPoint().direction;
-    auto monomer_pos = get_coords_for_monomer(monomer);
-    auto new_pos = get_default_coords_for_bound_monomer(monomer, direction);
-    auto* copy_of_monomer = new RDKit::Atom(*monomer);
-    auto linkage_start = ap_item->getAttachmentPoint().model_name;
-    auto linkage_end = get_attachment_point_for_new_monomer(
-        monomer_type, linkage_start, m_monomer_type);
-    int new_monomer_res_num;
-    std::string new_monomer_chain_id;
-    if (m_chain_type == rdkit_extensions::getChainType(*monomer)) {
-        new_monomer_chain_id = rdkit_extensions::get_polymer_id(monomer);
-        new_monomer_res_num = rdkit_extensions::get_residue_number(monomer) + 1;
-    } else {
-        new_monomer_chain_id = rdkit_extensions::toString(m_chain_type) + "1";
-        new_monomer_res_num = 1;
-    }
-    auto new_monomer = rdkit_extensions::makeMonomer(m_res_name, new_monomer_chain_id, new_monomer_res_num,
-                               false);
-    createHintFragmentItem(copy_of_monomer, linkage_start, monomer_pos, new_monomer.release(), linkage_end, new_pos, true);
+    auto new_monomer_info = createHintFragmentMonomerInfoForHintToDirection(hovered_monomer_info, direction);
+    createHintFragmentItem(hovered_monomer_info, new_monomer_info);
 }
 
-// TODO: will need to update this function and MonomerHitnFragmentItem to allow hiding more than one atom for cases where the user drags from one existing atom to another existing atonm
 void DrawMonomerSceneTool::createHintFragmentItem(const HintFragmentMonomerInfo& monomer_one_info, const HintFragmentMonomerInfo& monomer_two_info)
-    
-    // RDKit::Atom* monomer_one, const std::string_view ap_one, const RDGeom::Point3D& pos_one,
-    // RDKit::Atom* monomer_two, const std::string_view ap_two, const RDGeom::Point3D& pos_two, const bool hide_monomer_one)
 {
     // Create an RWMol fragment with two monomers and a connection between them
     m_frag = std::make_shared<RDKit::RWMol>();
@@ -614,78 +595,6 @@ HintFragmentMonomerInfo DrawMonomerSceneTool::createHintFragmentMonomerInfoForHi
         start_monomer_info.monomer_type, start_monomer_info.ap_model_name, m_monomer_type);
     return HintFragmentMonomerInfo(monomer.release(), m_monomer_type, pos, ap_model_name, true);
 }
-
-
-// void DrawMonomerSceneTool::createDragHintToDirection(const QPointF scene_pos, const Direction direction) {
-//     auto chain_id = rdkit_extensions::toString(m_chain_type) + "1";
-//     auto monomer = rdkit_extensions::makeMonomer(m_res_name, chain_id, 1,
-//                                false);
-//     auto monomer_pos = to_mol_xy(scene_pos);
-//     auto linkage_start = m_monomer_type == MonomerType::NA_BASE ? NA_BASE_AP_PAIR : ap_model_name_for(PeptideAP::C);
-//     createDragHintToDirection(monomer.release(), m_monomer_type, monomer_pos, linkage_start, direction, false);
-// }
-
-// // TODO: will need to recreate the hint fragment when the user starts or stops mousing over an existing monomer
-// void DrawMonomerSceneTool::createDragHintToDirection(const AbstractMonomerItem* const start_monomer_item,
-//     const UnboundAttachmentPoint& ap, const Direction direction)
-// {
-//     auto [monomer, monomer_type] = get_monomer_and_type(start_monomer_item);
-//     auto monomer_pos = get_coords_for_monomer(monomer);
-//     createDragHintToDirection(new RDKit::Atom(*monomer), monomer_type, monomer_pos, ap.model_name, direction, true);
-// }
-
-// void DrawMonomerSceneTool::createDragHintToDirection(RDKit::Atom* const monomer, const MonomerType monomer_type, const RDGeom::Point3D monomer_pos,
-//     const std::string_view linkage_start, const Direction direction, const bool hide_monomer_one)
-// {
-//     auto new_pos = get_default_coords_for_bound_monomer(monomer, direction);
-//     auto linkage_end = get_attachment_point_for_new_monomer(
-//         monomer_type, linkage_start, m_monomer_type);
-//     int new_monomer_res_num;
-//     std::string new_monomer_chain_id;
-//     if (m_chain_type == rdkit_extensions::getChainType(*monomer)) {
-//         new_monomer_chain_id = rdkit_extensions::get_polymer_id(monomer);
-//         new_monomer_res_num = rdkit_extensions::get_residue_number(monomer) + 1;
-//     } else {
-//         new_monomer_chain_id = rdkit_extensions::toString(m_chain_type) + "1";
-//         new_monomer_res_num = 1;
-//     }
-//     auto new_monomer = rdkit_extensions::makeMonomer(m_res_name, new_monomer_chain_id, new_monomer_res_num,
-//                                false);
-
-//     m_drag_state = DragState::DRAGGING_TO_DIRECTION;
-//     delete m_hint_fragment_item;
-//     m_hint_fragment_item = nullptr;
-//     createHintFragmentItem(monomer, linkage_start, monomer_pos, new_monomer.release(), linkage_end, new_pos, true);
-
-// }
-
-// void DrawMonomerSceneTool::createDragHintToExistingMonomer(RDKit::Atom* const monomer, const MonomerType monomer_type, const RDGeom::Point3D monomer_pos,
-//     const std::string_view linkage_start, const bool hide_monomer_one, AbstractMonomerItem* drag_end_monomer_item, UnboundMonomericAttachmentPointItem* drag_end_ap_item)
-// {
-//     // TODO: create two functions that return createHintFragmentItem params
-//     //       related to monomer one: one for starting from an existing monomer
-//     //       and one for starting from empty space.  Also create two functions
-//     //       for monomer two: one for dragging to a direction and one for
-//     //       dragging to an existing monomer AP.  Then mix and match those to
-//     //       call params for actual call to createHintFragmentItem.
-//     auto new_pos = to_mol_xy(drag_end_ap_item->getLineEnd());
-//     auto linkage_end = drag_end_ap_item->getAttachmentPoint().model_name;
-//     auto new_monomer_orig = drag_end_monomer_item->getAtom();
-//     auto new_monomer_copy = new RDKit::Atom(new_monomer_orig);
-
-//     m_drag_state = DragState::DRAGGING_TO_MONOMER;
-//     delete m_hint_fragment_item;
-//     m_hint_fragment_item = nullptr;
-//     // TODO: always hide the second atom
-//     createHintFragmentItem(monomer, linkage_start, monomer_pos, new_monomer_copy, linkage_end, new_pos, hide_monomer_one);
-
-// }
-
-// void DrawMonomerSceneTool::updateDragHintDirection(const Direction direction)
-// {
-//     auto new_pos = get_default_coords_for_bound_monomer(m_frag->getAtomWithIdx(1), direction);
-//     m_frag->getConformer().setAtomPos(2, new_pos);
-// }
 
 void DrawMonomerSceneTool::onLeftButtonClick(
     QGraphicsSceneMouseEvent* const event)
@@ -841,23 +750,19 @@ void DrawMonomerSceneTool::onLeftButtonDragMove(
         return;
     }
     auto [drag_end_info, hovered_monomer_item] = getDragEndInfo(event->scenePos());
-    // auto scene_pos = event->scenePos();
-    // auto* hovered_monomer_item = getTopMonomerItemAt(scene_pos);
-    // if (hovered_monomer_item == m_drag_start_monomer_item) {
-    //     // we can't drag from a monomer to itself
-    //     hovered_monomer_item = nullptr;
-    // }
+
     if (hovered_monomer_item != m_drag_end_monomer_item) {
         if (m_drag_end_monomer_item) {
             // TODO: clear drag end monomer labels
         }
-        // TODO: function that creates labels could update m_drag_end_monomer_item
         m_drag_end_monomer_item = hovered_monomer_item;
         if (hovered_monomer_item != nullptr) {
             labelAttachmentPointsOnMonomer(hovered_monomer_item->getAtom(), hovered_monomer_item);
         }
     }
+
     if (drag_end_info != m_drag_end_info) {
+        m_drag_end_info = drag_end_info;
         createDragHint(drag_end_info);
     }       
 }
@@ -866,12 +771,14 @@ void DrawMonomerSceneTool::onLeftButtonDragRelease(
     QGraphicsSceneMouseEvent* const event)
 {
     StandardSceneToolBase::onLeftButtonDragRelease(event);
-    if (m_drag_state == DragState::DRAG_IGNORED) {
+    if (m_drag_ignored) {
         return;
     }
     delete m_hint_fragment_item;
     m_hint_fragment_item = nullptr;
-    m_drag_end_info = std::monostate;
+    m_drag_end_monomer_item = nullptr;
+    m_drag_end_info = std::monostate{};
+    // TODO: clear labels
     // TODO: add monomer(s) and bond to MolModel
 }
 

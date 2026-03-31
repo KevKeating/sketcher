@@ -44,12 +44,6 @@ class HintFragmentMonomerInfo;
 using MonomerAndAPItems = std::pair<AbstractMonomerItem*, UnboundMonomericAttachmentPointItem*>;
 using DragEndInfo = std::variant<std::monostate, rdkit_extensions::Direction, MonomerAndAPItems>;
 
-enum class DragState {
-    DRAG_IGNORED,
-    DRAGGING_TO_DIRECTION,
-    DRAGGING_TO_MONOMER,
-};
-
 /**
  * Return the default unbound attachment point; that is, the attachment point
  * that should be selected when the user hovers over a monomer.
@@ -109,13 +103,9 @@ class SKETCHER_API DrawMonomerSceneTool : public StandardSceneToolBase
     QColor m_bound_ap_label_color = BOUND_AP_LABEL_COLOR;
     bool m_cursor_hint_shown = true;
     
-    DragState m_drag_state;
     bool m_drag_ignored;
-    std::optional<rdkit_extensions::Direction> m_drag_direction;
     const AbstractMonomerItem* m_drag_start_monomer_item;
-    UnboundAttachmentPoint m_drag_start_ap;
     const AbstractMonomerItem* m_drag_end_monomer_item;
-    UnboundMonomericAttachmentPointItem* m_drag_end_ap_item;
     DragEndInfo m_drag_end_info;
     
 
@@ -234,12 +224,6 @@ class SKETCHER_API DrawMonomerSceneTool : public StandardSceneToolBase
     
     void createHintFragmentItem(const HintFragmentMonomerInfo& monomer_one, const HintFragmentMonomerInfo& monomer_two);
     
-    // void createDragHintToDirection(const QPointF scene_pos, const Direction direction);
-    // void createDragHintToDirection(const AbstractMonomerItem* const start_monomer_item,
-    //     const UnboundAttachmentPoint& ap, const rdkit_extensions::Direction direction);
-    // void createDragHintToDirection(RDKit::Atom* const monomer, const MonomerType monomer_type, const RDGeom::Point3D monomer_pos,
-    // const std::string_view linkage_start, const Direction direction, const bool hide_monomer_one);
-
     bool createDragHint(const DragEndInfo& drag_end_info);
     HintFragmentMonomerInfo createHintFragmentMonomerInfoForHintFromEmptySpace(const QPointF& scene_pos) const;
     HintFragmentMonomerInfo createHintFragmentMonomerInfoForHintToOrFromExistingMonomer(const AbstractMonomerItem* const monomer_item,
@@ -247,7 +231,6 @@ class SKETCHER_API DrawMonomerSceneTool : public StandardSceneToolBase
     HintFragmentMonomerInfo createHintFragmentMonomerInfoForHintToDirection(const HintFragmentMonomerInfo& start_monomer_info, const Direction direction) const;
     std::pair<DragEndInfo, AbstractMonomerItem*> getDragEndInfo(const QPointF& scene_pos);
 
-    // void updateDragHintDirection(const rdkit_extensions::Direction direction);
     rdkit_extensions::Direction getDragDirection(const QPointF& cur_scene_pos) const;
 };
 
