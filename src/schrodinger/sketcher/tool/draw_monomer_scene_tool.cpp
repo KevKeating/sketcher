@@ -39,6 +39,14 @@ namespace sketcher
 
 using rdkit_extensions::Direction;
 
+struct HintFragmentMonomerInfo {
+    RDKit::Atom* monomer;
+    MonomerType monomer_type;
+    RDGeom::Point3D pos;
+    std::string ap_model_name;
+    bool visible;
+};
+
 DrawMonomerSceneTool::DrawMonomerSceneTool(
     const std::string& res_name, const rdkit_extensions::ChainType chain_type,
     const Fonts& fonts, Scene* scene, MolModel* mol_model) :
@@ -478,13 +486,20 @@ static RDGeom::Point3D get_coords_for_monomer(const RDKit::Atom* const monomer)
  * than BOND_LENGTH.)
  */
 static RDGeom::Point3D
+get_default_coords_for_bound_monomer(const RDGeom::Point3D monomer_pos,
+                                     const Direction dir)
+{
+    auto offset = rdkit_extensions::direction_to_vector(dir);
+    offset *= BOND_LENGTH;
+    return monomer_pos + offset;
+}
+
+static RDGeom::Point3D
 get_default_coords_for_bound_monomer(const RDKit::Atom* const monomer,
                                      const Direction dir)
 {
     auto monomer_pos = get_coords_for_monomer(monomer);
-    auto offset = rdkit_extensions::direction_to_vector(dir);
-    offset *= BOND_LENGTH;
-    return monomer_pos + offset;
+    return get_default_coords_for_bound_monomer(monomer_pos, dir);
 }
 
 // should only be called when hovering over a monomer
@@ -558,6 +573,36 @@ void DrawMonomerSceneTool::createHintFragmentItem(RDKit::Atom* monomer_one, cons
         *m_frag, m_fonts, atom_index_to_hide, bond_index_to_label,
         m_monomer_background_color);
     m_scene->addItem(m_hint_fragment_item);
+}
+
+// returned monomer is owned by calling scope
+HintFragmentMonomerInfo DrawMonomerSceneTool::createHintFragmentMonomerInfoForHintFromEmptySpace(const QPointF scene_pos) const
+{
+    auto chain_id = rdkit_extensions::toString(m_chain_type) + "1";
+    auto monomer = rdkit_extensions::makeMonomer(m_res_name, chain_id, 1,
+                               false);
+    auto monomer_pos = to_mol_xy(scene_pos);
+    auto linkage_start = m_monomer_type == MonomerType::NA_BASE ? NA_BASE_AP_PAIR : ap_model_name_for(PeptideAP::C);
+    return HintFragmentMonomerInfo(monomer.release(), m_monomer_type, monomer_pos, linkage_start, true);
+}
+
+HintFragmentMonomerInfo DrawMonomerSceneTool::createHintFragmentMonomerInfoForHintFromExistingMonomer(const AbstractMonomerItem* const start_monomer_item,
+    const UnboundAttachmentPoint& ap) const
+{
+    auto [monomer, monomer_type] = get_monomer_and_type(start_monomer_item);
+    auto copy_of_monomer = new RDKit::Atom(*monomer);
+    auto monomer_pos = get_coords_for_monomer(monomer);
+    return HintFragmentMonomerInfo(copy_of_monomer, monomer_type, monomer_pos, ap.model_name, false);
+}
+
+HintFragmentMonomerInfo DrawMonomerSceneTool::createHintFragmentMonomerInfoForHintToDirection(const RDGeom::Point3D start_monomer_pos, const Direction direction) const
+{
+    auto pos = get_default_coords_for_bound_monomer(start_monomer_pos, direction);
+    // TODO: is it worth trying to get these to match the first monomer?
+    //       Probably not.
+    auto chain_id = rdkit_extensions::toString(m_chain_type) + "1";
+    auto res_num = 1;
+    auto monomer = rdkit_extensions::makeMonomer(m_res_name, chain_id, res_num, false);
 }
 
 void DrawMonomerSceneTool::createDragHintToDirection(const QPointF scene_pos, const Direction direction) {

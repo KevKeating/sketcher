@@ -38,6 +38,7 @@ enum class MonomerType;
 class MonomerHintFragmentItem;
 class UnboundMonomericAttachmentPointItem;
 class UnboundAttachmentPoint;
+class HintFragmentMonomerInfo;
 
 enum class DragState {
     DRAG_IGNORED,
@@ -233,10 +234,16 @@ class SKETCHER_API DrawMonomerSceneTool : public StandardSceneToolBase
         const UnboundAttachmentPoint& ap, const rdkit_extensions::Direction direction);
     void createDragHintToDirection(RDKit::Atom* const monomer, const MonomerType monomer_type, const RDGeom::Point3D monomer_pos,
     const std::string_view linkage_start, const Direction direction, const bool hide_monomer_one);
-        
+
+    HintFragmentMonomerInfo createHintFragmentMonomerInfoForHintFromEmptySpace(const QPointF scene_pos) const;
+    HintFragmentMonomerInfo createHintFragmentMonomerInfoForHintFromExistingMonomer(const AbstractMonomerItem* const start_monomer_item,
+        const UnboundAttachmentPoint& ap) const;
+    HintFragmentMonomerInfo DrawMonomerSceneTool::createHintFragmentMonomerInfoForHintToDirection(const RDGeom::Point3D start_monomer_pos, const Direction direction) const;
+
     void updateDragHintDirection(const rdkit_extensions::Direction direction);
     rdkit_extensions::Direction getDragDirection(const QPointF& cur_scene_pos) const;
 };
 
 } // namespace sketcher
 } // namespace schrodinger
+HintFragmentMonomerInfo
