@@ -106,6 +106,7 @@ class SKETCHER_API DrawMonomerSceneTool : public StandardSceneToolBase
     bool m_cursor_hint_shown = true;
     
     DragState m_drag_state;
+    bool m_drag_ignored;
     std::optional<rdkit_extensions::Direction> m_drag_direction;
     const AbstractMonomerItem* m_drag_start_monomer_item;
     UnboundAttachmentPoint m_drag_start_ap;
