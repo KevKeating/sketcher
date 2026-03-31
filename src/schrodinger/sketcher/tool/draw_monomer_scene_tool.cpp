@@ -704,7 +704,8 @@ bool DrawMonomerSceneTool::createDragHint(const DragEndInfo& drag_end_info)
         }
     } else {
         // the drag started over a monomer
-        auto* hovered_ap_item = getUnboundDragEndAttachmentPointAt(m_mouse_press_scene_pos);
+        auto* hovered_ap_item = getUnboundAttachmentPointAt(m_mouse_press_scene_pos);
+        std::cout << "drag started over monomer: " << hovered_ap_item << "\n";
         if (hovered_ap_item != nullptr) {
             hint_start_monomer_info = createHintFragmentMonomerInfoForHintToOrFromExistingMonomer(m_drag_start_monomer_item, hovered_ap_item);
         } else {
