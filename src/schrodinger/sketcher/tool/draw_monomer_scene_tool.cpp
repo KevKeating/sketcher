@@ -576,7 +576,7 @@ void DrawMonomerSceneTool::createHintFragmentItem(RDKit::Atom* monomer_one, cons
 }
 
 // returned monomer is owned by calling scope
-HintFragmentMonomerInfo DrawMonomerSceneTool::createHintFragmentMonomerInfoForHintFromEmptySpace(const QPointF scene_pos) const
+HintFragmentMonomerInfo DrawMonomerSceneTool::createHintFragmentMonomerInfoForHintFromEmptySpace(const QPointF& scene_pos) const
 {
     auto chain_id = rdkit_extensions::toString(m_chain_type) + "1";
     auto monomer = rdkit_extensions::makeMonomer(m_res_name, chain_id, 1,
@@ -586,24 +586,29 @@ HintFragmentMonomerInfo DrawMonomerSceneTool::createHintFragmentMonomerInfoForHi
     return HintFragmentMonomerInfo(monomer.release(), m_monomer_type, monomer_pos, linkage_start, true);
 }
 
-HintFragmentMonomerInfo DrawMonomerSceneTool::createHintFragmentMonomerInfoForHintFromExistingMonomer(const AbstractMonomerItem* const start_monomer_item,
-    const UnboundAttachmentPoint& ap) const
+HintFragmentMonomerInfo DrawMonomerSceneTool::createHintFragmentMonomerInfoForHintToOrFromExistingMonomer(const AbstractMonomerItem* const monomer_item,
+    const UnboundMonomericAttachmentPointItem* const ap_item) const
 {
-    auto [monomer, monomer_type] = get_monomer_and_type(start_monomer_item);
+    auto [monomer, monomer_type] = get_monomer_and_type(monomer_item);
     auto copy_of_monomer = new RDKit::Atom(*monomer);
     auto monomer_pos = get_coords_for_monomer(monomer);
-    return HintFragmentMonomerInfo(copy_of_monomer, monomer_type, monomer_pos, ap.model_name, false);
+    auto ap_model_name = ap_item->getAttachmentPoint().model_name;
+    return HintFragmentMonomerInfo(copy_of_monomer, monomer_type, monomer_pos, ap_model_name, false);
 }
 
-HintFragmentMonomerInfo DrawMonomerSceneTool::createHintFragmentMonomerInfoForHintToDirection(const RDGeom::Point3D start_monomer_pos, const Direction direction) const
+HintFragmentMonomerInfo DrawMonomerSceneTool::createHintFragmentMonomerInfoForHintToDirection(const HintFragmentMonomerInfo& start_monomer_info, const QPointF& scene_pos) const
 {
-    auto pos = get_default_coords_for_bound_monomer(start_monomer_pos, direction);
-    // TODO: is it worth trying to get these to match the first monomer?
-    //       Probably not.
+    auto direction = getDragDirection(scene_pos);
+    auto pos = get_default_coords_for_bound_monomer(start_monomer_info.pos, direction);
+    // TODO: Have these match the first monomer now that we have the info?
     auto chain_id = rdkit_extensions::toString(m_chain_type) + "1";
     auto res_num = 1;
     auto monomer = rdkit_extensions::makeMonomer(m_res_name, chain_id, res_num, false);
+    auto ap_model_name = get_attachment_point_for_new_monomer(
+        start_monomer_info.monomer_type, start_monomer_info.ap_model_name, m_monomer_type);
+    return HintFragmentMonomerInfo(monomer.release(), m_monomer_type, pos, ap_model_name, true);
 }
+
 
 void DrawMonomerSceneTool::createDragHintToDirection(const QPointF scene_pos, const Direction direction) {
     auto chain_id = rdkit_extensions::toString(m_chain_type) + "1";
@@ -726,23 +731,20 @@ void DrawMonomerSceneTool::onLeftButtonDragStart(
 {
     StandardSceneToolBase::onLeftButtonDragStart(event);
     auto scene_pos = event->scenePos();
+    m_drag_state = DragState::DRAG_IGNORED;
+}
     
+bool DrawMonomerSceneTool::initializeDragHint(const QPointF& scene_pos)
+{
     // TODO: split this off to separate method, call it whenever drag switches
     //       from direction to monomer or vice versa?  initializeDragHint?
     m_drag_start_monomer_item = getTopMonomerItemAt(m_mouse_press_scene_pos);
 
-
-    // auto* cur_item = getTopMonomerItemAt(scene_pos);
-    // if (cur_item == m_drag_start_monomer_item) {
-    //     // we can't connect a monomer to itself
-    //     cur_item = nullptr;
-    // }
-    
-    // TODO: split this off to createDragHintToDirectionFromScenePos()
-    auto drag_direction = getDragDirection(scene_pos);
     // if we call createDragHintToDirection below, that method will update
     // m_drag_state. If we don't call it, then we should ignore this drag.
-    m_drag_state = DragState::DRAG_IGNORED;
+    
+    std::optional<HintFragmentMonomerInfo> hint_start_monomer_info;
+    
     // if (cur_item)
     if (m_drag_start_monomer_item == nullptr) {
         // we're not over a monomer
@@ -750,17 +752,27 @@ void DrawMonomerSceneTool::onLeftButtonDragStart(
             // This monomer type makes biological sense when connected to
             // itself, so we'll start a drag that creates a new monomer at the
             // start position
-            createDragHintToDirection(m_drag_start_scene_pos, drag_direction);
+            hint_start_monomer_info = createHintFragmentMonomerInfoForHintFromEmptySpace(m_mouse_press_scene_pos);
         }
     } else {
         // we're over a monomer
         auto* hovered_ap_item = getUnboundAttachmentPointAt(m_mouse_press_scene_pos);
         if (hovered_ap_item != nullptr) {
-            // if hovered_ap_item is nullptr, then this monomer has no available
-            // attachment points, so there's nothing for us to do
-            createDragHintToDirection(m_drag_start_monomer_item, hovered_ap_item->getAttachmentPoint(), drag_direction);
+            hint_start_monomer_info = createHintFragmentMonomerInfoForHintToOrFromExistingMonomer(m_drag_start_monomer_item, hovered_ap_item);
         }
     }
+    
+    if (!hint_start_monomer_info.has_value()) {
+        return false;
+    }
+    
+    
+    
+    HintFragmentMonomerInfo hint_end_monomer_info;
+    
+    
+    
+    
 }
 
 Direction DrawMonomerSceneTool::getDragDirection(const QPointF& cur_scene_pos) const
@@ -795,28 +807,48 @@ void DrawMonomerSceneTool::onLeftButtonDragMove(
         return;
     }
     auto scene_pos = event->scenePos();
-    auto* item = getTopMonomerItemAt(scene_pos);
-    if (item != m_drag_start_monomer_item) {
+    auto* hovered_monomer_item = getTopMonomerItemAt(scene_pos);
+    if (hovered_monomer_item == m_drag_start_monomer_item) {
         // we can't drag from a monomer to itself
-        item = nullptr;
-    }
-    if (item != nullptr && item != m_drag_end_monomer_item) {
-        if (m_drag_end_monomer_item != nullptr) {
-            m_drag_end_ap_item = nullptr;
-            // TODO: clear labels on drag end monomer
-        }
-        m_drag_end_monomer_item = item;
-        labelAttachmentPointsOnMonomer(item->getAtom(), item);
+        hovered_monomer_item = nullptr;
     }
     
-    if (item != nullptr) {
-        // TODO: this needs to be restricted to drag end monomers
+    
+    bool hint_needs_update = false;
+    if (hovered_monomer_item != m_drag_end_monomer_item && m_drag_end_monomer_item != nullptr) {
+        // clear labels for the previous hovered monomer, if there was one
+        // TODO: clear labels on drag end monomer
+    }
+    
+    if (hovered_monomer_item != nullptr) {
+        bool new_hovered_monomer = hovered_monomer_item != m_drag_end_monomer_item;
+        if (new_hovered_monomer) {
+            // the user is hovering over a new monomer, so we need to draw its attachment point labels
+            labelAttachmentPointsOnMonomer(hovered_monomer_item->getAtom(), hovered_monomer_item);
+        }
+        
         auto* drag_end_ap_item = getUnboundAttachmentPointAt(scene_pos);
+        // TODO: once drag hover is stored separately, won't need this check
         if (drag_end_ap_item->parentItem() != m_drag_end_monomer_item) {
             // the user is over an attachment point belonging to the monomer
             // where the drag started
             drag_end_ap_item = nullptr;
         }
+        // if (drag_end_ap_item != nullptr) {
+        //     m_drag_direction.reset();
+        // }
+        hint_needs_update = drag_end_ap_item != nullptr && (new_hovered_monomer || drag_end_ap_item != m_drag_end_ap_item);
+        m_drag_end_ap_item = drag_end_ap_item;
+    } else {
+        auto direction = getDragDirection(scene_pos);
+        hint_needs_update = !m_drag_direction.has_value() || direction != m_drag_direction;
+        // m_drag_end_ap_item = nullptr;
+        
+    }
+    m_drag_end_monomer_item = hovered_monomer_item;
+        
+        if (new_hovered_monomer || drag_end_ap_item != )
+        
         if (drag_end_ap_item != nullptr) {
             if (drag_end_ap_item != m_drag_end_ap_item) {
                 // we're dragging to a new attachment point, so update the hint
