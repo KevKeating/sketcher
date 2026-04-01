@@ -79,7 +79,8 @@ DrawMonomerSceneTool::~DrawMonomerSceneTool()
     // m_attachment_point_labels_group is destroyed, but the unbound attachment
     // point labels are parented to their monomer, so they would outlive the
     // scene tool without this call.
-    clearAttachmentPointsLabels();
+    clearAttachmentPointsLabelsAndHintFragmentItem();
+    clearDragEndAttachmentPointsLabels();
 }
 
 std::vector<QGraphicsItem*> DrawMonomerSceneTool::getGraphicsItems()
@@ -476,7 +477,7 @@ void DrawMonomerSceneTool::onMouseMove(QGraphicsSceneMouseEvent* const event)
 void DrawMonomerSceneTool::drawAttachmentPointLabelsFor(
     QGraphicsItem* const item)
 {
-    clearAttachmentPointsLabels();
+    clearAttachmentPointsLabelsAndHintFragmentItem();
     if (item == nullptr) {
         return;
     }
@@ -528,10 +529,7 @@ get_default_coords_for_bound_monomer(const RDKit::Atom* const monomer,
 void DrawMonomerSceneTool::drawBoundMonomerHintFor(
     UnboundMonomericAttachmentPointItem* const ap_item)
 {
-    // TODO: make a clearHintFragmentItem method?
-    delete m_hint_fragment_item;
-    m_hint_fragment_item = nullptr;
-
+    clearHintFragmentItem();
     if (ap_item == nullptr) {
         return;
     }
@@ -658,7 +656,7 @@ void DrawMonomerSceneTool::onLeftButtonClick(
                 monomer, clicked_ap->direction);
             // the attachment point labels won't be valid once the new monomer
             // is added, so clear them now (otherwise we risk a crash)
-            clearAttachmentPointsLabels();
+            clearAttachmentPointsLabelsAndHintFragmentItem();
             m_mol_model->addBoundMonomer(m_res_name, m_chain_type, new_pos,
                                          new_monomer_ap_name, monomer,
                                          clicked_ap->model_name);
@@ -667,7 +665,7 @@ void DrawMonomerSceneTool::onLeftButtonClick(
             // the user clicked directly on the monomer and the clicked
             // monomer's residue name is different than the tool's, so we mutate
             // the clicked monomer
-            clearAttachmentPointsLabels();
+            clearAttachmentPointsLabelsAndHintFragmentItem();
             m_mol_model->mutateMonomers({monomer}, m_res_name, m_monomer_type);
         }
     }
@@ -695,7 +693,7 @@ void DrawMonomerSceneTool::onLeftButtonDragStart(
     // clear the attachment point labels, but only *after* we've figured out
     // which attachment point to use (since getUnboundAttachmentPointAt requires
     // the attachment points to be in the Scene)
-    clearAttachmentPointsLabels();
+    clearAttachmentPointsLabelsAndHintFragmentItem();
     
     auto handled = createDragHint(dir);
     if (!handled) {
@@ -706,10 +704,7 @@ void DrawMonomerSceneTool::onLeftButtonDragStart(
     
 bool DrawMonomerSceneTool::createDragHint(const DragEndInfo& drag_end_info)
 {
-    delete m_hint_fragment_item;
-    m_hint_fragment_item = nullptr;
-    m_frag.reset();
-
+    clearHintFragmentItem();
     HintFragmentMonomerInfo hint_start_monomer_info;
     if (m_drag_start_monomer_item == nullptr) {
         // the drag started over empty space
@@ -819,8 +814,7 @@ void DrawMonomerSceneTool::onLeftButtonDragRelease(
         return;
     }
     // TODO: add monomer(s) and bond to MolModel
-    delete m_hint_fragment_item;
-    m_hint_fragment_item = nullptr;
+    clearHintFragmentItem();
     m_drag_start_monomer_item = nullptr;
     m_drag_start_ap = std::nullopt;
     m_drag_end_monomer_item = nullptr;
@@ -847,7 +841,6 @@ QPixmap DrawMonomerSceneTool::createDefaultCursorPixmap() const
     return cursor_hint_from_graphics_item(monomer_item.get(), min_scene_size);
 }
 
-// TODO: create separate storage for labels for "normal" hovered monomer, and labels for drag destination hovers?
 void DrawMonomerSceneTool::labelAttachmentPointsOnHoveredMonomer(
     const RDKit::Atom* const monomer, AbstractMonomerItem* const monomer_item)
 {
@@ -889,33 +882,35 @@ void DrawMonomerSceneTool::labelAttachmentPointsOnConnector(
     }
 }
 
-void DrawMonomerSceneTool::clearAttachmentPointsLabels()
+template <typename T> static void clear_graphics_item_group_and_list(QGraphicsItemGroup& group, std::vector<T*> items_list)
 {
-    for (auto* item : m_attachment_point_labels_group.childItems()) {
-        m_attachment_point_labels_group.removeFromGroup(item);
+    for (auto* item : group.childItems()) {
+        group.removeFromGroup(item);
         delete item;
     }
-    for (auto* item : m_unbound_ap_items) {
+    for (auto* item : items_list) {
         delete item;
     }
-    m_unbound_ap_items.clear();
+    items_list.clear();
+}
+
+void DrawMonomerSceneTool::clearAttachmentPointsLabelsAndHintFragmentItem()
+{
+    clear_graphics_item_group_and_list(m_attachment_point_labels_group, m_unbound_ap_items);
     m_hovered_ap_item = nullptr;
+    clearHintFragmentItem();
+}
+
+void DrawMonomerSceneTool::clearHintFragmentItem()
+{
     delete m_hint_fragment_item;
     m_hint_fragment_item = nullptr;
     m_frag.reset();
 }
 
-// TODO: fix duplication
 void DrawMonomerSceneTool::clearDragEndAttachmentPointsLabels()
 {
-    for (auto* item : m_drag_end_attachment_point_labels_group.childItems()) {
-        m_attachment_point_labels_group.removeFromGroup(item);
-        delete item;
-    }
-    for (auto* item : m_drag_end_unbound_ap_items) {
-        delete item;
-    }
-    m_drag_end_unbound_ap_items.clear();
+    clear_graphics_item_group_and_list(m_drag_end_attachment_point_labels_group, m_drag_end_unbound_ap_items);
 }
 
 } // namespace sketcher

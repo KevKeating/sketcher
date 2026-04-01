@@ -160,7 +160,8 @@ class SKETCHER_API DrawMonomerSceneTool : public StandardSceneToolBase
     /**
      * Clear all attachment point labels drawn by this scene tool
      */
-    void clearAttachmentPointsLabels();
+    void clearAttachmentPointsLabelsAndHintFragmentItem();
+    void clearHintFragmentItem();
     void clearDragEndAttachmentPointsLabels();
 
     /**
