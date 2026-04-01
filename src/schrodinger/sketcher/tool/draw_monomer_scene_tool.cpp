@@ -38,16 +38,17 @@ namespace sketcher
 
 using rdkit_extensions::Direction;
 
-// TODO: store atom index for existing monomers, -1 for new monomers
 struct HintFragmentMonomerInfo {
     RDKit::Atom* monomer;
     MonomerType monomer_type;
     RDGeom::Point3D pos;
     std::string ap_model_name;
-    // whether this monomer is an existing monomer in the Scene/MolModel (false)
-    // or a new monomer added by the drag (true)
-    bool is_new;
+    // the atom index for this monomer in the MolModel molecule. Will be
+    // NEW_MONOMER_FROM_DRAG if the monomer is not present in MolModel.
+    int atom_idx;
 };
+
+constexpr int NEW_MONOMER_FROM_DRAG = -1;
 
 DrawMonomerSceneTool::DrawMonomerSceneTool(
     const std::string& res_name, const rdkit_extensions::ChainType chain_type,
@@ -571,11 +572,12 @@ void DrawMonomerSceneTool::createHintFragmentItem(const HintFragmentMonomerInfo&
     frag_conf->setAtomPos(second_idx, monomer_two_info.pos);
     m_frag->addConformer(frag_conf, true);
     
+    // hide the monomers that already exist in the Scene
     std::vector<size_t> atom_indices_to_hide;
-    if (!monomer_one_info.is_new) {
+    if (monomer_one_info.atom_idx > 0) {
         atom_indices_to_hide.push_back(first_idx);
     }
-    if (!monomer_two_info.is_new) {
+    if (monomer_two_info.atom_idx > 0) {
         atom_indices_to_hide.push_back(second_idx);
     }
 
@@ -593,7 +595,7 @@ HintFragmentMonomerInfo DrawMonomerSceneTool::createHintFragmentMonomerInfoForHi
                                false);
     auto monomer_pos = to_mol_xy(scene_pos);
     auto linkage_start = m_monomer_type == MonomerType::NA_BASE ? NA_BASE_AP_PAIR : ap_model_name_for(PeptideAP::C);
-    return HintFragmentMonomerInfo(monomer.release(), m_monomer_type, monomer_pos, linkage_start, true);
+    return HintFragmentMonomerInfo(monomer.release(), m_monomer_type, monomer_pos, linkage_start, NEW_MONOMER_FROM_DRAG);
 }
 
 HintFragmentMonomerInfo DrawMonomerSceneTool::createHintFragmentMonomerInfoForHintFromExistingMonomer(const AbstractMonomerItem* const monomer_item,
@@ -602,7 +604,7 @@ HintFragmentMonomerInfo DrawMonomerSceneTool::createHintFragmentMonomerInfoForHi
     auto [monomer, monomer_type] = get_monomer_and_type(monomer_item);
     auto copy_of_monomer = new RDKit::Atom(*monomer);
     auto monomer_pos = get_coords_for_monomer(monomer);
-    return HintFragmentMonomerInfo(copy_of_monomer, monomer_type, monomer_pos, ap.model_name, false);
+    return HintFragmentMonomerInfo(copy_of_monomer, monomer_type, monomer_pos, ap.model_name, monomer->getIdx());
 }
 
 HintFragmentMonomerInfo DrawMonomerSceneTool::createHintFragmentMonomerInfoForHintToExistingMonomer(const AbstractMonomerItem* const monomer_item,
@@ -613,7 +615,7 @@ HintFragmentMonomerInfo DrawMonomerSceneTool::createHintFragmentMonomerInfoForHi
     auto ap_pos = to_mol_xy(ap_item->getLineEndPos());
     // auto monomer_pos = get_coords_for_monomer(monomer);
     auto ap_model_name = ap_item->getAttachmentPoint().model_name;
-    return HintFragmentMonomerInfo(copy_of_monomer, monomer_type, ap_pos, ap_model_name, false);
+    return HintFragmentMonomerInfo(copy_of_monomer, monomer_type, ap_pos, ap_model_name, monomer->getIdx());
 }
 
 // returned monomer is owned by calling scope
@@ -626,7 +628,7 @@ HintFragmentMonomerInfo DrawMonomerSceneTool::createHintFragmentMonomerInfoForHi
     auto monomer = rdkit_extensions::makeMonomer(m_res_name, chain_id, res_num, false);
     auto ap_model_name = get_attachment_point_for_new_monomer(
         start_monomer_info.monomer_type, start_monomer_info.ap_model_name, m_monomer_type);
-    return HintFragmentMonomerInfo(monomer.release(), m_monomer_type, pos, ap_model_name, true);
+    return HintFragmentMonomerInfo(monomer.release(), m_monomer_type, pos, ap_model_name, NEW_MONOMER_FROM_DRAG);
 }
 
 void DrawMonomerSceneTool::onLeftButtonClick(
@@ -848,9 +850,9 @@ void DrawMonomerSceneTool::addDragMonomerAndConnectionToMolModel(const QPointF& 
     
     auto add_monomer_to_mol_model_if_new = [this](const HintFragmentMonomerInfo& monomer_info) {
         int monomer_idx;
-        if (monomer_info.monomer_idx > 0) {
+        if (monomer_info.atom_idx > 0) {
             // the monomer already exists in MolModel
-            monomer_idx = monomer_info.monomer_idx;
+            monomer_idx = monomer_info.atom_idx;
         } else {
             monomer_idx = m_mol_model->getMol()->getNumAtoms();
             m_mol_model->addMonomer(m_res_name, m_chain_type, monomer_info.pos);
