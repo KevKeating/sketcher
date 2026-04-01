@@ -574,10 +574,10 @@ void DrawMonomerSceneTool::createHintFragmentItem(const HintFragmentMonomerInfo&
     
     // hide the monomers that already exist in the Scene
     std::vector<size_t> atom_indices_to_hide;
-    if (monomer_one_info.atom_idx > 0) {
+    if (monomer_one_info.atom_idx >= 0) {
         atom_indices_to_hide.push_back(first_idx);
     }
-    if (monomer_two_info.atom_idx > 0) {
+    if (monomer_two_info.atom_idx >= 0) {
         atom_indices_to_hide.push_back(second_idx);
     }
 
@@ -612,6 +612,7 @@ HintFragmentMonomerInfo DrawMonomerSceneTool::createHintFragmentMonomerInfoForHi
 {
     auto [monomer, monomer_type] = get_monomer_and_type(monomer_item);
     auto copy_of_monomer = new RDKit::Atom(*monomer);
+    // TODO: drag isn't going to the right spot
     auto ap_pos = to_mol_xy(ap_item->getLineEndPos());
     // auto monomer_pos = get_coords_for_monomer(monomer);
     auto ap_model_name = ap_item->getAttachmentPoint().model_name;
@@ -828,7 +829,6 @@ void DrawMonomerSceneTool::onLeftButtonDragRelease(
         return;
     }
     addDragMonomerAndConnectionToMolModel(event->scenePos());
-    // TODO: add monomer(s) and bond to MolModel
     clearHintFragmentItem();
     m_drag_start_monomer_item = nullptr;
     m_drag_start_ap = std::nullopt;
@@ -849,21 +849,21 @@ void DrawMonomerSceneTool::addDragMonomerAndConnectionToMolModel(const QPointF& 
     
     
     auto add_monomer_to_mol_model_if_new = [this](const HintFragmentMonomerInfo& monomer_info) {
-        int monomer_idx;
-        if (monomer_info.atom_idx > 0) {
+        if (monomer_info.atom_idx >= 0) {
             // the monomer already exists in MolModel
-            monomer_idx = monomer_info.atom_idx;
+            return static_cast<unsigned int>(monomer_info.atom_idx);
         } else {
-            monomer_idx = m_mol_model->getMol()->getNumAtoms();
+            auto monomer_idx = m_mol_model->getMol()->getNumAtoms();
             m_mol_model->addMonomer(m_res_name, m_chain_type, monomer_info.pos);
+            return monomer_idx;
         }
-        return m_mol_model->getMol()->getAtomWithIdx(monomer_idx);
     };
     
     auto undo_raii = m_mol_model->createUndoMacro("Add monomeric connection");
-    auto start_monomer = add_monomer_to_mol_model_if_new(*hint_start_monomer_info);
-    auto end_monomer = add_monomer_to_mol_model_if_new(hint_end_monomer_info);
-    m_mol_model->addMonomericConnection(start_monomer, hint_start_monomer_info->ap_model_name, end_monomer, hint_end_monomer_info.ap_model_name);
+    auto start_monomer_idx = add_monomer_to_mol_model_if_new(*hint_start_monomer_info);
+    auto end_monomer_idx = add_monomer_to_mol_model_if_new(hint_end_monomer_info);
+    auto mol = m_mol_model->getMol();
+    m_mol_model->addMonomericConnection(mol->getAtomWithIdx(start_monomer_idx), hint_start_monomer_info->ap_model_name, mol->getAtomWithIdx(end_monomer_idx), hint_end_monomer_info.ap_model_name);
 }
 
 QPixmap DrawMonomerSceneTool::createDefaultCursorPixmap() const
