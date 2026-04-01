@@ -845,18 +845,23 @@ void DrawMonomerSceneTool::addDragMonomerAndConnectionToMolModel(const QPointF& 
     auto [drag_end_info, hovered_monomer_item] = getDragEndInfo(scene_pos);
     auto hint_end_monomer_info = getHintFragmentMonomerInfoForDragEnd(*hint_start_monomer_info, drag_end_info);
     
+    
+    auto add_monomer_to_mol_model_if_new = [this](const HintFragmentMonomerInfo& monomer_info) {
+        int monomer_idx;
+        if (monomer_info.monomer_idx > 0) {
+            // the monomer already exists in MolModel
+            monomer_idx = monomer_info.monomer_idx;
+        } else {
+            monomer_idx = m_mol_model->getMol()->getNumAtoms();
+            m_mol_model->addMonomer(m_res_name, m_chain_type, monomer_info.pos);
+        }
+        return m_mol_model->getMol()->getAtomWithIdx(monomer_idx);
+    };
+    
     auto undo_raii = m_mol_model->createUndoMacro("Add monomeric connection");
-    
-    int start_monomer_idx;
-    if (hint_start_monomer_info->is_new) {
-        start_monomer_idx = m_mol_model->getMol()->getNumAtoms();
-        m_mol_model->addMonomer(m_res_name, m_chain_type, hint_start_monomer_info->pos);
-    } else {
-        start_monomer_idx = hint_start_monomer_info->monomer_idx;
-    }
-    
-    // add the connection
-    m_mol_model->addMonomericConnection(, hint_start_monomer_info->ap_model_name, , hint_end_monomer_info.ap_model_name);
+    auto start_monomer = add_monomer_to_mol_model_if_new(*hint_start_monomer_info);
+    auto end_monomer = add_monomer_to_mol_model_if_new(hint_end_monomer_info);
+    m_mol_model->addMonomericConnection(start_monomer, hint_start_monomer_info->ap_model_name, end_monomer, hint_end_monomer_info.ap_model_name);
 }
 
 QPixmap DrawMonomerSceneTool::createDefaultCursorPixmap() const
