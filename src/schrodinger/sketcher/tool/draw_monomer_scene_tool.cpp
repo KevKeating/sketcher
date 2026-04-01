@@ -612,7 +612,9 @@ HintFragmentMonomerInfo DrawMonomerSceneTool::createHintFragmentMonomerInfoForHi
 {
     auto [monomer, monomer_type] = get_monomer_and_type(monomer_item);
     auto copy_of_monomer = new RDKit::Atom(*monomer);
-    // TODO: drag isn't going to the right spot
+    // TODO: drag isn't going to the right spot when connection has an arrowhead
+    // TODO: should color attachment point nubbin blue and maybe get rid of AP label at this end of the connection
+    // TODO: this doesn't look great even when not going to an arrowhead, maybe not worth it once nubbin is blue?
     auto ap_pos = to_mol_xy(ap_item->getLineEndPos());
     // auto monomer_pos = get_coords_for_monomer(monomer);
     auto ap_model_name = ap_item->getAttachmentPoint().model_name;
@@ -837,6 +839,7 @@ void DrawMonomerSceneTool::onLeftButtonDragRelease(
     clearDragEndAttachmentPointsLabels();
 }
 
+// TODO: crashes when dragging to an existing monomer
 void DrawMonomerSceneTool::addDragMonomerAndConnectionToMolModel(const QPointF& scene_pos)
 {
     auto hint_start_monomer_info = getHintFragmentMonomerInfoForDragStart();

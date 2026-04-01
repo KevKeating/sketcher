@@ -209,7 +209,7 @@ UnboundMonomericAttachmentPointItem::getAttachmentPoint() const
 
 QPointF UnboundMonomericAttachmentPointItem::getLineEndPos() const
 {
-    return m_line_end;
+    return mapToScene(m_line_end);
 }
 
 } // namespace sketcher
