@@ -38,12 +38,15 @@ namespace sketcher
 
 using rdkit_extensions::Direction;
 
+// TODO: store atom index for existing monomers, -1 for new monomers
 struct HintFragmentMonomerInfo {
     RDKit::Atom* monomer;
     MonomerType monomer_type;
     RDGeom::Point3D pos;
     std::string ap_model_name;
-    bool visible;
+    // whether this monomer is an existing monomer in the Scene/MolModel (false)
+    // or a new monomer added by the drag (true)
+    bool is_new;
 };
 
 DrawMonomerSceneTool::DrawMonomerSceneTool(
@@ -569,10 +572,10 @@ void DrawMonomerSceneTool::createHintFragmentItem(const HintFragmentMonomerInfo&
     m_frag->addConformer(frag_conf, true);
     
     std::vector<size_t> atom_indices_to_hide;
-    if (!monomer_one_info.visible) {
+    if (!monomer_one_info.is_new) {
         atom_indices_to_hide.push_back(first_idx);
     }
-    if (!monomer_two_info.visible) {
+    if (!monomer_two_info.is_new) {
         atom_indices_to_hide.push_back(second_idx);
     }
 
@@ -705,37 +708,46 @@ void DrawMonomerSceneTool::onLeftButtonDragStart(
 bool DrawMonomerSceneTool::createDragHint(const DragEndInfo& drag_end_info)
 {
     clearHintFragmentItem();
-    HintFragmentMonomerInfo hint_start_monomer_info;
+    auto hint_start_monomer_info = getHintFragmentMonomerInfoForDragStart();
+    if (!hint_start_monomer_info.has_value()) {
+        return false;
+    }
+    HintFragmentMonomerInfo hint_end_monomer_info = getHintFragmentMonomerInfoForDragEnd(*hint_start_monomer_info, drag_end_info);
+    createHintFragmentItem(*hint_start_monomer_info, hint_end_monomer_info);
+    return true;
+}
+
+std::optional<HintFragmentMonomerInfo> DrawMonomerSceneTool::getHintFragmentMonomerInfoForDragStart()
+{
     if (m_drag_start_monomer_item == nullptr) {
         // the drag started over empty space
         if (m_monomer_type == MonomerType::PEPTIDE || m_monomer_type == MonomerType::NA_BASE) {
-            hint_start_monomer_info = createHintFragmentMonomerInfoForHintFromEmptySpace(m_mouse_press_scene_pos);
+            return createHintFragmentMonomerInfoForHintFromEmptySpace(m_mouse_press_scene_pos);
         } else {
             // it doesn't make much biological sense to connect this monomer
             // type to itself, which is what would typically happen when
             // dragging from empty space, so don't start the drag
-            return false;
+            return std::nullopt;
         }
     } else if (m_drag_start_ap.has_value()) {
         // the drag started over a monomer and it has an available attachment point
-        // std::cout << "drag started over monomer: " << m_drag_start_ap_item << "\n";
-        hint_start_monomer_info = createHintFragmentMonomerInfoForHintFromExistingMonomer(m_drag_start_monomer_item, *m_drag_start_ap);
+        return createHintFragmentMonomerInfoForHintFromExistingMonomer(m_drag_start_monomer_item, *m_drag_start_ap);
     } else {
         // the drag started over a monomer, but that monomer has no available
         // unbound attachment points so we can't drag from it
-        return false;
+        return std::nullopt;
     }
-    
-    HintFragmentMonomerInfo hint_end_monomer_info;
+}
+
+HintFragmentMonomerInfo DrawMonomerSceneTool::getHintFragmentMonomerInfoForDragEnd(const HintFragmentMonomerInfo& hint_start_monomer_info, const DragEndInfo& drag_end_info)
+{
     if (std::holds_alternative<Direction>(drag_end_info)) {
         auto dir = std::get<Direction>(drag_end_info);
-        hint_end_monomer_info = createHintFragmentMonomerInfoForHintToDirection(hint_start_monomer_info, dir);
+        return createHintFragmentMonomerInfoForHintToDirection(hint_start_monomer_info, dir);
     } else {
         auto [hovered_monomer_item, drag_end_ap_item] = std::get<MonomerAndAPItems>(drag_end_info);
-        hint_end_monomer_info = createHintFragmentMonomerInfoForHintToExistingMonomer(hovered_monomer_item, drag_end_ap_item);
+        return createHintFragmentMonomerInfoForHintToExistingMonomer(hovered_monomer_item, drag_end_ap_item);
     }
-    createHintFragmentItem(hint_start_monomer_info, hint_end_monomer_info);
-    return true;
 }
 
 std::pair<DragEndInfo, AbstractMonomerItem*> DrawMonomerSceneTool::getDragEndInfo(const QPointF& scene_pos)
@@ -813,6 +825,7 @@ void DrawMonomerSceneTool::onLeftButtonDragRelease(
     if (m_drag_ignored) {
         return;
     }
+    addDragMonomerAndConnectionToMolModel(event->scenePos());
     // TODO: add monomer(s) and bond to MolModel
     clearHintFragmentItem();
     m_drag_start_monomer_item = nullptr;
@@ -820,6 +833,30 @@ void DrawMonomerSceneTool::onLeftButtonDragRelease(
     m_drag_end_monomer_item = nullptr;
     m_drag_end_info = std::monostate{};
     clearDragEndAttachmentPointsLabels();
+}
+
+void DrawMonomerSceneTool::addDragMonomerAndConnectionToMolModel(const QPointF& scene_pos)
+{
+    auto hint_start_monomer_info = getHintFragmentMonomerInfoForDragStart();
+    if (!hint_start_monomer_info.has_value()) {
+        // this drag should have been ignored
+        throw std::runtime_error("No drag start info available");
+    }
+    auto [drag_end_info, hovered_monomer_item] = getDragEndInfo(scene_pos);
+    auto hint_end_monomer_info = getHintFragmentMonomerInfoForDragEnd(*hint_start_monomer_info, drag_end_info);
+    
+    auto undo_raii = m_mol_model->createUndoMacro("Add monomeric connection");
+    
+    int start_monomer_idx;
+    if (hint_start_monomer_info->is_new) {
+        start_monomer_idx = m_mol_model->getMol()->getNumAtoms();
+        m_mol_model->addMonomer(m_res_name, m_chain_type, hint_start_monomer_info->pos);
+    } else {
+        start_monomer_idx = hint_start_monomer_info->monomer_idx;
+    }
+    
+    // add the connection
+    m_mol_model->addMonomericConnection(, hint_start_monomer_info->ap_model_name, , hint_end_monomer_info.ap_model_name);
 }
 
 QPixmap DrawMonomerSceneTool::createDefaultCursorPixmap() const

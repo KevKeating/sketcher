@@ -248,6 +248,9 @@ class SKETCHER_API DrawMonomerSceneTool : public StandardSceneToolBase
     const UnboundMonomericAttachmentPointItem* const ap_item) const;
     HintFragmentMonomerInfo createHintFragmentMonomerInfoForHintToDirection(const HintFragmentMonomerInfo& start_monomer_info, const rdkit_extensions::Direction direction) const;
     std::pair<DragEndInfo, AbstractMonomerItem*> getDragEndInfo(const QPointF& scene_pos);
+    void addDragMonomerAndConnectionToMolModel(const QPointF& scene_pos);
+    std::optional<HintFragmentMonomerInfo> getHintFragmentMonomerInfoForDragStart();
+    HintFragmentMonomerInfo getHintFragmentMonomerInfoForDragEnd(const HintFragmentMonomerInfo& hint_start_monomer_info, const DragEndInfo& drag_end_info);
 
     rdkit_extensions::Direction getDragDirection(const QPointF& cur_scene_pos) const;
 };
