@@ -11,6 +11,7 @@
 #include "schrodinger/sketcher/molviewer/fonts.h"
 #include "schrodinger/sketcher/molviewer/monomer_constants.h"
 #include "schrodinger/sketcher/tool/standard_scene_tool_base.h"
+#include "schrodinger/sketcher/rdkit/monomeric.h"
 
 namespace RDKit
 {
@@ -35,10 +36,8 @@ enum class Direction;
 namespace sketcher
 {
 
-enum class MonomerType;
 class MonomerHintFragmentItem;
 class UnboundMonomericAttachmentPointItem;
-class UnboundAttachmentPoint;
 class HintFragmentMonomerInfo;
 
 using MonomerAndAPItems = std::pair<AbstractMonomerItem*, UnboundMonomericAttachmentPointItem*>;
@@ -105,6 +104,7 @@ class SKETCHER_API DrawMonomerSceneTool : public StandardSceneToolBase
     
     bool m_drag_ignored;
     AbstractMonomerItem* m_drag_start_monomer_item;
+    std::optional<UnboundAttachmentPoint> m_drag_start_ap;
     AbstractMonomerItem* m_drag_end_monomer_item;
     DragEndInfo m_drag_end_info;
     QGraphicsItemGroup m_drag_end_attachment_point_labels_group;
@@ -242,7 +242,8 @@ class SKETCHER_API DrawMonomerSceneTool : public StandardSceneToolBase
     
     bool createDragHint(const DragEndInfo& drag_end_info);
     HintFragmentMonomerInfo createHintFragmentMonomerInfoForHintFromEmptySpace(const QPointF& scene_pos) const;
-    HintFragmentMonomerInfo createHintFragmentMonomerInfoForHintToOrFromExistingMonomer(const AbstractMonomerItem* const monomer_item,
+    HintFragmentMonomerInfo createHintFragmentMonomerInfoForHintFromExistingMonomer(const AbstractMonomerItem* const monomer_item, const UnboundAttachmentPoint& ap) const;
+    HintFragmentMonomerInfo createHintFragmentMonomerInfoForHintToExistingMonomer(const AbstractMonomerItem* const monomer_item,
     const UnboundMonomericAttachmentPointItem* const ap_item) const;
     HintFragmentMonomerInfo createHintFragmentMonomerInfoForHintToDirection(const HintFragmentMonomerInfo& start_monomer_info, const rdkit_extensions::Direction direction) const;
     std::pair<DragEndInfo, AbstractMonomerItem*> getDragEndInfo(const QPointF& scene_pos);

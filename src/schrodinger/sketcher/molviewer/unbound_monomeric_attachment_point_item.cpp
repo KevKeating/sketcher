@@ -207,7 +207,7 @@ UnboundMonomericAttachmentPointItem::getAttachmentPoint() const
     return m_attachment_point;
 }
 
-QPointF UnboundMonomericAttachmentPointItem::getLineEnd() const
+QPointF UnboundMonomericAttachmentPointItem::getLineEndPos() const
 {
     return m_line_end;
 }
