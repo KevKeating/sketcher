@@ -882,7 +882,7 @@ void DrawMonomerSceneTool::labelAttachmentPointsOnConnector(
     }
 }
 
-template <typename T> static void clear_graphics_item_group_and_list(QGraphicsItemGroup& group, std::vector<T*> items_list)
+template <typename T> static void clear_graphics_item_group_and_list(QGraphicsItemGroup& group, std::vector<T*>& items_list)
 {
     for (auto* item : group.childItems()) {
         group.removeFromGroup(item);
