@@ -13,7 +13,7 @@ namespace schrodinger::sketcher
 {
 
 MonomerHintFragmentItem::MonomerHintFragmentItem(
-    const RDKit::ROMol& fragment, const Fonts& fonts,
+    const std::shared_ptr<RDKit::RWMol> fragment, const Fonts& fonts,
     const std::vector<size_t>& atom_indices_to_hide, const int bond_index_to_label,
     const QColor monomer_background_color, QGraphicsItem* parent) :
     QGraphicsItemGroup(parent),
@@ -31,7 +31,7 @@ void MonomerHintFragmentItem::createGraphicsItems()
 {
     auto [all_items, atom_to_atom_item, bond_to_bond_item,
           bond_to_secondary_connection_item, s_group_to_s_group_item] =
-        create_graphics_items_for_mol(&m_frag, *m_fonts);
+        create_graphics_items_for_mol(m_frag.get(), *m_fonts);
     for (auto* item : all_items) {
         addToGroup(item);
     }
@@ -64,7 +64,7 @@ void MonomerHintFragmentItem::createGraphicsItems()
 
     // label the attachment points
     if (m_bond_index_to_label >= 0) {
-        auto* bond = m_frag.getBondWithIdx(m_bond_index_to_label);
+        auto* bond = m_frag->getBondWithIdx(m_bond_index_to_label);
         auto* begin_monomer_item = atom_to_atom_item.at(bond->getBeginAtom());
         auto* end_monomer_item = atom_to_atom_item.at(bond->getEndAtom());
         auto items = create_attachment_point_labels_for_connector(

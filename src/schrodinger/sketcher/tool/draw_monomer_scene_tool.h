@@ -244,6 +244,7 @@ class SKETCHER_API DrawMonomerSceneTool : public StandardSceneToolBase
     
     bool createDragHint(const DragEndInfo& drag_end_info);
     std::string getDefaultDragStartAPModelName() const;
+    MonomerType getDragMonomerType(const AbstractMonomerItem* const monomer_item) const;
     HintFragmentMonomerInfo createHintFragmentMonomerInfoForHintFromEmptySpace(const QPointF& scene_pos) const;
     HintFragmentMonomerInfo createHintFragmentMonomerInfoForHintFromExistingMonomer(const AbstractMonomerItem* const monomer_item, const std::string& ap_model_name) const;
     HintFragmentMonomerInfo createHintFragmentMonomerInfoForHintToExistingMonomer(const AbstractMonomerItem* const monomer_item,

@@ -1,5 +1,7 @@
 #pragma once
 
+#include <memory>
+
 #include <QGraphicsItem>
 #include <QGraphicsItemGroup>
 #include <QList>
@@ -11,7 +13,7 @@
 
 namespace RDKit
 {
-class ROMol;
+class RWMol;
 }
 
 namespace schrodinger::sketcher
@@ -41,14 +43,14 @@ class MonomerHintFragmentItem : public QGraphicsItemGroup
      * connections will be visible behind the monomer outlines and labels.
      * @param parent The parent graphics item, if any.
      */
-    MonomerHintFragmentItem(const RDKit::ROMol& fragment, const Fonts& fonts,
+    MonomerHintFragmentItem(const std::shared_ptr<RDKit::RWMol> fragment, const Fonts& fonts,
                             const std::vector<size_t>& atom_indices_to_hide,
                             const int bond_index_to_label,
                             const QColor monomer_background_color,
                             QGraphicsItem* parent = nullptr);
 
   protected:
-    RDKit::ROMol m_frag;
+    std::shared_ptr<RDKit::RWMol> m_frag;
     const Fonts* m_fonts = nullptr;
     std::vector<size_t> m_atom_indices_to_hide;
     int m_bond_index_to_label = -1;
