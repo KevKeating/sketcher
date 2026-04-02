@@ -371,28 +371,15 @@ DrawMonomerSceneTool::getUnboundAttachmentPointAt(
 static std::tuple<const RDKit::Atom*, MonomerType>
 get_monomer_and_type(const AbstractMonomerItem* const monomer_item)
 {
-    std::cout << "getting monomer\n\n\n";
     auto* monomer = monomer_item->getAtom();
-    std::cout << "getting monomer type\n\n\n";
     auto monomer_type = get_monomer_type(monomer);
-    std::cout << "got monomer type\n\n\n";
     return {monomer, monomer_type};
-}
-
-MonomerType DrawMonomerSceneTool::getDragMonomerType(const AbstractMonomerItem* const monomer_item) const
-{
-    if (monomer_item == nullptr) {
-        return m_monomer_type;
-    }
-    auto [monomer, monomer_type] = get_monomer_and_type(monomer_item);
-    return monomer_type;
 }
 
 UnboundMonomericAttachmentPointItem*
 DrawMonomerSceneTool::getUnboundDragEndAttachmentPointAt(
     const QPointF& scene_pos) const
 {
-    std::cout << "1\n";
     // TODO: remove duplication
     if (m_drag_end_unbound_ap_items.empty()) {
         return nullptr;
@@ -402,12 +389,19 @@ DrawMonomerSceneTool::getUnboundDragEndAttachmentPointAt(
             return ap_item;
         }
     }
-    std::cout << "2\n";
-    auto drag_start_monomer_type = getDragMonomerType(m_drag_start_monomer_item);
-    std::cout << "2b\n";
-    auto drag_end_monomer_type = getDragMonomerType(m_drag_end_monomer_item);
     
-    std::cout << "3\n";
+    // get the monomer type for the start and end monomers
+    auto get_drag_monomer_type = [this](const AbstractMonomerItem* const monomer_item)
+    {
+        if (monomer_item == nullptr) {
+            return m_monomer_type;
+        }
+        auto [monomer, monomer_type] = get_monomer_and_type(monomer_item);
+        return monomer_type;
+    };
+    auto drag_start_monomer_type = get_drag_monomer_type(m_drag_start_monomer_item);
+    auto drag_end_monomer_type = get_drag_monomer_type(m_drag_end_monomer_item);
+    
     // if the user is hovered over the monomer itself and the "correct"
     // attachment point is available (e.g. N terminus when we dragged from a C
     // terminus), use that one
@@ -418,7 +412,6 @@ DrawMonomerSceneTool::getUnboundDragEndAttachmentPointAt(
         }
     }
 
-    std::cout << "4\n";
     // if the correct attachment point isn't available then there's probably no
     // good option, so use whatever we would've defaulted if we'd started the
     // drag at this monomer.
