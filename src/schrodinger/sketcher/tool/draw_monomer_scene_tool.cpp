@@ -854,7 +854,12 @@ void DrawMonomerSceneTool::onLeftButtonDragRelease(
     if (m_drag_ignored) {
         return;
     }
-    addDragMonomerAndConnectionToMolModel(event->scenePos());
+    // we know that hint_start_monomer_info can't be std::nullopt, since
+    // otherwise m_drag_ignored would be true and we would've returned already
+    auto hint_start_monomer_info = getHintFragmentMonomerInfoForDragStart();
+    auto [drag_end_info, hovered_monomer_item] = getDragEndInfo(event->scenePos());
+    auto hint_end_monomer_info = getHintFragmentMonomerInfoForDragEnd(*hint_start_monomer_info, drag_end_info);
+    
     // clearHintFragmentItem();
     clearAttachmentPointsLabelsAndHintFragmentItem();
     clearDragEndAttachmentPointsLabels();
@@ -863,20 +868,12 @@ void DrawMonomerSceneTool::onLeftButtonDragRelease(
     m_drag_end_monomer_item = nullptr;
     m_drag_end_info = std::monostate{};
     std::cout << "Finished onLeftButtonDragRelease\n";
+    
+    addDragStructureToMolModel(*hint_start_monomer_info, hint_end_monomer_info);
 }
 
-// TODO: crashes when dragging to an existing monomer
-void DrawMonomerSceneTool::addDragMonomerAndConnectionToMolModel(const QPointF& scene_pos)
+void DrawMonomerSceneTool::addDragStructureToMolModel(const HintFragmentMonomerInfo& hint_start_monomer_info, const HintFragmentMonomerInfo& hint_end_monomer_info)
 {
-    auto hint_start_monomer_info = getHintFragmentMonomerInfoForDragStart();
-    if (!hint_start_monomer_info.has_value()) {
-        // this drag should have been ignored
-        throw std::runtime_error("No drag start info available");
-    }
-    auto [drag_end_info, hovered_monomer_item] = getDragEndInfo(scene_pos);
-    auto hint_end_monomer_info = getHintFragmentMonomerInfoForDragEnd(*hint_start_monomer_info, drag_end_info);
-    
-    
     auto add_monomer_to_mol_model_if_new = [this](const HintFragmentMonomerInfo& monomer_info) {
         if (monomer_info.atom_idx >= 0) {
             // the monomer already exists in MolModel
@@ -889,11 +886,11 @@ void DrawMonomerSceneTool::addDragMonomerAndConnectionToMolModel(const QPointF& 
     };
     
     auto undo_raii = m_mol_model->createUndoMacro("Add monomeric connection");
-    auto start_monomer_idx = add_monomer_to_mol_model_if_new(*hint_start_monomer_info);
+    auto start_monomer_idx = add_monomer_to_mol_model_if_new(hint_start_monomer_info);
     auto end_monomer_idx = add_monomer_to_mol_model_if_new(hint_end_monomer_info);
     auto mol = m_mol_model->getMol();
-    std::cout << "About to call addMonomericConnection " << start_monomer_idx << " " << hint_start_monomer_info->ap_model_name << " - " << end_monomer_idx << " " << hint_end_monomer_info.ap_model_name << "\n";
-    m_mol_model->addMonomericConnection(mol->getAtomWithIdx(start_monomer_idx), hint_start_monomer_info->ap_model_name, mol->getAtomWithIdx(end_monomer_idx), hint_end_monomer_info.ap_model_name);
+    std::cout << "About to call addMonomericConnection " << start_monomer_idx << " " << hint_start_monomer_info.ap_model_name << " - " << end_monomer_idx << " " << hint_end_monomer_info.ap_model_name << "\n";
+    m_mol_model->addMonomericConnection(mol->getAtomWithIdx(start_monomer_idx), hint_start_monomer_info.ap_model_name, mol->getAtomWithIdx(end_monomer_idx), hint_end_monomer_info.ap_model_name);
     std::cout << "Finished addMonomericConnection call\n";
 }
 
