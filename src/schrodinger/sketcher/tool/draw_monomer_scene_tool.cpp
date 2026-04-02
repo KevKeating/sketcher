@@ -638,9 +638,11 @@ HintFragmentMonomerInfo DrawMonomerSceneTool::createHintFragmentMonomerInfoForHi
 HintFragmentMonomerInfo DrawMonomerSceneTool::createHintFragmentMonomerInfoForHintToDirection(const HintFragmentMonomerInfo& start_monomer_info, const Direction direction) const
 {
     auto pos = get_default_coords_for_bound_monomer(start_monomer_info.pos, direction);
-    // TODO: Have these match the first monomer now that we have the info?
+    // We'll determine the correct values for chain id and residue number
+    // when/if the structure is actually added to MolModel. For the hint,
+    // though, just generate something reasonable looking.
     auto chain_id = rdkit_extensions::toString(m_chain_type) + "1";
-    auto res_num = 1;
+    auto res_num = 2;
     auto monomer = rdkit_extensions::makeMonomer(m_res_name, chain_id, res_num, false);
     auto ap_model_name = get_attachment_point_for_new_monomer(
         start_monomer_info.monomer_type, start_monomer_info.ap_model_name, m_monomer_type);
@@ -729,6 +731,13 @@ bool DrawMonomerSceneTool::createDragHint(const DragEndInfo& drag_end_info)
     clearHintFragmentItem();
     auto hint_start_monomer_info = getHintFragmentMonomerInfoForDragStart();
     if (!hint_start_monomer_info.has_value()) {
+        // TODO: move this to the docstring?
+        // we should ignore this drag because one of the following happened:
+        //  - the user tried to start a drag from an existing monomer with no
+        //    available attachment points
+        //  - the user tried to start a drag from empty space while using a
+        //    nucleic acid phosphate or sugar tool, and it doesn't make any
+        //    biological sense to create a dimer of those.
         return false;
     }
     HintFragmentMonomerInfo hint_end_monomer_info = getHintFragmentMonomerInfoForDragEnd(*hint_start_monomer_info, drag_end_info);
@@ -854,21 +863,27 @@ void DrawMonomerSceneTool::onLeftButtonDragRelease(
     if (m_drag_ignored) {
         return;
     }
-    // we know that hint_start_monomer_info can't be std::nullopt, since
-    // otherwise m_drag_ignored would be true and we would've returned already
+    
+    // we need to figure out what attachment point we're over before we delete
+    // the attachment point graphics items
     auto hint_start_monomer_info = getHintFragmentMonomerInfoForDragStart();
     auto [drag_end_info, hovered_monomer_item] = getDragEndInfo(event->scenePos());
+    // we know that hint_start_monomer_info can't be std::nullopt, since
+    // otherwise m_drag_ignored would be true and we would've returned already
     auto hint_end_monomer_info = getHintFragmentMonomerInfoForDragEnd(*hint_start_monomer_info, drag_end_info);
     
-    // clearHintFragmentItem();
+    // delete the attachment point graphics items before we modify the structure
+    // so that we don't have to worry about monomer graphics items being deleted
+    // and automatically destroying their children
     clearAttachmentPointsLabelsAndHintFragmentItem();
     clearDragEndAttachmentPointsLabels();
     m_drag_start_monomer_item = nullptr;
     m_drag_start_ap = std::nullopt;
     m_drag_end_monomer_item = nullptr;
     m_drag_end_info = std::monostate{};
-    std::cout << "Finished onLeftButtonDragRelease\n";
-    
+
+    // now that everything is cleaned up, we can actually add the monomers and
+    // connection to MolModel
     addDragStructureToMolModel(*hint_start_monomer_info, hint_end_monomer_info);
 }
 
@@ -889,9 +904,7 @@ void DrawMonomerSceneTool::addDragStructureToMolModel(const HintFragmentMonomerI
     auto start_monomer_idx = add_monomer_to_mol_model_if_new(hint_start_monomer_info);
     auto end_monomer_idx = add_monomer_to_mol_model_if_new(hint_end_monomer_info);
     auto mol = m_mol_model->getMol();
-    std::cout << "About to call addMonomericConnection " << start_monomer_idx << " " << hint_start_monomer_info.ap_model_name << " - " << end_monomer_idx << " " << hint_end_monomer_info.ap_model_name << "\n";
     m_mol_model->addMonomericConnection(mol->getAtomWithIdx(start_monomer_idx), hint_start_monomer_info.ap_model_name, mol->getAtomWithIdx(end_monomer_idx), hint_end_monomer_info.ap_model_name);
-    std::cout << "Finished addMonomericConnection call\n";
 }
 
 QPixmap DrawMonomerSceneTool::createDefaultCursorPixmap() const
