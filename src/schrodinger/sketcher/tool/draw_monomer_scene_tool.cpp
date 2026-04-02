@@ -579,12 +579,6 @@ void DrawMonomerSceneTool::createHintFragmentItem(const HintFragmentMonomerInfo&
     }
     if (monomer_two_info.atom_idx >= 0) {
         atom_indices_to_hide.push_back(second_idx);
-        
-        // TODO: move this someplace more logical
-        for (auto* ap_item : m_drag_end_unbound_ap_items) {
-            bool highlight = ap_item->getAttachmentPoint().model_name == monomer_two_info.ap_model_name;
-            ap_item->setHighlighted(highlight);
-        }
     }
 
     m_hint_fragment_item = new MonomerHintFragmentItem(
@@ -828,6 +822,15 @@ void DrawMonomerSceneTool::onLeftButtonDragMove(
     if (drag_end_info != m_drag_end_info) {
         m_drag_end_info = drag_end_info;
         createDragHint(drag_end_info);
+        
+        
+        if (std::holds_alternative<MonomerAndAPItems>(drag_end_info)) {
+            auto active_ap_item = std::get<MonomerAndAPItems>(drag_end_info).second;
+            for (auto* ap_item : m_drag_end_unbound_ap_items) {
+                bool highlight = ap_item == active_ap_item;
+                ap_item->setHighlighted(highlight);
+            }
+        }
     }       
 }
 
