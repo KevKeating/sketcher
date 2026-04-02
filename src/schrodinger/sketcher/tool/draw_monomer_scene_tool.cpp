@@ -105,6 +105,8 @@ void DrawMonomerSceneTool::updateColorsAfterBackgroundColorChange(
         is_dark_mode ? UNBOUND_AP_LABEL_COLOR_DARK_BG : UNBOUND_AP_LABEL_COLOR;
     m_bound_ap_label_color =
         is_dark_mode ? BOUND_AP_LABEL_COLOR_DARK_BG : BOUND_AP_LABEL_COLOR;
+    m_drag_end_inactive_ap_color =
+        is_dark_mode ? DRAG_END_INACTIVE_AP_DARK_BG : DRAG_END_INACTIVE_AP;
 }
 
 AbstractMonomerItem*
@@ -827,8 +829,7 @@ void DrawMonomerSceneTool::onLeftButtonDragMove(
         if (std::holds_alternative<MonomerAndAPItems>(drag_end_info)) {
             auto active_ap_item = std::get<MonomerAndAPItems>(drag_end_info).second;
             for (auto* ap_item : m_drag_end_unbound_ap_items) {
-                // TODO: make color a constand and keep it updated for dark mode
-                auto color = ap_item == active_ap_item ? STRUCTURE_HINT_COLOR : QColor("#EEEEEE");
+                auto color = ap_item == active_ap_item ? STRUCTURE_HINT_COLOR : m_drag_end_inactive_ap_color;
                 ap_item->setColor(color);
             }
         }

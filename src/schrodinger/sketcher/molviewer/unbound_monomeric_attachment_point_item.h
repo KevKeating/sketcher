@@ -79,10 +79,7 @@ class SKETCHER_API UnboundMonomericAttachmentPointItem : public QGraphicsItem
      * @return the attachment point represented by this graphics item
      */
     const UnboundAttachmentPoint& getAttachmentPoint() const;
-    
-    // TODO: remove this function
-    QPointF getLineEndPos() const;
-    
+
     void setColor(const QColor& color);
 
   private:

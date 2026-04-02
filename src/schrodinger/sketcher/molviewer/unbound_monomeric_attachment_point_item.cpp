@@ -207,12 +207,6 @@ UnboundMonomericAttachmentPointItem::getAttachmentPoint() const
     return m_attachment_point;
 }
 
-// TODO: remove this function
-QPointF UnboundMonomericAttachmentPointItem::getLineEndPos() const
-{
-    return mapToScene(m_line_end);
-}
-
 void UnboundMonomericAttachmentPointItem::setColor(const QColor& color)
 {
     m_line_pen.setColor(color);

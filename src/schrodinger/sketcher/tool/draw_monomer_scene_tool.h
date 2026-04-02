@@ -109,6 +109,7 @@ class SKETCHER_API DrawMonomerSceneTool : public StandardSceneToolBase
     DragEndInfo m_drag_end_info;
     QGraphicsItemGroup m_drag_end_attachment_point_labels_group;
     std::vector<UnboundMonomericAttachmentPointItem*> m_drag_end_unbound_ap_items;
+    QColor m_drag_end_inactive_ap_color;
     
 
     QPixmap createDefaultCursorPixmap() const override;
