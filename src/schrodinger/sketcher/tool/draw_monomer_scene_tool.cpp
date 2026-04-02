@@ -802,6 +802,8 @@ Direction DrawMonomerSceneTool::getDragDirection(const QPointF& cur_scene_pos) c
     }
 }
 
+// TODO: should default to the attachment point that makes the most sense for
+//       the connection, not the usual default
 void DrawMonomerSceneTool::onLeftButtonDragMove(
     QGraphicsSceneMouseEvent* const event)
 {
