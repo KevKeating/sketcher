@@ -104,7 +104,7 @@ class SKETCHER_API DrawMonomerSceneTool : public StandardSceneToolBase
     
     bool m_drag_ignored;
     AbstractMonomerItem* m_drag_start_monomer_item;
-    std::optional<UnboundAttachmentPoint> m_drag_start_ap;
+    std::string m_drag_start_ap_model_name;
     AbstractMonomerItem* m_drag_end_monomer_item;
     DragEndInfo m_drag_end_info;
     QGraphicsItemGroup m_drag_end_attachment_point_labels_group;
@@ -243,8 +243,9 @@ class SKETCHER_API DrawMonomerSceneTool : public StandardSceneToolBase
     void createHintFragmentItem(const HintFragmentMonomerInfo& monomer_one, const HintFragmentMonomerInfo& monomer_two);
     
     bool createDragHint(const DragEndInfo& drag_end_info);
+    std::string getDefaultDragStartAPModelName() const;
     HintFragmentMonomerInfo createHintFragmentMonomerInfoForHintFromEmptySpace(const QPointF& scene_pos) const;
-    HintFragmentMonomerInfo createHintFragmentMonomerInfoForHintFromExistingMonomer(const AbstractMonomerItem* const monomer_item, const UnboundAttachmentPoint& ap) const;
+    HintFragmentMonomerInfo createHintFragmentMonomerInfoForHintFromExistingMonomer(const AbstractMonomerItem* const monomer_item, const std::string& ap_model_name) const;
     HintFragmentMonomerInfo createHintFragmentMonomerInfoForHintToExistingMonomer(const AbstractMonomerItem* const monomer_item,
     const UnboundMonomericAttachmentPointItem* const ap_item) const;
     HintFragmentMonomerInfo createHintFragmentMonomerInfoForHintToDirection(const HintFragmentMonomerInfo& start_monomer_info, const rdkit_extensions::Direction direction) const;

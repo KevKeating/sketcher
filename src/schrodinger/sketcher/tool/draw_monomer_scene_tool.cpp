@@ -395,7 +395,7 @@ DrawMonomerSceneTool::getUnboundDragEndAttachmentPointAt(
     // if the user is hovered over the monomer itself and the "correct"
     // attachment point is available (e.g. N terminus when we dragged from a C
     // terminus), use that one
-    auto ideal_ap_model_name = get_attachment_point_for_new_monomer(drag_start_monomer_type, m_drag_start_ap->model_name, drag_end_monomer_type);
+    auto ideal_ap_model_name = get_attachment_point_for_new_monomer(drag_start_monomer_type, m_drag_start_ap_model_name, drag_end_monomer_type);
     for (auto* ap_item : m_drag_end_unbound_ap_items) {
         if (ap_item->getAttachmentPoint().model_name == ideal_ap_model_name) {
             return ap_item;
@@ -555,7 +555,7 @@ void DrawMonomerSceneTool::drawBoundMonomerHintFor(
     }
     const auto* monomer_item =
         static_cast<const AbstractMonomerItem*>(m_hovered_item);
-    auto hovered_monomer_info = createHintFragmentMonomerInfoForHintFromExistingMonomer(monomer_item, ap_item->getAttachmentPoint());
+    auto hovered_monomer_info = createHintFragmentMonomerInfoForHintFromExistingMonomer(monomer_item, ap_item->getAttachmentPoint().model_name);
     auto direction = ap_item->getAttachmentPoint().direction;
     auto new_monomer_info = createHintFragmentMonomerInfoForHintToDirection(hovered_monomer_info, direction);
     createHintFragmentItem(hovered_monomer_info, new_monomer_info);
@@ -603,6 +603,10 @@ void DrawMonomerSceneTool::createHintFragmentItem(const HintFragmentMonomerInfo&
     m_scene->addItem(m_hint_fragment_item);
 }
 
+std::string DrawMonomerSceneTool::getDefaultDragStartAPModelName() const {
+    return m_monomer_type == MonomerType::NA_BASE ? NA_BASE_AP_PAIR : ap_model_name_for(PeptideAP::C);
+}
+
 // returned monomer is owned by calling scope
 HintFragmentMonomerInfo DrawMonomerSceneTool::createHintFragmentMonomerInfoForHintFromEmptySpace(const QPointF& scene_pos) const
 {
@@ -610,17 +614,17 @@ HintFragmentMonomerInfo DrawMonomerSceneTool::createHintFragmentMonomerInfoForHi
     auto monomer = rdkit_extensions::makeMonomer(m_res_name, chain_id, 1,
                                false);
     auto monomer_pos = to_mol_xy(scene_pos);
-    auto linkage_start = m_monomer_type == MonomerType::NA_BASE ? NA_BASE_AP_PAIR : ap_model_name_for(PeptideAP::C);
+    auto linkage_start = getDefaultDragStartAPModelName();
     return HintFragmentMonomerInfo(monomer.release(), m_monomer_type, monomer_pos, linkage_start, NEW_MONOMER_FROM_DRAG);
 }
 
 HintFragmentMonomerInfo DrawMonomerSceneTool::createHintFragmentMonomerInfoForHintFromExistingMonomer(const AbstractMonomerItem* const monomer_item,
-    const UnboundAttachmentPoint& ap) const
+    const std::string& ap_model_name) const
 {
     auto [monomer, monomer_type] = get_monomer_and_type(monomer_item);
     auto copy_of_monomer = new RDKit::Atom(*monomer);
     auto monomer_pos = get_coords_for_monomer(monomer);
-    return HintFragmentMonomerInfo(copy_of_monomer, monomer_type, monomer_pos, ap.model_name, monomer->getIdx());
+    return HintFragmentMonomerInfo(copy_of_monomer, monomer_type, monomer_pos, ap_model_name, monomer->getIdx());
 }
 
 // TODO: remove duplication with FromExistingMonomer method if I wind up using monomer coords (also get rid of getLineEndPos)
@@ -704,14 +708,13 @@ void DrawMonomerSceneTool::onLeftButtonDragStart(
     auto dir = getDragDirection(event->scenePos());
     m_drag_start_monomer_item = getTopMonomerItemAt(m_mouse_press_scene_pos);
     if (m_drag_start_monomer_item == nullptr) {
-        // TODO: use default attachment point for this monomer type
-        m_drag_start_ap = std::nullopt;
+        m_drag_start_ap_model_name = getDefaultDragStartAPModelName();
     } else {
         auto ap_item = getUnboundAttachmentPointAt(m_mouse_press_scene_pos, false);
         if (ap_item == nullptr) {
-            m_drag_start_ap = std::nullopt;
+            m_drag_start_ap_model_name = "";
         } else {
-            m_drag_start_ap = ap_item->getAttachmentPoint();
+            m_drag_start_ap_model_name = ap_item->getAttachmentPoint().model_name;
         }
     }
     // clear the attachment point labels, but only *after* we've figured out
@@ -758,9 +761,9 @@ std::optional<HintFragmentMonomerInfo> DrawMonomerSceneTool::getHintFragmentMono
             // dragging from empty space, so don't start the drag
             return std::nullopt;
         }
-    } else if (m_drag_start_ap.has_value()) {
+    } else if (m_drag_start_ap_model_name != "") {
         // the drag started over a monomer and it has an available attachment point
-        return createHintFragmentMonomerInfoForHintFromExistingMonomer(m_drag_start_monomer_item, *m_drag_start_ap);
+        return createHintFragmentMonomerInfoForHintFromExistingMonomer(m_drag_start_monomer_item, m_drag_start_ap_model_name);
     } else {
         // the drag started over a monomer, but that monomer has no available
         // unbound attachment points so we can't drag from it
@@ -878,7 +881,7 @@ void DrawMonomerSceneTool::onLeftButtonDragRelease(
     clearAttachmentPointsLabelsAndHintFragmentItem();
     clearDragEndAttachmentPointsLabels();
     m_drag_start_monomer_item = nullptr;
-    m_drag_start_ap = std::nullopt;
+    m_drag_start_ap_model_name = "";
     m_drag_end_monomer_item = nullptr;
     m_drag_end_info = std::monostate{};
 
