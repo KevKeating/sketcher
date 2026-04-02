@@ -391,6 +391,20 @@ DrawMonomerSceneTool::getUnboundDragEndAttachmentPointAt(
     }
     auto [drag_start_monomer, drag_start_monomer_type] = get_monomer_and_type(m_drag_start_monomer_item);
     auto [drag_end_monomer, drag_end_monomer_type] = get_monomer_and_type(m_drag_end_monomer_item);
+    
+    // if the user is hovered over the monomer itself and the "correct"
+    // attachment point is available (e.g. N terminus when we dragged from a C
+    // terminus), use that one
+    auto ideal_ap_model_name = get_attachment_point_for_new_monomer(drag_start_monomer_type, m_drag_start_ap->model_name, drag_end_monomer_type);
+    for (auto* ap_item : m_drag_end_unbound_ap_items) {
+        if (ap_item->getAttachmentPoint().model_name == ideal_ap_model_name) {
+            return ap_item;
+        }
+    }
+
+    // if the correct attachment point isn't available then there's probably no
+    // good option, so use whatever we would've defaulted if we'd started the
+    // drag at this monomer.
     return get_default_attachment_point(drag_end_monomer_type, drag_start_monomer_type,
                                         m_drag_end_unbound_ap_items);
 }
@@ -692,6 +706,7 @@ void DrawMonomerSceneTool::onLeftButtonDragStart(
     auto dir = getDragDirection(event->scenePos());
     m_drag_start_monomer_item = getTopMonomerItemAt(m_mouse_press_scene_pos);
     if (m_drag_start_monomer_item == nullptr) {
+        // TODO: use default attachment point for this monomer type
         m_drag_start_ap = std::nullopt;
     } else {
         auto ap_item = getUnboundAttachmentPointAt(m_mouse_press_scene_pos, false);
@@ -802,8 +817,6 @@ Direction DrawMonomerSceneTool::getDragDirection(const QPointF& cur_scene_pos) c
     }
 }
 
-// TODO: should default to the attachment point that makes the most sense for
-//       the connection, not the usual default
 void DrawMonomerSceneTool::onLeftButtonDragMove(
     QGraphicsSceneMouseEvent* const event)
 {
