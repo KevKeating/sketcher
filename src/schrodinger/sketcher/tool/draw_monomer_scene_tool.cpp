@@ -629,10 +629,6 @@ HintFragmentMonomerInfo DrawMonomerSceneTool::createHintFragmentMonomerInfoForHi
 {
     auto [monomer, monomer_type] = get_monomer_and_type(monomer_item);
     auto copy_of_monomer = new RDKit::Atom(*monomer);
-    // TODO: drag isn't going to the right spot when connection has an arrowhead
-    // TODO: should color attachment point nubbin blue and maybe get rid of AP label at this end of the connection
-    // TODO: this doesn't look great even when not going to an arrowhead, maybe not worth it once nubbin is blue?
-    // auto ap_pos = to_mol_xy(ap_item->getLineEndPos());
     auto monomer_pos = get_coords_for_monomer(monomer);
     auto ap_model_name = ap_item->getAttachmentPoint().model_name;
     return HintFragmentMonomerInfo(copy_of_monomer, monomer_type, monomer_pos, ap_model_name, monomer->getIdx());
@@ -859,12 +855,14 @@ void DrawMonomerSceneTool::onLeftButtonDragRelease(
         return;
     }
     addDragMonomerAndConnectionToMolModel(event->scenePos());
-    clearHintFragmentItem();
+    // clearHintFragmentItem();
+    clearAttachmentPointsLabelsAndHintFragmentItem();
+    clearDragEndAttachmentPointsLabels();
     m_drag_start_monomer_item = nullptr;
     m_drag_start_ap = std::nullopt;
     m_drag_end_monomer_item = nullptr;
     m_drag_end_info = std::monostate{};
-    clearDragEndAttachmentPointsLabels();
+    std::cout << "Finished onLeftButtonDragRelease\n";
 }
 
 // TODO: crashes when dragging to an existing monomer
@@ -894,7 +892,9 @@ void DrawMonomerSceneTool::addDragMonomerAndConnectionToMolModel(const QPointF& 
     auto start_monomer_idx = add_monomer_to_mol_model_if_new(*hint_start_monomer_info);
     auto end_monomer_idx = add_monomer_to_mol_model_if_new(hint_end_monomer_info);
     auto mol = m_mol_model->getMol();
+    std::cout << "About to call addMonomericConnection " << start_monomer_idx << " " << hint_start_monomer_info->ap_model_name << " - " << end_monomer_idx << " " << hint_end_monomer_info.ap_model_name << "\n";
     m_mol_model->addMonomericConnection(mol->getAtomWithIdx(start_monomer_idx), hint_start_monomer_info->ap_model_name, mol->getAtomWithIdx(end_monomer_idx), hint_end_monomer_info.ap_model_name);
+    std::cout << "Finished addMonomericConnection call\n";
 }
 
 QPixmap DrawMonomerSceneTool::createDefaultCursorPixmap() const
