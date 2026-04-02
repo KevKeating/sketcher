@@ -148,14 +148,14 @@ UnboundMonomericAttachmentPointItem::UnboundMonomericAttachmentPointItem(
     const Fonts& fonts) :
     QGraphicsItem(parent_monomer),
     m_attachment_point(attachment_point),
-    m_fonts(&fonts)
+    m_fonts(&fonts),
+    m_unhighlighted_color(color)
 {
     setFlag(QGraphicsItem::ItemStacksBehindParent);
 
     m_line_pen.setWidthF(UNBOUND_AP_LINE_THICKNESS);
     m_line_pen.setCapStyle(Qt::RoundCap);
-    m_line_pen.setColor(color);
-    m_circle_brush.setColor(color);
+    setHighlighted(false);
 
     std::tie(m_line_end, m_label_text, m_label_rect, m_bounding_rect,
              m_hover_area) =
@@ -207,9 +207,17 @@ UnboundMonomericAttachmentPointItem::getAttachmentPoint() const
     return m_attachment_point;
 }
 
+// TODO: remove this function
 QPointF UnboundMonomericAttachmentPointItem::getLineEndPos() const
 {
     return mapToScene(m_line_end);
+}
+
+void UnboundMonomericAttachmentPointItem::setHighlighted(bool highlighted)
+{
+    auto color = highlighted ? STRUCTURE_HINT_COLOR : m_unhighlighted_color;
+    m_line_pen.setColor(color);
+    m_circle_brush.setColor(color);
 }
 
 } // namespace sketcher

@@ -579,6 +579,12 @@ void DrawMonomerSceneTool::createHintFragmentItem(const HintFragmentMonomerInfo&
     }
     if (monomer_two_info.atom_idx >= 0) {
         atom_indices_to_hide.push_back(second_idx);
+        
+        // TODO: move this someplace more logical
+        for (auto* ap_item : m_drag_end_unbound_ap_items) {
+            bool highlight = ap_item->getAttachmentPoint().model_name == monomer_two_info.ap_model_name;
+            ap_item->setHighlighted(highlight);
+        }
     }
 
     m_hint_fragment_item = new MonomerHintFragmentItem(
@@ -607,6 +613,7 @@ HintFragmentMonomerInfo DrawMonomerSceneTool::createHintFragmentMonomerInfoForHi
     return HintFragmentMonomerInfo(copy_of_monomer, monomer_type, monomer_pos, ap.model_name, monomer->getIdx());
 }
 
+// TODO: remove duplication with FromExistingMonomer method if I wind up using monomer coords (also get rid of getLineEndPos)
 HintFragmentMonomerInfo DrawMonomerSceneTool::createHintFragmentMonomerInfoForHintToExistingMonomer(const AbstractMonomerItem* const monomer_item,
     const UnboundMonomericAttachmentPointItem* const ap_item) const
 {
@@ -615,10 +622,10 @@ HintFragmentMonomerInfo DrawMonomerSceneTool::createHintFragmentMonomerInfoForHi
     // TODO: drag isn't going to the right spot when connection has an arrowhead
     // TODO: should color attachment point nubbin blue and maybe get rid of AP label at this end of the connection
     // TODO: this doesn't look great even when not going to an arrowhead, maybe not worth it once nubbin is blue?
-    auto ap_pos = to_mol_xy(ap_item->getLineEndPos());
-    // auto monomer_pos = get_coords_for_monomer(monomer);
+    // auto ap_pos = to_mol_xy(ap_item->getLineEndPos());
+    auto monomer_pos = get_coords_for_monomer(monomer);
     auto ap_model_name = ap_item->getAttachmentPoint().model_name;
-    return HintFragmentMonomerInfo(copy_of_monomer, monomer_type, ap_pos, ap_model_name, monomer->getIdx());
+    return HintFragmentMonomerInfo(copy_of_monomer, monomer_type, monomer_pos, ap_model_name, monomer->getIdx());
 }
 
 // returned monomer is owned by calling scope
@@ -719,6 +726,7 @@ bool DrawMonomerSceneTool::createDragHint(const DragEndInfo& drag_end_info)
     }
     HintFragmentMonomerInfo hint_end_monomer_info = getHintFragmentMonomerInfoForDragEnd(*hint_start_monomer_info, drag_end_info);
     createHintFragmentItem(*hint_start_monomer_info, hint_end_monomer_info);
+    
     return true;
 }
 
