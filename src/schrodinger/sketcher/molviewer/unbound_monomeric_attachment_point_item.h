@@ -83,7 +83,7 @@ class SKETCHER_API UnboundMonomericAttachmentPointItem : public QGraphicsItem
     // TODO: remove this function
     QPointF getLineEndPos() const;
     
-    void setHighlighted(bool highlighted);
+    void setColor(const QColor& color);
 
   private:
     UnboundAttachmentPoint m_attachment_point;
@@ -97,7 +97,7 @@ class SKETCHER_API UnboundMonomericAttachmentPointItem : public QGraphicsItem
     QPainterPath m_hover_area;
     QPen m_line_pen;
     QBrush m_circle_brush{Qt::SolidPattern};
-    QColor m_unhighlighted_color;
+    // QColor m_unhighlighted_color;
 };
 
 } // namespace sketcher

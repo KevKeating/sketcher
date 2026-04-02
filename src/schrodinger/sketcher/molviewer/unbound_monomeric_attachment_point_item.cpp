@@ -148,14 +148,14 @@ UnboundMonomericAttachmentPointItem::UnboundMonomericAttachmentPointItem(
     const Fonts& fonts) :
     QGraphicsItem(parent_monomer),
     m_attachment_point(attachment_point),
-    m_fonts(&fonts),
-    m_unhighlighted_color(color)
+    m_fonts(&fonts)
+    // m_unhighlighted_color(color)
 {
     setFlag(QGraphicsItem::ItemStacksBehindParent);
 
     m_line_pen.setWidthF(UNBOUND_AP_LINE_THICKNESS);
     m_line_pen.setCapStyle(Qt::RoundCap);
-    setHighlighted(false);
+    setColor(color);
 
     std::tie(m_line_end, m_label_text, m_label_rect, m_bounding_rect,
              m_hover_area) =
@@ -213,9 +213,8 @@ QPointF UnboundMonomericAttachmentPointItem::getLineEndPos() const
     return mapToScene(m_line_end);
 }
 
-void UnboundMonomericAttachmentPointItem::setHighlighted(bool highlighted)
+void UnboundMonomericAttachmentPointItem::setColor(const QColor& color)
 {
-    auto color = highlighted ? STRUCTURE_HINT_COLOR : m_unhighlighted_color;
     m_line_pen.setColor(color);
     m_circle_brush.setColor(color);
 }

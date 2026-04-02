@@ -823,12 +823,13 @@ void DrawMonomerSceneTool::onLeftButtonDragMove(
         m_drag_end_info = drag_end_info;
         createDragHint(drag_end_info);
         
-        
+        // update which unbound attachment point is highlighted
         if (std::holds_alternative<MonomerAndAPItems>(drag_end_info)) {
             auto active_ap_item = std::get<MonomerAndAPItems>(drag_end_info).second;
             for (auto* ap_item : m_drag_end_unbound_ap_items) {
-                bool highlight = ap_item == active_ap_item;
-                ap_item->setHighlighted(highlight);
+                // TODO: make color a constand and keep it updated for dark mode
+                auto color = ap_item == active_ap_item ? STRUCTURE_HINT_COLOR : QColor("#EEEEEE");
+                ap_item->setColor(color);
             }
         }
     }       
