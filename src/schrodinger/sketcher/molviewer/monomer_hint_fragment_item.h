@@ -32,9 +32,9 @@ class MonomerHintFragmentItem : public QGraphicsItemGroup
      * @param fragment The fragment to display
      * @param fonts The fonts to use for displaying the fragment. This object
      * must not be destroyed while this graphics item is in use.
-     * @param atom_index_to_hide If >= 0, the graphics item for this atom will
-     * be hidden. Normally used to hide the atom that overlaps the existing
-     * Sketcher structure.
+     * @param atom_indices_to_hide The graphics item for these atom will be
+     * hidden. Normally used to hide atoms that overlap the existing Sketcher
+     * structure.
      * @param bond_index_to_label If >= 0, the attachment points for this
      * connector will be labeled.
      * @param monomer_background_color The color to use for the monomer

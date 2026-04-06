@@ -94,7 +94,6 @@ class SKETCHER_API UnboundMonomericAttachmentPointItem : public QGraphicsItem
     QPainterPath m_hover_area;
     QPen m_line_pen;
     QBrush m_circle_brush{Qt::SolidPattern};
-    // QColor m_unhighlighted_color;
 };
 
 } // namespace sketcher

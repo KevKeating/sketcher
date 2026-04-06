@@ -149,7 +149,6 @@ UnboundMonomericAttachmentPointItem::UnboundMonomericAttachmentPointItem(
     QGraphicsItem(parent_monomer),
     m_attachment_point(attachment_point),
     m_fonts(&fonts)
-    // m_unhighlighted_color(color)
 {
     setFlag(QGraphicsItem::ItemStacksBehindParent);
 

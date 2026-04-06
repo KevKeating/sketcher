@@ -38,10 +38,17 @@ namespace sketcher
 
 using rdkit_extensions::Direction;
 
+/**
+ * Information about one monomer of the hint structure fragment (i.e. the blue
+ * structure that shows up when the user hovers over a monomer or
+ * click-and-drags from a monomer)
+ */
 struct HintFragmentMonomerInfo {
     RDKit::Atom* monomer;
     MonomerType monomer_type;
     RDGeom::Point3D pos;
+    // the model name of this monomer's attachment point that's connected to the
+    // bond (e.g. "R2", not "C")
     std::string ap_model_name;
     // the atom index for this monomer in the MolModel molecule. Will be
     // NEW_MONOMER_FROM_DRAG if the monomer is not present in MolModel.
@@ -80,9 +87,10 @@ DrawMonomerSceneTool::~DrawMonomerSceneTool()
 {
     // explicitly erase any attachment point labels. Without this, the bound
     // attachment point labels would be deleted regardless when
-    // m_attachment_point_labels_group is destroyed, but the unbound attachment
-    // point labels are parented to their monomer, so they would outlive the
-    // scene tool without this call.
+    // m_attachment_point_labels_group and
+    // m_drag_end_attachment_point_labels_group are destroyed, but the unbound
+    // attachment point labels are parented to their monomer, so they would
+    // outlive the scene tool without this call.
     clearAttachmentPointsLabelsAndHintFragmentItem();
     clearDragEndAttachmentPointsLabels();
 }
@@ -112,6 +120,9 @@ void DrawMonomerSceneTool::updateColorsAfterBackgroundColorChange(
 AbstractMonomerItem*
 DrawMonomerSceneTool::getTopMonomerItemAt(const QPointF& scene_pos) const
 {
+    // we're only interested in monomers that are part of the actual Sketcher
+    // structure, so we need to ignore any graphics items that belong to our
+    // hint structure
     auto is_item_part_of_hint_fragment = [this](QGraphicsItem* item) {return m_hint_fragment_item != nullptr &&
             (item == m_hint_fragment_item ||
              item->group() == m_hint_fragment_item);};
@@ -380,7 +391,6 @@ UnboundMonomericAttachmentPointItem*
 DrawMonomerSceneTool::getUnboundDragEndAttachmentPointAt(
     const QPointF& scene_pos) const
 {
-    // TODO: remove duplication
     if (m_drag_end_unbound_ap_items.empty()) {
         return nullptr;
     }
@@ -402,9 +412,9 @@ DrawMonomerSceneTool::getUnboundDragEndAttachmentPointAt(
     auto drag_start_monomer_type = get_drag_monomer_type(m_drag_start_monomer_item);
     auto drag_end_monomer_type = get_drag_monomer_type(m_drag_end_monomer_item);
     
-    // if the user is hovered over the monomer itself and the "correct"
-    // attachment point is available (e.g. N terminus when we dragged from a C
-    // terminus), use that one
+    // if the user is hovered over the monomer itself (not an attachment point)
+    // and the "correct" attachment point is available (e.g. N terminus when we
+    // dragged from a C terminus), use that one
     auto ideal_ap_model_name = get_attachment_point_for_new_monomer(drag_start_monomer_type, m_drag_start_ap_model_name, drag_end_monomer_type);
     for (auto* ap_item : m_drag_end_unbound_ap_items) {
         if (ap_item->getAttachmentPoint().model_name == ideal_ap_model_name) {
@@ -547,6 +557,9 @@ get_default_coords_for_bound_monomer(const RDGeom::Point3D monomer_pos,
     return monomer_pos + offset;
 }
 
+/**
+ * @overload takes a monomer instead of monomer coordinates
+ */
 static RDGeom::Point3D
 get_default_coords_for_bound_monomer(const RDKit::Atom* const monomer,
                                      const Direction dir)

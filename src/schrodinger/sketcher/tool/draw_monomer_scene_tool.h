@@ -189,9 +189,17 @@ class SKETCHER_API DrawMonomerSceneTool : public StandardSceneToolBase
      * item, that item will be returned. If the coordinates are over the
      * monomer, then the default unbound attachment point will be returned,
      * assuming one exists for the current tool. If no default attachment point
-     * exists (e.g. if a click would mutate the monomer or if the tool and the
-     * hovered monomer are of different molecule types), then nullptr will be
-     * returned.
+     * exists (e.g. if the tool and the hovered monomer are of different
+     * molecule types), then nullptr will be returned.
+     * @param scene_pos the coordinates to check
+     * @param no_default_if_click_should_mutate If true, this function will
+     * return nullptr if scene_pos is over the monomer itself and clicking on
+     * the monomer should trigger a mutation (e.g. if the user has the alanine
+     * tool selected and is hovering over a proline).  If false, this function
+     * will return the default unbound attachment point in this scenario,
+     * assuming one exists. (This value should normally be true if the user is
+     * hovering over or has clicked on the monomer, and false if the user has
+     * started a drag from the monomer.)
      *
      * @note This method only returns accurate results for the currently hovered
      * monomer, and assumes that the unbound attachment point graphics items
@@ -200,6 +208,15 @@ class SKETCHER_API DrawMonomerSceneTool : public StandardSceneToolBase
     UnboundMonomericAttachmentPointItem*
     getUnboundAttachmentPointAt(const QPointF& scene_pos, const bool no_default_if_click_should_mutate) const;
 
+    /**
+     * Return the unbound attachment point graphics item that should be "active"
+     * (i.e. that we'd draw a connection for if the user released the mouse
+     * button) for the given coordinates, assuming that the user is in the
+     * middle of a click-and-drag.  If the coordinates are over the monomer,
+     * then the default unbound attachment point will be returned based on the
+     * monomer and attachment point that the drag was started from, assuming one
+     * exists.
+     */
     UnboundMonomericAttachmentPointItem*
     getUnboundDragEndAttachmentPointAt(
     const QPointF& scene_pos) const;
@@ -207,6 +224,13 @@ class SKETCHER_API DrawMonomerSceneTool : public StandardSceneToolBase
     /**
      * @return the unbound attachment point that should be active when the user
      * is hovering over the monomer itself
+     * @param no_default_if_click_should_mutate If true, this function will
+     * return nullptr if clicking on the monomer should trigger a mutation (e.g.
+     * if the user has the alanine tool selected and is hovering over a
+     * proline).  If false, this function will return the default unbound
+     * attachment point in this scenario, assuming one exists. (This value
+     * should normally be true if the user is hovering over or has clicked on
+     * the monomer, and false if the user has started a drag from the monomer.)
      */
     UnboundMonomericAttachmentPointItem*
     getDefaultUnboundAttachmentPointForHoveredMonomer(const bool no_default_if_click_should_mutate) const;
