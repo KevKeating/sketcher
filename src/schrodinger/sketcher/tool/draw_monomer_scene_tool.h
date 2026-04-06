@@ -271,7 +271,19 @@ class SKETCHER_API DrawMonomerSceneTool : public StandardSceneToolBase
     void createHintFragmentItem(const HintFragmentMonomerInfo& monomer_one,
                                 const HintFragmentMonomerInfo& monomer_two);
 
-    bool createDragHint(const DragEndInfo& drag_end_info);
+    /**
+     * If the user has started a "valid" click-and-drag operation, create the
+     * drag hint and return true. Otherwise, return false. The click-and-drag
+     * will be valid unless one of the following happened:
+     *  - the user tried to start a drag from an existing monomer that has no
+     *    available attachment points
+     *  - the user tried to start a drag from empty space while using a nucleic
+     *    acid phosphate or sugar tool (It doesn't make any biological sense to
+     *    create a dimer of those, so we disallow drags from empty space.)
+     * @return 
+     */
+    bool createDragHintIfDragStartValid(const DragEndInfo& drag_end_info);
+
     /**
      * @return the attachment point to use if user starts a drag from empty
      * space. We only allow drags from empty space for peptides and nucleic acid
@@ -318,13 +330,39 @@ class SKETCHER_API DrawMonomerSceneTool : public StandardSceneToolBase
         const HintFragmentMonomerInfo& start_monomer_info,
         const rdkit_extensions::Direction direction) const;
 
+    /**
+     * Determine whether the end of current click-and-drag operation is over an
+     * existing monomer or not.  If not, return the direction of the drag.
+     * @param scene_pos The scene coordinates representing the end of the
+     * click-and-drag.
+     * @return A pair of
+     *   - If scene_pos is over an existing monomer, a pair of graphics items
+     *     representing the monomer and the attachment point. The attachment
+     *     point will be nullptr if the monomer does not have any available
+     *     unbound attachment points. If scene_pos is not over an existing
+     *     monomer, the `Direction` enum value representing the direction of the
+     *     drag.
+     */
     std::pair<DragEndInfo, AbstractMonomerItem*>
     getDragEndInfo(const QPointF& scene_pos);
+
     void addDragStructureToMolModel(
         const HintFragmentMonomerInfo& hint_start_monomer_info,
         const HintFragmentMonomerInfo& hint_end_monomer_info);
+
+    /**
+     * If the user starting a "valid" click-and-drag, create and return the
+     * HintFragmentMonomerInfo object describing the start of the drag.
+     * Otherwise, return std::nullopt. See the createDragHintIfDragStartValid
+     * docstring for an explanation of valid versus invalid click-and-drags.
+     */
     std::optional<HintFragmentMonomerInfo>
     getHintFragmentMonomerInfoForDragStart();
+
+    /**
+     * Create and return the HintFragmentMonomerInfo object describing the end
+     * of the current click-and-drag operation.
+     */
     HintFragmentMonomerInfo getHintFragmentMonomerInfoForDragEnd(
         const HintFragmentMonomerInfo& hint_start_monomer_info,
         const DragEndInfo& drag_end_info);

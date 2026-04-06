@@ -722,10 +722,6 @@ void DrawMonomerSceneTool::onLeftButtonDragStart(
     QGraphicsSceneMouseEvent* const event)
 {
     StandardSceneToolBase::onLeftButtonDragStart(event);
-    // since the drag just started, we can safely assume that we're not over a
-    // different monomer than m_drag_start_monomer_item, which means we want a
-    // drag to direction, not to another's monomer attachment point
-    auto dir = getDragDirection(event->scenePos());
     m_drag_start_monomer_item = getTopMonomerItemAt(m_mouse_press_scene_pos);
     if (m_drag_start_monomer_item == nullptr) {
         m_drag_start_ap_model_name = getDefaultDragStartAPModelName();
@@ -740,30 +736,27 @@ void DrawMonomerSceneTool::onLeftButtonDragStart(
             m_drag_start_ap_model_name = ap_item->getAttachmentPoint().model_name;
         }
     }
-    // clear the attachment point labels, but only *after* we've figured out
-    // which attachment point to use (since getUnboundAttachmentPointAt requires
-    // the attachment points to be in the Scene)
+    // clear the attachment point labels. Note that this must happen *after* the
+    // getUnboundAttachmentPointAt call, since that method requires the
+    // attachment points to be in the Scene
     clearAttachmentPointsLabelsAndHintFragmentItem();
     
-    auto handled = createDragHint(dir);
+    // since the drag just started, we can safely assume that we're not over a
+    // different monomer than m_drag_start_monomer_item, which means we want a
+    // drag to direction, not to another's monomer attachment point
+    auto dir = getDragDirection(event->scenePos());
+    auto handled = createDragHintIfDragStartValid(dir);
     if (!handled) {
         m_drag_start_monomer_item = nullptr;
     }
     m_drag_ignored = !handled;
 }
     
-bool DrawMonomerSceneTool::createDragHint(const DragEndInfo& drag_end_info)
+bool DrawMonomerSceneTool::createDragHintIfDragStartValid(const DragEndInfo& drag_end_info)
 {
     clearHintFragmentItem();
     auto hint_start_monomer_info = getHintFragmentMonomerInfoForDragStart();
     if (!hint_start_monomer_info.has_value()) {
-        // TODO: move this to the docstring?
-        // we should ignore this drag because one of the following happened:
-        //  - the user tried to start a drag from an existing monomer with no
-        //    available attachment points
-        //  - the user tried to start a drag from empty space while using a
-        //    nucleic acid phosphate or sugar tool, and it doesn't make any
-        //    biological sense to create a dimer of those.
         return false;
     }
     HintFragmentMonomerInfo hint_end_monomer_info = getHintFragmentMonomerInfoForDragEnd(*hint_start_monomer_info, drag_end_info);
@@ -869,7 +862,9 @@ void DrawMonomerSceneTool::onLeftButtonDragMove(
 
     if (drag_end_info != m_drag_end_info) {
         m_drag_end_info = drag_end_info;
-        createDragHint(drag_end_info);
+        // we know the drag start was valid, since otherwise m_drag_ignored
+        // would have been true
+        createDragHintIfDragStartValid(drag_end_info);
         
         // update which unbound attachment point is highlighted
         if (std::holds_alternative<MonomerAndAPItems>(drag_end_info)) {
