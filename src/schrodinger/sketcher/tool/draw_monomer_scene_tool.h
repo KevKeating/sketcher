@@ -268,6 +268,10 @@ class SKETCHER_API DrawMonomerSceneTool : public StandardSceneToolBase
     bool clickShouldMutate(const RDKit::Atom* monomer,
                            const MonomerType monomer_type) const;
 
+    /**
+     * Create a hint fragment containing the two specified monomers and the
+     * connection between them, then add this hint fragment to the scene.
+     */
     void createHintFragmentItem(const HintFragmentMonomerInfo& monomer_one,
                                 const HintFragmentMonomerInfo& monomer_two);
 
@@ -335,13 +339,16 @@ class SKETCHER_API DrawMonomerSceneTool : public StandardSceneToolBase
      * existing monomer or not.  If not, return the direction of the drag.
      * @param scene_pos The scene coordinates representing the end of the
      * click-and-drag.
-     * @return A pair of
-     *   - If scene_pos is over an existing monomer, a pair of graphics items
-     *     representing the monomer and the attachment point. The attachment
-     *     point will be nullptr if the monomer does not have any available
-     *     unbound attachment points. If scene_pos is not over an existing
-     *     monomer, the `Direction` enum value representing the direction of the
-     *     drag.
+     * @return If scene_pos is over an existing monomer, returns a pair of
+     *   - a pair of pointers to the graphics items representing the monomer and
+     *     the relevant attachment point. The second value will be nullptr if the
+     *     monomer does not have any available unbound attachment points.
+     *   - a pointer to the monomer's graphics item (i.e. the first pointer of
+     *     the pair)
+     * If scene_pos is not over an existing monomer, returns a pair of
+     *   - the `Direction` enum value representing the direction of the
+     *     drag
+     *   - nullptr
      */
     std::pair<DragEndInfo, AbstractMonomerItem*>
     getDragEndInfo(const QPointF& scene_pos);
@@ -367,6 +374,10 @@ class SKETCHER_API DrawMonomerSceneTool : public StandardSceneToolBase
         const HintFragmentMonomerInfo& hint_start_monomer_info,
         const DragEndInfo& drag_end_info);
 
+    /**
+     * @return the direction of the specified position relative to the start of
+     * the current click-and-drag operation
+     */
     rdkit_extensions::Direction
     getDragDirection(const QPointF& cur_scene_pos) const;
 };
