@@ -117,16 +117,26 @@ class SKETCHER_API DrawMonomerSceneTool : public StandardSceneToolBase
     QPixmap createDefaultCursorPixmap() const override;
 
     /**
-     * Label all attachment points on the given monomer
+     * Label all attachment points on the given hovered monomer
      */
     void labelAttachmentPointsOnHoveredMonomer(
         const RDKit::Atom* const monomer,
         AbstractMonomerItem* const monomer_item);
 
+    /**
+     * Label all attachment points on the given monomer at the end of the
+     * current click-and-drag operation
+     */
     void labelAttachmentPointsOnDragEndMonomer(
         const RDKit::Atom* const monomer,
         AbstractMonomerItem* const monomer_item);
 
+    /**
+     * Label all attachment points on the given monomer, placing all newly
+     * created graphics items into the specified group and list. (You probably
+     * want to call either labelAttachmentPointsOnHoveredMonomer or
+     * labelAttachmentPointsOnDragEndMonomer instead of this.)
+     */
     void labelAttachmentPointsOnMonomer(
         const RDKit::Atom* const monomer,
         AbstractMonomerItem* const monomer_item,
