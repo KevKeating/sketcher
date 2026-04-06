@@ -267,6 +267,14 @@ class SKETCHER_API DrawMonomerSceneTool : public StandardSceneToolBase
     void createHintFragmentItem(const HintFragmentMonomerInfo& monomer_one, const HintFragmentMonomerInfo& monomer_two);
     
     bool createDragHint(const DragEndInfo& drag_end_info);
+    /**
+     * @return the attachment point to use if user starts a drag from empty
+     * space. We only allow drags from empty space for peptides and nucleic acid
+     * bases, so this function is only valid for those monomer types. (A drag
+     * from empty space normally creates two monomers of the same type, and it
+     * doesn't make biological sense to have a dimer of nucleic acid sugars or
+     * phosphates.)
+     */
     std::string getDefaultDragStartAPModelName() const;
     HintFragmentMonomerInfo createHintFragmentMonomerInfoForHintFromEmptySpace(const QPointF& scene_pos) const;
     HintFragmentMonomerInfo createHintFragmentMonomerInfoForHintFromExistingMonomer(const AbstractMonomerItem* const monomer_item, const std::string& ap_model_name) const;
