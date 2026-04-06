@@ -172,7 +172,7 @@ class SKETCHER_API DrawMonomerSceneTool : public StandardSceneToolBase
      * the RDKit structure object it represents.
      */
     void clearHintFragmentItem();
-    
+
     /**
      * Clear all attachment point labels drawn on the existing monomer at the
      * end of the current click-and-drag operation. Note that this method *does
@@ -296,7 +296,7 @@ class SKETCHER_API DrawMonomerSceneTool : public StandardSceneToolBase
      *  - the user tried to start a drag from empty space while using a nucleic
      *    acid phosphate or sugar tool (It doesn't make any biological sense to
      *    create a dimer of those, so we disallow drags from empty space.)
-     * @return 
+     * @return
      */
     bool createDragHintIfDragStartValid(const DragEndInfo& drag_end_info);
 
@@ -353,8 +353,8 @@ class SKETCHER_API DrawMonomerSceneTool : public StandardSceneToolBase
      * click-and-drag.
      * @return If scene_pos is over an existing monomer, returns a pair of
      *   - a pair of pointers to the graphics items representing the monomer and
-     *     the relevant attachment point. The second value will be nullptr if the
-     *     monomer does not have any available unbound attachment points.
+     *     the relevant attachment point. The second value will be nullptr if
+     * the monomer does not have any available unbound attachment points.
      *   - a pointer to the monomer's graphics item (i.e. the first pointer of
      *     the pair)
      * If scene_pos is not over an existing monomer, returns a pair of

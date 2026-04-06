@@ -43,7 +43,8 @@ class MonomerHintFragmentItem : public QGraphicsItemGroup
      * connections will be visible behind the monomer outlines and labels.
      * @param parent The parent graphics item, if any.
      */
-    MonomerHintFragmentItem(const std::shared_ptr<RDKit::RWMol> fragment, const Fonts& fonts,
+    MonomerHintFragmentItem(const std::shared_ptr<RDKit::RWMol> fragment,
+                            const Fonts& fonts,
                             const std::vector<size_t>& atom_indices_to_hide,
                             const int bond_index_to_label,
                             const QColor monomer_background_color,
