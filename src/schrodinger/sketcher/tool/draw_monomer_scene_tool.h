@@ -40,8 +40,10 @@ class MonomerHintFragmentItem;
 class UnboundMonomericAttachmentPointItem;
 class HintFragmentMonomerInfo;
 
-using MonomerAndAPItems = std::pair<AbstractMonomerItem*, UnboundMonomericAttachmentPointItem*>;
-using DragEndInfo = std::variant<std::monostate, rdkit_extensions::Direction, MonomerAndAPItems>;
+using MonomerAndAPItems =
+    std::pair<AbstractMonomerItem*, UnboundMonomericAttachmentPointItem*>;
+using DragEndInfo = std::variant<std::monostate, rdkit_extensions::Direction,
+                                 MonomerAndAPItems>;
 
 /**
  * Return the default unbound attachment point; that is, the attachment point
@@ -101,34 +103,35 @@ class SKETCHER_API DrawMonomerSceneTool : public StandardSceneToolBase
     QColor m_unbound_ap_label_color = UNBOUND_AP_LABEL_COLOR;
     QColor m_bound_ap_label_color = BOUND_AP_LABEL_COLOR;
     bool m_cursor_hint_shown = true;
-    
+
     bool m_drag_ignored;
     AbstractMonomerItem* m_drag_start_monomer_item;
     std::string m_drag_start_ap_model_name;
     AbstractMonomerItem* m_drag_end_monomer_item;
     DragEndInfo m_drag_end_info;
     QGraphicsItemGroup m_drag_end_attachment_point_labels_group;
-    std::vector<UnboundMonomericAttachmentPointItem*> m_drag_end_unbound_ap_items;
+    std::vector<UnboundMonomericAttachmentPointItem*>
+        m_drag_end_unbound_ap_items;
     QColor m_drag_end_inactive_ap_color;
-    
 
     QPixmap createDefaultCursorPixmap() const override;
 
     /**
      * Label all attachment points on the given monomer
      */
-    void
-    labelAttachmentPointsOnHoveredMonomer(const RDKit::Atom* const monomer,
-                                   AbstractMonomerItem* const monomer_item);
+    void labelAttachmentPointsOnHoveredMonomer(
+        const RDKit::Atom* const monomer,
+        AbstractMonomerItem* const monomer_item);
 
-    void
-    labelAttachmentPointsOnDragEndMonomer(const RDKit::Atom* const monomer,
-                                   AbstractMonomerItem* const monomer_item);
+    void labelAttachmentPointsOnDragEndMonomer(
+        const RDKit::Atom* const monomer,
+        AbstractMonomerItem* const monomer_item);
 
-    void
-    labelAttachmentPointsOnMonomer(const RDKit::Atom* const monomer,
-                                   AbstractMonomerItem* const monomer_item, QGraphicsItemGroup& attachment_point_labels_group,
-    std::vector<UnboundMonomericAttachmentPointItem*>& unbound_ap_items);
+    void labelAttachmentPointsOnMonomer(
+        const RDKit::Atom* const monomer,
+        AbstractMonomerItem* const monomer_item,
+        QGraphicsItemGroup& attachment_point_labels_group,
+        std::vector<UnboundMonomericAttachmentPointItem*>& unbound_ap_items);
 
     /**
      * Label both attachment points for the given monomeric connector
@@ -205,8 +208,9 @@ class SKETCHER_API DrawMonomerSceneTool : public StandardSceneToolBase
      * monomer, and assumes that the unbound attachment point graphics items
      * have already been drawn for this monomer.
      */
-    UnboundMonomericAttachmentPointItem*
-    getUnboundAttachmentPointAt(const QPointF& scene_pos, const bool no_default_if_click_should_mutate) const;
+    UnboundMonomericAttachmentPointItem* getUnboundAttachmentPointAt(
+        const QPointF& scene_pos,
+        const bool no_default_if_click_should_mutate) const;
 
     /**
      * Return the unbound attachment point graphics item that should be "active"
@@ -218,8 +222,7 @@ class SKETCHER_API DrawMonomerSceneTool : public StandardSceneToolBase
      * exists.
      */
     UnboundMonomericAttachmentPointItem*
-    getUnboundDragEndAttachmentPointAt(
-    const QPointF& scene_pos) const;
+    getUnboundDragEndAttachmentPointAt(const QPointF& scene_pos) const;
 
     /**
      * @return the unbound attachment point that should be active when the user
@@ -233,7 +236,8 @@ class SKETCHER_API DrawMonomerSceneTool : public StandardSceneToolBase
      * the monomer, and false if the user has started a drag from the monomer.)
      */
     UnboundMonomericAttachmentPointItem*
-    getDefaultUnboundAttachmentPointForHoveredMonomer(const bool no_default_if_click_should_mutate) const;
+    getDefaultUnboundAttachmentPointForHoveredMonomer(
+        const bool no_default_if_click_should_mutate) const;
 
     /**
      * Draw a hint structure showing a monomer bound to the specified attachment
@@ -263,9 +267,10 @@ class SKETCHER_API DrawMonomerSceneTool : public StandardSceneToolBase
      */
     bool clickShouldMutate(const RDKit::Atom* monomer,
                            const MonomerType monomer_type) const;
-    
-    void createHintFragmentItem(const HintFragmentMonomerInfo& monomer_one, const HintFragmentMonomerInfo& monomer_two);
-    
+
+    void createHintFragmentItem(const HintFragmentMonomerInfo& monomer_one,
+                                const HintFragmentMonomerInfo& monomer_two);
+
     bool createDragHint(const DragEndInfo& drag_end_info);
     /**
      * @return the attachment point to use if user starts a drag from empty
@@ -276,17 +281,56 @@ class SKETCHER_API DrawMonomerSceneTool : public StandardSceneToolBase
      * phosphates.)
      */
     std::string getDefaultDragStartAPModelName() const;
-    HintFragmentMonomerInfo createHintFragmentMonomerInfoForHintFromEmptySpace(const QPointF& scene_pos) const;
-    HintFragmentMonomerInfo createHintFragmentMonomerInfoForHintFromExistingMonomer(const AbstractMonomerItem* const monomer_item, const std::string& ap_model_name) const;
-    HintFragmentMonomerInfo createHintFragmentMonomerInfoForHintToExistingMonomer(const AbstractMonomerItem* const monomer_item,
-    const UnboundMonomericAttachmentPointItem* const ap_item) const;
-    HintFragmentMonomerInfo createHintFragmentMonomerInfoForHintToDirection(const HintFragmentMonomerInfo& start_monomer_info, const rdkit_extensions::Direction direction) const;
-    std::pair<DragEndInfo, AbstractMonomerItem*> getDragEndInfo(const QPointF& scene_pos);
-    void addDragStructureToMolModel(const HintFragmentMonomerInfo& hint_start_monomer_info, const HintFragmentMonomerInfo& hint_end_monomer_info);
-    std::optional<HintFragmentMonomerInfo> getHintFragmentMonomerInfoForDragStart();
-    HintFragmentMonomerInfo getHintFragmentMonomerInfoForDragEnd(const HintFragmentMonomerInfo& hint_start_monomer_info, const DragEndInfo& drag_end_info);
 
-    rdkit_extensions::Direction getDragDirection(const QPointF& cur_scene_pos) const;
+    /**
+     * Create a HintFragmentMonomerInfo object describing a new monomer at the
+     * given coordinates. Note that the returned monomer is owned by the calling
+     * scope.
+     */
+    HintFragmentMonomerInfo createHintFragmentMonomerInfoForHintFromEmptySpace(
+        const QPointF& scene_pos) const;
+
+    /**
+     * Create a HintFragmentMonomerInfo object describing the existing monomer
+     * and attachment point. Note that the returned monomer is owned by the
+     * calling scope.
+     */
+    HintFragmentMonomerInfo
+    createHintFragmentMonomerInfoForHintToOrFromExistingMonomer(
+        const AbstractMonomerItem* const monomer_item,
+        const std::string& ap_model_name) const;
+
+    /**
+     * @overload takes a graphics item for the attachment point in place of the
+     * model name
+     */
+    HintFragmentMonomerInfo
+    createHintFragmentMonomerInfoForHintToOrFromExistingMonomer(
+        const AbstractMonomerItem* const monomer_item,
+        const UnboundMonomericAttachmentPointItem* const ap_item) const;
+
+    /**
+     * Create a HintFragmentMonomerInfo object describing a new monomer at the
+     * given coordinates. Note that the returned monomer is owned by the calling
+     * scope.
+     */
+    HintFragmentMonomerInfo createHintFragmentMonomerInfoForHintToDirection(
+        const HintFragmentMonomerInfo& start_monomer_info,
+        const rdkit_extensions::Direction direction) const;
+
+    std::pair<DragEndInfo, AbstractMonomerItem*>
+    getDragEndInfo(const QPointF& scene_pos);
+    void addDragStructureToMolModel(
+        const HintFragmentMonomerInfo& hint_start_monomer_info,
+        const HintFragmentMonomerInfo& hint_end_monomer_info);
+    std::optional<HintFragmentMonomerInfo>
+    getHintFragmentMonomerInfoForDragStart();
+    HintFragmentMonomerInfo getHintFragmentMonomerInfoForDragEnd(
+        const HintFragmentMonomerInfo& hint_start_monomer_info,
+        const DragEndInfo& drag_end_info);
+
+    rdkit_extensions::Direction
+    getDragDirection(const QPointF& cur_scene_pos) const;
 };
 
 } // namespace sketcher
