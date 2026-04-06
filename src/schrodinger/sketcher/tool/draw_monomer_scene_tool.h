@@ -162,10 +162,22 @@ class SKETCHER_API DrawMonomerSceneTool : public StandardSceneToolBase
                                  const QRectF& label_rect);
 
     /**
-     * Clear all attachment point labels drawn by this scene tool
+     * Clear all attachment point labels drawn on the hovered monomer. Also
+     * clear the hint fragment item and the associated structure.
      */
     void clearAttachmentPointsLabelsAndHintFragmentItem();
+
+    /**
+     * Remove the hint fragment item from the scene, then destroy it as well as
+     * the RDKit structure object it represents.
+     */
     void clearHintFragmentItem();
+    
+    /**
+     * Clear all attachment point labels drawn on the existing monomer at the
+     * end of the current click-and-drag operation. Note that this method *does
+     * not* clear the hint fragment item.
+     */
     void clearDragEndAttachmentPointsLabels();
 
     /**
