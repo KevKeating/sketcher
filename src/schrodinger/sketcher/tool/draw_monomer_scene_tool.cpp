@@ -17,7 +17,6 @@
 #include <rdkit/GraphMol/ROMol.h>
 #include <rdkit/GraphMol/RWMol.h>
 
-#include "schrodinger/rdkit_extensions/convert.h"
 #include "schrodinger/rdkit_extensions/helm.h"
 #include "schrodinger/rdkit_extensions/monomer_directions.h"
 #include "schrodinger/rdkit_extensions/monomer_mol.h"
@@ -751,9 +750,6 @@ void DrawMonomerSceneTool::onLeftButtonClick(
             m_mol_model->mutateMonomers({monomer}, m_res_name, m_monomer_type);
         }
     }
-    
-    std::cout << rdkit_extensions::to_string(*(m_mol_model->getMolForExport()), rdkit_extensions::Format::HELM) << "\n";
-    
 }
 
 void DrawMonomerSceneTool::onLeftButtonDragStart(
