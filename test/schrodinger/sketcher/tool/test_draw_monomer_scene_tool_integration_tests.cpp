@@ -48,7 +48,7 @@ void processQtEvents()
 /**
  * Simulate a mouse click at the given position.
  */
-void simulateClick(Scene* scene, const QPointF& pos)
+void simulateClick(TestScene* scene, const QPointF& pos)
 {
     QGraphicsSceneMouseEvent press(QEvent::GraphicsSceneMousePress);
     QGraphicsSceneMouseEvent release(QEvent::GraphicsSceneMouseRelease);
@@ -68,7 +68,7 @@ void simulateClick(Scene* scene, const QPointF& pos)
 /**
  * Simulate a mouse drag from start to end position.
  */
-void simulateDrag(Scene* scene, const QPointF& start, const QPointF& end)
+void simulateDrag(TestScene* scene, const QPointF& start, const QPointF& end)
 {
     QGraphicsSceneMouseEvent press(QEvent::GraphicsSceneMousePress);
     QGraphicsSceneMouseEvent move(QEvent::GraphicsSceneMouseMove);
@@ -127,7 +127,7 @@ void verifyHELM(MolModel* model, const std::string& expected)
  * Get the position of an unbound attachment point on a monomer.
  * This searches for an attachment point item with the given name.
  */
-QPointF getAttachmentPointPos(Scene* scene, MolModel* model,
+QPointF getAttachmentPointPos(TestScene* scene, MolModel* model,
                               unsigned int monomer_idx,
                               const std::string& ap_name)
 {
@@ -144,7 +144,7 @@ QPointF getAttachmentPointPos(Scene* scene, MolModel* model,
         if (auto* ap_item =
                 qgraphicsitem_cast<UnboundMonomericAttachmentPointItem*>(
                     child)) {
-            if (ap_item->getModelName() == ap_name) {
+            if (ap_item->getAttachmentPoint().model_name == ap_name) {
                 return ap_item->scenePos();
             }
         }
@@ -328,12 +328,9 @@ BOOST_AUTO_TEST_CASE(test_drag_monomer_to_monomer_connects_default_aps)
     MonomerToolTestFixture fix;
     fix.setAminoAcidTool(AminoAcidTool::ALA);
 
-    // Add two separate monomers
-    import_mol_text(fix.mol_model, "PEPTIDE1{A}$$$$V2.0");
+    // Add two separate, unconnected monomers by creating two chains
+    import_mol_text(fix.mol_model, "PEPTIDE1{A}|PEPTIDE2{A}$$$$V2.0");
     auto pos1 = getMonomerPos(fix.mol_model, 0);
-
-    fix.clearModel();
-    import_mol_text(fix.mol_model, "PEPTIDE1{A.A}$$$$V2.0");
     auto pos2 = getMonomerPos(fix.mol_model, 1);
 
     // Drag from first monomer to second monomer
@@ -348,8 +345,8 @@ BOOST_AUTO_TEST_CASE(test_drag_ap_to_ap_connects_via_both_aps)
     MonomerToolTestFixture fix;
     fix.setAminoAcidTool(AminoAcidTool::ALA);
 
-    // Add two separate monomers
-    import_mol_text(fix.mol_model, "PEPTIDE1{A.A}$$$$V2.0");
+    // Add two separate, unconnected monomers by creating two chains
+    import_mol_text(fix.mol_model, "PEPTIDE1{A}|PEPTIDE2{A}$$$$V2.0");
 
     auto start_pos =
         getAttachmentPointPos(fix.scene.get(), fix.mol_model, 0, "R1");
