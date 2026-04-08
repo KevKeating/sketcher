@@ -465,6 +465,11 @@ DrawMonomerSceneTool::getDefaultUnboundAttachmentPointForHoveredMonomer(
 bool DrawMonomerSceneTool::clickShouldMutate(
     const RDKit::Atom* monomer, const MonomerType monomer_type) const
 {
+    std::cout << "\tmonomer_type = " << static_cast<int>(monomer_type) << "\n";
+    std::cout << "\tm_monomer_type = " << static_cast<int>(m_monomer_type) << "\n";
+    std::cout << "\tget_monomer_res_name(monomer) = " << get_monomer_res_name(monomer) << "\n";
+    std::cout << "\tm_res_name = " << m_res_name << "\n";
+    
     return (monomer_type == m_monomer_type &&
             get_monomer_res_name(monomer) != m_res_name);
 }
@@ -715,7 +720,7 @@ void DrawMonomerSceneTool::onLeftButtonClick(
     StandardSceneToolBase::onLeftButtonClick(event);
     QPointF scene_pos = event->scenePos();
     auto* item = getTopMonomerItemAt(scene_pos);
-
+    std::cout << "item = " << item << "\n";
     if (item == nullptr) {
         // the click was on empty space, so create a new monomer here
         auto mol_pos = to_mol_xy(scene_pos);
@@ -724,10 +729,12 @@ void DrawMonomerSceneTool::onLeftButtonClick(
         auto [monomer, monomer_type] = get_monomer_and_type(item);
         std::optional<UnboundAttachmentPoint> clicked_ap;
         auto ap_item = getUnboundAttachmentPointAt(scene_pos, true);
+        std::cout << "ap_item = " << ap_item << "\n";
         if (ap_item != nullptr) {
             clicked_ap = ap_item->getAttachmentPoint();
         }
 
+        std::cout << "clickShouldMutate(monomer, monomer_type) = " << clickShouldMutate(monomer, monomer_type) << "\n";
         if (clicked_ap.has_value()) {
             // the user clicked on an attachment point or this monomer has a
             // default attachment point for this tool, so add a new monomer
@@ -751,9 +758,6 @@ void DrawMonomerSceneTool::onLeftButtonClick(
             m_mol_model->mutateMonomers({monomer}, m_res_name, m_monomer_type);
         }
     }
-    
-    std::cout << rdkit_extensions::to_string(*(m_mol_model->getMolForExport()), rdkit_extensions::Format::HELM) << "\n";
-    
 }
 
 void DrawMonomerSceneTool::onLeftButtonDragStart(

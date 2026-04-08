@@ -227,6 +227,20 @@ struct MonomerToolTestFixture {
         mol_model->clear();
         processQtEvents();
     }
+    
+    QPointF getMonomerPos(unsigned int atom_idx)
+    {
+        auto mol = mol_model->getMol();
+        BOOST_REQUIRE(mol);
+        BOOST_REQUIRE(atom_idx < mol->getNumAtoms());
+        return to_scene_xy(mol->getConformer().getAtomPos(atom_idx));
+    }
+    
+    void verifyHELM(const std::string& expected)
+    {
+        auto actual = get_mol_text(mol_model, rdkit_extensions::Format::HELM);
+        BOOST_TEST(actual == expected);
+    }
 };
 
 // ============================================================================
@@ -240,7 +254,7 @@ BOOST_AUTO_TEST_CASE(test_click_empty_space_adds_monomer)
 
     simulateClick(fix.scene.get(), emptySpacePos());
 
-    verifyHELM(fix.mol_model, "PEPTIDE1{A}$$$$V2.0");
+    fix.verifyHELM("PEPTIDE1{A}$$$$V2.0");
 }
 
 BOOST_AUTO_TEST_CASE(test_click_existing_monomer_same_residue_no_change)
@@ -250,7 +264,7 @@ BOOST_AUTO_TEST_CASE(test_click_existing_monomer_same_residue_no_change)
 
     // Add initial monomer
     import_mol_text(fix.mol_model, "PEPTIDE1{A}$$$$V2.0");
-    auto pos = getMonomerPos(fix.mol_model, 0);
+    auto pos = fix.getMonomerPos(0);
 
     // Click on it with same tool
     simulateClick(fix.scene.get(), pos);
@@ -266,14 +280,14 @@ BOOST_AUTO_TEST_CASE(test_click_existing_monomer_different_residue_mutates)
     // Add alanine
     fix.setAminoAcidTool(AminoAcidTool::ALA);
     import_mol_text(fix.mol_model, "PEPTIDE1{A}$$$$V2.0");
-    auto pos = getMonomerPos(fix.mol_model, 0);
+    auto pos = fix.getMonomerPos(0);
 
     // Click with cysteine tool
     fix.setAminoAcidTool(AminoAcidTool::CYS);
     simulateClick(fix.scene.get(), pos);
 
     // Should mutate to cysteine
-    verifyHELM(fix.mol_model, "PEPTIDE1{C}$$$$V2.0");
+    fix.verifyHELM("PEPTIDE1{C}$$$$V2.0");
 }
 
 BOOST_AUTO_TEST_CASE(test_click_existing_monomer_same_residue_does_nothing)

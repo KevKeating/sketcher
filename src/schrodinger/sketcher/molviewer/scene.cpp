@@ -614,7 +614,9 @@ void Scene::onMolModelSelectionChanged()
 
 void Scene::onModelValuesChanged(const std::unordered_set<ModelKey>& keys)
 {
+    std::cout << "Scene::onModelValuesChanged() called with " << keys.size() << " keys\n";
     for (auto key : keys) {
+        std::cout << "\tkey = " << static_cast<int>(key) << "\n";
         switch (key) {
             case ModelKey::SELECTION_TOOL:
             case ModelKey::DRAW_TOOL:
@@ -646,6 +648,7 @@ void Scene::updateSceneTool()
 
 std::shared_ptr<AbstractSceneTool> Scene::getNewSceneTool()
 {
+    std::cout << "Scene::getNewSceneTool() called\n";
     auto draw_tool = m_sketcher_model->getDrawTool();
     if (draw_tool == DrawTool::SELECT) {
         auto select_tool = m_sketcher_model->getSelectionTool();
@@ -715,16 +718,23 @@ std::shared_ptr<AbstractSceneTool> Scene::getNewSceneTool()
     } else if (draw_tool == DrawTool::EXPLICIT_H) {
         return std::make_shared<ExplicitHsSceneTool>(this, m_mol_model);
     } else if (draw_tool == DrawTool::MONOMER) {
+        std::cout << "\tdraw_tool == DrawTool::MONOMER\n";
         auto monomer_tool_type = m_sketcher_model->getMonomerToolType();
+        std::cout << "\tmonomer_tool_type = " << static_cast<int>(monomer_tool_type) << "\n";
         if (monomer_tool_type == MonomerToolType::AMINO_ACID) {
+            std::cout << "\tmonomer_tool_type == MonomerToolType::AMINO_ACID\n";
             auto analog =
                 m_sketcher_model->getValueString(ModelKey::AMINO_ACID_SYMBOL);
+            std::cout << "\tAMINO_ACID_SYMBOL = '" << analog.toStdString() << "'\n";
             std::string res_name;
             if (!analog.isEmpty()) {
+                std::cout << "\tUsing AMINO_ACID_SYMBOL instead of AMINO_ACID_TOOL\n";
                 res_name = analog.toStdString();
             } else {
                 auto tool = m_sketcher_model->getAminoAcidTool();
+                std::cout << "\tgetAminoAcidTool() returned: " << static_cast<int>(tool) << "\n";
                 res_name = AMINO_ACID_TOOL_TO_RES_NAME.at(tool);
+                std::cout << "\tres_name = " << res_name << "\n";
             }
             return std::make_shared<DrawMonomerSceneTool>(
                 res_name, rdkit_extensions::ChainType::PEPTIDE, m_fonts, this,
