@@ -5,6 +5,7 @@
 #include <vector>
 
 #include <QApplication>
+#include <QEvent>
 #include <QGraphicsSceneMouseEvent>
 #include <QPointF>
 #include <boost/test/data/test_case.hpp>
@@ -40,9 +41,13 @@ namespace sketcher
  */
 void processQtEvents()
 {
+    // call processEvents multiple times in case an any current events put new
+    // events on the queue (e.g. starting a timer with a timeout of 0)
     for (int i = 0; i < 3; ++i) {
         QApplication::processEvents();
-        QApplication::sendPostedEvents();
+        // despite what Qt's documentation claims, DeferredDelete are only
+        // processed if we explicitly pass their event type
+        QApplication::sendPostedEvents(nullptr, QEvent::DeferredDelete);
     }
 }
 
