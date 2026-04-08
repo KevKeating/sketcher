@@ -58,6 +58,7 @@ struct HintFragmentMonomerInfo {
 
 constexpr int NEW_MONOMER_FROM_DRAG = -1;
 
+// TODO: hovering over a bond doesn't display attachment points any more
 DrawMonomerSceneTool::DrawMonomerSceneTool(
     const std::string& res_name, const rdkit_extensions::ChainType chain_type,
     const Fonts& fonts, Scene* scene, MolModel* mol_model) :
