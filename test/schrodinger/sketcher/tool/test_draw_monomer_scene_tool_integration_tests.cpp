@@ -53,6 +53,8 @@ void processQtEvents()
     }
 }
 
+// TODO: all of these functions could be methods on the fixture
+
 /**
  * Simulate a mouse click at the given position.
  */
@@ -61,17 +63,14 @@ void simulateClick(TestScene* scene, const QPointF& pos)
     QGraphicsSceneMouseEvent press(QEvent::GraphicsSceneMousePress);
     QGraphicsSceneMouseEvent release(QEvent::GraphicsSceneMouseRelease);
 
-    std::cout << "\t about to simulate click: " << pos.x() << ",  " << pos.y() << "\n";
     for (auto* event : {&press, &release}) {
         event->setScenePos(pos);
         event->setButton(Qt::LeftButton);
         event->setButtons(Qt::LeftButton);
     }
 
-    std::cout << "\t about to send mouse press event\n";
     scene->mousePressEvent(&press);
     processQtEvents();
-    std::cout << "\t about to send mouse release event\n";
     scene->mouseReleaseEvent(&release);
     processQtEvents();
 }
@@ -111,6 +110,7 @@ void simulateDrag(TestScene* scene, const QPointF& start, const QPointF& end)
 QPointF getMonomerPos(MolModel* model, unsigned int atom_idx)
 {
     auto mol = model->getMol();
+    // TODO: convert this to a BOOST_REQUIRE
     if (!mol || atom_idx >= mol->getNumAtoms()) {
         throw std::runtime_error("Invalid atom index");
     }
@@ -133,27 +133,6 @@ void verifyHELM(MolModel* model, const std::string& expected)
 {
     auto actual = get_mol_text(model, rdkit_extensions::Format::HELM);
     BOOST_TEST(actual == expected);
-    // For flexibility, also accept other chain IDs if the structure is otherwise correct
-    // Extract just the monomer sequence part (between { and })
-    // auto actual_seq_start = actual.find('{');
-    // auto actual_seq_end = actual.find('}');
-    // auto expected_seq_start = expected.find('{');
-    // auto expected_seq_end = expected.find('}');
-
-    // if (actual_seq_start != std::string::npos && actual_seq_end != std::string::npos &&
-    //     expected_seq_start != std::string::npos && expected_seq_end != std::string::npos) {
-    //     auto actual_seq = actual.substr(actual_seq_start, actual_seq_end - actual_seq_start + 1);
-    //     auto expected_seq = expected.substr(expected_seq_start, expected_seq_end - expected_seq_start + 1);
-    //     // Also check the part after $$ (version and annotations)
-    //     auto actual_suffix = actual.substr(actual.find("$$"));
-    //     auto expected_suffix = expected.substr(expected.find("$$"));
-
-    //     BOOST_TEST(actual_seq == expected_seq);
-    //     BOOST_TEST(actual_suffix == expected_suffix);
-    // } else {
-    //     // Fallback to exact match if we can't parse
-    //     BOOST_TEST(actual == expected);
-    // }
 }
 
 /**
@@ -166,6 +145,10 @@ QPointF getAttachmentPointPos(TestScene* scene, MolModel* model,
 {
     auto mol = model->getMol();
     auto* monomer = mol->getAtomWithIdx(monomer_idx);
+
+    // TODO: this method is completely wrong, getTopInteractiveItemAt might
+    // return a hint structure item, and attachment point graphics items don't
+    // have a pos set
 
     // Find the monomer graphics item
     auto* monomer_item = scene->getTopInteractiveItemAt(getMonomerPos(model, monomer_idx),

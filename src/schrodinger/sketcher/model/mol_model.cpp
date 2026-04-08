@@ -672,6 +672,7 @@ void MolModel::addMonomer(const std::string_view res_name,
                           const rdkit_extensions::ChainType chain_type,
                           const RDGeom::Point3D& coords)
 {
+    // TODO: the chain won't get renumbered
     // we'll renumber the chains in assignChains, so for now we just need
     // something with the correct prefix and a unique number
     auto chain_id = rdkit_extensions::toString(chain_type) + "999999";
