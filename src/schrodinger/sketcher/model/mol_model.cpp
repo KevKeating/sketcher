@@ -675,7 +675,7 @@ void MolModel::addMonomer(const std::string_view res_name,
     // TODO: the chain won't get renumbered
     // we'll renumber the chains in assignChains, so for now we just need
     // something with the correct prefix and a unique number
-    auto chain_id = rdkit_extensions::toString(chain_type) + "999999";
+    auto chain_id = get_first_available_chain_name(m_mol, chain_type);
     auto create_atom = std::bind(create_monomer, res_name, chain_id, 1);
     auto cmd_func = [this, create_atom, coords]() {
         addAtomChainCommandFunc(create_atom, {coords}, make_new_single_bond,
