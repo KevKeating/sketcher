@@ -21,6 +21,8 @@
 #include "schrodinger/sketcher/public_constants.h"
 #include "schrodinger/sketcher/rdkit/monomeric.h"
 
+#include <QtDebug>
+
 namespace bdata = boost::unit_test::data;
 
 BOOST_GLOBAL_FIXTURE(QApplicationRequiredFixture);
@@ -184,7 +186,9 @@ struct MonomerToolTestFixture {
                 auto ap = ap_item->getAttachmentPoint();
                 if (ap.display_name == ap_display_name) {
                     auto offset_vec = direction_to_qt_vector(ap.direction);
-                    auto offset_dist = UNBOUND_AP_LINE_LENGTH + STANDARD_AA_BORDER_WIDTH / 2 - 1;
+                    auto offset_dist = UNBOUND_AP_LINE_LENGTH - 1 + STANDARD_AA_BORDER_WIDTH / 2;
+                    qDebug() << "monomer_pos = " << monomer_pos;
+                    qDebug() << "ap_pos = " << (monomer_pos + offset_dist * offset_vec) << " -- " << ap_item->withinHoverArea(monomer_pos + offset_dist * offset_vec);
                     return monomer_pos + offset_dist * offset_vec;
                 }
             }
