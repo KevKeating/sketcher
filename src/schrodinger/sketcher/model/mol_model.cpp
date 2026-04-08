@@ -891,11 +891,8 @@ determine_if_merge_needed(const RDKit::Atom* const monomer_one,
     if (polymer_id_one == polymer_id_two) {
         return std::nullopt;
     }
-    auto chain_type_name = rdkit_extensions::toString(chain_type_one);
-    auto polymer_num_one =
-        std::stoi(polymer_id_one.substr(chain_type_name.size()));
-    auto polymer_num_two =
-        std::stoi(polymer_id_two.substr(chain_type_name.size()));
+    auto polymer_num_one = get_chain_num(polymer_id_one, chain_type_one);
+    auto polymer_num_two = get_chain_num(polymer_id_two, chain_type_two);
     auto merge_from = polymer_id_two;
     auto merge_to = polymer_id_one;
     if (polymer_num_two < polymer_num_one) {
