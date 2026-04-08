@@ -325,6 +325,7 @@ BOOST_AUTO_TEST_CASE(test_click_attachment_point_adds_connected_via_clicked_ap)
     processQtEvents();
 
     // Click on the R1 attachment point
+    auto ap_pos = getAttachmentPointPos(fix.scene.get(), fix.mol_model, 0, "R1");
     simulateClick(fix.scene.get(), ap_pos);
 
     // Should add a second alanine connected via R1-R2
