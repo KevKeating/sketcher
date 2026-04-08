@@ -790,9 +790,9 @@ int get_chain_num(const std::string_view chain_name, const rdkit_extensions::Cha
 {
     auto prefix = rdkit_extensions::toString(chain_type);
     auto first_num_char = prefix.size();
-    std::string chain_num_text = chain_name.substr(first_num_char);
+    auto chain_num_text = chain_name.substr(first_num_char);
     try {
-        return std::stoi(chain_num_text);
+        return std::stoi(std::string(chain_num_text));
     } catch (const std::invalid_argument&) {
         return -1;
     } catch (const std::out_of_range&) {
