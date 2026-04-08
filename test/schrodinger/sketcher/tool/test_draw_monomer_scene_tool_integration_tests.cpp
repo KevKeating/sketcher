@@ -13,6 +13,7 @@
 
 #include "../test_common.h"
 #include "schrodinger/rdkit_extensions/convert.h"
+#include "schrodinger/sketcher/crash_handler.h"
 #include "schrodinger/sketcher/model/sketcher_model.h"
 #include "schrodinger/sketcher/molviewer/abstract_monomer_item.h"
 #include "schrodinger/sketcher/molviewer/coord_utils.h"
@@ -307,6 +308,7 @@ BOOST_AUTO_TEST_CASE(test_click_existing_monomer_same_residue_does_nothing)
 
 BOOST_AUTO_TEST_CASE(test_click_attachment_point_adds_connected_via_clicked_ap)
 {
+    schrodinger::install_crash_handlers();
     MonomerToolTestFixture fix;
     fix.setAminoAcidTool(AminoAcidTool::ALA);
 
