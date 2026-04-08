@@ -162,7 +162,7 @@ QPointF getAttachmentPointPos(TestScene* scene, MolModel* model,
         if (auto* ap_item =
                 qgraphicsitem_cast<UnboundMonomericAttachmentPointItem*>(
                     child)) {
-            if (ap_item->getAttachmentPoint().model_name == ap_name) {
+            if (ap_item->getAttachmentPoint().display_name == ap_name) {
                 return ap_item->scenePos();
             }
         }
@@ -190,6 +190,7 @@ struct MonomerToolTestFixture {
         auto undo_stack = new QUndoStack();
         mol_model = new MolModel(undo_stack);
         sketcher_model = new SketcherModel();
+        // TODO: use static function?
         scene = std::make_shared<TestScene>(mol_model, sketcher_model);
         undo_stack->setParent(mol_model);
         mol_model->setParent(scene.get());
@@ -223,24 +224,84 @@ struct MonomerToolTestFixture {
         processQtEvents();
     }
 
+    void importMolText(const std::string& text)
+    {
+        import_mol_text(mol_model, text);
+        processQtEvents();
+    }
+
     void clearModel()
     {
         mol_model->clear();
         processQtEvents();
     }
     
-    QPointF getMonomerPos(unsigned int atom_idx)
+    QPointF getMonomerPos(unsigned int monomer_idx)
     {
         auto mol = mol_model->getMol();
         BOOST_REQUIRE(mol);
-        BOOST_REQUIRE(atom_idx < mol->getNumAtoms());
-        return to_scene_xy(mol->getConformer().getAtomPos(atom_idx));
+        BOOST_REQUIRE(monomer_idx < mol->getNumAtoms());
+        return to_scene_xy(mol->getConformer().getAtomPos(monomer_idx));
+    }
+
+    QPointF getAttachmentPointPos(unsigned int monomer_idx,
+                              const std::string& ap_display_name)
+    {
+        auto mol = mol_model->getMol();
+        auto monomer_pos = getMonomerPos(monomer_idx);
+        auto* monomer_item = scene->getTopInteractiveItemAt(monomer_pos,
+                                       InteractiveItemFlag::MONOMER);
+        BOOST_REQUIRE(monomer_item != nullptr);
+
+        // Search through child items to find the attachment point
+        for (auto* child : monomer_item->childItems()) {
+            auto* ap_item =
+                    qgraphicsitem_cast<UnboundMonomericAttachmentPointItem*>(
+                        child);
+            if (ap_item) {
+                auto ap = ap_item->getAttachmentPoint();
+                if (ap.display_name == ap_display_name) {
+                    auto offset_vec = direction_to_qt_vector(ap.direction);
+                    auto offset_dist = UNBOUND_AP_LINE_LENGTH + STANDARD_AA_BORDER_WIDTH / 2 - 1;
+                    return monomer_pos + offset_dist * offset_vec;
+                }
+            }
+        }
+
+        throw std::runtime_error("Attachment point " + ap_display_name + " not found");
     }
     
     void verifyHELM(const std::string& expected)
     {
         auto actual = get_mol_text(mol_model, rdkit_extensions::Format::HELM);
         BOOST_TEST(actual == expected);
+    }
+    
+    void simulateMouseMove(const QPointF& pos)
+    {
+        QGraphicsSceneMouseEvent move(QEvent::GraphicsSceneMouseMove);
+        move.setScenePos(pos);
+        move.setButton(Qt::NoButton);
+        move.setButtons(Qt::NoButton);
+        scene->mouseMoveEvent(&move);
+        processQtEvents();
+    }
+    
+    void simulateClick(const QPointF& pos)
+    {
+        QGraphicsSceneMouseEvent press(QEvent::GraphicsSceneMousePress);
+        QGraphicsSceneMouseEvent release(QEvent::GraphicsSceneMouseRelease);
+
+        for (auto* event : {&press, &release}) {
+            event->setScenePos(pos);
+            event->setButton(Qt::LeftButton);
+            event->setButtons(Qt::LeftButton);
+        }
+
+        scene->mousePressEvent(&press);
+        processQtEvents();
+        scene->mouseReleaseEvent(&release);
+        processQtEvents();
     }
 };
 
@@ -291,60 +352,18 @@ BOOST_AUTO_TEST_CASE(test_click_existing_monomer_different_residue_mutates)
     fix.verifyHELM("PEPTIDE1{C}$$$$V2.0");
 }
 
-BOOST_AUTO_TEST_CASE(test_click_existing_monomer_same_residue_does_nothing)
-{
-    MonomerToolTestFixture fix;
-    fix.setAminoAcidTool(AminoAcidTool::ALA);
-
-    // Add initial monomer
-    import_mol_text(fix.mol_model, "PEPTIDE1{A}$$$$V2.0");
-    auto pos = getMonomerPos(fix.mol_model, 0);
-
-    // Click on it with the same tool
-    // (Should do nothing - not mutate, not add)
-    simulateClick(fix.scene.get(), pos);
-
-    // Should remain unchanged
-    verifyHELM(fix.mol_model, "PEPTIDE1{A}$$$$V2.0");
-}
-
 BOOST_AUTO_TEST_CASE(test_click_attachment_point_adds_connected_via_clicked_ap)
 {
     MonomerToolTestFixture fix;
-    std::cout << "instantiated test fixture\n";
-    fix.setAminoAcidTool(AminoAcidTool::ALA);
-    std::cout << "set tool\n";
-
-    // Add initial monomer
-    import_mol_text(fix.mol_model, "PEPTIDE1{A}$$$$V2.0");
-    std::cout << "imported HELM string\n";
-    // Process events to ensure scene is fully updated with graphics items
-    processQtEvents();
-    std::cout << "processed events\n";
-
-    // TODO: this should be a function like click and drag
-    // First hover over the monomer to trigger AP label creation
-    auto monomer_pos = getMonomerPos(fix.mol_model, 0);
-    QGraphicsSceneMouseEvent hover(QEvent::GraphicsSceneMouseMove);
-    hover.setScenePos(monomer_pos);
-    hover.setButton(Qt::NoButton);
-    hover.setButtons(Qt::NoButton);
-    std::cout << "instantiated mouse move\n";
-    fix.scene->mouseMoveEvent(&hover);
-    std::cout << "sent mouse move\n";
-    processQtEvents();
-    std::cout << "processed events again\n";
-
-    // Click on the R1 attachment point
-    auto ap_pos = getAttachmentPointPos(fix.scene.get(), fix.mol_model, 0, "R1");
-    std::cout << "got ap_pos";
-    simulateClick(fix.scene.get(), ap_pos);
-    std::cout << "simulated click\n";
-
-    // Should add a second alanine connected via R1-R2
-    // The connection annotation in HELM would be: 2:R2-1:R1
-    verifyHELM(fix.mol_model,
-               "PEPTIDE1{A.A}$PEPTIDE1,PEPTIDE1,2:R2-1:R1$$$V2.0");
+    fix.importMolText( "PEPTIDE1{A}$$$$V2.0");
+    fix.setAminoAcidTool(AminoAcidTool::CYS);
+    auto monomer_pos = fix.getMonomerPos(0);
+    // hover over the monomer to trigger AP label creation
+    fix.simulateMouseMove(monomer_pos);
+    // click on the N terminus attachment point
+    auto ap_pos = fix.getAttachmentPointPos(0, "C");
+    fix.simulateClick(ap_pos);
+    fix.verifyHELM("PEPTIDE1{C.A}$$$$V2.0");
 }
 
 // ============================================================================

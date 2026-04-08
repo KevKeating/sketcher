@@ -34,6 +34,8 @@ get_hover_area_for_unbound_monomer_attachment_point_item(
     const UnboundAttachmentPoint& attachment_point,
     const AbstractMonomerItem* const parent_monomer, const Fonts& fonts);
 
+SKETCHER_API QPointF direction_to_qt_vector(Direction dir);
+
 /**
  * A graphics item for representing an unbound (available) attachment point
  * on a monomer. Draws a short line extending from the monomer with a text
