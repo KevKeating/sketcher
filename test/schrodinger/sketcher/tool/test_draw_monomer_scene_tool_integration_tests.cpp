@@ -61,14 +61,17 @@ void simulateClick(TestScene* scene, const QPointF& pos)
     QGraphicsSceneMouseEvent press(QEvent::GraphicsSceneMousePress);
     QGraphicsSceneMouseEvent release(QEvent::GraphicsSceneMouseRelease);
 
+    std::cout << "\t about to simulate click: " << pos.x() << ",  " << pos.y() << "\n";
     for (auto* event : {&press, &release}) {
         event->setScenePos(pos);
         event->setButton(Qt::LeftButton);
         event->setButtons(Qt::LeftButton);
     }
 
+    std::cout << "\t about to send mouse press event\n";
     scene->mousePressEvent(&press);
     processQtEvents();
+    std::cout << "\t about to send mouse release event\n";
     scene->mouseReleaseEvent(&release);
     processQtEvents();
 }
@@ -165,9 +168,11 @@ QPointF getAttachmentPointPos(TestScene* scene, MolModel* model,
     auto* monomer = mol->getAtomWithIdx(monomer_idx);
 
     // Find the monomer graphics item
-    auto* monomer_item = qgraphicsitem_cast<AbstractMonomerItem*>(
-        scene->getTopInteractiveItemAt(getMonomerPos(model, monomer_idx),
-                                       InteractiveItemFlag::ATOM));
+    auto* monomer_item = scene->getTopInteractiveItemAt(getMonomerPos(model, monomer_idx),
+                                       InteractiveItemFlag::MONOMER);
+    // BOOST_REQUIRE(item != nullptr);
+    // auto* monomer_item = dynamic_cast<AbstractMonomerItem*>(item);
+    BOOST_REQUIRE(monomer_item != nullptr);
 
     // Search through child items to find the attachment point
     for (auto* child : monomer_item->childItems()) {
@@ -308,25 +313,35 @@ BOOST_AUTO_TEST_CASE(test_click_existing_monomer_same_residue_does_nothing)
 BOOST_AUTO_TEST_CASE(test_click_attachment_point_adds_connected_via_clicked_ap)
 {
     MonomerToolTestFixture fix;
+    std::cout << "instantiated test fixture\n";
     fix.setAminoAcidTool(AminoAcidTool::ALA);
+    std::cout << "set tool\n";
 
     // Add initial monomer
     import_mol_text(fix.mol_model, "PEPTIDE1{A}$$$$V2.0");
+    std::cout << "imported HELM string\n";
     // Process events to ensure scene is fully updated with graphics items
     processQtEvents();
+    std::cout << "processed events\n";
 
+    // TODO: this should be a function like click and drag
     // First hover over the monomer to trigger AP label creation
     auto monomer_pos = getMonomerPos(fix.mol_model, 0);
     QGraphicsSceneMouseEvent hover(QEvent::GraphicsSceneMouseMove);
     hover.setScenePos(monomer_pos);
     hover.setButton(Qt::NoButton);
     hover.setButtons(Qt::NoButton);
+    std::cout << "instantiated mouse move\n";
     fix.scene->mouseMoveEvent(&hover);
+    std::cout << "sent mouse move\n";
     processQtEvents();
+    std::cout << "processed events again\n";
 
     // Click on the R1 attachment point
     auto ap_pos = getAttachmentPointPos(fix.scene.get(), fix.mol_model, 0, "R1");
+    std::cout << "got ap_pos";
     simulateClick(fix.scene.get(), ap_pos);
+    std::cout << "simulated click\n";
 
     // Should add a second alanine connected via R1-R2
     // The connection annotation in HELM would be: 2:R2-1:R1
