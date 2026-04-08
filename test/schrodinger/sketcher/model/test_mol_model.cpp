@@ -72,6 +72,7 @@ BOOST_TEST_DONT_PRINT_LOG_VALUE(r_group_num_t);
 BOOST_TEST_DONT_PRINT_LOG_VALUE(decltype(no_r_group_num));
 
 using schrodinger::rdkit_extensions::Format;
+using schrodinger::rdkit_extensions::ChainType;
 
 namespace schrodinger
 {
@@ -4780,6 +4781,29 @@ BOOST_AUTO_TEST_CASE(test_addMonomericConnection_pairing_two_nucleotides)
     auto helm = get_mol_text(&model, Format::HELM);
     BOOST_TEST(helm ==
                "RNA1{R(A)P}|RNA2{R(C)P}$RNA1,RNA2,2:pair-2:pair$$$V2.0");
+}
+
+/**
+ * Make sure that adding disconnected monomers via addMonomer results in the
+ * expected HELM strings, which should contain properly numbered chains without
+ * any connection between the monomers.
+ */
+BOOST_AUTO_TEST_CASE(test_addMonomer_disconnected)
+{
+    QUndoStack undo_stack;
+    TestMolModel model(&undo_stack);
+
+    model.addMonomer("A", ChainType::PEPTIDE, {0.0, 0.0, 0.0});
+    auto helm = get_mol_text(&model, Format::HELM);
+    BOOST_TEST(helm == "PEPTIDE1{A}$$$$V2.0");
+
+    model.addMonomer("C", ChainType::PEPTIDE, {50.0, 0.0, 0.0});
+    helm = get_mol_text(&model, Format::HELM);
+    BOOST_TEST(helm == "PEPTIDE1{A}|PEPTIDE2{C}$$$$V2.0");
+
+    model.addMonomer("F", ChainType::PEPTIDE, {100.0, 0.0, 0.0});
+    helm = get_mol_text(&model, Format::HELM);
+    BOOST_TEST(helm == "PEPTIDE1{A}|PEPTIDE2{A}|PEPTIDE3{F}$$$$V2.0");
 }
 
 } // namespace sketcher
