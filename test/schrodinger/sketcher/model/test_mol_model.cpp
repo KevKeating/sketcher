@@ -4803,7 +4803,7 @@ BOOST_AUTO_TEST_CASE(test_addMonomer_disconnected)
 
     model.addMonomer("F", ChainType::PEPTIDE, {100.0, 0.0, 0.0});
     helm = get_mol_text(&model, Format::HELM);
-    BOOST_TEST(helm == "PEPTIDE1{A}|PEPTIDE2{A}|PEPTIDE3{F}$$$$V2.0");
+    BOOST_TEST(helm == "PEPTIDE1{A}|PEPTIDE2{C}|PEPTIDE3{F}$$$$V2.0");
 }
 
 } // namespace sketcher
