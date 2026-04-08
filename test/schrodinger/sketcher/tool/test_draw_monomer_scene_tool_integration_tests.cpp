@@ -352,18 +352,35 @@ BOOST_AUTO_TEST_CASE(test_click_existing_monomer_different_residue_mutates)
     fix.verifyHELM("PEPTIDE1{C}$$$$V2.0");
 }
 
-BOOST_AUTO_TEST_CASE(test_click_attachment_point_adds_connected_via_clicked_ap)
+BOOST_AUTO_TEST_CASE(test_click_attachment_point)
 {
     MonomerToolTestFixture fix;
     fix.importMolText( "PEPTIDE1{A}$$$$V2.0");
-    fix.setAminoAcidTool(AminoAcidTool::CYS);
     auto monomer_pos = fix.getMonomerPos(0);
     // hover over the monomer to trigger AP label creation
+    fix.setAminoAcidTool(AminoAcidTool::CYS);
     fix.simulateMouseMove(monomer_pos);
+
     // click on the N terminus attachment point
-    auto ap_pos = fix.getAttachmentPointPos(0, "C");
-    fix.simulateClick(ap_pos);
+    fix.setAminoAcidTool(AminoAcidTool::CYS);
+    fix.simulateMouseMove(monomer_pos);
+    auto n_ap_pos = fix.getAttachmentPointPos(0, "N");
+    fix.simulateClick(n_ap_pos);
     fix.verifyHELM("PEPTIDE1{C.A}$$$$V2.0");
+
+    // click on the C terminus attachment point
+    fix.setAminoAcidTool(AminoAcidTool::PHE);
+    fix.simulateMouseMove(monomer_pos);
+    auto c_ap_pos = fix.getAttachmentPointPos(0, "C");
+    fix.simulateClick(c_ap_pos);
+    fix.verifyHELM("PEPTIDE1{C.A.F}$$$$V2.0");
+
+    // click on the side chain attachment point
+    fix.setAminoAcidTool(AminoAcidTool::TRP);
+    fix.simulateMouseMove(monomer_pos);
+    auto x_ap_pos = fix.getAttachmentPointPos(0, "C");
+    fix.simulateClick(x_ap_pos);
+    fix.verifyHELM("PEPTIDE1{C.A.F}|PEPTIDE2{W}$PEPTIDE1,PEPTIDE2,2:R3-1:R3$$$V2.0");
 }
 
 // ============================================================================
