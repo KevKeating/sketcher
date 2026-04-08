@@ -45,8 +45,10 @@ void processQtEvents()
     // events on the queue (e.g. starting a timer with a timeout of 0)
     for (int i = 0; i < 3; ++i) {
         QApplication::processEvents();
-        // despite what Qt's documentation claims, DeferredDelete are only
-        // processed if we explicitly pass their event type
+        // processEvents will never process DeferredDelete events, but
+        // sendPostedEvents will if we explicitly pass their event type.
+        // (Despite what Qt's documentation claims, passing 0 as the event type
+        // processes everything *other than* DeferredDeletes.)
         QApplication::sendPostedEvents(nullptr, QEvent::DeferredDelete);
     }
 }
@@ -127,27 +129,28 @@ QPointF emptySpacePos()
 void verifyHELM(MolModel* model, const std::string& expected)
 {
     auto actual = get_mol_text(model, rdkit_extensions::Format::HELM);
+    BOOST_TEST(actual == expected);
     // For flexibility, also accept other chain IDs if the structure is otherwise correct
     // Extract just the monomer sequence part (between { and })
-    auto actual_seq_start = actual.find('{');
-    auto actual_seq_end = actual.find('}');
-    auto expected_seq_start = expected.find('{');
-    auto expected_seq_end = expected.find('}');
+    // auto actual_seq_start = actual.find('{');
+    // auto actual_seq_end = actual.find('}');
+    // auto expected_seq_start = expected.find('{');
+    // auto expected_seq_end = expected.find('}');
 
-    if (actual_seq_start != std::string::npos && actual_seq_end != std::string::npos &&
-        expected_seq_start != std::string::npos && expected_seq_end != std::string::npos) {
-        auto actual_seq = actual.substr(actual_seq_start, actual_seq_end - actual_seq_start + 1);
-        auto expected_seq = expected.substr(expected_seq_start, expected_seq_end - expected_seq_start + 1);
-        // Also check the part after $$ (version and annotations)
-        auto actual_suffix = actual.substr(actual.find("$$"));
-        auto expected_suffix = expected.substr(expected.find("$$"));
+    // if (actual_seq_start != std::string::npos && actual_seq_end != std::string::npos &&
+    //     expected_seq_start != std::string::npos && expected_seq_end != std::string::npos) {
+    //     auto actual_seq = actual.substr(actual_seq_start, actual_seq_end - actual_seq_start + 1);
+    //     auto expected_seq = expected.substr(expected_seq_start, expected_seq_end - expected_seq_start + 1);
+    //     // Also check the part after $$ (version and annotations)
+    //     auto actual_suffix = actual.substr(actual.find("$$"));
+    //     auto expected_suffix = expected.substr(expected.find("$$"));
 
-        BOOST_TEST(actual_seq == expected_seq);
-        BOOST_TEST(actual_suffix == expected_suffix);
-    } else {
-        // Fallback to exact match if we can't parse
-        BOOST_TEST(actual == expected);
-    }
+    //     BOOST_TEST(actual_seq == expected_seq);
+    //     BOOST_TEST(actual_suffix == expected_suffix);
+    // } else {
+    //     // Fallback to exact match if we can't parse
+    //     BOOST_TEST(actual == expected);
+    // }
 }
 
 /**
