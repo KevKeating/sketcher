@@ -208,7 +208,8 @@ struct MonomerToolTestFixture {
             {{ModelKey::DRAW_TOOL, QVariant::fromValue(DrawTool::MONOMER)},
              {ModelKey::MONOMER_TOOL_TYPE,
               QVariant::fromValue(MonomerToolType::AMINO_ACID)},
-             {ModelKey::AMINO_ACID_TOOL, QVariant::fromValue(tool)}});
+             {ModelKey::AMINO_ACID_TOOL, QVariant::fromValue(tool)},
+             {ModelKey::AMINO_ACID_SYMBOL, QString("")}});
         processQtEvents();
     }
 
