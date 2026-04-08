@@ -324,11 +324,13 @@ BOOST_AUTO_TEST_CASE(test_click_attachment_point_adds_connected_via_clicked_ap)
     fix.scene->mouseMoveEvent(&hover);
     processQtEvents();
 
-    // Now try to get the attachment point position
-    // Note: We may need to offset slightly from monomer center to hit the AP
-    // For now, skip this test as it requires more complex setup
-    // TODO: Investigate how to properly access AP positions in tests
-    BOOST_TEST_WARN(false, "Test skipped - requires AP graphics item access");
+    // Click on the R1 attachment point
+    simulateClick(fix.scene.get(), ap_pos);
+
+    // Should add a second alanine connected via R1-R2
+    // The connection annotation in HELM would be: 2:R2-1:R1
+    verifyHELM(fix.mol_model,
+               "PEPTIDE1{A.A}$PEPTIDE1,PEPTIDE1,2:R2-1:R1$$$V2.0");
 }
 
 // ============================================================================
@@ -337,64 +339,130 @@ BOOST_AUTO_TEST_CASE(test_click_attachment_point_adds_connected_via_clicked_ap)
 
 BOOST_AUTO_TEST_CASE(test_drag_monomer_to_empty_adds_connected_default_ap)
 {
-    // TODO: This test fails because dragging from an imported monomer doesn't
-    // trigger the default attachment point selection. This may require the
-    // attachment point graphics items to be created via mouse hover first, or
-    // there may be an issue with how the tool detects available APs on
-    // imported structures.
-    BOOST_TEST_WARN(false,
-                    "Test skipped - dragging from imported monomer needs investigation");
+    MonomerToolTestFixture fix;
+    fix.setAminoAcidTool(AminoAcidTool::ALA);
+
+    // Add initial monomer
+    import_mol_text(fix.mol_model, "PEPTIDE1{A}$$$$V2.0");
+    auto start_pos = getMonomerPos(fix.mol_model, 0);
+    auto end_pos = start_pos + QPointF(100, 0); // Drag to the right
+
+    // Drag from monomer to empty space
+    simulateDrag(fix.scene.get(), start_pos, end_pos);
+
+    // Should add a second monomer connected via default APs
+    verifyHELM(fix.mol_model, "PEPTIDE1{A.A}$$$$V2.0");
 }
 
 BOOST_AUTO_TEST_CASE(test_drag_ap_to_empty_adds_connected_via_dragged_ap)
 {
-    // TODO: This test fails with a memory access violation when trying to
-    // access attachment point graphics items. The items may not be created
-    // immediately after import, or may require mouse hover to trigger creation.
-    // Needs investigation into the Scene/Tool lifecycle for AP items.
-    BOOST_TEST_WARN(false,
-                    "Test skipped - AP graphics item access needs investigation");
+    MonomerToolTestFixture fix;
+    fix.setAminoAcidTool(AminoAcidTool::ALA);
+
+    // Add initial monomer
+    import_mol_text(fix.mol_model, "PEPTIDE1{A}$$$$V2.0");
+    auto start_pos =
+        getAttachmentPointPos(fix.scene.get(), fix.mol_model, 0, "R1");
+    auto end_pos = start_pos + QPointF(100, 0);
+
+    // Drag from R1 attachment point to empty space
+    simulateDrag(fix.scene.get(), start_pos, end_pos);
+
+    // Should add a second monomer connected via R1-R2
+    verifyHELM(fix.mol_model,
+               "PEPTIDE1{A.A}$PEPTIDE1,PEPTIDE1,2:R2-1:R1$$$V2.0");
 }
 
 BOOST_AUTO_TEST_CASE(test_drag_monomer_to_monomer_connects_default_aps)
 {
-    // TODO: Similar to test_drag_monomer_to_empty, this fails because dragging
-    // between imported monomers doesn't properly detect/use attachment points.
-    // The attachment point system requires further investigation for imported
-    // structures vs user-drawn structures.
-    BOOST_TEST_WARN(false,
-                    "Test skipped - dragging between imported monomers needs investigation");
+    MonomerToolTestFixture fix;
+    fix.setAminoAcidTool(AminoAcidTool::ALA);
+
+    // Add two separate, unconnected monomers by creating two chains
+    import_mol_text(fix.mol_model, "PEPTIDE1{A}|PEPTIDE2{A}$$$$V2.0");
+    auto pos1 = getMonomerPos(fix.mol_model, 0);
+    auto pos2 = getMonomerPos(fix.mol_model, 1);
+
+    // Drag from first monomer to second monomer
+    simulateDrag(fix.scene.get(), pos1, pos2);
+
+    // Should connect via default APs (R2 of first to R1 of second)
+    verifyHELM(fix.mol_model, "PEPTIDE1{A.A}$$$$V2.0");
 }
 
 BOOST_AUTO_TEST_CASE(test_drag_ap_to_ap_connects_via_both_aps)
 {
-    // TODO: Same AP graphics item access issue as other AP-related drag tests.
-    BOOST_TEST_WARN(false,
-                    "Test skipped - AP graphics item access needs investigation");
+    MonomerToolTestFixture fix;
+    fix.setAminoAcidTool(AminoAcidTool::ALA);
+
+    // Add two separate, unconnected monomers by creating two chains
+    import_mol_text(fix.mol_model, "PEPTIDE1{A}|PEPTIDE2{A}$$$$V2.0");
+
+    auto start_pos =
+        getAttachmentPointPos(fix.scene.get(), fix.mol_model, 0, "R1");
+    auto end_pos =
+        getAttachmentPointPos(fix.scene.get(), fix.mol_model, 1, "R1");
+
+    // Drag from R1 of first to R1 of second
+    simulateDrag(fix.scene.get(), start_pos, end_pos);
+
+    // Should connect via R1-R1
+    verifyHELM(fix.mol_model,
+               "PEPTIDE1{A.A}$PEPTIDE1,PEPTIDE1,2:R1-1:R1$$$V2.0");
 }
 
 BOOST_AUTO_TEST_CASE(test_drag_empty_to_empty_adds_two_connected_default_aps)
 {
-    // TODO: Dragging from empty space is creating only a single monomer
-    // instead of two connected monomers. This may be a test issue with event
-    // simulation or an actual bug in the drag handling. Needs investigation.
-    BOOST_TEST_WARN(false,
-                    "Test skipped - dragging from empty space needs investigation");
+    MonomerToolTestFixture fix;
+    fix.setAminoAcidTool(AminoAcidTool::ALA);
+
+    auto start_pos = emptySpacePos();
+    auto end_pos = start_pos + QPointF(100, 0);
+
+    // Drag from empty space to empty space
+    simulateDrag(fix.scene.get(), start_pos, end_pos);
+
+    // Should create two connected monomers via default APs
+    verifyHELM(fix.mol_model, "PEPTIDE1{A.A}$$$$V2.0");
 }
 
 BOOST_AUTO_TEST_CASE(test_drag_empty_to_monomer_adds_connected_default_aps)
 {
-    // TODO: Same issue as test_drag_empty_to_empty - drag from empty space
-    // not working as expected in test environment.
-    BOOST_TEST_WARN(false,
-                    "Test skipped - dragging from empty space needs investigation");
+    MonomerToolTestFixture fix;
+    fix.setAminoAcidTool(AminoAcidTool::ALA);
+
+    // Add existing monomer
+    import_mol_text(fix.mol_model, "PEPTIDE1{A}$$$$V2.0");
+    auto existing_pos = getMonomerPos(fix.mol_model, 0);
+
+    auto start_pos = emptySpacePos();
+
+    // Drag from empty space to existing monomer
+    simulateDrag(fix.scene.get(), start_pos, existing_pos);
+
+    // Should add a new monomer connected via default APs
+    verifyHELM(fix.mol_model, "PEPTIDE1{A.A}$$$$V2.0");
 }
 
 BOOST_AUTO_TEST_CASE(test_drag_empty_to_ap_adds_connected_correct_aps)
 {
-    // TODO: Combination of empty space drag issue and AP access issue.
-    BOOST_TEST_WARN(false,
-                    "Test skipped - dragging from empty space needs investigation");
+    MonomerToolTestFixture fix;
+    fix.setAminoAcidTool(AminoAcidTool::ALA);
+
+    // Add existing monomer
+    import_mol_text(fix.mol_model, "PEPTIDE1{A}$$$$V2.0");
+
+    auto start_pos = emptySpacePos();
+    auto end_pos =
+        getAttachmentPointPos(fix.scene.get(), fix.mol_model, 0, "R1");
+
+    // Drag from empty space to R1 attachment point
+    simulateDrag(fix.scene.get(), start_pos, end_pos);
+
+    // Should add a new monomer connected to R1
+    // New monomer uses R2 (default outgoing AP) to connect to existing R1
+    verifyHELM(fix.mol_model,
+               "PEPTIDE1{A.A}$PEPTIDE1,PEPTIDE1,2:R2-1:R1$$$V2.0");
 }
 
 // ============================================================================
@@ -404,17 +472,33 @@ BOOST_AUTO_TEST_CASE(test_drag_empty_to_ap_adds_connected_correct_aps)
 BOOST_AUTO_TEST_CASE(
     test_nucleic_acid_base_drag_empty_to_empty_uses_pair_ap)
 {
-    // TODO: Same drag from empty space issue as peptide tests.
-    BOOST_TEST_WARN(false,
-                    "Test skipped - dragging from empty space needs investigation");
+    MonomerToolTestFixture fix;
+    fix.setNucleicAcidTool(NucleicAcidTool::A);
+
+    auto start_pos = emptySpacePos();
+    auto end_pos = start_pos + QPointF(100, 0);
+
+    // Drag from empty space to empty space with nucleic acid base tool
+    simulateDrag(fix.scene.get(), start_pos, end_pos);
+
+    // Should create two bases connected via "pair" attachment point
+    verifyHELM(fix.mol_model, "RNA1{A.A}$RNA1,RNA1,2:pair-1:pair$$$V2.0");
 }
 
 BOOST_AUTO_TEST_CASE(test_nucleic_acid_sugar_drag_empty_to_empty_ignored)
 {
-    // TODO: Drag from empty space is creating a monomer when it should be
-    // ignored for sugar tools. Same underlying drag mechanism issue.
-    BOOST_TEST_WARN(false,
-                    "Test skipped - dragging from empty space needs investigation");
+    MonomerToolTestFixture fix;
+    fix.setNucleicAcidTool(NucleicAcidTool::R);
+
+    auto start_pos = emptySpacePos();
+    auto end_pos = start_pos + QPointF(100, 0);
+
+    // Drag from empty space to empty space with nucleic acid sugar tool
+    simulateDrag(fix.scene.get(), start_pos, end_pos);
+
+    // Drag should be ignored - no monomers added
+    auto mol = fix.mol_model->getMol();
+    BOOST_TEST(mol->getNumAtoms() == 0);
 }
 
 } // namespace sketcher
