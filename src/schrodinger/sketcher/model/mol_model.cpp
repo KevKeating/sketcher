@@ -815,7 +815,10 @@ void MolModel::addBoundMonomer(const std::string_view res_name,
 {
     auto [linkage, flip_monomer_order] =
         build_linkage_string(bound_to_monomer_ap_name, new_monomer_ap_name);
-    // TODO: monomer_mol should do this flip for us
+    // To standardize the linkage string, make sure that the higher numbered
+    // attachment point is first. rdkit_extensions::addConnection will do this
+    // flip for us, but we do it here anyway since it allows us to simplify
+    // get_is_custom_bond
     size_t bond_start_idx = bound_to_monomer->getIdx();
     size_t bond_end_idx = m_mol.getNumAtoms();
     if (flip_monomer_order) {
@@ -837,8 +840,6 @@ void MolModel::addBoundMonomer(const std::string_view res_name,
         res_num = 1;
     }
     
-    std::cout << "rdkit_extensions::get_residue_number(bound_to_monomer) = " << rdkit_extensions::get_residue_number(bound_to_monomer) << "\n";
-    std::cout << "new res_num = " << res_num << "\n";
     auto create_atom = std::bind(create_monomer, res_name, chain_id, res_num);
 
     

@@ -4530,31 +4530,29 @@ BOOST_AUTO_TEST_CASE(test_addBoundMonomer)
 
 /**
  * Use addBoundMonomer to extend a peptide chain in the opposite direction,
- * building from C terminus to N terminus. We also add a side chain interaction to a new chain and confirm that the new chain remains separate
+ * building from C terminus to N terminus. We also add a side chain interaction
+ * to a new chain and confirm that the new chain remains separate
  */
 BOOST_AUTO_TEST_CASE(test_addBoundMonomer_N_terminus)
 {
     QUndoStack undo_stack;
     TestMolModel model(&undo_stack);
 
-    std::cout << "about to add ala\n";
     model.addMonomer("A", ChainType::PEPTIDE, {0.0, 0.0, 0.0});
     auto helm = get_mol_text(&model, Format::HELM);
     BOOST_TEST(helm == "PEPTIDE1{A}$$$$V2.0");
 
-    std::cout << "about to add cys\n";
     auto ala_monomer = model.getMol()->getAtomWithIdx(0);
     model.addBoundMonomer("C", ChainType::PEPTIDE, {-50.0, 0.0, 0.0}, "R2", ala_monomer, "R1");
     helm = get_mol_text(&model, Format::HELM);
     BOOST_TEST(helm == "PEPTIDE1{C.A}$$$$V2.0");
 
-    std::cout << "about to add phe\n";
     auto cys_monomer = model.getMol()->getAtomWithIdx(1);
     model.addBoundMonomer("F", ChainType::PEPTIDE, {-100.0, 0.0, 0.0}, "R2", cys_monomer, "R1");
     helm = get_mol_text(&model, Format::HELM);
     BOOST_TEST(helm == "PEPTIDE1{F.C.A}$$$$V2.0");
 
-    std::cout << "about to add trp\n";
+    // now add the side chain interaction
     ala_monomer = model.getMol()->getAtomWithIdx(0);
     model.addBoundMonomer("W", ChainType::PEPTIDE, {-100.0, 0.0, 0.0}, "R3", ala_monomer, "R3");
     helm = get_mol_text(&model, Format::HELM);
