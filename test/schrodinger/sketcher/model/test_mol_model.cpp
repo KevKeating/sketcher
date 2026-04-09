@@ -4529,6 +4529,30 @@ BOOST_AUTO_TEST_CASE(test_addBoundMonomer)
 }
 
 /**
+ * Use addBoundMonomer to extend a peptide chain in the opposite direction,
+ * building from C terminus to N terminus
+ */
+BOOST_AUTO_TEST_CASE(test_addBoundMonomer_N_terminus)
+{
+    QUndoStack undo_stack;
+    TestMolModel model(&undo_stack);
+
+    model.addMonomer("A", ChainType::PEPTIDE, {0.0, 0.0, 0.0});
+    auto helm = get_mol_text(&model, Format::HELM);
+    BOOST_TEST(helm == "PEPTIDE1{A}$$$$V2.0");
+
+    auto ala_monomer = model.getMol()->getAtomWithIdx(0);
+    model.addBoundMonomer("C", ChainType::PEPTIDE, {-50.0, 0.0, 0.0}, "R2", ala_monomer, "R1");
+    helm = get_mol_text(&model, Format::HELM);
+    BOOST_TEST(helm == "PEPTIDE1{C.A}$$$$V2.0");
+
+    auto cys_monomer = model.getMol()->getAtomWithIdx(1);
+    model.addBoundMonomer("F", ChainType::PEPTIDE, {-100.0, 0.0, 0.0}, "R2", cys_monomer, "R1");
+    helm = get_mol_text(&model, Format::HELM);
+    BOOST_TEST(helm == "PEPTIDE1{F.C.A}$$$$V2.0");
+}
+
+/**
  * Use addBoundMonomer to build two full nucleotides: one 3' to an existing
  * nucleotide and one 5' to the same existing nucleotide.
  */

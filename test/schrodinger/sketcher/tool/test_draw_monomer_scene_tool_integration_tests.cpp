@@ -295,7 +295,6 @@ BOOST_AUTO_TEST_CASE(test_click_attachment_point)
     // TODO: this is failing because the HELM writer is outputting the atoms in
     //       the wrong order. Is the bond being added as a Dative?  Is the
     //       directionality wrong?
-    // TODO: add a MolModel test that fails for the same reason
     fix.verifyHELM("PEPTIDE1{C.A}$$$$V2.0");
 
     // click on the C terminus attachment point
