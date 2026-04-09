@@ -758,7 +758,6 @@ void DrawMonomerSceneTool::onLeftButtonDragStart(
     QGraphicsSceneMouseEvent* const event)
 {
     StandardSceneToolBase::onLeftButtonDragStart(event);
-    std::cout << "!!! on LeftButtonDragStart !!!\n";
     m_drag_start_monomer_item = getTopMonomerItemAt(m_mouse_press_scene_pos);
     if (m_drag_start_monomer_item == nullptr) {
         m_drag_start_ap_model_name = getDefaultDragStartAPModelName();
