@@ -238,7 +238,7 @@ BOOST_AUTO_TEST_CASE(test_click_empty_space_adds_monomer)
 {
     MonomerToolTestFixture fix;
     fix.setAminoAcidTool(AminoAcidTool::ALA);
-    fix.mouseClick(emptySpacePos());
+    fix.mouseClick({0, 0});
     fix.verifyHELM("PEPTIDE1{A}$$$$V2.0");
 }
 
@@ -249,9 +249,9 @@ BOOST_AUTO_TEST_CASE(test_click_empty_space_adds_monomer)
 BOOST_AUTO_TEST_CASE(test_click_existing_monomer_same_residue_adds_residue)
 {
     MonomerToolTestFixture fix;
-    fix.setAminoAcidTool(AminoAcidTool::ALA);
     fix.importMolText("PEPTIDE1{A}$$$$V2.0");
     auto pos = fix.getMonomerPos(0);
+    fix.setAminoAcidTool(AminoAcidTool::ALA);
     fix.mouseClick(pos);
     fix.verifyHELM("PEPTIDE1{A.A}$$$$V2.0");
 }
@@ -264,20 +264,26 @@ BOOST_AUTO_TEST_CASE(test_click_existing_monomer_different_residue_mutates)
 {
     MonomerToolTestFixture fix;
 
-    // Add alanine
-    fix.setAminoAcidTool(AminoAcidTool::ALA);
     fix.importMolText("PEPTIDE1{A}$$$$V2.0");
     auto pos = fix.getMonomerPos(0);
-
-    // Click with cysteine tool
     fix.setAminoAcidTool(AminoAcidTool::CYS);
     fix.mouseClick(pos);
-
-    // Should mutate to cysteine
     fix.verifyHELM("PEPTIDE1{C}$$$$V2.0");
 }
 
-// TODO: click on a monomer with a monomer tool of the wrong type
+/**
+ * Confirm that clicking on an existing monomer with a monomer tool of
+ * a different monomer type has no effect.
+ */
+BOOST_AUTO_TEST_CASE(test_click_existing_monomer_different_monomer_type)
+{
+    MonomerToolTestFixture fix;
+    fix.importMolText("PEPTIDE1{A}$$$$V2.0");
+    auto pos = fix.getMonomerPos(0);
+    fix.setNucleicAcidTool(NucleicAcidTool::P);
+    fix.mouseClick(pos);
+    fix.verifyHELM("PEPTIDE1{A}$$$$V2.0");
+}
 
 BOOST_AUTO_TEST_CASE(test_click_attachment_point)
 {
