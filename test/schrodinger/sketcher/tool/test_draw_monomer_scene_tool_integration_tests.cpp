@@ -407,43 +407,44 @@ BOOST_AUTO_TEST_CASE(test_drag_ap_to_empty_adds_connected_via_dragged_ap)
     fix.verifyHELM("PEPTIDE1{C.A.F}|PEPTIDE2{A}$PEPTIDE1,PEPTIDE2,2:R3-1:R3$$$V2.0");
 }
 
+/**
+ * Confirm that click-and-drag from an existing monomer to an existing monomer
+ * connects them via the default attachment points
+ */
 BOOST_AUTO_TEST_CASE(test_drag_monomer_to_monomer_connects_default_aps)
 {
     MonomerToolTestFixture fix;
     fix.setAminoAcidTool(AminoAcidTool::ALA);
-
-    // Add two separate, unconnected monomers by creating two chains
     import_mol_text(fix.mol_model, "PEPTIDE1{A}|PEPTIDE2{C}$$$$V2.0");
     auto pos1 = fix.getMonomerPos(0);
     auto pos2 = fix.getMonomerPos(1);
-
-    fix.mouseMove(pos1);
     fix.mouseDrag(pos1, pos2);
-
-    // Should connect via default APs (R2 of first to R1 of second)
     fix.verifyHELM("PEPTIDE1{A.C}$$$$V2.0");
 }
 
-// BOOST_AUTO_TEST_CASE(test_drag_ap_to_ap_connects_via_both_aps)
-// {
-//     MonomerToolTestFixture fix;
-//     fix.setAminoAcidTool(AminoAcidTool::ALA);
-
-//     // Add two separate, unconnected monomers by creating two chains
-//     import_mol_text(fix.mol_model, "PEPTIDE1{A}|PEPTIDE2{A}$$$$V2.0");
-
-//     auto start_pos =
-//         getAttachmentPointPos(0, "R1");
-//     auto end_pos =
-//         getAttachmentPointPos(1, "R1");
-
-//     // Drag from R1 of first to R1 of second
-//     mouseDrag(fix.scene.get(), start_pos, end_pos);
-
-//     // Should connect via R1-R1
-//     verifyHELM(fix.mol_model,
-//                "PEPTIDE1{A.A}$PEPTIDE1,PEPTIDE1,2:R1-1:R1$$$V2.0");
-// }
+/**
+ * Confirm that click-and-drag from the attachment point of one existing monomer
+ * to the attachment point of another existing monomer connects the monomer via
+ * the specified attachment points.
+ */
+BOOST_AUTO_TEST_CASE(test_drag_ap_to_ap_connects_via_both_aps)
+{
+    MonomerToolTestFixture fix;
+    fix.setAminoAcidTool(AminoAcidTool::ALA);
+    import_mol_text(fix.mol_model, "PEPTIDE1{A}|PEPTIDE2{C}$$$$V2.0");
+    auto ala_pos = fix.getMonomerPos(0);
+    auto cys_pos = fix.getMonomerPos(1);
+    fix.mouseMove(ala_pos);
+    auto start_pos = fix.getAttachmentPointPos(0, "N");
+    fix.mouseMove(start_pos);
+    fix.mousePress(start_pos);
+    // fist, drag to the cysteine to make its attachment points appear
+    fix.mouseMove(cys_pos, Qt::LeftButton);
+    auto end_pos = fix.getAttachmentPointPos(1, "N");
+    fix.mouseMove(end_pos, Qt::LeftButton);
+    fix.mouseRelease(end_pos);
+    fix.verifyHELM("PEPTIDE1{A}|PEPTIDE2{C}$PEPTIDE1,PEPTIDE2,1:R1-1:R1$$$V2.0");
+}
 
 BOOST_AUTO_TEST_CASE(test_drag_empty_to_empty_adds_two_connected_default_aps)
 {
