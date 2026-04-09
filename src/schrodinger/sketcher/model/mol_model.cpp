@@ -658,10 +658,10 @@ void MolModel::addAttachmentPoint(const RDGeom::Point3D& coords,
  */
 static std::shared_ptr<RDKit::Atom>
 create_monomer(const std::string_view res_name, const std::string_view chain_id,
-               const int residue_number)
+               const int res_num)
 {
     auto monomer_unique_ptr =
-        rdkit_extensions::makeMonomer(res_name, chain_id, 1, false);
+        rdkit_extensions::makeMonomer(res_name, chain_id, res_num, false);
     std::shared_ptr<RDKit::Atom> monomer;
     monomer.reset(monomer_unique_ptr.release());
     set_atom_monomeric(monomer.get());
@@ -819,10 +819,13 @@ void MolModel::addBoundMonomer(const std::string_view res_name,
     auto chain_id = rdkit_extensions::get_polymer_id(bound_to_monomer);
     auto res_num = get_residue_number_for_new_monomer(
         res_name, chain_type, new_monomer_ap_name, bound_to_monomer);
+    std::cout << "rdkit_extensions::get_residue_number(bound_to_monomer) = " << rdkit_extensions::get_residue_number(bound_to_monomer) << "\n";
+    std::cout << "new res_num = " << res_num << "\n";
     auto create_atom = std::bind(create_monomer, res_name, chain_id, res_num);
 
     auto [linkage, flip_monomer_order] =
         build_linkage_string(bound_to_monomer_ap_name, new_monomer_ap_name);
+    // TODO: monomer_mol should do this flip for us
     size_t bond_start_idx = bound_to_monomer->getIdx();
     size_t bond_end_idx = m_mol.getNumAtoms();
     if (flip_monomer_order) {

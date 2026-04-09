@@ -4537,15 +4537,18 @@ BOOST_AUTO_TEST_CASE(test_addBoundMonomer_N_terminus)
     QUndoStack undo_stack;
     TestMolModel model(&undo_stack);
 
+    std::cout << "about to add ala\n";
     model.addMonomer("A", ChainType::PEPTIDE, {0.0, 0.0, 0.0});
     auto helm = get_mol_text(&model, Format::HELM);
     BOOST_TEST(helm == "PEPTIDE1{A}$$$$V2.0");
 
+    std::cout << "about to add cys\n";
     auto ala_monomer = model.getMol()->getAtomWithIdx(0);
     model.addBoundMonomer("C", ChainType::PEPTIDE, {-50.0, 0.0, 0.0}, "R2", ala_monomer, "R1");
     helm = get_mol_text(&model, Format::HELM);
     BOOST_TEST(helm == "PEPTIDE1{C.A}$$$$V2.0");
 
+    std::cout << "about to add phe\n";
     auto cys_monomer = model.getMol()->getAtomWithIdx(1);
     model.addBoundMonomer("F", ChainType::PEPTIDE, {-100.0, 0.0, 0.0}, "R2", cys_monomer, "R1");
     helm = get_mol_text(&model, Format::HELM);

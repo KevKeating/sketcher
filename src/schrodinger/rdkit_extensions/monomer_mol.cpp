@@ -387,11 +387,14 @@ addConnection(RDKit::RWMol& monomer_mol, size_t monomer1, size_t monomer2,
         bool set_directional_bond = false;
         if (linkage.front() != 'p' && linkage.find('?') == std::string::npos) {
             auto [begin_attchpt, end_attchpt] = getAttchpts(linkage);
+            std::cout << "begin_attchpt = " << begin_attchpt << "end_attchpt = " << end_attchpt << "\n";
             if (begin_attchpt > end_attchpt) {
+                std::cout << "adding in forward order\n";
                 bond = create_bond(monomer1, monomer2, ::RDKit::Bond::DATIVE,
                                    linkage);
                 set_directional_bond = true;
             } else if (begin_attchpt < end_attchpt) {
+                std::cout << "adding in reverse order\n";
                 auto new_linkage =
                     fmt::format("R{}-R{}", end_attchpt, begin_attchpt);
                 bond = create_bond(monomer2, monomer1, ::RDKit::Bond::DATIVE,
@@ -551,6 +554,11 @@ bool isValidChain(const RDKit::RWMol& monomer_mol, std::string_view polymer_id)
         }
 
         // Bond direction should be in the same order as residues
+        std::cout << "i = " << i << "\n";
+        std::cout << "\tget_residue_number(bond->getBeginAtom()) = " << get_residue_number(bond->getBeginAtom()) << "\n";
+        std::cout << "\tget_residue_number(bond->getEndAtom()) = " << get_residue_number(bond->getEndAtom()) << "\n";
+        std::cout << "\tchain.atoms[i] = " << chain.atoms[i] << "\n";
+        std::cout << "\tbond->getEndAtomIdx() = " << bond->getEndAtomIdx() << "\n";
         if (get_residue_number(bond->getBeginAtom()) >
                 get_residue_number(bond->getEndAtom()) &&
             chain.atoms[i] != bond->getEndAtomIdx()) {
@@ -650,8 +658,12 @@ void assignChains(RDKit::RWMol& monomer_mol)
 
     // Currently, orderResidues only works when there is a single chain
     auto chain_ids = get_polymer_ids(monomer_mol);
-    if (chain_ids.size() == 1 && !isValidChain(monomer_mol, chain_ids[0])) {
+    bool is_valid_chain = isValidChain(monomer_mol, chain_ids[0]);
+    if (chain_ids.size() == 1 && !is_valid_chain) {
+        std::cout << "ordering residues\n";
         orderResidues(monomer_mol);
+    } else {
+        std::cout << "not ordering residues " << chain_ids.size() << " " << is_valid_chain << "\n";
     }
 
     // Determine and mark the 'connection bonds'
