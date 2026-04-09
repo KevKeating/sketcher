@@ -672,9 +672,6 @@ void MolModel::addMonomer(const std::string_view res_name,
                           const rdkit_extensions::ChainType chain_type,
                           const RDGeom::Point3D& coords)
 {
-    // TODO: the chain won't get renumbered
-    // we'll renumber the chains in assignChains, so for now we just need
-    // something with the correct prefix and a unique number
     auto chain_id = get_first_available_chain_name(m_mol, chain_type);
     auto create_atom = std::bind(create_monomer, res_name, chain_id, 1);
     auto cmd_func = [this, create_atom, coords]() {
@@ -816,6 +813,7 @@ void MolModel::addBoundMonomer(const std::string_view res_name,
                                const RDKit::Atom* const bound_to_monomer,
                                const std::string_view bound_to_monomer_ap_name)
 {
+    // TODO: need to figure out if this is a backbone connection before I decide if it should be the same chain or a new one
     auto chain_id = rdkit_extensions::get_polymer_id(bound_to_monomer);
     auto res_num = get_residue_number_for_new_monomer(
         res_name, chain_type, new_monomer_ap_name, bound_to_monomer);

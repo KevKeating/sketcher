@@ -4530,7 +4530,7 @@ BOOST_AUTO_TEST_CASE(test_addBoundMonomer)
 
 /**
  * Use addBoundMonomer to extend a peptide chain in the opposite direction,
- * building from C terminus to N terminus
+ * building from C terminus to N terminus. We also add a side chain interaction to a new chain and confirm that the new chain remains separate
  */
 BOOST_AUTO_TEST_CASE(test_addBoundMonomer_N_terminus)
 {
@@ -4553,6 +4553,12 @@ BOOST_AUTO_TEST_CASE(test_addBoundMonomer_N_terminus)
     model.addBoundMonomer("F", ChainType::PEPTIDE, {-100.0, 0.0, 0.0}, "R2", cys_monomer, "R1");
     helm = get_mol_text(&model, Format::HELM);
     BOOST_TEST(helm == "PEPTIDE1{F.C.A}$$$$V2.0");
+
+    std::cout << "about to add trp\n";
+    ala_monomer = model.getMol()->getAtomWithIdx(0);
+    model.addBoundMonomer("W", ChainType::PEPTIDE, {-100.0, 0.0, 0.0}, "R3", ala_monomer, "R3");
+    helm = get_mol_text(&model, Format::HELM);
+    BOOST_TEST(helm == "PEPTIDE1{F.C.A}|PEPTIDE1{W}$PEPTIDE1,PEPTIDE2,2:R3-1:R3$$$V2.0");
 }
 
 /**

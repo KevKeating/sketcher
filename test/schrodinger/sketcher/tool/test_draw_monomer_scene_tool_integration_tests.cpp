@@ -292,9 +292,6 @@ BOOST_AUTO_TEST_CASE(test_click_attachment_point)
     fix.simulateMouseMove(monomer_pos);
     auto n_ap_pos = fix.getAttachmentPointPos(0, "N");
     fix.simulateClick(n_ap_pos);
-    // TODO: this is failing because the HELM writer is outputting the atoms in
-    //       the wrong order. Is the bond being added as a Dative?  Is the
-    //       directionality wrong?
     fix.verifyHELM("PEPTIDE1{C.A}$$$$V2.0");
 
     // click on the C terminus attachment point
@@ -307,7 +304,7 @@ BOOST_AUTO_TEST_CASE(test_click_attachment_point)
     // click on the side chain attachment point
     fix.setAminoAcidTool(AminoAcidTool::TRP);
     fix.simulateMouseMove(monomer_pos);
-    auto x_ap_pos = fix.getAttachmentPointPos(0, "C");
+    auto x_ap_pos = fix.getAttachmentPointPos(0, "X");
     fix.simulateClick(x_ap_pos);
     fix.verifyHELM("PEPTIDE1{C.A.F}|PEPTIDE2{W}$PEPTIDE1,PEPTIDE2,2:R3-1:R3$$$V2.0");
 }
