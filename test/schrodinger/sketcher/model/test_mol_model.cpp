@@ -4558,7 +4558,7 @@ BOOST_AUTO_TEST_CASE(test_addBoundMonomer_N_terminus)
     ala_monomer = model.getMol()->getAtomWithIdx(0);
     model.addBoundMonomer("W", ChainType::PEPTIDE, {-100.0, 0.0, 0.0}, "R3", ala_monomer, "R3");
     helm = get_mol_text(&model, Format::HELM);
-    BOOST_TEST(helm == "PEPTIDE1{F.C.A}|PEPTIDE1{W}$PEPTIDE1,PEPTIDE2,2:R3-1:R3$$$V2.0");
+    BOOST_TEST(helm == "PEPTIDE1{F.C.A}|PEPTIDE1{W}$PEPTIDE1,PEPTIDE2,3:R3-1:R3$$$V2.0");
 }
 
 /**

@@ -813,14 +813,6 @@ void MolModel::addBoundMonomer(const std::string_view res_name,
                                const RDKit::Atom* const bound_to_monomer,
                                const std::string_view bound_to_monomer_ap_name)
 {
-    // TODO: need to figure out if this is a backbone connection before I decide if it should be the same chain or a new one
-    auto chain_id = rdkit_extensions::get_polymer_id(bound_to_monomer);
-    auto res_num = get_residue_number_for_new_monomer(
-        res_name, chain_type, new_monomer_ap_name, bound_to_monomer);
-    std::cout << "rdkit_extensions::get_residue_number(bound_to_monomer) = " << rdkit_extensions::get_residue_number(bound_to_monomer) << "\n";
-    std::cout << "new res_num = " << res_num << "\n";
-    auto create_atom = std::bind(create_monomer, res_name, chain_id, res_num);
-
     auto [linkage, flip_monomer_order] =
         build_linkage_string(bound_to_monomer_ap_name, new_monomer_ap_name);
     // TODO: monomer_mol should do this flip for us
@@ -831,6 +823,25 @@ void MolModel::addBoundMonomer(const std::string_view res_name,
     }
     bool is_custom_bond =
         get_is_custom_bond(res_name, chain_type, bound_to_monomer, linkage);
+        
+    std::string chain_id;
+    int res_num;
+    if (!is_custom_bond) {
+        // if this is a standard backbone connection, put the new monomer in the same chain as bound_to_monomer
+        chain_id = rdkit_extensions::get_polymer_id(bound_to_monomer);
+        res_num = get_residue_number_for_new_monomer(
+            res_name, chain_type, new_monomer_ap_name, bound_to_monomer);
+    } else {
+        // otherwise, put the new monomer in its own chain
+        chain_id = get_first_available_chain_name(m_mol, chain_type);
+        res_num = 1;
+    }
+    
+    std::cout << "rdkit_extensions::get_residue_number(bound_to_monomer) = " << rdkit_extensions::get_residue_number(bound_to_monomer) << "\n";
+    std::cout << "new res_num = " << res_num << "\n";
+    auto create_atom = std::bind(create_monomer, res_name, chain_id, res_num);
+
+    
 
     auto cmd_func = [this, create_atom, coords, bond_start_idx, bond_end_idx,
                      linkage, is_custom_bond]() {
