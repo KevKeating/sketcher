@@ -337,22 +337,24 @@ BOOST_AUTO_TEST_CASE(test_drag_monomer_to_empty_adds_connected_default_ap)
     fix.verifyHELM("PEPTIDE1{A.C}$$$$V2.0");
 }
 
-// BOOST_AUTO_TEST_CASE(test_drag_ap_to_empty_adds_connected_via_dragged_ap)
-// {
-//     MonomerToolTestFixture fix;
-//     fix.setAminoAcidTool(AminoAcidTool::ALA);
+BOOST_AUTO_TEST_CASE(test_drag_ap_to_empty_adds_connected_via_dragged_ap)
+{
+    MonomerToolTestFixture fix;
+    fix.setAminoAcidTool(AminoAcidTool::CYS);
 
-//     // Add initial monomer
-//     fix.importMolText("PEPTIDE1{A}$$$$V2.0");
-//     auto start_pos = fix.getAttachmentPointPos(0, "N");
-//     auto end_pos = start_pos + QPointF(100, 0);
+    // Add initial monomer
+    fix.importMolText("PEPTIDE1{A}$$$$V2.0");
+    auto ala_pos = fix.getMonomerPos(0);
+    fix.simulateMouseMove(ala_pos);
+    auto start_pos = fix.getAttachmentPointPos(0, "N");
+    auto end_pos = start_pos + QPointF(-100, 0);
 
-//     // Drag from R1 attachment point to empty space
-//     fix.simulateDrag(start_pos, end_pos);
+    // Drag from R1 attachment point to empty space
+    fix.simulateDrag(start_pos, end_pos);
 
-//     // Should add a second monomer connected via R1-R2
-//     fix.verifyHELM("PEPTIDE1{A.A}$PEPTIDE1,PEPTIDE1,2:R2-1:R1$$$V2.0");
-// }
+    // Should add a second monomer connected via R1-R2
+    fix.verifyHELM("PEPTIDE1{C.A}$$$$V2.0");
+}
 
 // BOOST_AUTO_TEST_CASE(test_drag_monomer_to_monomer_connects_default_aps)
 // {
