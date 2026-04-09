@@ -60,31 +60,7 @@ void processQtEvents()
 /**
  * Simulate a mouse drag from start to end position.
  */
-void simulateDrag(TestScene* scene, const QPointF& start, const QPointF& end)
-{
-    QGraphicsSceneMouseEvent press(QEvent::GraphicsSceneMousePress);
-    QGraphicsSceneMouseEvent move(QEvent::GraphicsSceneMouseMove);
-    QGraphicsSceneMouseEvent release(QEvent::GraphicsSceneMouseRelease);
 
-    press.setScenePos(start);
-    press.setButton(Qt::LeftButton);
-    press.setButtons(Qt::LeftButton);
-
-    move.setScenePos(end);
-    move.setButton(Qt::LeftButton);
-    move.setButtons(Qt::LeftButton);
-
-    release.setScenePos(end);
-    release.setButton(Qt::LeftButton);
-    release.setButtons(Qt::NoButton);
-
-    scene->mousePressEvent(&press);
-    processQtEvents();
-    scene->mouseMoveEvent(&move);
-    processQtEvents();
-    scene->mouseReleaseEvent(&release);
-    processQtEvents();
-}
 
 // TODO: get rid of this
 /**
@@ -223,8 +199,33 @@ struct MonomerToolTestFixture {
             event->setButton(Qt::LeftButton);
             event->setButtons(Qt::LeftButton);
         }
+        release.setButtons(Qt::NoButton);
 
         scene->mousePressEvent(&press);
+        processQtEvents();
+        scene->mouseReleaseEvent(&release);
+        processQtEvents();
+    }
+    
+    void simulateDrag(const QPointF& start, const QPointF& end)
+    {
+        QGraphicsSceneMouseEvent press(QEvent::GraphicsSceneMousePress);
+        QGraphicsSceneMouseEvent move(QEvent::GraphicsSceneMouseMove);
+        QGraphicsSceneMouseEvent release(QEvent::GraphicsSceneMouseRelease);
+
+        press.setScenePos(start);
+        move.setScenePos(end);
+        release.setScenePos(end);
+        for (auto* event : {&press, &move, &release}) {
+            event->setButton(Qt::LeftButton);
+            event->setButtons(Qt::LeftButton);
+        }
+        move.setButton(Qt::NoButton);
+        release.setButtons(Qt::NoButton);
+
+        scene->mousePressEvent(&press);
+        processQtEvents();
+        scene->mouseMoveEvent(&move);
         processQtEvents();
         scene->mouseReleaseEvent(&release);
         processQtEvents();
@@ -313,22 +314,22 @@ BOOST_AUTO_TEST_CASE(test_click_attachment_point)
 // Drag Tests
 // ============================================================================
 
-// BOOST_AUTO_TEST_CASE(test_drag_monomer_to_empty_adds_connected_default_ap)
-// {
-//     MonomerToolTestFixture fix;
-//     fix.setAminoAcidTool(AminoAcidTool::ALA);
+BOOST_AUTO_TEST_CASE(test_drag_monomer_to_empty_adds_connected_default_ap)
+{
+    MonomerToolTestFixture fix;
+    fix.importMolText("PEPTIDE1{A}$$$$V2.0");
+    fix.setAminoAcidTool(AminoAcidTool::CYS);
 
-//     // Add initial monomer
-//     import_mol_text(fix.mol_model, "PEPTIDE1{A}$$$$V2.0");
-//     auto start_pos = getMonomerPos(fix.mol_model, 0);
-//     auto end_pos = start_pos + QPointF(100, 0); // Drag to the right
+    auto start_pos = fix.getMonomerPos(0);
+    auto end_pos = start_pos + QPointF(100, 0); // Drag to the right
 
-//     // Drag from monomer to empty space
-//     simulateDrag(fix.scene.get(), start_pos, end_pos);
+    // Drag from monomer to empty space
+    fix.simulateMouseMove(start_pos);
+    fix.simulateDrag(start_pos, end_pos);
 
-//     // Should add a second monomer connected via default APs
-//     verifyHELM(fix.mol_model, "PEPTIDE1{A.A}$$$$V2.0");
-// }
+    // Should add a second monomer connected via default APs
+    fix.verifyHELM("PEPTIDE1{A.C}$$$$V2.0");
+}
 
 // BOOST_AUTO_TEST_CASE(test_drag_ap_to_empty_adds_connected_via_dragged_ap)
 // {
@@ -336,17 +337,15 @@ BOOST_AUTO_TEST_CASE(test_click_attachment_point)
 //     fix.setAminoAcidTool(AminoAcidTool::ALA);
 
 //     // Add initial monomer
-//     import_mol_text(fix.mol_model, "PEPTIDE1{A}$$$$V2.0");
-//     auto start_pos =
-//         getAttachmentPointPos(fix.scene.get(), fix.mol_model, 0, "R1");
+//     fix.importMolText("PEPTIDE1{A}$$$$V2.0");
+//     auto start_pos = fix.getAttachmentPointPos(0, "N");
 //     auto end_pos = start_pos + QPointF(100, 0);
 
 //     // Drag from R1 attachment point to empty space
-//     simulateDrag(fix.scene.get(), start_pos, end_pos);
+//     fix.simulateDrag(start_pos, end_pos);
 
 //     // Should add a second monomer connected via R1-R2
-//     verifyHELM(fix.mol_model,
-//                "PEPTIDE1{A.A}$PEPTIDE1,PEPTIDE1,2:R2-1:R1$$$V2.0");
+//     fix.verifyHELM("PEPTIDE1{A.A}$PEPTIDE1,PEPTIDE1,2:R2-1:R1$$$V2.0");
 // }
 
 // BOOST_AUTO_TEST_CASE(test_drag_monomer_to_monomer_connects_default_aps)
