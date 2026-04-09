@@ -242,79 +242,79 @@ struct MonomerToolTestFixture {
 // Click Tests
 // ============================================================================
 
-// BOOST_AUTO_TEST_CASE(test_click_empty_space_adds_monomer)
-// {
-//     MonomerToolTestFixture fix;
-//     fix.setAminoAcidTool(AminoAcidTool::ALA);
+BOOST_AUTO_TEST_CASE(test_click_empty_space_adds_monomer)
+{
+    MonomerToolTestFixture fix;
+    fix.setAminoAcidTool(AminoAcidTool::ALA);
 
-//     fix.simulateClick(emptySpacePos());
+    fix.simulateClick(emptySpacePos());
 
-//     fix.verifyHELM("PEPTIDE1{A}$$$$V2.0");
-// }
+    fix.verifyHELM("PEPTIDE1{A}$$$$V2.0");
+}
 
-// BOOST_AUTO_TEST_CASE(test_click_existing_monomer_same_residue_no_change)
-// {
-//     MonomerToolTestFixture fix;
-//     fix.setAminoAcidTool(AminoAcidTool::ALA);
+BOOST_AUTO_TEST_CASE(test_click_existing_monomer_same_residue_no_change)
+{
+    MonomerToolTestFixture fix;
+    fix.setAminoAcidTool(AminoAcidTool::ALA);
 
-//     // Add initial monomer
-//     fix.importMolText("PEPTIDE1{A}$$$$V2.0");
-//     auto pos = fix.getMonomerPos(0);
+    // Add initial monomer
+    fix.importMolText("PEPTIDE1{A}$$$$V2.0");
+    auto pos = fix.getMonomerPos(0);
 
-//     // Click on it with same tool
-//     fix.simulateClick(pos);
+    // Click on it with same tool
+    fix.simulateClick(pos);
 
-//     // Should remain unchanged
-//     fix.verifyHELM("PEPTIDE1{A}$$$$V2.0");
-// }
+    // Should remain unchanged
+    fix.verifyHELM("PEPTIDE1{A}$$$$V2.0");
+}
 
-// BOOST_AUTO_TEST_CASE(test_click_existing_monomer_different_residue_mutates)
-// {
-//     MonomerToolTestFixture fix;
+BOOST_AUTO_TEST_CASE(test_click_existing_monomer_different_residue_mutates)
+{
+    MonomerToolTestFixture fix;
 
-//     // Add alanine
-//     fix.setAminoAcidTool(AminoAcidTool::ALA);
-//     fix.importMolText("PEPTIDE1{A}$$$$V2.0");
-//     auto pos = fix.getMonomerPos(0);
+    // Add alanine
+    fix.setAminoAcidTool(AminoAcidTool::ALA);
+    fix.importMolText("PEPTIDE1{A}$$$$V2.0");
+    auto pos = fix.getMonomerPos(0);
 
-//     // Click with cysteine tool
-//     fix.setAminoAcidTool(AminoAcidTool::CYS);
-//     fix.simulateClick(pos);
+    // Click with cysteine tool
+    fix.setAminoAcidTool(AminoAcidTool::CYS);
+    fix.simulateClick(pos);
 
-//     // Should mutate to cysteine
-//     fix.verifyHELM("PEPTIDE1{C}$$$$V2.0");
-// }
+    // Should mutate to cysteine
+    fix.verifyHELM("PEPTIDE1{C}$$$$V2.0");
+}
 
-// BOOST_AUTO_TEST_CASE(test_click_attachment_point)
-// {
-//     MonomerToolTestFixture fix;
-//     fix.importMolText( "PEPTIDE1{A}$$$$V2.0");
-//     auto monomer_pos = fix.getMonomerPos(0);
-//     // hover over the monomer to trigger AP label creation
-//     fix.setAminoAcidTool(AminoAcidTool::CYS);
-//     fix.simulateMouseMove(monomer_pos);
+BOOST_AUTO_TEST_CASE(test_click_attachment_point)
+{
+    MonomerToolTestFixture fix;
+    fix.importMolText( "PEPTIDE1{A}$$$$V2.0");
+    auto monomer_pos = fix.getMonomerPos(0);
+    // hover over the monomer to trigger AP label creation
+    fix.setAminoAcidTool(AminoAcidTool::CYS);
+    fix.simulateMouseMove(monomer_pos);
 
-//     // click on the N terminus attachment point
-//     fix.setAminoAcidTool(AminoAcidTool::CYS);
-//     fix.simulateMouseMove(monomer_pos);
-//     auto n_ap_pos = fix.getAttachmentPointPos(0, "N");
-//     fix.simulateClick(n_ap_pos);
-//     fix.verifyHELM("PEPTIDE1{C.A}$$$$V2.0");
+    // click on the N terminus attachment point
+    fix.setAminoAcidTool(AminoAcidTool::CYS);
+    fix.simulateMouseMove(monomer_pos);
+    auto n_ap_pos = fix.getAttachmentPointPos(0, "N");
+    fix.simulateClick(n_ap_pos);
+    fix.verifyHELM("PEPTIDE1{C.A}$$$$V2.0");
 
-//     // click on the C terminus attachment point
-//     fix.setAminoAcidTool(AminoAcidTool::PHE);
-//     fix.simulateMouseMove(monomer_pos);
-//     auto c_ap_pos = fix.getAttachmentPointPos(0, "C");
-//     fix.simulateClick(c_ap_pos);
-//     fix.verifyHELM("PEPTIDE1{C.A.F}$$$$V2.0");
+    // click on the C terminus attachment point
+    fix.setAminoAcidTool(AminoAcidTool::PHE);
+    fix.simulateMouseMove(monomer_pos);
+    auto c_ap_pos = fix.getAttachmentPointPos(0, "C");
+    fix.simulateClick(c_ap_pos);
+    fix.verifyHELM("PEPTIDE1{C.A.F}$$$$V2.0");
 
-//     // click on the side chain attachment point
-//     fix.setAminoAcidTool(AminoAcidTool::TRP);
-//     fix.simulateMouseMove(monomer_pos);
-//     auto x_ap_pos = fix.getAttachmentPointPos(0, "X");
-//     fix.simulateClick(x_ap_pos);
-//     fix.verifyHELM("PEPTIDE1{C.A.F}|PEPTIDE2{W}$PEPTIDE1,PEPTIDE2,2:R3-1:R3$$$V2.0");
-// }
+    // click on the side chain attachment point
+    fix.setAminoAcidTool(AminoAcidTool::TRP);
+    fix.simulateMouseMove(monomer_pos);
+    auto x_ap_pos = fix.getAttachmentPointPos(0, "X");
+    fix.simulateClick(x_ap_pos);
+    fix.verifyHELM("PEPTIDE1{C.A.F}|PEPTIDE2{W}$PEPTIDE1,PEPTIDE2,2:R3-1:R3$$$V2.0");
+}
 
 // ============================================================================
 // Drag Tests
@@ -356,22 +356,22 @@ BOOST_AUTO_TEST_CASE(test_drag_ap_to_empty_adds_connected_via_dragged_ap)
     fix.verifyHELM("PEPTIDE1{C.A}$$$$V2.0");
 }
 
-// BOOST_AUTO_TEST_CASE(test_drag_monomer_to_monomer_connects_default_aps)
-// {
-//     MonomerToolTestFixture fix;
-//     fix.setAminoAcidTool(AminoAcidTool::ALA);
+BOOST_AUTO_TEST_CASE(test_drag_monomer_to_monomer_connects_default_aps)
+{
+    MonomerToolTestFixture fix;
+    fix.setAminoAcidTool(AminoAcidTool::ALA);
 
-//     // Add two separate, unconnected monomers by creating two chains
-//     import_mol_text(fix.mol_model, "PEPTIDE1{A}|PEPTIDE2{A}$$$$V2.0");
-//     auto pos1 = getMonomerPos(fix.mol_model, 0);
-//     auto pos2 = getMonomerPos(fix.mol_model, 1);
+    // Add two separate, unconnected monomers by creating two chains
+    import_mol_text(fix.mol_model, "PEPTIDE1{A}|PEPTIDE2{C}$$$$V2.0");
+    auto pos1 = fix.getMonomerPos(0);
+    auto pos2 = fix.getMonomerPos(1);
 
-//     // Drag from first monomer to second monomer
-//     simulateDrag(fix.scene.get(), pos1, pos2);
+    fix.simulateMouseMove(pos1);
+    fix.simulateDrag(pos1, pos2);
 
-//     // Should connect via default APs (R2 of first to R1 of second)
-//     verifyHELM(fix.mol_model, "PEPTIDE1{A.A}$$$$V2.0");
-// }
+    // Should connect via default APs (R2 of first to R1 of second)
+    fix.verifyHELM("PEPTIDE1{A.C}$$$$V2.0");
+}
 
 // BOOST_AUTO_TEST_CASE(test_drag_ap_to_ap_connects_via_both_aps)
 // {
@@ -382,9 +382,9 @@ BOOST_AUTO_TEST_CASE(test_drag_ap_to_empty_adds_connected_via_dragged_ap)
 //     import_mol_text(fix.mol_model, "PEPTIDE1{A}|PEPTIDE2{A}$$$$V2.0");
 
 //     auto start_pos =
-//         getAttachmentPointPos(fix.scene.get(), fix.mol_model, 0, "R1");
+//         getAttachmentPointPos(0, "R1");
 //     auto end_pos =
-//         getAttachmentPointPos(fix.scene.get(), fix.mol_model, 1, "R1");
+//         getAttachmentPointPos(1, "R1");
 
 //     // Drag from R1 of first to R1 of second
 //     simulateDrag(fix.scene.get(), start_pos, end_pos);
@@ -394,20 +394,20 @@ BOOST_AUTO_TEST_CASE(test_drag_ap_to_empty_adds_connected_via_dragged_ap)
 //                "PEPTIDE1{A.A}$PEPTIDE1,PEPTIDE1,2:R1-1:R1$$$V2.0");
 // }
 
-// BOOST_AUTO_TEST_CASE(test_drag_empty_to_empty_adds_two_connected_default_aps)
-// {
-//     MonomerToolTestFixture fix;
-//     fix.setAminoAcidTool(AminoAcidTool::ALA);
+BOOST_AUTO_TEST_CASE(test_drag_empty_to_empty_adds_two_connected_default_aps)
+{
+    MonomerToolTestFixture fix;
+    fix.setAminoAcidTool(AminoAcidTool::ALA);
 
-//     auto start_pos = emptySpacePos();
-//     auto end_pos = start_pos + QPointF(100, 0);
+    auto start_pos = emptySpacePos();
+    auto end_pos = start_pos + QPointF(100, 0);
 
-//     // Drag from empty space to empty space
-//     simulateDrag(fix.scene.get(), start_pos, end_pos);
+    // Drag from empty space to empty space
+    fix.simulateDrag(start_pos, end_pos);
 
-//     // Should create two connected monomers via default APs
-//     verifyHELM(fix.mol_model, "PEPTIDE1{A.A}$$$$V2.0");
-// }
+    // Should create two connected monomers via default APs
+    fix.verifyHELM("PEPTIDE1{A.A}$$$$V2.0");
+}
 
 // BOOST_AUTO_TEST_CASE(test_drag_empty_to_monomer_adds_connected_default_aps)
 // {
@@ -452,37 +452,37 @@ BOOST_AUTO_TEST_CASE(test_drag_ap_to_empty_adds_connected_via_dragged_ap)
 // // Nucleic Acid Special Cases
 // // ============================================================================
 
-// BOOST_AUTO_TEST_CASE(
-//     test_nucleic_acid_base_drag_empty_to_empty_uses_pair_ap)
-// {
-//     MonomerToolTestFixture fix;
-//     fix.setNucleicAcidTool(NucleicAcidTool::A);
+BOOST_AUTO_TEST_CASE(
+    test_nucleic_acid_base_drag_empty_to_empty_uses_pair_ap)
+{
+    MonomerToolTestFixture fix;
+    fix.setNucleicAcidTool(NucleicAcidTool::A);
 
-//     auto start_pos = emptySpacePos();
-//     auto end_pos = start_pos + QPointF(100, 0);
+    auto start_pos = emptySpacePos();
+    auto end_pos = start_pos + QPointF(100, 0);
 
-//     // Drag from empty space to empty space with nucleic acid base tool
-//     simulateDrag(fix.scene.get(), start_pos, end_pos);
+    // Drag from empty space to empty space with nucleic acid base tool
+    fix.simulateDrag(start_pos, end_pos);
 
-//     // Should create two bases connected via "pair" attachment point
-//     verifyHELM(fix.mol_model, "RNA1{A.A}$RNA1,RNA1,2:pair-1:pair$$$V2.0");
-// }
+    // Should create two bases connected via "pair" attachment point
+    fix.verifyHELM("RNA1{A}|RNA2{A}$RNA1,RNA2,1:pair-1:pair$$$V2.0");
+}
 
-// BOOST_AUTO_TEST_CASE(test_nucleic_acid_sugar_drag_empty_to_empty_ignored)
-// {
-//     MonomerToolTestFixture fix;
-//     fix.setNucleicAcidTool(NucleicAcidTool::R);
+BOOST_AUTO_TEST_CASE(test_nucleic_acid_sugar_drag_empty_to_empty_ignored)
+{
+    MonomerToolTestFixture fix;
+    fix.setNucleicAcidTool(NucleicAcidTool::R);
 
-//     auto start_pos = emptySpacePos();
-//     auto end_pos = start_pos + QPointF(100, 0);
+    auto start_pos = emptySpacePos();
+    auto end_pos = start_pos + QPointF(100, 0);
 
-//     // Drag from empty space to empty space with nucleic acid sugar tool
-//     simulateDrag(fix.scene.get(), start_pos, end_pos);
+    // Drag from empty space to empty space with nucleic acid sugar tool
+    fix.simulateDrag(start_pos, end_pos);
 
-//     // Drag should be ignored - no monomers added
-//     auto mol = fix.mol_model->getMol();
-//     BOOST_TEST(mol->getNumAtoms() == 0);
-// }
+    // Drag should be ignored - no monomers added
+    auto mol = fix.mol_model->getMol();
+    BOOST_TEST(mol->getNumAtoms() == 0);
+}
 
 } // namespace sketcher
 } // namespace schrodinger
