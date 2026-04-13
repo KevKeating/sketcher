@@ -253,10 +253,11 @@ SKETCHER_API int get_chain_num(const std::string_view chain_name,
                                const rdkit_extensions::ChainType chain_type);
 
 /**
- * @return the lowest numbered chain name that doesn't already exist in the
- * molecule.  For example, if a molecule already has "PEPTIDE1" and "PEPTIDE2"
- * chains, "PEPTIDE3" will be returned when ChainType::PEPTIDE is passed in.
- * Alternatively, "RNA1" would be returned if ChainType::RNA was passed in.
+ * @return the lowest numbered chain name (of the specified type) that doesn't
+ * already exist in the molecule. For example, if a molecule already has
+ * "PEPTIDE1" and "PEPTIDE2" chains, "PEPTIDE3" will be returned when
+ * ChainType::PEPTIDE is passed in. Alternatively, "RNA1" would be returned if
+ * ChainType::RNA was passed in.
  */
 SKETCHER_API std::string
 get_first_available_chain_name(const RDKit::ROMol& mol,

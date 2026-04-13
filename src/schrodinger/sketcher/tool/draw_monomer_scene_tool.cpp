@@ -17,7 +17,6 @@
 #include <rdkit/GraphMol/ROMol.h>
 #include <rdkit/GraphMol/RWMol.h>
 
-#include "schrodinger/rdkit_extensions/convert.h"
 #include "schrodinger/rdkit_extensions/helm.h"
 #include "schrodinger/rdkit_extensions/monomer_directions.h"
 #include "schrodinger/rdkit_extensions/monomer_mol.h"
@@ -58,7 +57,6 @@ struct HintFragmentMonomerInfo {
 
 constexpr int NEW_MONOMER_FROM_DRAG = -1;
 
-// TODO: hovering over a bond doesn't display attachment points any more
 DrawMonomerSceneTool::DrawMonomerSceneTool(
     const std::string& res_name, const rdkit_extensions::ChainType chain_type,
     const Fonts& fonts, Scene* scene, MolModel* mol_model) :
@@ -716,6 +714,7 @@ void DrawMonomerSceneTool::onLeftButtonClick(
     StandardSceneToolBase::onLeftButtonClick(event);
     QPointF scene_pos = event->scenePos();
     auto* item = getTopMonomerItemAt(scene_pos);
+
     if (item == nullptr) {
         // the click was on empty space, so create a new monomer here
         auto mol_pos = to_mol_xy(scene_pos);
