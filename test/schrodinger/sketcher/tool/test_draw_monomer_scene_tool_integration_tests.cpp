@@ -211,6 +211,12 @@ struct MonomerToolTestFixture {
         mouseMove(end, Qt::LeftButton);
         mouseRelease(end);
     }
+    
+    void confirmIsEmpty()
+    {
+        auto mol = mol_model->getMol();
+        BOOST_TEST(mol->getNumAtoms() == 0);
+    }
 };
 
 /**
@@ -297,10 +303,6 @@ BOOST_AUTO_TEST_CASE(test_click_attachment_point)
     fix.mouseClick(x_ap_pos);
     fix.verifyHELM("PEPTIDE1{C.A.F}|PEPTIDE2{W}$PEPTIDE1,PEPTIDE2,2:R3-1:R3$$$V2.0");
 }
-
-// ============================================================================
-// Drag Tests
-// ============================================================================
 
 /**
  * Confirm that click-and-drag from an existing monomer adds a new monomer using
@@ -420,7 +422,7 @@ BOOST_AUTO_TEST_CASE(test_drag_ap_to_ap_connects_via_both_aps)
     auto start_pos = fix.getAttachmentPointPos(0, "N");
     fix.mouseMove(start_pos);
     fix.mousePress(start_pos);
-    // fist, drag to the cysteine to make its attachment points appear
+    // first, drag to the cysteine to make its attachment points appear
     fix.mouseMove(cys_pos, Qt::LeftButton);
     auto end_pos = fix.getAttachmentPointPos(1, "N");
     fix.mouseMove(end_pos, Qt::LeftButton);
@@ -428,19 +430,47 @@ BOOST_AUTO_TEST_CASE(test_drag_ap_to_ap_connects_via_both_aps)
     fix.verifyHELM("PEPTIDE1{A}|PEPTIDE2{C}$PEPTIDE1,PEPTIDE2,1:R1-1:R1$$$V2.0");
 }
 
+/**
+ * Confirm that dragging from empty space to empty space with a peptide monomer
+ * creates a dimer with a backbone connection
+ */
 BOOST_AUTO_TEST_CASE(test_drag_empty_to_empty_adds_two_connected_default_aps)
 {
     MonomerToolTestFixture fix;
     fix.setAminoAcidTool(AminoAcidTool::ALA);
-
     auto start_pos = QPointF(100, 100);
     auto end_pos = start_pos + QPointF(100, 0);
-
-    // Drag from empty space to empty space
     fix.mouseDrag(start_pos, end_pos);
-
-    // Should create two connected monomers via default APs
     fix.verifyHELM("PEPTIDE1{A.A}$$$$V2.0");
+}
+
+/**
+ * Confirm that dragging from empty space to empty space with a nucleic acid
+ * base monomer creates two paired bases
+ */
+BOOST_AUTO_TEST_CASE(
+    test_nucleic_acid_base_drag_empty_to_empty_uses_pair_ap)
+{
+    MonomerToolTestFixture fix;
+    fix.setNucleicAcidTool(NucleicAcidTool::A);
+    auto start_pos = QPointF(100, 100);
+    auto end_pos = start_pos + QPointF(100, 0);
+    fix.mouseDrag(start_pos, end_pos);
+    fix.verifyHELM("RNA1{A}|RNA2{A}$RNA1,RNA2,1:pair-1:pair$$$V2.0");
+}
+
+/**
+ * Confirm that dragging from empty space to empty space with a nucleic acid
+ * phosphate monomer is ignored and doesn't create any monomers
+ */
+BOOST_AUTO_TEST_CASE(test_nucleic_acid_sugar_drag_empty_to_empty_ignored)
+{
+    MonomerToolTestFixture fix;
+    fix.setNucleicAcidTool(NucleicAcidTool::R);
+    auto start_pos = QPointF(100, 100);
+    auto end_pos = start_pos + QPointF(100, 0);
+    fix.mouseDrag(start_pos, end_pos);
+    fix.confirmIsEmpty();
 }
 
 // BOOST_AUTO_TEST_CASE(test_drag_empty_to_monomer_adds_connected_default_aps)
@@ -482,41 +512,6 @@ BOOST_AUTO_TEST_CASE(test_drag_empty_to_empty_adds_two_connected_default_aps)
 //                "PEPTIDE1{A.A}$PEPTIDE1,PEPTIDE1,2:R2-1:R1$$$V2.0");
 // }
 
-// // ============================================================================
-// // Nucleic Acid Special Cases
-// // ============================================================================
-
-BOOST_AUTO_TEST_CASE(
-    test_nucleic_acid_base_drag_empty_to_empty_uses_pair_ap)
-{
-    MonomerToolTestFixture fix;
-    fix.setNucleicAcidTool(NucleicAcidTool::A);
-
-    auto start_pos = QPointF(100, 100);
-    auto end_pos = start_pos + QPointF(100, 0);
-
-    // Drag from empty space to empty space with nucleic acid base tool
-    fix.mouseDrag(start_pos, end_pos);
-
-    // Should create two bases connected via "pair" attachment point
-    fix.verifyHELM("RNA1{A}|RNA2{A}$RNA1,RNA2,1:pair-1:pair$$$V2.0");
-}
-
-BOOST_AUTO_TEST_CASE(test_nucleic_acid_sugar_drag_empty_to_empty_ignored)
-{
-    MonomerToolTestFixture fix;
-    fix.setNucleicAcidTool(NucleicAcidTool::R);
-
-    auto start_pos = QPointF(100, 100);
-    auto end_pos = start_pos + QPointF(100, 0);
-
-    // Drag from empty space to empty space with nucleic acid sugar tool
-    fix.mouseDrag(start_pos, end_pos);
-
-    // Drag should be ignored - no monomers added
-    auto mol = fix.mol_model->getMol();
-    BOOST_TEST(mol->getNumAtoms() == 0);
-}
 
 } // namespace sketcher
 } // namespace schrodinger
