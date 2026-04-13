@@ -791,6 +791,9 @@ int get_chain_num(const std::string_view chain_name,
 {
     auto prefix = rdkit_extensions::toString(chain_type);
     auto first_num_char = prefix.size();
+    if (chain_name.substr(0, first_num_char) != prefix) {
+        return -1;
+    }
     auto chain_num_text = chain_name.substr(first_num_char);
     try {
         return std::stoi(std::string(chain_num_text));

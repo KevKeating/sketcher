@@ -380,11 +380,11 @@ BOOST_AUTO_TEST_CASE(test_get_first_available_chain_name)
     using rdkit_extensions::ChainType;
     
     
-    auto mol = rdkit_extensions::to_rdkit("PEPTIDE1{A}|PEPTIDE2{A}$$$$$V2.0");
+    auto mol = rdkit_extensions::to_rdkit("PEPTIDE1{A}|PEPTIDE2{A}$$$$V2.0");
     BOOST_TEST(get_first_available_chain_name(*mol, ChainType::PEPTIDE) == "PEPTIDE3");
     BOOST_TEST(get_first_available_chain_name(*mol, ChainType::RNA) == "RNA1");
 
-    mol = rdkit_extensions::to_rdkit("PEPTIDE1{A}|PEPTIDE3{A}$$$$$V2.0");
+    mol = rdkit_extensions::to_rdkit("PEPTIDE1{A}|PEPTIDE3{A}$$$$V2.0");
     BOOST_TEST(get_first_available_chain_name(*mol, ChainType::PEPTIDE) == "PEPTIDE2");
     BOOST_TEST(get_first_available_chain_name(*mol, ChainType::RNA) == "RNA1");
 
