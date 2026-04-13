@@ -32,10 +32,6 @@ namespace schrodinger
 namespace sketcher
 {
 
-// ============================================================================
-// Helper Functions
-// ============================================================================
-
 /**
  * Process all Qt events, includeing DeferredDelete events.
  */
@@ -53,47 +49,39 @@ void process_qt_events()
     }
 }
 
+/**
+ * Set both the scene and screen pos for an event
+ * @param event 
+ * @param pos 
+ */
 void set_event_pos(QGraphicsSceneMouseEvent& event, const QPointF& pos)
 {
     event.setScenePos(pos);
     event.setScreenPos(pos.toPoint());
 }
 
-// ============================================================================
-// Test Fixture
-// ============================================================================
-
 /**
  * Fixture that provides a clean Scene with MolModel and SketcherModel for
  * testing monomer drawing tools.
  */
 struct MonomerToolTestFixture {
-    std::shared_ptr<TestScene> scene;
-    MolModel* mol_model;
-    SketcherModel* sketcher_model;
+    std::shared_ptr<TestScene> m_scene;
+    MolModel* m_mol_model;
+    SketcherModel* m_sketcher_model;
 
     MonomerToolTestFixture()
     {
-        // Create a fresh scene for each test to avoid state leakage
-        auto undo_stack = new QUndoStack();
-        mol_model = new MolModel(undo_stack);
-        sketcher_model = new SketcherModel();
-        // TODO: use static function?
-        scene = std::make_shared<TestScene>(mol_model, sketcher_model);
-        undo_stack->setParent(mol_model);
-        mol_model->setParent(scene.get());
-        sketcher_model->setParent(scene.get());
-
-        // Set interface type to support monomeric structures
-        sketcher_model->setValue(ModelKey::INTERFACE_TYPE,
+        m_scene = TestScene::getScene();
+        m_mol_model = m_scene->m_mol_model;
+        m_sketcher_model = m_scene->m_sketcher_model;
+        m_sketcher_model->setValue(ModelKey::INTERFACE_TYPE,
                                 static_cast<int>(InterfaceType::ATOMISTIC_OR_MONOMERIC));
         process_qt_events();
-        setAminoAcidTool(AminoAcidTool::ALA); // Default tool
     }
 
     void setAminoAcidTool(AminoAcidTool tool)
     {
-        sketcher_model->setValues(
+        m_sketcher_model->setValues(
             {{ModelKey::DRAW_TOOL, QVariant::fromValue(DrawTool::MONOMER)},
              {ModelKey::MONOMER_TOOL_TYPE,
               QVariant::fromValue(MonomerToolType::AMINO_ACID)},
@@ -104,7 +92,7 @@ struct MonomerToolTestFixture {
 
     void setNucleicAcidTool(NucleicAcidTool tool)
     {
-        sketcher_model->setValues(
+        m_sketcher_model->setValues(
             {{ModelKey::DRAW_TOOL, QVariant::fromValue(DrawTool::MONOMER)},
              {ModelKey::MONOMER_TOOL_TYPE,
               QVariant::fromValue(MonomerToolType::NUCLEIC_ACID)},
@@ -114,19 +102,19 @@ struct MonomerToolTestFixture {
 
     void importMolText(const std::string& text)
     {
-        import_mol_text(mol_model, text);
+        import_mol_text(m_mol_model, text);
         process_qt_events();
     }
 
     void clearModel()
     {
-        mol_model->clear();
+        m_mol_model->clear();
         process_qt_events();
     }
     
     QPointF getMonomerPos(unsigned int monomer_idx)
     {
-        auto mol = mol_model->getMol();
+        auto mol = m_mol_model->getMol();
         BOOST_REQUIRE(mol);
         BOOST_REQUIRE(monomer_idx < mol->getNumAtoms());
         return to_scene_xy(mol->getConformer().getAtomPos(monomer_idx));
@@ -135,9 +123,9 @@ struct MonomerToolTestFixture {
     QPointF getAttachmentPointPos(unsigned int monomer_idx,
                               const std::string& ap_display_name)
     {
-        auto mol = mol_model->getMol();
+        auto mol = m_mol_model->getMol();
         auto monomer_pos = getMonomerPos(monomer_idx);
-        auto* monomer_item = scene->getTopInteractiveItemAt(monomer_pos,
+        auto* monomer_item = m_scene->getTopInteractiveItemAt(monomer_pos,
                                        InteractiveItemFlag::MONOMER);
         BOOST_REQUIRE(monomer_item != nullptr);
 
@@ -161,7 +149,7 @@ struct MonomerToolTestFixture {
     
     void verifyHELM(const std::string& expected)
     {
-        auto actual = get_mol_text(mol_model, rdkit_extensions::Format::HELM);
+        auto actual = get_mol_text(m_mol_model, rdkit_extensions::Format::HELM);
         BOOST_TEST(actual == expected);
     }
     
@@ -171,7 +159,7 @@ struct MonomerToolTestFixture {
         set_event_pos(event, pos);
         event.setButton(Qt::NoButton);
         event.setButtons(btns);
-        scene->mouseMoveEvent(&event);
+        m_scene->mouseMoveEvent(&event);
         process_qt_events();
     }
 
@@ -181,7 +169,7 @@ struct MonomerToolTestFixture {
         set_event_pos(event, pos);
         event.setButton(Qt::LeftButton);
         event.setButtons(Qt::LeftButton);
-        scene->mousePressEvent(&event);
+        m_scene->mousePressEvent(&event);
         process_qt_events();
     }
 
@@ -191,7 +179,7 @@ struct MonomerToolTestFixture {
         set_event_pos(event, pos);
         event.setButton(Qt::LeftButton);
         event.setButtons(Qt::NoButton);
-        scene->mouseReleaseEvent(&event);
+        m_scene->mouseReleaseEvent(&event);
         process_qt_events();
     }
     
@@ -212,7 +200,7 @@ struct MonomerToolTestFixture {
     
     void confirmIsEmpty()
     {
-        auto mol = mol_model->getMol();
+        auto mol = m_mol_model->getMol();
         BOOST_TEST(mol->getNumAtoms() == 0);
     }
 };
@@ -401,7 +389,7 @@ BOOST_AUTO_TEST_CASE(test_drag_monomer_to_monomer_connects_default_aps)
 {
     MonomerToolTestFixture fix;
     fix.setAminoAcidTool(AminoAcidTool::ALA);
-    import_mol_text(fix.mol_model, "PEPTIDE1{A}|PEPTIDE2{C}$$$$V2.0");
+    fix.importMolText("PEPTIDE1{A}|PEPTIDE2{C}$$$$V2.0");
     auto pos1 = fix.getMonomerPos(0);
     auto pos2 = fix.getMonomerPos(1);
     fix.mouseDrag(pos1, pos2);
@@ -417,7 +405,7 @@ BOOST_AUTO_TEST_CASE(test_drag_ap_to_ap_connects_via_both_aps)
 {
     MonomerToolTestFixture fix;
     fix.setAminoAcidTool(AminoAcidTool::ALA);
-    import_mol_text(fix.mol_model, "PEPTIDE1{A}|PEPTIDE2{C}$$$$V2.0");
+    fix.importMolText("PEPTIDE1{A}|PEPTIDE2{C}$$$$V2.0");
     auto ala_pos = fix.getMonomerPos(0);
     auto cys_pos = fix.getMonomerPos(1);
     fix.mouseMove(ala_pos);
@@ -483,7 +471,7 @@ BOOST_AUTO_TEST_CASE(test_nucleic_acid_sugar_drag_empty_to_empty_ignored)
 BOOST_AUTO_TEST_CASE(test_drag_empty_to_monomer_adds_connected_default_aps)
 {
     MonomerToolTestFixture fix;
-    import_mol_text(fix.mol_model, "PEPTIDE1{C}$$$$V2.0");
+    fix.importMolText("PEPTIDE1{C}$$$$V2.0");
     fix.setAminoAcidTool(AminoAcidTool::ALA);
     auto start_pos = QPointF(100, 100);
     auto end_pos = fix.getMonomerPos(0);
@@ -499,7 +487,7 @@ BOOST_AUTO_TEST_CASE(test_drag_empty_to_monomer_adds_connected_default_aps)
 BOOST_AUTO_TEST_CASE(test_drag_empty_to_ap_adds_connected_correct_aps)
 {
     MonomerToolTestFixture fix;
-    import_mol_text(fix.mol_model, "PEPTIDE1{C}$$$$V2.0");
+    fix.importMolText("PEPTIDE1{C}$$$$V2.0");
     fix.setAminoAcidTool(AminoAcidTool::ALA);
     auto start_pos = QPointF(100, 100);
     auto monomer_pos = fix.getMonomerPos(0);
