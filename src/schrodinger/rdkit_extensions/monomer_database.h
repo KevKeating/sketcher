@@ -11,12 +11,17 @@
 
 #include <boost/noncopyable.hpp>
 #include <boost/filesystem/path.hpp>
-#include <rdkit/GraphMol/ROMol.h>
+#include <boost/shared_ptr.hpp>
 
 struct sqlite3;
 
 inline constexpr std::string_view CUSTOM_MONOMER_DB_PATH_ENV_VAR =
     "SCHRODINGER_CUSTOM_MONOMER_DB_PATH";
+
+namespace RDKit
+{
+class RWMol;
+}
 
 namespace schrodinger
 {
@@ -43,9 +48,6 @@ struct RDKIT_EXTENSIONS_API MonomerInfo {
     size_t getHash() const;
     bool areRequiredFieldsPopulated() const;
 };
-
-inline constexpr unsigned int NO_ATTACHMENT =
-    std::numeric_limits<unsigned int>::max();
 
 struct RDKIT_EXTENSIONS_API ResidueQuery {
     /// Query molecule
