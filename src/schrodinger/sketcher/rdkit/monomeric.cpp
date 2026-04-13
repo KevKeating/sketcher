@@ -786,7 +786,8 @@ void merge_chains(RDKit::ROMol& mol, const std::string_view merge_from,
     }
 }
 
-int get_chain_num(const std::string_view chain_name, const rdkit_extensions::ChainType chain_type)
+int get_chain_num(const std::string_view chain_name,
+                  const rdkit_extensions::ChainType chain_type)
 {
     auto prefix = rdkit_extensions::toString(chain_type);
     auto first_num_char = prefix.size();
@@ -800,7 +801,9 @@ int get_chain_num(const std::string_view chain_name, const rdkit_extensions::Cha
     }
 }
 
-std::string get_first_available_chain_name(const RDKit::ROMol& mol, const rdkit_extensions::ChainType chain_type)
+std::string
+get_first_available_chain_name(const RDKit::ROMol& mol,
+                               const rdkit_extensions::ChainType chain_type)
 {
     auto prefix = rdkit_extensions::toString(chain_type);
     std::unordered_set<int> chain_nums;

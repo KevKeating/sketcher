@@ -243,7 +243,8 @@ SKETCHER_API void merge_chains(RDKit::ROMol& mol,
                                const std::string_view merge_from,
                                const std::string& merge_to);
 
-SKETCHER_API int get_chain_num(const std::string_view chain_name, const rdkit_extensions::ChainType chain_type);
+SKETCHER_API int get_chain_num(const std::string_view chain_name,
+                               const rdkit_extensions::ChainType chain_type);
 
 SKETCHER_API std::string
 get_first_available_chain_name(const RDKit::ROMol& mol,

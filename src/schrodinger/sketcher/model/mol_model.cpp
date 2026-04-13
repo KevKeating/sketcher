@@ -826,11 +826,12 @@ void MolModel::addBoundMonomer(const std::string_view res_name,
     }
     bool is_custom_bond =
         get_is_custom_bond(res_name, chain_type, bound_to_monomer, linkage);
-        
+
     std::string chain_id;
     int res_num;
     if (!is_custom_bond) {
-        // if this is a standard backbone connection, put the new monomer in the same chain as bound_to_monomer
+        // if this is a standard backbone connection, put the new monomer in the
+        // same chain as bound_to_monomer
         chain_id = rdkit_extensions::get_polymer_id(bound_to_monomer);
         res_num = get_residue_number_for_new_monomer(
             res_name, chain_type, new_monomer_ap_name, bound_to_monomer);
@@ -839,10 +840,8 @@ void MolModel::addBoundMonomer(const std::string_view res_name,
         chain_id = get_first_available_chain_name(m_mol, chain_type);
         res_num = 1;
     }
-    
-    auto create_atom = std::bind(create_monomer, res_name, chain_id, res_num);
 
-    
+    auto create_atom = std::bind(create_monomer, res_name, chain_id, res_num);
 
     auto cmd_func = [this, create_atom, coords, bond_start_idx, bond_end_idx,
                      linkage, is_custom_bond]() {

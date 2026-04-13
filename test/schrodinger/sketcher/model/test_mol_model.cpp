@@ -71,8 +71,8 @@ static auto no_r_group_num = std::nullopt;
 BOOST_TEST_DONT_PRINT_LOG_VALUE(r_group_num_t);
 BOOST_TEST_DONT_PRINT_LOG_VALUE(decltype(no_r_group_num));
 
-using schrodinger::rdkit_extensions::Format;
 using schrodinger::rdkit_extensions::ChainType;
+using schrodinger::rdkit_extensions::Format;
 
 namespace schrodinger
 {
@@ -4543,20 +4543,25 @@ BOOST_AUTO_TEST_CASE(test_addBoundMonomer_N_terminus)
     BOOST_TEST(helm == "PEPTIDE1{A}$$$$V2.0");
 
     auto ala_monomer = model.getMol()->getAtomWithIdx(0);
-    model.addBoundMonomer("C", ChainType::PEPTIDE, {-50.0, 0.0, 0.0}, "R2", ala_monomer, "R1");
+    model.addBoundMonomer("C", ChainType::PEPTIDE, {-50.0, 0.0, 0.0}, "R2",
+                          ala_monomer, "R1");
     helm = get_mol_text(&model, Format::HELM);
     BOOST_TEST(helm == "PEPTIDE1{C.A}$$$$V2.0");
 
     auto cys_monomer = model.getMol()->getAtomWithIdx(1);
-    model.addBoundMonomer("F", ChainType::PEPTIDE, {-100.0, 0.0, 0.0}, "R2", cys_monomer, "R1");
+    model.addBoundMonomer("F", ChainType::PEPTIDE, {-100.0, 0.0, 0.0}, "R2",
+                          cys_monomer, "R1");
     helm = get_mol_text(&model, Format::HELM);
     BOOST_TEST(helm == "PEPTIDE1{F.C.A}$$$$V2.0");
 
     // now add the side chain interaction
     ala_monomer = model.getMol()->getAtomWithIdx(0);
-    model.addBoundMonomer("W", ChainType::PEPTIDE, {-100.0, 0.0, 0.0}, "R3", ala_monomer, "R3");
+    model.addBoundMonomer("W", ChainType::PEPTIDE, {-100.0, 0.0, 0.0}, "R3",
+                          ala_monomer, "R3");
     helm = get_mol_text(&model, Format::HELM);
-    BOOST_TEST(helm == "PEPTIDE1{F.C.A}|PEPTIDE2{W}$PEPTIDE1,PEPTIDE2,3:R3-1:R3$$$V2.0");
+    BOOST_TEST(
+        helm ==
+        "PEPTIDE1{F.C.A}|PEPTIDE2{W}$PEPTIDE1,PEPTIDE2,3:R3-1:R3$$$V2.0");
 }
 
 /**

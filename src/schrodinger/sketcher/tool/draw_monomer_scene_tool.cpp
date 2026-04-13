@@ -751,7 +751,6 @@ void DrawMonomerSceneTool::onLeftButtonClick(
             m_mol_model->mutateMonomers({monomer}, m_res_name, m_monomer_type);
         }
     }
-    // std::cout << rdkit_extensions::to_string(*m_mol_model->getMolForExport(), rdkit_extensions::Format::HELM) << "\n";
 }
 
 void DrawMonomerSceneTool::onLeftButtonDragStart(

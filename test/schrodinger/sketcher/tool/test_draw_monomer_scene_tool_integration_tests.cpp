@@ -51,8 +51,6 @@ void process_qt_events()
 
 /**
  * Set both the scene and screen pos for an event
- * @param event 
- * @param pos 
  */
 void set_event_pos(QGraphicsSceneMouseEvent& event, const QPointF& pos)
 {
@@ -74,8 +72,9 @@ struct MonomerToolTestFixture {
         m_scene = TestScene::getScene();
         m_mol_model = m_scene->m_mol_model;
         m_sketcher_model = m_scene->m_sketcher_model;
-        m_sketcher_model->setValue(ModelKey::INTERFACE_TYPE,
-                                static_cast<int>(InterfaceType::ATOMISTIC_OR_MONOMERIC));
+        m_sketcher_model->setValue(
+            ModelKey::INTERFACE_TYPE,
+            static_cast<int>(InterfaceType::ATOMISTIC_OR_MONOMERIC));
         process_qt_events();
     }
 
@@ -115,38 +114,40 @@ struct MonomerToolTestFixture {
     }
 
     QPointF getAttachmentPointPos(unsigned int monomer_idx,
-                              const std::string& ap_display_name)
+                                  const std::string& ap_display_name)
     {
         auto mol = m_mol_model->getMol();
         auto monomer_pos = getMonomerPos(monomer_idx);
-        auto* monomer_item = m_scene->getTopInteractiveItemAt(monomer_pos,
-                                       InteractiveItemFlag::MONOMER);
+        auto* monomer_item = m_scene->getTopInteractiveItemAt(
+            monomer_pos, InteractiveItemFlag::MONOMER);
         BOOST_REQUIRE(monomer_item != nullptr);
 
         // Search through child items to find the attachment point
         for (auto* child : monomer_item->childItems()) {
             auto* ap_item =
-                    qgraphicsitem_cast<UnboundMonomericAttachmentPointItem*>(
-                        child);
+                qgraphicsitem_cast<UnboundMonomericAttachmentPointItem*>(child);
             if (ap_item) {
                 auto ap = ap_item->getAttachmentPoint();
                 if (ap.display_name == ap_display_name) {
                     auto offset_vec = direction_to_qt_vector(ap.direction);
-                    auto offset_dist = UNBOUND_AP_LINE_LENGTH - 1 + STANDARD_AA_BORDER_WIDTH / 2;
+                    auto offset_dist = UNBOUND_AP_LINE_LENGTH - 1 +
+                                       STANDARD_AA_BORDER_WIDTH / 2;
                     return monomer_pos + offset_dist * offset_vec;
                 }
             }
         }
-        throw std::runtime_error("Attachment point " + ap_display_name + " not found");
+        throw std::runtime_error("Attachment point " + ap_display_name +
+                                 " not found");
     }
-    
+
     void verifyHELM(const std::string& expected)
     {
         auto actual = get_mol_text(m_mol_model, rdkit_extensions::Format::HELM);
         BOOST_TEST(actual == expected);
     }
-    
-    void mouseMove(const QPointF& pos, const Qt::MouseButtons btns = Qt::NoButton)
+
+    void mouseMove(const QPointF& pos,
+                   const Qt::MouseButtons btns = Qt::NoButton)
     {
         QGraphicsSceneMouseEvent event(QEvent::GraphicsSceneMouseMove);
         set_event_pos(event, pos);
@@ -175,14 +176,14 @@ struct MonomerToolTestFixture {
         m_scene->mouseReleaseEvent(&event);
         process_qt_events();
     }
-    
+
     void mouseClick(const QPointF& pos)
     {
         mouseMove(pos);
         mousePress(pos);
         mouseRelease(pos);
     }
-    
+
     void mouseDrag(const QPointF& start, const QPointF& end)
     {
         mouseMove(start);
@@ -190,7 +191,7 @@ struct MonomerToolTestFixture {
         mouseMove(end, Qt::LeftButton);
         mouseRelease(end);
     }
-    
+
     void confirmIsEmpty()
     {
         auto mol = m_mol_model->getMol();
@@ -259,7 +260,7 @@ BOOST_AUTO_TEST_CASE(test_click_existing_monomer_different_monomer_type)
 BOOST_AUTO_TEST_CASE(test_click_attachment_point)
 {
     MonomerToolTestFixture fix;
-    fix.importMolText( "PEPTIDE1{A}$$$$V2.0");
+    fix.importMolText("PEPTIDE1{A}$$$$V2.0");
     auto monomer_pos = fix.getMonomerPos(0);
     fix.setAminoAcidTool(AminoAcidTool::CYS);
     // hover over the monomer to trigger AP label creation
@@ -284,7 +285,8 @@ BOOST_AUTO_TEST_CASE(test_click_attachment_point)
     fix.mouseMove(monomer_pos);
     auto x_ap_pos = fix.getAttachmentPointPos(0, "X");
     fix.mouseClick(x_ap_pos);
-    fix.verifyHELM("PEPTIDE1{C.A.F}|PEPTIDE2{W}$PEPTIDE1,PEPTIDE2,2:R3-1:R3$$$V2.0");
+    fix.verifyHELM(
+        "PEPTIDE1{C.A.F}|PEPTIDE2{W}$PEPTIDE1,PEPTIDE2,2:R3-1:R3$$$V2.0");
 }
 
 /**
@@ -310,7 +312,8 @@ BOOST_AUTO_TEST_CASE(test_drag_monomer_to_empty_adds_connected_default_ap)
  * the default attachment point, even when the monomer tool is equivalent to the
  * existing monomer (e.g. ALA tool on an A monomer).
  */
-BOOST_AUTO_TEST_CASE(test_drag_monomer_to_empty_adds_connected_default_ap_same_monomer)
+BOOST_AUTO_TEST_CASE(
+    test_drag_monomer_to_empty_adds_connected_default_ap_same_monomer)
 {
     MonomerToolTestFixture fix;
     fix.importMolText("PEPTIDE1{A}$$$$V2.0");
@@ -336,7 +339,7 @@ BOOST_AUTO_TEST_CASE(test_drag_ap_to_empty_adds_connected_via_dragged_ap)
 
     // Add initial monomer
     fix.importMolText("PEPTIDE1{A}$$$$V2.0");
-    
+
     // hover over the monomer so that the attachment point graphics items are
     // created
     auto ala_pos = fix.getMonomerPos(0);
@@ -371,7 +374,8 @@ BOOST_AUTO_TEST_CASE(test_drag_ap_to_empty_adds_connected_via_dragged_ap)
     end_pos = start_pos + QPointF(-50, 100);
     fix.mouseDrag(start_pos, end_pos);
 
-    fix.verifyHELM("PEPTIDE1{C.A.F}|PEPTIDE2{A}$PEPTIDE1,PEPTIDE2,2:R3-1:R3$$$V2.0");
+    fix.verifyHELM(
+        "PEPTIDE1{C.A.F}|PEPTIDE2{A}$PEPTIDE1,PEPTIDE2,2:R3-1:R3$$$V2.0");
 }
 
 /**
@@ -410,7 +414,8 @@ BOOST_AUTO_TEST_CASE(test_drag_ap_to_ap_connects_via_both_aps)
     auto end_pos = fix.getAttachmentPointPos(1, "N");
     fix.mouseMove(end_pos, Qt::LeftButton);
     fix.mouseRelease(end_pos);
-    fix.verifyHELM("PEPTIDE1{A}|PEPTIDE2{C}$PEPTIDE1,PEPTIDE2,1:R1-1:R1$$$V2.0");
+    fix.verifyHELM(
+        "PEPTIDE1{A}|PEPTIDE2{C}$PEPTIDE1,PEPTIDE2,1:R1-1:R1$$$V2.0");
 }
 
 /**
@@ -431,8 +436,7 @@ BOOST_AUTO_TEST_CASE(test_drag_empty_to_empty_adds_two_connected_default_aps)
  * Confirm that dragging from empty space to empty space with a nucleic acid
  * base monomer creates two paired bases
  */
-BOOST_AUTO_TEST_CASE(
-    test_nucleic_acid_base_drag_empty_to_empty_uses_pair_ap)
+BOOST_AUTO_TEST_CASE(test_nucleic_acid_base_drag_empty_to_empty_uses_pair_ap)
 {
     MonomerToolTestFixture fix;
     fix.setNucleicAcidTool(NucleicAcidTool::A);
@@ -491,9 +495,9 @@ BOOST_AUTO_TEST_CASE(test_drag_empty_to_ap_adds_connected_correct_aps)
     auto end_pos = fix.getAttachmentPointPos(0, "X");
     fix.mouseMove(end_pos);
     fix.mouseRelease(end_pos);
-    fix.verifyHELM("PEPTIDE1{C}|PEPTIDE2{A}$PEPTIDE1,PEPTIDE2,1:R3-1:R2$$$V2.0");
+    fix.verifyHELM(
+        "PEPTIDE1{C}|PEPTIDE2{A}$PEPTIDE1,PEPTIDE2,1:R3-1:R2$$$V2.0");
 }
-
 
 } // namespace sketcher
 } // namespace schrodinger
