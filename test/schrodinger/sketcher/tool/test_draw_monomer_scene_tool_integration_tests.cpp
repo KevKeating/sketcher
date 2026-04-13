@@ -106,12 +106,6 @@ struct MonomerToolTestFixture {
         process_qt_events();
     }
 
-    void clearModel()
-    {
-        m_mol_model->clear();
-        process_qt_events();
-    }
-    
     QPointF getMonomerPos(unsigned int monomer_idx)
     {
         auto mol = m_mol_model->getMol();
@@ -143,7 +137,6 @@ struct MonomerToolTestFixture {
                 }
             }
         }
-
         throw std::runtime_error("Attachment point " + ap_display_name + " not found");
     }
     
