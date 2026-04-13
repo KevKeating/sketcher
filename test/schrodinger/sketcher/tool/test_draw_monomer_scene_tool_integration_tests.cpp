@@ -37,11 +37,9 @@ namespace sketcher
 // ============================================================================
 
 /**
- * Process Qt events to ensure all deferred operations complete.
- * Critical for proper test execution - without this, events may not be
- * processed and tests will fail intermittently.
+ * Process all Qt events, includeing DeferredDelete events.
  */
-void processQtEvents()
+void process_qt_events()
 {
     // call processEvents multiple times in case an any current events put new
     // events on the queue (e.g. starting a timer with a timeout of 0)
@@ -53,22 +51,6 @@ void processQtEvents()
         // processes everything *other than* DeferredDeletes.)
         QApplication::sendPostedEvents(nullptr, QEvent::DeferredDelete);
     }
-}
-
-// TODO: all of these functions could be methods on the fixture
-
-/**
- * Simulate a mouse drag from start to end position.
- */
-
-
-// TODO: get rid of this
-/**
- * Return an arbitrary position in empty space.
- */
-QPointF emptySpacePos()
-{
-    return QPointF(100, 100);
 }
 
 void set_event_pos(QGraphicsSceneMouseEvent& event, const QPointF& pos)
@@ -105,7 +87,7 @@ struct MonomerToolTestFixture {
         // Set interface type to support monomeric structures
         sketcher_model->setValue(ModelKey::INTERFACE_TYPE,
                                 static_cast<int>(InterfaceType::ATOMISTIC_OR_MONOMERIC));
-        processQtEvents();
+        process_qt_events();
         setAminoAcidTool(AminoAcidTool::ALA); // Default tool
     }
 
@@ -117,7 +99,7 @@ struct MonomerToolTestFixture {
               QVariant::fromValue(MonomerToolType::AMINO_ACID)},
              {ModelKey::AMINO_ACID_TOOL, QVariant::fromValue(tool)},
              {ModelKey::AMINO_ACID_SYMBOL, QString("")}});
-        processQtEvents();
+        process_qt_events();
     }
 
     void setNucleicAcidTool(NucleicAcidTool tool)
@@ -127,19 +109,19 @@ struct MonomerToolTestFixture {
              {ModelKey::MONOMER_TOOL_TYPE,
               QVariant::fromValue(MonomerToolType::NUCLEIC_ACID)},
              {ModelKey::NUCLEIC_ACID_TOOL, QVariant::fromValue(tool)}});
-        processQtEvents();
+        process_qt_events();
     }
 
     void importMolText(const std::string& text)
     {
         import_mol_text(mol_model, text);
-        processQtEvents();
+        process_qt_events();
     }
 
     void clearModel()
     {
         mol_model->clear();
-        processQtEvents();
+        process_qt_events();
     }
     
     QPointF getMonomerPos(unsigned int monomer_idx)
@@ -192,7 +174,7 @@ struct MonomerToolTestFixture {
         event.setButton(Qt::NoButton);
         event.setButtons(btns);
         scene->mouseMoveEvent(&event);
-        processQtEvents();
+        process_qt_events();
     }
 
     void mousePress(const QPointF& pos)
@@ -202,7 +184,7 @@ struct MonomerToolTestFixture {
         event.setButton(Qt::LeftButton);
         event.setButtons(Qt::LeftButton);
         scene->mousePressEvent(&event);
-        processQtEvents();
+        process_qt_events();
     }
 
     void mouseRelease(const QPointF& pos)
@@ -212,7 +194,7 @@ struct MonomerToolTestFixture {
         event.setButton(Qt::LeftButton);
         event.setButtons(Qt::NoButton);
         scene->mouseReleaseEvent(&event);
-        processQtEvents();
+        process_qt_events();
     }
     
     void mouseClick(const QPointF& pos)
@@ -451,7 +433,7 @@ BOOST_AUTO_TEST_CASE(test_drag_empty_to_empty_adds_two_connected_default_aps)
     MonomerToolTestFixture fix;
     fix.setAminoAcidTool(AminoAcidTool::ALA);
 
-    auto start_pos = emptySpacePos();
+    auto start_pos = QPointF(100, 100);
     auto end_pos = start_pos + QPointF(100, 0);
 
     // Drag from empty space to empty space
@@ -470,7 +452,7 @@ BOOST_AUTO_TEST_CASE(test_drag_empty_to_empty_adds_two_connected_default_aps)
 //     import_mol_text(fix.mol_model, "PEPTIDE1{A}$$$$V2.0");
 //     auto existing_pos = getMonomerPos(fix.mol_model, 0);
 
-//     auto start_pos = emptySpacePos();
+//     auto start_pos = QPointF(100, 100);
 
 //     // Drag from empty space to existing monomer
 //     mouseDrag(fix.scene.get(), start_pos, existing_pos);
@@ -487,7 +469,7 @@ BOOST_AUTO_TEST_CASE(test_drag_empty_to_empty_adds_two_connected_default_aps)
 //     // Add existing monomer
 //     import_mol_text(fix.mol_model, "PEPTIDE1{A}$$$$V2.0");
 
-//     auto start_pos = emptySpacePos();
+//     auto start_pos = QPointF(100, 100);
 //     auto end_pos =
 //         getAttachmentPointPos(fix.scene.get(), fix.mol_model, 0, "R1");
 
@@ -510,7 +492,7 @@ BOOST_AUTO_TEST_CASE(
     MonomerToolTestFixture fix;
     fix.setNucleicAcidTool(NucleicAcidTool::A);
 
-    auto start_pos = emptySpacePos();
+    auto start_pos = QPointF(100, 100);
     auto end_pos = start_pos + QPointF(100, 0);
 
     // Drag from empty space to empty space with nucleic acid base tool
@@ -525,7 +507,7 @@ BOOST_AUTO_TEST_CASE(test_nucleic_acid_sugar_drag_empty_to_empty_ignored)
     MonomerToolTestFixture fix;
     fix.setNucleicAcidTool(NucleicAcidTool::R);
 
-    auto start_pos = emptySpacePos();
+    auto start_pos = QPointF(100, 100);
     auto end_pos = start_pos + QPointF(100, 0);
 
     // Drag from empty space to empty space with nucleic acid sugar tool
