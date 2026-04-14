@@ -27,6 +27,11 @@ namespace bdata = boost::unit_test::data;
 
 BOOST_GLOBAL_FIXTURE(QApplicationRequiredFixture);
 
+Q_DECLARE_METATYPE(schrodinger::sketcher::AminoAcidTool);
+Q_DECLARE_METATYPE(schrodinger::sketcher::DrawTool);
+Q_DECLARE_METATYPE(schrodinger::sketcher::MonomerToolType);
+Q_DECLARE_METATYPE(schrodinger::sketcher::NucleicAcidTool);
+
 namespace schrodinger
 {
 namespace sketcher
