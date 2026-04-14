@@ -221,7 +221,8 @@ BOOST_AUTO_TEST_CASE(test_click_empty_space_adds_monomer)
 }
 
 // /**
-//  * Confirm that clicking on an existing monomer with the equivalent monomer tool
+//  * Confirm that clicking on an existing monomer with the equivalent monomer
+//  tool
 //  * adds a new monomer via the default attachment point.
 //  */
 // BOOST_AUTO_TEST_CASE(test_click_existing_monomer_same_residue_adds_residue)
@@ -235,7 +236,8 @@ BOOST_AUTO_TEST_CASE(test_click_empty_space_adds_monomer)
 // }
 
 // /**
-//  * Confirm that clicking on an existing monomer with a different monomer tool of
+//  * Confirm that clicking on an existing monomer with a different monomer tool
+//  of
 //  * the same monomer type mutates the monomer.
 //  */
 // BOOST_AUTO_TEST_CASE(test_click_existing_monomer_different_residue_mutates)
@@ -264,7 +266,8 @@ BOOST_AUTO_TEST_CASE(test_click_empty_space_adds_monomer)
 // }
 
 // /**
-//  * Confirm that clicking on an unbounnd attachment point of an existing monomer
+//  * Confirm that clicking on an unbounnd attachment point of an existing
+//  monomer
 //  * adds a new monomer via the clicked attachment point.
 //  */
 // BOOST_AUTO_TEST_CASE(test_click_attachment_point)
@@ -300,7 +303,8 @@ BOOST_AUTO_TEST_CASE(test_click_empty_space_adds_monomer)
 // }
 
 // /**
-//  * Confirm that click-and-drag from an existing monomer adds a new monomer using
+//  * Confirm that click-and-drag from an existing monomer adds a new monomer
+//  using
 //  * the default attachment point
 //  */
 // BOOST_AUTO_TEST_CASE(test_drag_monomer_to_empty_adds_connected_default_ap)
@@ -318,8 +322,10 @@ BOOST_AUTO_TEST_CASE(test_click_empty_space_adds_monomer)
 // }
 
 // /**
-//  * Confirm that click-and-drag from an existing monomer adds a new monomer using
-//  * the default attachment point, even when the monomer tool is equivalent to the
+//  * Confirm that click-and-drag from an existing monomer adds a new monomer
+//  using
+//  * the default attachment point, even when the monomer tool is equivalent to
+//  the
 //  * existing monomer (e.g. ALA tool on an A monomer).
 //  */
 // BOOST_AUTO_TEST_CASE(
@@ -338,8 +344,10 @@ BOOST_AUTO_TEST_CASE(test_click_empty_space_adds_monomer)
 // }
 
 // /**
-//  * Confirm that click-and-drag from the attachment point of an existing monomer
-//  * to empty space adds a new monomer via the specified attachment point of the
+//  * Confirm that click-and-drag from the attachment point of an existing
+//  monomer
+//  * to empty space adds a new monomer via the specified attachment point of
+//  the
 //  * existing monomer
 //  */
 // BOOST_AUTO_TEST_CASE(test_drag_ap_to_empty_adds_connected_via_dragged_ap)
@@ -362,7 +370,8 @@ BOOST_AUTO_TEST_CASE(test_click_empty_space_adds_monomer)
 
 //     fix.verifyHELM("PEPTIDE1{C.A}$$$$V2.0");
 
-//     // hover over the first monomer so that its attachment point graphics items
+//     // hover over the first monomer so that its attachment point graphics
+//     items
 //     // are created again
 //     fix.setAminoAcidTool(AminoAcidTool::PHE);
 //     fix.mouseMove(ala_pos);
@@ -374,7 +383,8 @@ BOOST_AUTO_TEST_CASE(test_click_empty_space_adds_monomer)
 
 //     fix.verifyHELM("PEPTIDE1{C.A.F}$$$$V2.0");
 
-//     // hover over the first monomer so that its attachment point graphics items
+//     // hover over the first monomer so that its attachment point graphics
+//     items
 //     // are created again
 //     fix.setAminoAcidTool(AminoAcidTool::ALA);
 //     fix.mouseMove(ala_pos);
@@ -389,7 +399,8 @@ BOOST_AUTO_TEST_CASE(test_click_empty_space_adds_monomer)
 // }
 
 // /**
-//  * Confirm that click-and-drag from an existing monomer to an existing monomer
+//  * Confirm that click-and-drag from an existing monomer to an existing
+//  monomer
 //  * connects them via the default attachment points
 //  */
 // BOOST_AUTO_TEST_CASE(test_drag_monomer_to_monomer_connects_default_aps)
@@ -404,8 +415,10 @@ BOOST_AUTO_TEST_CASE(test_click_empty_space_adds_monomer)
 // }
 
 // /**
-//  * Confirm that click-and-drag from the attachment point of one existing monomer
-//  * to the attachment point of another existing monomer connects the monomer via
+//  * Confirm that click-and-drag from the attachment point of one existing
+//  monomer
+//  * to the attachment point of another existing monomer connects the monomer
+//  via
 //  * the specified attachment points.
 //  */
 // BOOST_AUTO_TEST_CASE(test_drag_ap_to_ap_connects_via_both_aps)
@@ -429,7 +442,8 @@ BOOST_AUTO_TEST_CASE(test_click_empty_space_adds_monomer)
 // }
 
 // /**
-//  * Confirm that dragging from empty space to empty space with a peptide monomer
+//  * Confirm that dragging from empty space to empty space with a peptide
+//  monomer
 //  * creates a dimer with a backbone connection
 //  */
 // BOOST_AUTO_TEST_CASE(test_drag_empty_to_empty_adds_two_connected_default_aps)
@@ -471,7 +485,8 @@ BOOST_AUTO_TEST_CASE(test_click_empty_space_adds_monomer)
 // }
 
 // /**
-//  * Confirm that dragging from empty space to an existing monomer creates a new
+//  * Confirm that dragging from empty space to an existing monomer creates a
+//  new
 //  * monomer and connects it to the default attachment point of the existing
 //  * monomer
 //  */
@@ -487,7 +502,8 @@ BOOST_AUTO_TEST_CASE(test_click_empty_space_adds_monomer)
 // }
 
 // /**
-//  * Confirm that dragging from empty space to an existing monomer creates a new
+//  * Confirm that dragging from empty space to an existing monomer creates a
+//  new
 //  * monomer and connects it to the specified attachment point of the existing
 //  * monomer
 //  */
@@ -500,10 +516,9 @@ BOOST_AUTO_TEST_CASE(test_click_empty_space_adds_monomer)
 //     auto monomer_pos = fix.getMonomerPos(0);
 //     fix.mouseMove(start_pos);
 //     fix.mousePress(start_pos);
-//     // first, drag to the existing monomer to make its attachment points appear
-//     fix.mouseMove(monomer_pos);
-//     auto end_pos = fix.getAttachmentPointPos(0, "X");
-//     fix.mouseMove(end_pos);
+//     // first, drag to the existing monomer to make its attachment points
+//     appear fix.mouseMove(monomer_pos); auto end_pos =
+//     fix.getAttachmentPointPos(0, "X"); fix.mouseMove(end_pos);
 //     fix.mouseRelease(end_pos);
 //     fix.verifyHELM(
 //         "PEPTIDE1{C}|PEPTIDE2{A}$PEPTIDE1,PEPTIDE2,1:R3-1:R2$$$V2.0");
