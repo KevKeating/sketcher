@@ -604,8 +604,10 @@ void DrawMonomerSceneTool::createHintFragmentItem(
     frag->setProp(HELM_MODEL, true);
 
     // create the two monomers
-    auto first_idx = frag->addAtom(monomer_one_info.monomer.release(), true, true);
-    auto second_idx = frag->addAtom(monomer_two_info.monomer.release(), true, true);
+    auto first_idx =
+        frag->addAtom(monomer_one_info.monomer.release(), true, true);
+    auto second_idx =
+        frag->addAtom(monomer_two_info.monomer.release(), true, true);
 
     // create the connection between them
     auto linkage = fmt::format("{}-{}", monomer_one_info.ap_model_name,
@@ -673,8 +675,8 @@ HintFragmentMonomerInfo DrawMonomerSceneTool::
     auto copy_of_monomer = std::make_unique<RDKit::Atom>(*monomer);
     auto monomer_pos = get_coords_for_monomer(monomer);
     auto monomer_idx = static_cast<int>(monomer->getIdx());
-    return HintFragmentMonomerInfo{std::move(copy_of_monomer), monomer_type, monomer_pos,
-                                   ap_model_name, monomer_idx};
+    return HintFragmentMonomerInfo{std::move(copy_of_monomer), monomer_type,
+                                   monomer_pos, ap_model_name, monomer_idx};
 }
 
 HintFragmentMonomerInfo DrawMonomerSceneTool::
