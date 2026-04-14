@@ -44,7 +44,7 @@ using rdkit_extensions::Direction;
  * click-and-drags from a monomer)
  */
 struct HintFragmentMonomerInfo {
-    RDKit::Atom* monomer;
+    std::unique_ptr<RDKit::Atom> monomer;
     MonomerType monomer_type;
     RDGeom::Point3D pos;
     // the model name of this monomer's attachment point that's connected to the
@@ -597,15 +597,15 @@ void DrawMonomerSceneTool::drawBoundMonomerHintFor(
 }
 
 void DrawMonomerSceneTool::createHintFragmentItem(
-    const HintFragmentMonomerInfo& monomer_one_info,
-    const HintFragmentMonomerInfo& monomer_two_info)
+    HintFragmentMonomerInfo& monomer_one_info,
+    HintFragmentMonomerInfo& monomer_two_info)
 {
     auto frag = std::make_shared<RDKit::RWMol>();
     frag->setProp(HELM_MODEL, true);
 
     // create the two monomers
-    auto first_idx = frag->addAtom(monomer_one_info.monomer, true, true);
-    auto second_idx = frag->addAtom(monomer_two_info.monomer, true, true);
+    auto first_idx = frag->addAtom(monomer_one_info.monomer.release(), true, true);
+    auto second_idx = frag->addAtom(monomer_two_info.monomer.release(), true, true);
 
     // create the connection between them
     auto linkage = fmt::format("{}-{}", monomer_one_info.ap_model_name,
@@ -658,7 +658,7 @@ DrawMonomerSceneTool::createHintFragmentMonomerInfoForHintFromEmptySpace(
     auto monomer_pos = to_mol_xy(scene_pos);
     auto linkage_start = getDefaultDragStartAPModelName();
     // returned monomer is owned by the calling scope
-    return HintFragmentMonomerInfo{monomer.release(), m_monomer_type,
+    return HintFragmentMonomerInfo{std::move(monomer), m_monomer_type,
                                    monomer_pos, linkage_start,
                                    NEW_MONOMER_FROM_DRAG};
 }
@@ -670,10 +670,10 @@ HintFragmentMonomerInfo DrawMonomerSceneTool::
 {
     auto [monomer, monomer_type] = get_monomer_and_type(monomer_item);
     // returned monomer is owned by the calling scope
-    auto copy_of_monomer = new RDKit::Atom(*monomer);
+    auto copy_of_monomer = std::make_unique<RDKit::Atom>(*monomer);
     auto monomer_pos = get_coords_for_monomer(monomer);
     auto monomer_idx = static_cast<int>(monomer->getIdx());
-    return HintFragmentMonomerInfo{copy_of_monomer, monomer_type, monomer_pos,
+    return HintFragmentMonomerInfo{std::move(copy_of_monomer), monomer_type, monomer_pos,
                                    ap_model_name, monomer_idx};
 }
 
@@ -705,7 +705,7 @@ DrawMonomerSceneTool::createHintFragmentMonomerInfoForHintToDirection(
     auto ap_model_name = get_attachment_point_for_new_monomer(
         start_monomer_info.monomer_type, start_monomer_info.ap_model_name,
         m_monomer_type);
-    return HintFragmentMonomerInfo{monomer.release(), m_monomer_type, pos,
+    return HintFragmentMonomerInfo{std::move(monomer), m_monomer_type, pos,
                                    ap_model_name, NEW_MONOMER_FROM_DRAG};
 }
 

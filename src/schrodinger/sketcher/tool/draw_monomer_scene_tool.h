@@ -293,8 +293,8 @@ class SKETCHER_API DrawMonomerSceneTool : public StandardSceneToolBase
      * Create a hint fragment containing the two specified monomers and the
      * connection between them, then add this hint fragment to the scene.
      */
-    void createHintFragmentItem(const HintFragmentMonomerInfo& monomer_one,
-                                const HintFragmentMonomerInfo& monomer_two);
+    void createHintFragmentItem(HintFragmentMonomerInfo& monomer_one,
+                                HintFragmentMonomerInfo& monomer_two);
 
     /**
      * If the user has started a "valid" click-and-drag operation, create the
