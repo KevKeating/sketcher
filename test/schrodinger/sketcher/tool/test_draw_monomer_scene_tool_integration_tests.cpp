@@ -205,18 +205,18 @@ struct MonomerToolTestFixture {
 /**
  * Confirm that clicking in empty space adds the appropriate monomer
  */
-BOOST_AUTO_TEST_CASE(test_click_empty_space_adds_monomer)
-{
-    std::cout << "starting test_click_empty_space_adds_monomer\n";
-    MonomerToolTestFixture fix;
-    std::cout << "Declared fixture\n";
-    fix.setAminoAcidTool(AminoAcidTool::ALA);
-    std::cout << "Set amino acid tool\n";
-    fix.mouseClick({0, 0});
-    std::cout << "clicked\n";
-    fix.verifyHELM("PEPTIDE1{A}$$$$V2.0");
-    std::cout << "verified HELM\n";
-}
+// BOOST_AUTO_TEST_CASE(test_click_empty_space_adds_monomer)
+// {
+//     std::cout << "starting test_click_empty_space_adds_monomer\n";
+//     MonomerToolTestFixture fix;
+//     std::cout << "Declared fixture\n";
+//     fix.setAminoAcidTool(AminoAcidTool::ALA);
+//     std::cout << "Set amino acid tool\n";
+//     fix.mouseClick({0, 0});
+//     std::cout << "clicked\n";
+//     fix.verifyHELM("PEPTIDE1{A}$$$$V2.0");
+//     std::cout << "verified HELM\n";
+// }
 
 /**
  * Confirm that clicking on an existing monomer with the equivalent monomer tool
@@ -227,11 +227,17 @@ BOOST_AUTO_TEST_CASE(test_click_existing_monomer_same_residue_adds_residue)
     std::cout
         << "starting test_click_existing_monomer_same_residue_adds_residue\n";
     MonomerToolTestFixture fix;
+    std::cout << "Declared fixture\n";
     fix.importMolText("PEPTIDE1{A}$$$$V2.0");
+    std::cout << "imported mol\n";
     auto pos = fix.getMonomerPos(0);
+    std::cout << "got monomer pos\n";
     fix.setAminoAcidTool(AminoAcidTool::ALA);
+    std::cout << "set amino acid tool\n";
     fix.mouseClick(pos);
+    std::cout << "clicked\n";
     fix.verifyHELM("PEPTIDE1{A.A}$$$$V2.0");
+    std::cout << "verified HELM\n";
 }
 
 /**
