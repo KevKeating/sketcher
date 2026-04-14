@@ -658,9 +658,9 @@ DrawMonomerSceneTool::createHintFragmentMonomerInfoForHintFromEmptySpace(
     auto monomer_pos = to_mol_xy(scene_pos);
     auto linkage_start = getDefaultDragStartAPModelName();
     // returned monomer is owned by the calling scope
-    return HintFragmentMonomerInfo(monomer.release(), m_monomer_type,
+    return HintFragmentMonomerInfo{monomer.release(), m_monomer_type,
                                    monomer_pos, linkage_start,
-                                   NEW_MONOMER_FROM_DRAG);
+                                   NEW_MONOMER_FROM_DRAG};
 }
 
 HintFragmentMonomerInfo DrawMonomerSceneTool::
@@ -672,8 +672,9 @@ HintFragmentMonomerInfo DrawMonomerSceneTool::
     // returned monomer is owned by the calling scope
     auto copy_of_monomer = new RDKit::Atom(*monomer);
     auto monomer_pos = get_coords_for_monomer(monomer);
-    return HintFragmentMonomerInfo(copy_of_monomer, monomer_type, monomer_pos,
-                                   ap_model_name, monomer->getIdx());
+    auto monomer_idx = static_cast<int>(monomer->getIdx());
+    return HintFragmentMonomerInfo{copy_of_monomer, monomer_type, monomer_pos,
+                                   ap_model_name, monomer_idx};
 }
 
 HintFragmentMonomerInfo DrawMonomerSceneTool::
@@ -704,8 +705,8 @@ DrawMonomerSceneTool::createHintFragmentMonomerInfoForHintToDirection(
     auto ap_model_name = get_attachment_point_for_new_monomer(
         start_monomer_info.monomer_type, start_monomer_info.ap_model_name,
         m_monomer_type);
-    return HintFragmentMonomerInfo(monomer.release(), m_monomer_type, pos,
-                                   ap_model_name, NEW_MONOMER_FROM_DRAG);
+    return HintFragmentMonomerInfo{monomer.release(), m_monomer_type, pos,
+                                   ap_model_name, NEW_MONOMER_FROM_DRAG};
 }
 
 void DrawMonomerSceneTool::onLeftButtonClick(
