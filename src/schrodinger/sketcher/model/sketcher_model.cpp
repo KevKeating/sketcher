@@ -252,7 +252,7 @@ void SketcherModel::reset()
         {ModelKey::DNA_NUCLEOBASE, QVariant::fromValue(StdNucleobase::A)},
         {ModelKey::CUSTOM_NUCLEOTIDE,
          QVariant::fromValue(MonomericNucleotide("R", "N", "P"))},
-        {ModelKey::INTERFACE_TYPE, QVariant::fromValue(InterfaceType::ATOMISTIC)},
+        {ModelKey::INTERFACE_TYPE, static_cast<int>(InterfaceType::ATOMISTIC)},
         {ModelKey::TOOL_SET, QVariant::fromValue(ToolSet::ATOMISTIC)},
         {ModelKey::MOLECULE_TYPE, QVariant::fromValue(MoleculeType::EMPTY)},
     };
