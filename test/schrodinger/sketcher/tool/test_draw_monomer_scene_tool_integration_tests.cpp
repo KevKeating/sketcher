@@ -27,11 +27,6 @@ namespace bdata = boost::unit_test::data;
 
 BOOST_GLOBAL_FIXTURE(QApplicationRequiredFixture);
 
-Q_DECLARE_METATYPE(schrodinger::sketcher::AminoAcidTool);
-Q_DECLARE_METATYPE(schrodinger::sketcher::DrawTool);
-Q_DECLARE_METATYPE(schrodinger::sketcher::MonomerToolType);
-Q_DECLARE_METATYPE(schrodinger::sketcher::NucleicAcidTool);
-
 namespace schrodinger
 {
 namespace sketcher
@@ -85,22 +80,20 @@ struct MonomerToolTestFixture {
 
     void setAminoAcidTool(AminoAcidTool tool)
     {
-        m_sketcher_model->setValues(
-            {{ModelKey::DRAW_TOOL, QVariant::fromValue(DrawTool::MONOMER)},
-             {ModelKey::MONOMER_TOOL_TYPE,
-              QVariant::fromValue(MonomerToolType::AMINO_ACID)},
-             {ModelKey::AMINO_ACID_TOOL, QVariant::fromValue(tool)},
-             {ModelKey::AMINO_ACID_SYMBOL, QString("")}});
+        m_sketcher_model->setValue(ModelKey::DRAW_TOOL, DrawTool::MONOMER);
+        m_sketcher_model->setValue(ModelKey::MONOMER_TOOL_TYPE,
+                                   MonomerToolType::AMINO_ACID);
+        m_sketcher_model->setValue(ModelKey::AMINO_ACID_SYMBOL, QString());
+        m_sketcher_model->setValue(ModelKey::AMINO_ACID_TOOL, tool);
         process_qt_events();
     }
 
     void setNucleicAcidTool(NucleicAcidTool tool)
     {
-        m_sketcher_model->setValues(
-            {{ModelKey::DRAW_TOOL, QVariant::fromValue(DrawTool::MONOMER)},
-             {ModelKey::MONOMER_TOOL_TYPE,
-              QVariant::fromValue(MonomerToolType::NUCLEIC_ACID)},
-             {ModelKey::NUCLEIC_ACID_TOOL, QVariant::fromValue(tool)}});
+        m_sketcher_model->setValue(ModelKey::DRAW_TOOL, DrawTool::MONOMER);
+        m_sketcher_model->setValue(ModelKey::MONOMER_TOOL_TYPE,
+                                   MonomerToolType::NUCLEIC_ACID);
+        m_sketcher_model->setValue(ModelKey::NUCLEIC_ACID_TOOL, tool);
         process_qt_events();
     }
 
