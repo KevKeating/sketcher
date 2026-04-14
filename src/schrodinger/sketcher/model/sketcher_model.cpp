@@ -190,7 +190,7 @@ SketcherModel::getNucleotide() const
 
 InterfaceTypeType SketcherModel::getInterfaceType() const
 {
-    return m_model_map.at(ModelKey::INTERFACE_TYPE).toInt();
+    return m_model_map.at(ModelKey::INTERFACE_TYPE).value<InterfaceTypeType>();
 }
 
 ToolSet SketcherModel::getToolSet() const
@@ -252,7 +252,7 @@ void SketcherModel::reset()
         {ModelKey::DNA_NUCLEOBASE, QVariant::fromValue(StdNucleobase::A)},
         {ModelKey::CUSTOM_NUCLEOTIDE,
          QVariant::fromValue(MonomericNucleotide("R", "N", "P"))},
-        {ModelKey::INTERFACE_TYPE, InterfaceType::ATOMISTIC},
+        {ModelKey::INTERFACE_TYPE, QVariant::fromValue(InterfaceType::ATOMISTIC)},
         {ModelKey::TOOL_SET, QVariant::fromValue(ToolSet::ATOMISTIC)},
         {ModelKey::MOLECULE_TYPE, QVariant::fromValue(MoleculeType::EMPTY)},
     };

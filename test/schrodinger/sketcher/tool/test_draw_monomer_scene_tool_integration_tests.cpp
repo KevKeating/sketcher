@@ -75,7 +75,7 @@ struct MonomerToolTestFixture {
         std::cout << "About to set interface type\n";
         m_sketcher_model->setValue(
             ModelKey::INTERFACE_TYPE,
-            static_cast<int>(InterfaceType::ATOMISTIC_OR_MONOMERIC));
+            InterfaceType::ATOMISTIC_OR_MONOMERIC);
         std::cout << "finished setting interface type\n";
         process_qt_events();
     }

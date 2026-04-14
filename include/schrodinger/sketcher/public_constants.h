@@ -29,7 +29,7 @@ enum class SelectionTool {
 typedef int InterfaceTypeType;
 namespace InterfaceType
 {
-enum InterfaceTypeType {
+enum : InterfaceTypeType {
     ATOMISTIC = 1 << 0,
     MONOMERIC = 1 << 1,
     ATOMISTIC_OR_MONOMERIC = ATOMISTIC | MONOMERIC,
