@@ -600,31 +600,31 @@ void DrawMonomerSceneTool::createHintFragmentItem(
     const HintFragmentMonomerInfo& monomer_one_info,
     const HintFragmentMonomerInfo& monomer_two_info)
 {
-    m_frag = std::make_shared<RDKit::RWMol>();
-    m_frag->setProp(HELM_MODEL, true);
+    auto frag = std::make_shared<RDKit::RWMol>();
+    frag->setProp(HELM_MODEL, true);
 
     // create the two monomers
-    auto first_idx = m_frag->addAtom(monomer_one_info.monomer, true, true);
-    auto second_idx = m_frag->addAtom(monomer_two_info.monomer, true, true);
+    auto first_idx = frag->addAtom(monomer_one_info.monomer, true, true);
+    auto second_idx = frag->addAtom(monomer_two_info.monomer, true, true);
 
     // create the connection between them
     auto linkage = fmt::format("{}-{}", monomer_one_info.ap_model_name,
                                monomer_two_info.ap_model_name);
-    rdkit_extensions::addConnection(*m_frag, first_idx, second_idx, linkage);
+    rdkit_extensions::addConnection(*frag, first_idx, second_idx, linkage);
     auto bond_index_to_label =
-        m_frag->getBondBetweenAtoms(first_idx, second_idx)->getIdx();
+        frag->getBondBetweenAtoms(first_idx, second_idx)->getIdx();
 
     // flag the atoms as monomeric
-    for (auto* atom : m_frag->atoms()) {
+    for (auto* atom : frag->atoms()) {
         set_atom_monomeric(atom);
     }
 
     // Add a conformer with the atom coordinates
-    auto* frag_conf = new RDKit::Conformer(m_frag->getNumAtoms());
+    auto* frag_conf = new RDKit::Conformer(frag->getNumAtoms());
     frag_conf->set3D(false);
     frag_conf->setAtomPos(first_idx, monomer_one_info.pos);
     frag_conf->setAtomPos(second_idx, monomer_two_info.pos);
-    m_frag->addConformer(frag_conf, true);
+    frag->addConformer(frag_conf, true);
 
     // hide the monomers that already exist in the Scene
     std::vector<size_t> atom_indices_to_hide;
@@ -636,7 +636,7 @@ void DrawMonomerSceneTool::createHintFragmentItem(
     }
 
     m_hint_fragment_item = new MonomerHintFragmentItem(
-        m_frag, m_fonts, atom_indices_to_hide, bond_index_to_label,
+        frag, m_fonts, atom_indices_to_hide, bond_index_to_label,
         m_monomer_background_color);
     m_scene->addItem(m_hint_fragment_item);
 }
@@ -1093,7 +1093,6 @@ void DrawMonomerSceneTool::clearHintFragmentItem()
 {
     delete m_hint_fragment_item;
     m_hint_fragment_item = nullptr;
-    m_frag.reset();
 }
 
 void DrawMonomerSceneTool::clearDragEndAttachmentPointsLabels()
