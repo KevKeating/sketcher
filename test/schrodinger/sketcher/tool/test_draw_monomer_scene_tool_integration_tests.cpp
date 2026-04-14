@@ -209,7 +209,7 @@ struct MonomerToolTestFixture {
  */
 BOOST_AUTO_TEST_CASE(test_click_empty_space_adds_monomer)
 {
-    std::cout << "starting test\n";
+    std::cout << "starting test_click_empty_space_adds_monomer\n";
     MonomerToolTestFixture fix;
     std::cout << "Declared fixture\n";
     fix.setAminoAcidTool(AminoAcidTool::ALA);
@@ -220,87 +220,88 @@ BOOST_AUTO_TEST_CASE(test_click_empty_space_adds_monomer)
     std::cout << "verified HELM\n";
 }
 
-// /**
-//  * Confirm that clicking on an existing monomer with the equivalent monomer
-//  tool
-//  * adds a new monomer via the default attachment point.
-//  */
-// BOOST_AUTO_TEST_CASE(test_click_existing_monomer_same_residue_adds_residue)
-// {
-//     MonomerToolTestFixture fix;
-//     fix.importMolText("PEPTIDE1{A}$$$$V2.0");
-//     auto pos = fix.getMonomerPos(0);
-//     fix.setAminoAcidTool(AminoAcidTool::ALA);
-//     fix.mouseClick(pos);
-//     fix.verifyHELM("PEPTIDE1{A.A}$$$$V2.0");
-// }
+/**
+ * Confirm that clicking on an existing monomer with the equivalent monomer tool
+ * adds a new monomer via the default attachment point.
+ */
+BOOST_AUTO_TEST_CASE(test_click_existing_monomer_same_residue_adds_residue)
+{
+    std::cout << "starting test_click_existing_monomer_same_residue_adds_residue\n";
+    MonomerToolTestFixture fix;
+    fix.importMolText("PEPTIDE1{A}$$$$V2.0");
+    auto pos = fix.getMonomerPos(0);
+    fix.setAminoAcidTool(AminoAcidTool::ALA);
+    fix.mouseClick(pos);
+    fix.verifyHELM("PEPTIDE1{A.A}$$$$V2.0");
+}
 
-// /**
-//  * Confirm that clicking on an existing monomer with a different monomer tool
-//  of
-//  * the same monomer type mutates the monomer.
-//  */
-// BOOST_AUTO_TEST_CASE(test_click_existing_monomer_different_residue_mutates)
-// {
-//     MonomerToolTestFixture fix;
+/**
+ * Confirm that clicking on an existing monomer with a different monomer tool of
+ * the same monomer type mutates the monomer.
+ */
+BOOST_AUTO_TEST_CASE(test_click_existing_monomer_different_residue_mutates)
+{
+    std::cout << "starting test_click_existing_monomer_different_residue_mutates\n";
+    MonomerToolTestFixture fix;
 
-//     fix.importMolText("PEPTIDE1{A}$$$$V2.0");
-//     auto pos = fix.getMonomerPos(0);
-//     fix.setAminoAcidTool(AminoAcidTool::CYS);
-//     fix.mouseClick(pos);
-//     fix.verifyHELM("PEPTIDE1{C}$$$$V2.0");
-// }
+    fix.importMolText("PEPTIDE1{A}$$$$V2.0");
+    auto pos = fix.getMonomerPos(0);
+    fix.setAminoAcidTool(AminoAcidTool::CYS);
+    fix.mouseClick(pos);
+    fix.verifyHELM("PEPTIDE1{C}$$$$V2.0");
+}
 
-// /**
-//  * Confirm that clicking on an existing monomer with a monomer tool of
-//  * a different monomer type has no effect.
-//  */
-// BOOST_AUTO_TEST_CASE(test_click_existing_monomer_different_monomer_type)
-// {
-//     MonomerToolTestFixture fix;
-//     fix.importMolText("PEPTIDE1{A}$$$$V2.0");
-//     auto pos = fix.getMonomerPos(0);
-//     fix.setNucleicAcidTool(NucleicAcidTool::P);
-//     fix.mouseClick(pos);
-//     fix.verifyHELM("PEPTIDE1{A}$$$$V2.0");
-// }
+/**
+ * Confirm that clicking on an existing monomer with a monomer tool of
+ * a different monomer type has no effect.
+ */
+BOOST_AUTO_TEST_CASE(test_click_existing_monomer_different_monomer_type)
+{
+    std::cout << "starting test_click_existing_monomer_different_monomer_type\n";
+    MonomerToolTestFixture fix;
+    fix.importMolText("PEPTIDE1{A}$$$$V2.0");
+    auto pos = fix.getMonomerPos(0);
+    fix.setNucleicAcidTool(NucleicAcidTool::P);
+    fix.mouseClick(pos);
+    fix.verifyHELM("PEPTIDE1{A}$$$$V2.0");
+}
 
-// /**
-//  * Confirm that clicking on an unbounnd attachment point of an existing
-//  monomer
-//  * adds a new monomer via the clicked attachment point.
-//  */
-// BOOST_AUTO_TEST_CASE(test_click_attachment_point)
-// {
-//     MonomerToolTestFixture fix;
-//     fix.importMolText("PEPTIDE1{A}$$$$V2.0");
-//     auto monomer_pos = fix.getMonomerPos(0);
-//     fix.setAminoAcidTool(AminoAcidTool::CYS);
-//     // hover over the monomer to trigger AP label creation
-//     fix.mouseMove(monomer_pos);
+/**
+ * Confirm that clicking on an unbounnd attachment point of an existing monomer
+ * adds a new monomer via the clicked attachment point.
+ */
+BOOST_AUTO_TEST_CASE(test_click_attachment_point)
+{
+    std::cout << "starting test_click_attachment_point\n";
+    MonomerToolTestFixture fix;
+    fix.importMolText("PEPTIDE1{A}$$$$V2.0");
+    auto monomer_pos = fix.getMonomerPos(0);
+    fix.setAminoAcidTool(AminoAcidTool::CYS);
+    // hover over the monomer to trigger AP label creation
+    fix.mouseMove(monomer_pos);
 
-//     // click on the N terminus attachment point
-//     fix.setAminoAcidTool(AminoAcidTool::CYS);
-//     fix.mouseMove(monomer_pos);
-//     auto n_ap_pos = fix.getAttachmentPointPos(0, "N");
-//     fix.mouseClick(n_ap_pos);
-//     fix.verifyHELM("PEPTIDE1{C.A}$$$$V2.0");
+    // click on the N terminus attachment point
+    fix.setAminoAcidTool(AminoAcidTool::CYS);
+    fix.mouseMove(monomer_pos);
+    auto n_ap_pos = fix.getAttachmentPointPos(0, "N");
+    fix.mouseClick(n_ap_pos);
+    fix.verifyHELM("PEPTIDE1{C.A}$$$$V2.0");
 
-//     // click on the C terminus attachment point
-//     fix.setAminoAcidTool(AminoAcidTool::PHE);
-//     fix.mouseMove(monomer_pos);
-//     auto c_ap_pos = fix.getAttachmentPointPos(0, "C");
-//     fix.mouseClick(c_ap_pos);
-//     fix.verifyHELM("PEPTIDE1{C.A.F}$$$$V2.0");
+    // click on the C terminus attachment point
+    fix.setAminoAcidTool(AminoAcidTool::PHE);
+    fix.mouseMove(monomer_pos);
+    auto c_ap_pos = fix.getAttachmentPointPos(0, "C");
+    fix.mouseClick(c_ap_pos);
+    fix.verifyHELM("PEPTIDE1{C.A.F}$$$$V2.0");
 
-//     // click on the side chain attachment point
-//     fix.setAminoAcidTool(AminoAcidTool::TRP);
-//     fix.mouseMove(monomer_pos);
-//     auto x_ap_pos = fix.getAttachmentPointPos(0, "X");
-//     fix.mouseClick(x_ap_pos);
-//     fix.verifyHELM(
-//         "PEPTIDE1{C.A.F}|PEPTIDE2{W}$PEPTIDE1,PEPTIDE2,2:R3-1:R3$$$V2.0");
-// }
+    // click on the side chain attachment point
+    fix.setAminoAcidTool(AminoAcidTool::TRP);
+    fix.mouseMove(monomer_pos);
+    auto x_ap_pos = fix.getAttachmentPointPos(0, "X");
+    fix.mouseClick(x_ap_pos);
+    fix.verifyHELM(
+        "PEPTIDE1{C.A.F}|PEPTIDE2{W}$PEPTIDE1,PEPTIDE2,2:R3-1:R3$$$V2.0");
+}
 
 // /**
 //  * Confirm that click-and-drag from an existing monomer adds a new monomer
