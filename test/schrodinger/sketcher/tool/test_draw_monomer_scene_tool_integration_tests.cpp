@@ -226,7 +226,8 @@ BOOST_AUTO_TEST_CASE(test_click_empty_space_adds_monomer)
  */
 BOOST_AUTO_TEST_CASE(test_click_existing_monomer_same_residue_adds_residue)
 {
-    std::cout << "starting test_click_existing_monomer_same_residue_adds_residue\n";
+    std::cout
+        << "starting test_click_existing_monomer_same_residue_adds_residue\n";
     MonomerToolTestFixture fix;
     fix.importMolText("PEPTIDE1{A}$$$$V2.0");
     auto pos = fix.getMonomerPos(0);
@@ -241,7 +242,8 @@ BOOST_AUTO_TEST_CASE(test_click_existing_monomer_same_residue_adds_residue)
  */
 BOOST_AUTO_TEST_CASE(test_click_existing_monomer_different_residue_mutates)
 {
-    std::cout << "starting test_click_existing_monomer_different_residue_mutates\n";
+    std::cout
+        << "starting test_click_existing_monomer_different_residue_mutates\n";
     MonomerToolTestFixture fix;
 
     fix.importMolText("PEPTIDE1{A}$$$$V2.0");
@@ -257,7 +259,8 @@ BOOST_AUTO_TEST_CASE(test_click_existing_monomer_different_residue_mutates)
  */
 BOOST_AUTO_TEST_CASE(test_click_existing_monomer_different_monomer_type)
 {
-    std::cout << "starting test_click_existing_monomer_different_monomer_type\n";
+    std::cout
+        << "starting test_click_existing_monomer_different_monomer_type\n";
     MonomerToolTestFixture fix;
     fix.importMolText("PEPTIDE1{A}$$$$V2.0");
     auto pos = fix.getMonomerPos(0);
