@@ -524,5 +524,5 @@ BOOST_AUTO_TEST_CASE(test_click_empty_space_adds_monomer)
 //         "PEPTIDE1{C}|PEPTIDE2{A}$PEPTIDE1,PEPTIDE2,1:R3-1:R2$$$V2.0");
 // }
 
-// } // namespace sketcher
-// } // namespace schrodinger
+} // namespace sketcher
+} // namespace schrodinger
