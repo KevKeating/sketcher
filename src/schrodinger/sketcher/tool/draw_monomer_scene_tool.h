@@ -291,7 +291,9 @@ class SKETCHER_API DrawMonomerSceneTool : public StandardSceneToolBase
 
     /**
      * Create a hint fragment containing the two specified monomers and the
-     * connection between them, then add this hint fragment to the scene.
+     * connection between them, then add this hint fragment to the scene. Note
+     * that this function will transfer ownership of the monomers themselves to
+     * RDKit.
      */
     void createHintFragmentItem(HintFragmentMonomerInfo& monomer_one,
                                 HintFragmentMonomerInfo& monomer_two);
