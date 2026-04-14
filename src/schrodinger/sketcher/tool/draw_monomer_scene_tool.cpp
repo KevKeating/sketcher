@@ -971,6 +971,7 @@ void DrawMonomerSceneTool::onLeftButtonDragRelease(
     // now that everything is cleaned up, we can actually add the monomers and
     // connection to MolModel
     addDragStructureToMolModel(*hint_start_monomer_info, hint_end_monomer_info);
+    // TODO: the monomer pointers are lost here without being destroyed
 }
 
 void DrawMonomerSceneTool::addDragStructureToMolModel(
