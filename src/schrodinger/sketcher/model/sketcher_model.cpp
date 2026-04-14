@@ -190,7 +190,7 @@ SketcherModel::getNucleotide() const
 
 InterfaceTypeType SketcherModel::getInterfaceType() const
 {
-    return m_model_map.at(ModelKey::INTERFACE_TYPE).value<InterfaceTypeType>();
+    return m_model_map.at(ModelKey::INTERFACE_TYPE).toInt();
 }
 
 ToolSet SketcherModel::getToolSet() const
