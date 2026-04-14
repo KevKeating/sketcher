@@ -86,8 +86,8 @@ struct MonomerToolTestFixture {
         m_sketcher_model->setValue(ModelKey::DRAW_TOOL, DrawTool::MONOMER);
         m_sketcher_model->setValue(ModelKey::MONOMER_TOOL_TYPE,
                                    MonomerToolType::AMINO_ACID);
-        m_sketcher_model->setValue(ModelKey::AMINO_ACID_SYMBOL, QString());
         m_sketcher_model->setValue(ModelKey::AMINO_ACID_TOOL, tool);
+        m_sketcher_model->setValue(ModelKey::AMINO_ACID_SYMBOL, QString());
         std::cout << "\tabout to process events\n";
         process_qt_events();
         std::cout << "\tfinished processing events\n";

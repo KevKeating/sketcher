@@ -21,6 +21,19 @@
 using MonomericNucleotide = std::tuple<QString, QString, QString>;
 Q_DECLARE_METATYPE(MonomericNucleotide);
 
+Q_DECLARE_METATYPE(schrodinger::sketcher::DrawTool);
+Q_DECLARE_METATYPE(schrodinger::sketcher::AtomTool);
+Q_DECLARE_METATYPE(schrodinger::sketcher::ChargeTool);
+Q_DECLARE_METATYPE(schrodinger::sketcher::RingTool);
+Q_DECLARE_METATYPE(schrodinger::sketcher::EnumerationTool);
+Q_DECLARE_METATYPE(schrodinger::sketcher::AtomQuery);
+Q_DECLARE_METATYPE(schrodinger::sketcher::MonomerToolType);
+Q_DECLARE_METATYPE(schrodinger::sketcher::AminoAcidTool);
+Q_DECLARE_METATYPE(schrodinger::sketcher::NucleicAcidTool);
+Q_DECLARE_METATYPE(schrodinger::sketcher::StdNucleobase);
+Q_DECLARE_METATYPE(schrodinger::sketcher::ToolSet);
+Q_DECLARE_METATYPE(schrodinger::sketcher::MoleculeType);
+
 namespace schrodinger
 {
 namespace sketcher
