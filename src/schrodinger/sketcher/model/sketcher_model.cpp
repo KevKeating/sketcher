@@ -275,7 +275,7 @@ void SketcherModel::setValues(
         // Outright forbid setting a value of a different type
         if (current_value.typeId() != value.typeId()) {
             throw std::runtime_error(std::string("ModelKey must be type ") +
-                                     current_value.typeName());
+                                     current_value.typeName() + ", not " + value.typeName());
         }
         if (current_value != value) {
             m_model_map[key] = value;

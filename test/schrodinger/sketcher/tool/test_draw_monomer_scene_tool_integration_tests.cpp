@@ -21,7 +21,7 @@
 #include "schrodinger/sketcher/public_constants.h"
 #include "schrodinger/sketcher/rdkit/monomeric.h"
 
-#include <QtDebug>
+// #include <QtDebug>
 
 namespace bdata = boost::unit_test::data;
 
@@ -72,29 +72,37 @@ struct MonomerToolTestFixture {
         m_scene = TestScene::getScene();
         m_mol_model = m_scene->m_mol_model;
         m_sketcher_model = m_scene->m_sketcher_model;
+        std::cout << "About to set interface type\n";
         m_sketcher_model->setValue(
             ModelKey::INTERFACE_TYPE,
             static_cast<int>(InterfaceType::ATOMISTIC_OR_MONOMERIC));
+        std::cout << "finished setting interface type\n";
         process_qt_events();
     }
 
     void setAminoAcidTool(AminoAcidTool tool)
     {
+        std::cout << "About to set amino acid tool\n";
         m_sketcher_model->setValue(ModelKey::DRAW_TOOL, DrawTool::MONOMER);
         m_sketcher_model->setValue(ModelKey::MONOMER_TOOL_TYPE,
                                    MonomerToolType::AMINO_ACID);
         m_sketcher_model->setValue(ModelKey::AMINO_ACID_SYMBOL, QString());
         m_sketcher_model->setValue(ModelKey::AMINO_ACID_TOOL, tool);
+        std::cout << "\tabout to process events\n";
         process_qt_events();
+        std::cout << "\tfinished processing events\n";
     }
 
     void setNucleicAcidTool(NucleicAcidTool tool)
     {
+        std::cout << "About to set nucleic acid tool\n";
         m_sketcher_model->setValue(ModelKey::DRAW_TOOL, DrawTool::MONOMER);
         m_sketcher_model->setValue(ModelKey::MONOMER_TOOL_TYPE,
                                    MonomerToolType::NUCLEIC_ACID);
         m_sketcher_model->setValue(ModelKey::NUCLEIC_ACID_TOOL, tool);
+        std::cout << "\tabout to process events\n";
         process_qt_events();
+        std::cout << "\tfinished processing events\n";
     }
 
     void importMolText(const std::string& text)
