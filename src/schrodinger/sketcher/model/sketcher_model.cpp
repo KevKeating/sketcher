@@ -18,7 +18,6 @@
 #include "schrodinger/sketcher/molviewer/nucleic_acid_sugar_item.h"
 #include "schrodinger/sketcher/rdkit/rgroup.h"
 
-
 namespace schrodinger
 {
 namespace sketcher
