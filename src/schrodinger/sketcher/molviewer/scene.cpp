@@ -144,8 +144,8 @@ void Scene::moveInteractiveItems()
 
 void Scene::updateItems(const WhatChangedType what_changed)
 {
-    std::cout << "Scene::updateItems: entry, what_changed=" << what_changed
-              << std::endl;
+    std::cout << "Scene::updateItems: entry, what_changed="
+              << static_cast<int>(what_changed) << std::endl;
     Scene::SelectionChangeSignalBlocker signal_blocker(this);
 
     if (what_changed & WhatChanged::MOLECULE) {
@@ -925,23 +925,55 @@ QRectF Scene::getSelectionRect() const
 
 void Scene::updateMonomerLabelSizeOnModel()
 {
+    std::cout << "updateMonomerLabelSizeOnModel: entry" << std::endl;
+    std::cout << "updateMonomerLabelSizeOnModel: before isMonomeric"
+              << std::endl;
     if (!m_mol_model->isMonomeric()) {
+        std::cout << "updateMonomerLabelSizeOnModel: not monomeric, returning"
+                  << std::endl;
         return;
     }
+    std::cout << "updateMonomerLabelSizeOnModel: is monomeric" << std::endl;
     std::unordered_map<int, RDGeom::Point3D> sizes;
+    std::cout << "updateMonomerLabelSizeOnModel: before atom loop" << std::endl;
     for (auto atom : m_mol_model->getMol()->atoms()) {
+        std::cout << "updateMonomerLabelSizeOnModel: processing atom "
+                  << atom->getIdx() << std::endl;
         if (!is_atom_monomeric(atom)) {
+            std::cout << "updateMonomerLabelSizeOnModel: atom "
+                      << atom->getIdx() << " not monomeric" << std::endl;
             continue;
         }
+        std::cout << "updateMonomerLabelSizeOnModel: atom " << atom->getIdx()
+                  << " is monomeric" << std::endl;
         // create a temporary graphics item to figure out the label size
+        std::cout << "updateMonomerLabelSizeOnModel: before "
+                     "get_monomer_graphics_item for atom "
+                  << atom->getIdx() << std::endl;
         auto* item = get_monomer_graphics_item(atom, m_fonts);
+        std::cout << "updateMonomerLabelSizeOnModel: after "
+                     "get_monomer_graphics_item for atom "
+                  << atom->getIdx() << std::endl;
+        std::cout
+            << "updateMonomerLabelSizeOnModel: before boundingRect for atom "
+            << atom->getIdx() << std::endl;
         const auto bounding_rect = item->boundingRect();
+        std::cout
+            << "updateMonomerLabelSizeOnModel: after boundingRect for atom "
+            << atom->getIdx() << std::endl;
         sizes[atom->getIdx()] =
             RDGeom::Point3D(bounding_rect.width() / VIEW_SCALE,
                             bounding_rect.height() / VIEW_SCALE, 0);
         delete item;
+        std::cout << "updateMonomerLabelSizeOnModel: deleted item for atom "
+                  << atom->getIdx() << std::endl;
     }
+    std::cout << "updateMonomerLabelSizeOnModel: after atom loop" << std::endl;
+    std::cout << "updateMonomerLabelSizeOnModel: before setMonomerSizes"
+              << std::endl;
     m_mol_model->setMonomerSizes(sizes);
+    std::cout << "updateMonomerLabelSizeOnModel: after setMonomerSizes"
+              << std::endl;
 }
 
 const QGraphicsItem*
