@@ -2840,37 +2840,64 @@ std::vector<MonomerResizeData> collect_linear_resize_data(
     const std::unordered_map<unsigned int, RDGeom::Point3D>& resizes,
     const RingResizeInfo& ring_resize_info)
 {
+    std::cout << "collect_linear_resize_data: entry, resizes.size()="
+              << resizes.size() << std::endl;
     std::vector<MonomerResizeData> result;
     auto& conformer = mol.getConformer();
 
     result.reserve(resizes.size());
 
+    std::cout << "collect_linear_resize_data: before loop" << std::endl;
     for (const auto& r : resizes) {
         const unsigned int index = r.first;
+        std::cout << "collect_linear_resize_data: processing index " << index
+                  << std::endl;
         // if the monomer is in a ring, skip it
         if (ring_resize_info.atom_to_ring_map.contains(index)) {
+            std::cout << "collect_linear_resize_data: index " << index
+                      << " is in a ring, skipping" << std::endl;
             continue;
         }
+        std::cout
+            << "collect_linear_resize_data: before getting new_size for index "
+            << index << std::endl;
         const RDGeom::Point3D& new_size = r.second;
 
+        std::cout
+            << "collect_linear_resize_data: before get_monomer_size for index "
+            << index << std::endl;
         const RDGeom::Point3D current_size = get_monomer_size(mol, index);
 
+        std::cout
+            << "collect_linear_resize_data: before computing delta for index "
+            << index << std::endl;
         RDGeom::Point3D delta = new_size - current_size;
         // Skip no-op resizes
         if (delta.x == 0. && delta.y == 0.) {
+            std::cout << "collect_linear_resize_data: index " << index
+                      << " has zero delta, skipping" << std::endl;
             continue;
         }
 
+        std::cout << "collect_linear_resize_data: before push_back for index "
+                  << index << std::endl;
         result.push_back({index, conformer.getAtomPos(index), delta});
+        std::cout << "collect_linear_resize_data: after push_back for index "
+                  << index << std::endl;
     }
 
     // group vertically stacked monomers to avoid compound horizontal shifts
     assign_clusters(result, &RDGeom::Point3D::x, &MonomerResizeData::x_cluster,
                     MONOMER_MINIMUM_SIZE);
+    std::cout << "collect_linear_resize_data: after first assign_clusters call "
+              << std::endl;
 
     // group horizontally stacked monomers to avoid compound vertical shifts
     assign_clusters(result, &RDGeom::Point3D::y, &MonomerResizeData::y_cluster,
                     MONOMER_MINIMUM_SIZE);
+    std::cout
+        << "collect_linear_resize_data: after second assign_clusters call "
+        << std::endl;
 
     return result;
 }
