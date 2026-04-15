@@ -404,23 +404,11 @@ enum class StdNucleobase {
     N,
 };
 
-/**
- * Convert a StdNucleobase instance to a string
- *
- * @param base The base to convert
- * @param U_or_T The string to use for U_OR_T. Should be either "U" or "T".
- */
-SKETCHER_API QString std_nucleobase_to_qstring(StdNucleobase base,
-                                               QString U_or_T);
-
-/**
- * @return Every element of `ModelKey`.
- */
-SKETCHER_API std::vector<ModelKey> get_model_keys();
-
 using MonomericNucleotide = std::tuple<QString, QString, QString>;
+} // namespace sketcher
+} // namespace schrodinger
 
-Q_DECLARE_METATYPE(MonomericNucleotide);
+Q_DECLARE_METATYPE(schrodinger::sketcher::MonomericNucleotide);
 Q_DECLARE_METATYPE(schrodinger::sketcher::SelectionTool);
 Q_DECLARE_METATYPE(schrodinger::sketcher::DrawTool);
 Q_DECLARE_METATYPE(schrodinger::sketcher::AtomTool);
@@ -436,6 +424,23 @@ Q_DECLARE_METATYPE(schrodinger::sketcher::NucleicAcidTool);
 Q_DECLARE_METATYPE(schrodinger::sketcher::StdNucleobase);
 Q_DECLARE_METATYPE(schrodinger::sketcher::ToolSet);
 Q_DECLARE_METATYPE(schrodinger::sketcher::MoleculeType);
+
+namespace schrodinger::sketcher
+{
+
+/**
+ * Convert a StdNucleobase instance to a string
+ *
+ * @param base The base to convert
+ * @param U_or_T The string to use for U_OR_T. Should be either "U" or "T".
+ */
+SKETCHER_API QString std_nucleobase_to_qstring(StdNucleobase base,
+                                               QString U_or_T);
+
+/**
+ * @return Every element of `ModelKey`.
+ */
+SKETCHER_API std::vector<ModelKey> get_model_keys();
 
 /**
  * Model for shared state among the various sketcher views.
@@ -782,5 +787,4 @@ class SKETCHER_API SketcherModel : public QObject
     ColorScheme m_color_scheme = ColorScheme::DEFAULT;
 };
 
-} // namespace sketcher
-} // namespace schrodinger
+} // namespace schrodinger::sketcher
