@@ -109,11 +109,11 @@ struct ProtectedRegion {
 static void place_monomer_at(RDKit::Conformer& conformer,
                              const RDKit::Atom* monomer_to_place,
                              const RDGeom::Point3D& position,
-                             std::unordered_set<int>& placed_monomers_idcs)
+                             std::unordered_set<unsigned int>& placed_monomers_idcs)
 {
     auto monomer_idx = monomer_to_place->getIdx();
     conformer.setAtomPos(monomer_idx, position);
-    placed_monomers_idcs.insert(monomer_to_place->getProp<int>(ORIGINAL_INDEX));
+    placed_monomers_idcs.insert(monomer_to_place->getProp<unsigned int>(ORIGINAL_INDEX));
 }
 
 /**
@@ -229,7 +229,7 @@ static std::vector<Direction> get_available_directions(
  */
 template <typename _Cond = decltype(default_stop_condition)> static void
 lay_out_chain(RDKit::ROMol& polymer, const RDKit::Atom* start_monomer,
-              std::unordered_set<int>& placed_monomers_idcs,
+              std::unordered_set<unsigned int>& placed_monomers_idcs,
               const RDGeom::Point3D& start_pos = RDGeom::Point3D(0, 0, 0),
               ChainDirection chain_dir = ChainDirection::LTR,
               BranchDirection branch_direction = BranchDirection::UP,
@@ -266,7 +266,7 @@ lay_out_chain(RDKit::ROMol& polymer, const RDKit::Atom* start_monomer,
         std::vector<const RDKit::Atom*> branches;
         for (auto neighbor : monomer_neighbors) {
             if (placed_monomers_idcs.contains(
-                    neighbor->getProp<int>(ORIGINAL_INDEX)) ||
+                    neighbor->getProp<unsigned int>(ORIGINAL_INDEX)) ||
                 // Skip if the bond to this neighbor is not a backbone
                 // connection)
                 !has_backbone_linkage(polymer.getBondBetweenAtoms(
@@ -500,7 +500,7 @@ static void orient_ring_system(RDKit::ROMol& polymer)
  */
 static void
 generate_coordinates_for_cycles(RDKit::ROMol& polymer,
-                                std::unordered_set<int>& placed_monomers_idcs)
+                                std::unordered_set<unsigned int>& placed_monomers_idcs)
 {
     // generate ring coordinates using RDKit's small-molecule built-in
     // coordinate generation
@@ -779,7 +779,7 @@ compute_turn_positions_for_chain(const RDKit::ROMol& polymer)
  */
 static RDGeom::Point3D
 lay_out_turn(RDKit::ROMol& polymer, RDKit::Conformer& conformer,
-             std::unordered_set<int>& placed_monomers_idcs,
+             std::unordered_set<unsigned int>& placed_monomers_idcs,
              const RDGeom::Point3D& turn_start_pos, unsigned int segment_end,
              unsigned int turn_size, unsigned int total_monomers,
              ChainDirection chain_dir, bool downward = true,
@@ -1098,7 +1098,7 @@ compute_coiling_turns_for_chain(const RDKit::ROMol& polymer)
  */
 static void
 lay_out_chain_with_turns(RDKit::ROMol& polymer,
-                         std::unordered_set<int>& placed_monomers_idcs,
+                         std::unordered_set<unsigned int>& placed_monomers_idcs,
                          const std::vector<TurnInfo>& turn_positions)
 {
     auto& conformer = polymer.getConformer();
@@ -1331,7 +1331,7 @@ addTurnsBreakLongLinearSegments(const std::vector<TurnInfo>& turns,
  * updated
  */
 static bool maybe_lay_out_cyclic_polymer_as_snaking_chain(
-    RDKit::ROMol& polymer, std::unordered_set<int>& placed_monomers_idcs)
+    RDKit::ROMol& polymer, std::unordered_set<unsigned int>& placed_monomers_idcs)
 {
     auto turns = compute_turn_positions_for_chain(polymer);
 
@@ -1447,7 +1447,7 @@ static bool optimize_coiling_layout(RDKit::ROMol& polymer,
  * not be updated
  */
 static bool maybe_lay_out_cyclic_polymer_as_coiling_chain(
-    RDKit::ROMol& polymer, std::unordered_set<int>& placed_monomers_idcs)
+    RDKit::ROMol& polymer, std::unordered_set<unsigned int>& placed_monomers_idcs)
 {
     // Analyze CUSTOM_BONDs to determine if pattern fits coiling layout
     auto turns = compute_coiling_turns_for_chain(polymer);
@@ -1467,7 +1467,7 @@ static bool maybe_lay_out_cyclic_polymer_as_coiling_chain(
 
 static void
 lay_out_cyclic_polymer(RDKit::ROMol& polymer,
-                       std::unordered_set<int>& placed_monomers_idcs)
+                       std::unordered_set<unsigned int>& placed_monomers_idcs)
 {
 
     if (is_a_chain(polymer)) {
@@ -1592,7 +1592,7 @@ find_hairpin_turn(const RDKit::ROMol& polymer)
  */
 static void
 layout_hairpin_polymer(RDKit::ROMol& polymer,
-                       std::unordered_set<int>& placed_monomers_idcs)
+                       std::unordered_set<unsigned int>& placed_monomers_idcs)
 {
     auto hairpin_turn = find_hairpin_turn(polymer);
     auto& conformer = polymer.getConformer();
@@ -1637,7 +1637,7 @@ layout_hairpin_polymer(RDKit::ROMol& polymer,
 
 static void
 lay_out_linear_polymer(RDKit::ROMol& polymer,
-                       std::unordered_set<int>& placed_monomers_idcs,
+                       std::unordered_set<unsigned int>& placed_monomers_idcs,
                        const bool rotate = false)
 {
     auto monomers = polymer.atoms();
@@ -1676,7 +1676,7 @@ lay_out_linear_polymer(RDKit::ROMol& polymer,
  * monomer chains and branches 180° (chains go RTL and branches go UP).
  */
 static void lay_out_polymer(RDKit::ROMol& polymer,
-                            std::unordered_set<int>& placed_monomers_idcs,
+                            std::unordered_set<unsigned int>& placed_monomers_idcs,
                             const bool rotate = false)
 {
     if (!polymer.getRingInfo()->isInitialized()) {
@@ -2494,7 +2494,7 @@ void lay_out_polymers(
     const std::vector<RDKit::ROMOL_SPTR>& polymers,
     const std::map<RDKit::ROMOL_SPTR, RDKit::ROMOL_SPTR>& parent_polymer)
 {
-    std::unordered_set<int> placed_monomers_idcs{};
+    std::unordered_set<unsigned int> placed_monomers_idcs{};
     std::vector<RDKit::ROMOL_SPTR> placed_polymers;
 
     // lay out the polymers in connection order so connected polymers are laid
