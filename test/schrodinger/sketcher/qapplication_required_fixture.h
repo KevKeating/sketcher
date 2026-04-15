@@ -51,7 +51,8 @@ class QApplicationRequiredFixture
             auto trace_str = boost::stacktrace::to_string(trace);
 
             throw std::runtime_error(fmt::format(
-                "A SIGABRT signal was raised from '{}'\nStack trace:\n{}\n", test_name, trace_str));
+                "A SIGABRT signal was raised from '{}'\nStack trace:\n{}\n",
+                test_name, trace_str));
         });
 
         // Qt requires argc and argv to stay valid for the entire lifetime of
