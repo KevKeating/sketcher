@@ -19,27 +19,7 @@
 #include "schrodinger/sketcher/rdkit/rgroup.h"
 
 using MonomericNucleotide = std::tuple<QString, QString, QString>;
-
-// Register enum types with Qt's meta-object system so they can be used with
-// QVariant. Without this registration, QVariant::value<T>() can fail on some
-// platforms (particularly Mac with libc++) with std::bad_any_cast.
 Q_DECLARE_METATYPE(MonomericNucleotide);
-Q_DECLARE_METATYPE(schrodinger::sketcher::AminoAcidTool);
-Q_DECLARE_METATYPE(schrodinger::sketcher::AtomQuery);
-Q_DECLARE_METATYPE(schrodinger::sketcher::AtomTool);
-Q_DECLARE_METATYPE(schrodinger::sketcher::BondTool);
-Q_DECLARE_METATYPE(schrodinger::sketcher::ChargeTool);
-Q_DECLARE_METATYPE(schrodinger::sketcher::DrawTool);
-Q_DECLARE_METATYPE(schrodinger::sketcher::Element);
-Q_DECLARE_METATYPE(schrodinger::sketcher::EnumerationTool);
-Q_DECLARE_METATYPE(schrodinger::sketcher::InterfaceTypeType);
-Q_DECLARE_METATYPE(schrodinger::sketcher::MoleculeType);
-Q_DECLARE_METATYPE(schrodinger::sketcher::MonomerToolType);
-Q_DECLARE_METATYPE(schrodinger::sketcher::NucleicAcidTool);
-Q_DECLARE_METATYPE(schrodinger::sketcher::RingTool);
-Q_DECLARE_METATYPE(schrodinger::sketcher::SelectionTool);
-Q_DECLARE_METATYPE(schrodinger::sketcher::StdNucleobase);
-Q_DECLARE_METATYPE(schrodinger::sketcher::ToolSet);
 
 namespace schrodinger
 {
