@@ -18,21 +18,7 @@
 #include "schrodinger/sketcher/molviewer/nucleic_acid_sugar_item.h"
 #include "schrodinger/sketcher/rdkit/rgroup.h"
 
-using MonomericNucleotide = std::tuple<QString, QString, QString>;
-Q_DECLARE_METATYPE(MonomericNucleotide);
-
-Q_DECLARE_METATYPE(schrodinger::sketcher::DrawTool);
-Q_DECLARE_METATYPE(schrodinger::sketcher::AtomTool);
-Q_DECLARE_METATYPE(schrodinger::sketcher::ChargeTool);
-Q_DECLARE_METATYPE(schrodinger::sketcher::RingTool);
-Q_DECLARE_METATYPE(schrodinger::sketcher::EnumerationTool);
-Q_DECLARE_METATYPE(schrodinger::sketcher::AtomQuery);
-Q_DECLARE_METATYPE(schrodinger::sketcher::MonomerToolType);
-Q_DECLARE_METATYPE(schrodinger::sketcher::AminoAcidTool);
-Q_DECLARE_METATYPE(schrodinger::sketcher::NucleicAcidTool);
-Q_DECLARE_METATYPE(schrodinger::sketcher::StdNucleobase);
-Q_DECLARE_METATYPE(schrodinger::sketcher::ToolSet);
-Q_DECLARE_METATYPE(schrodinger::sketcher::MoleculeType);
+// Metatype declarations moved to sketcher_model.h for cross-translation-unit visibility
 
 namespace schrodinger
 {

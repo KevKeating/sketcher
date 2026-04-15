@@ -418,6 +418,31 @@ SKETCHER_API QString std_nucleobase_to_qstring(StdNucleobase base,
  */
 SKETCHER_API std::vector<ModelKey> get_model_keys();
 
+// Qt metatype declarations - must be in header for cross-translation-unit visibility
+// IMPORTANT: These declarations must be in the header (not .cpp) to ensure metatype
+// registration is visible across all translation units. This is critical for Qt6 on
+// macOS which uses std::any internally in QVariant and requires proper type
+// registration for QVariant::value<T>() to work correctly.
+
+using MonomericNucleotide = std::tuple<QString, QString, QString>;
+
+Q_DECLARE_METATYPE(MonomericNucleotide);
+Q_DECLARE_METATYPE(schrodinger::sketcher::SelectionTool);
+Q_DECLARE_METATYPE(schrodinger::sketcher::DrawTool);
+Q_DECLARE_METATYPE(schrodinger::sketcher::AtomTool);
+Q_DECLARE_METATYPE(schrodinger::sketcher::BondTool);
+Q_DECLARE_METATYPE(schrodinger::sketcher::ChargeTool);
+Q_DECLARE_METATYPE(schrodinger::sketcher::RingTool);
+Q_DECLARE_METATYPE(schrodinger::sketcher::EnumerationTool);
+Q_DECLARE_METATYPE(schrodinger::sketcher::Element);
+Q_DECLARE_METATYPE(schrodinger::sketcher::AtomQuery);
+Q_DECLARE_METATYPE(schrodinger::sketcher::MonomerToolType);
+Q_DECLARE_METATYPE(schrodinger::sketcher::AminoAcidTool);
+Q_DECLARE_METATYPE(schrodinger::sketcher::NucleicAcidTool);
+Q_DECLARE_METATYPE(schrodinger::sketcher::StdNucleobase);
+Q_DECLARE_METATYPE(schrodinger::sketcher::ToolSet);
+Q_DECLARE_METATYPE(schrodinger::sketcher::MoleculeType);
+
 /**
  * Model for shared state among the various sketcher views.
  *
