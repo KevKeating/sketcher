@@ -251,8 +251,8 @@ lay_out_chain(RDKit::ROMol& polymer, const RDKit::Atom* start_monomer,
         auto monomer_neighbors = polymer.atomNeighbors(monomer_to_place);
         bool bonded_to_parent_polymer = false;
         bool bonded_to_child_polymer = false;
-        std::vector<int> neighbor_monomer_idcs;
-        monomer_to_place->getPropIfPresent<std::vector<int>>(
+        std::vector<unsigned int> neighbor_monomer_idcs;
+        monomer_to_place->getPropIfPresent<std::vector<unsigned int>>(
             BOND_TO, neighbor_monomer_idcs);
         for (auto neighbor_idx : neighbor_monomer_idcs) {
             if (placed_monomers_idcs.contains(neighbor_idx)) {
@@ -1754,8 +1754,8 @@ sort_polymers_by_connectivity(const std::vector<RDKit::ROMOL_SPTR>& polymers)
                 if (!monomer->hasProp(BOND_TO)) {
                     continue;
                 }
-                std::vector<int> neighbor_monomer_idcs;
-                monomer->getPropIfPresent<std::vector<int>>(
+                std::vector<unsigned int> neighbor_monomer_idcs;
+                monomer->getPropIfPresent<std::vector<unsigned int>>(
                     BOND_TO, neighbor_monomer_idcs);
                 for (auto neighbor_monomer_idx : neighbor_monomer_idcs) {
                     auto neighbor_polymer =
@@ -1790,17 +1790,17 @@ break_into_polymers(const RDKit::ROMol& monomer_mol)
         }
         // store the connected indices as comma separated values in the
         // BOND_TO prop
-        std::vector<int> begin_monomer_bond_to;
+        std::vector<unsigned int> begin_monomer_bond_to;
         if (beginMonomer->hasProp(BOND_TO)) {
             begin_monomer_bond_to =
-                beginMonomer->getProp<std::vector<int>>(BOND_TO);
+                beginMonomer->getProp<std::vector<unsigned int>>(BOND_TO);
         }
         begin_monomer_bond_to.push_back(endMonomer->getIdx());
         beginMonomer->setProp(BOND_TO, begin_monomer_bond_to);
-        std::vector<int> end_monomer_bond_to;
+        std::vector<unsigned int> end_monomer_bond_to;
         if (endMonomer->hasProp(BOND_TO)) {
             end_monomer_bond_to =
-                endMonomer->getProp<std::vector<int>>(BOND_TO);
+                endMonomer->getProp<std::vector<unsigned int>>(BOND_TO);
         }
         end_monomer_bond_to.push_back(beginMonomer->getIdx());
         endMonomer->setProp(BOND_TO, end_monomer_bond_to);
@@ -1828,9 +1828,9 @@ static BOND_IDX_VEC get_bonds_between_polymers(const RDKit::ROMol& from,
 
     BOND_IDX_VEC bonds{};
     for (auto monomer : from.atoms()) {
-        std::vector<int> bonded_monomers_indices;
-        monomer->getPropIfPresent<std::vector<int>>(BOND_TO,
-                                                    bonded_monomers_indices);
+        std::vector<unsigned int> bonded_monomers_indices;
+        monomer->getPropIfPresent<std::vector<unsigned int>>(
+            BOND_TO, bonded_monomers_indices);
         if (bonded_monomers_indices.empty()) {
             continue;
         }
