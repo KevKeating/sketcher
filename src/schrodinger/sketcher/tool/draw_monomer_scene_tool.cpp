@@ -714,21 +714,30 @@ DrawMonomerSceneTool::createHintFragmentMonomerInfoForHintToDirection(
 void DrawMonomerSceneTool::onLeftButtonClick(
     QGraphicsSceneMouseEvent* const event)
 {
+    std::cout << "In DrawMonomerSceneTool::onLeftButtonClick" << std::endl;
     StandardSceneToolBase::onLeftButtonClick(event);
+    std::cout << "In DrawMonomerSceneTool::onLeftButtonClick, 1" << std::endl;
     QPointF scene_pos = event->scenePos();
+    std::cout << "In DrawMonomerSceneTool::onLeftButtonClick, 2" << std::endl;
     auto* item = getTopMonomerItemAt(scene_pos);
+    std::cout << "In DrawMonomerSceneTool::onLeftButtonClick, 3" << std::endl;
 
     if (item == nullptr) {
         // the click was on empty space, so create a new monomer here
         auto mol_pos = to_mol_xy(scene_pos);
         m_mol_model->addMonomer(m_res_name, m_chain_type, mol_pos);
     } else {
+        std::cout << "In DrawMonomerSceneTool::onLeftButtonClick, 4"
+                  << std::endl;
         auto [monomer, monomer_type] = get_monomer_and_type(item);
         std::optional<UnboundAttachmentPoint> clicked_ap;
         auto ap_item = getUnboundAttachmentPointAt(scene_pos, true);
         if (ap_item != nullptr) {
             clicked_ap = ap_item->getAttachmentPoint();
         }
+        std::cout << "In DrawMonomerSceneTool::onLeftButtonClick, calculated "
+                     "clicked_ap"
+                  << std::endl;
 
         if (clicked_ap.has_value()) {
             // the user clicked on an attachment point or this monomer has a
@@ -741,9 +750,15 @@ void DrawMonomerSceneTool::onLeftButtonClick(
             // the attachment point labels won't be valid once the new monomer
             // is added, so clear them now (otherwise we risk a crash)
             clearAttachmentPointsLabelsAndHintFragmentItem();
+            std::cout << "In DrawMonomerSceneTool::onLeftButtonClick, about to "
+                         "call addBoundMonomer"
+                      << std::endl;
             m_mol_model->addBoundMonomer(m_res_name, m_chain_type, new_pos,
                                          new_monomer_ap_name, monomer,
                                          clicked_ap->model_name);
+            std::cout << "In DrawMonomerSceneTool::onLeftButtonClick, finished "
+                         "addBoundMonomer"
+                      << std::endl;
 
         } else if (clickShouldMutate(monomer, monomer_type)) {
             // the user clicked directly on the monomer and the clicked
@@ -753,6 +768,8 @@ void DrawMonomerSceneTool::onLeftButtonClick(
             m_mol_model->mutateMonomers({monomer}, m_res_name, m_monomer_type);
         }
     }
+    std::cout << "Finished DrawMonomerSceneTool::onLeftButtonClick"
+              << std::endl;
 }
 
 void DrawMonomerSceneTool::onLeftButtonDragStart(

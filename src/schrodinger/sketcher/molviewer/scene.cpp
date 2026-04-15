@@ -442,7 +442,13 @@ void Scene::clearHovered()
 
 void Scene::mouseReleaseEvent(QGraphicsSceneMouseEvent* event)
 {
+    std::cout << "In Scene::mouseReleaseEvent, about to call "
+                 "m_scene_tool->mouseReleaseEvent"
+              << std::endl;
     m_scene_tool->mouseReleaseEvent(event);
+    std::cout << "In Scene::mouseReleaseEvent, finished "
+                 "m_scene_tool->mouseReleaseEvent"
+              << std::endl;
     event->accept();
     m_scene_tool_from_mouse_press = nullptr;
 }
