@@ -2695,8 +2695,8 @@ struct RingResizeData {
  */
 template <typename TCoord, typename TCluster>
 void assign_clusters(std::vector<MonomerResizeData>& resize_data,
-                     TCoord RDGeom::Point3D::* coord_member,
-                     TCluster MonomerResizeData::* cluster_member, double eps)
+                     TCoord RDGeom::Point3D::*coord_member,
+                     TCluster MonomerResizeData::*cluster_member, double eps)
 {
     unsigned int next_cluster_id = 1;
 
