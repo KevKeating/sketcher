@@ -9,8 +9,6 @@
 #include <boost/test/unit_test.hpp>
 #include <cstdlib>
 
-#include <boost/stacktrace.hpp>
-
 /// @return true if there is a display
 static bool has_display()
 {
@@ -47,12 +45,8 @@ class QApplicationRequiredFixture
         signal(SIGABRT, [](int signal) {
             auto test_name =
                 boost::unit_test::framework::current_test_case().p_name.get();
-            auto trace = boost::stacktrace::stacktrace();
-            auto trace_str = boost::stacktrace::to_string(trace);
-
             throw std::runtime_error(fmt::format(
-                "A SIGABRT signal was raised from '{}'\nStack trace:\n{}\n",
-                test_name, trace_str));
+                "A SIGABRT signal was raised from '{}'", test_name));
         });
 
         // Qt requires argc and argv to stay valid for the entire lifetime of

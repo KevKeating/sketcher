@@ -190,24 +190,6 @@ function(add_generated_header_dependency TARGET)
   add_dependencies(${TARGET} generated_header)
 endfunction()
 
-# Crash handler: configure Boost.Stacktrace backend per platform
-function(configure_crash_handler TARGET)
-    if(NOT EMSCRIPTEN)
-        target_link_libraries(${TARGET} PRIVATE fmt::fmt)
-        if(MSVC)
-            target_compile_definitions(${TARGET} PRIVATE
-            BOOST_STACKTRACE_USE_WINDBG)
-            target_link_libraries(${TARGET} PRIVATE dbghelp)
-        else()
-            target_compile_definitions(${TARGET} PRIVATE BOOST_STACKTRACE_USE_ADDR2LINE)
-            target_link_libraries(${TARGET} PRIVATE dl)
-            if(APPLE)
-            target_compile_definitions(${TARGET} PRIVATE _GNU_SOURCE)
-            endif()
-        endif()
-    endif()
-endfunction()
-
 # schrodinger::rdkit_extensions library
 set(RDKIT_EXTENSIONS_TARGET rdkit_extensions)
 build_schrodinger_library(${RDKIT_EXTENSIONS_TARGET})
@@ -279,7 +261,21 @@ if(MSVC AND NOT ${BUILD_SHARED_LIBS})
     ${APP_TARGET} PROPERTIES IMPORT_SUFFIX _bin${CMAKE_IMPORT_LIBRARY_SUFFIX})
 endif()
 
-configure_crash_handler(${APP_TARGET})
+# Crash handler: configure Boost.Stacktrace backend per platform
+if(NOT EMSCRIPTEN)
+  target_link_libraries(${APP_TARGET} PRIVATE fmt::fmt)
+  if(MSVC)
+    target_compile_definitions(${APP_TARGET} PRIVATE
+      BOOST_STACKTRACE_USE_WINDBG)
+    target_link_libraries(${APP_TARGET} PRIVATE dbghelp)
+  else()
+    target_compile_definitions(${APP_TARGET} PRIVATE BOOST_STACKTRACE_USE_ADDR2LINE)
+    target_link_libraries(${APP_TARGET} PRIVATE dl)
+    if(APPLE)
+      target_compile_definitions(${APP_TARGET} PRIVATE _GNU_SOURCE)
+    endif()
+  endif()
+endif()
 
 # Copy over the necessary wasm files into the application directory
 if(EMSCRIPTEN)
@@ -373,7 +369,6 @@ if(ENABLE_TESTING)
     set_target_properties(
       ${TEST_TARGET} PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${PREFIX_PATH}
                                 OUTPUT_NAME ${TEST_STEM})
-    configure_crash_handler(${TEST_TARGET})
     # Create memtest target and command
     if(${CMAKE_BUILD_TYPE} STREQUAL "Debug")
       # create the valgrind test
