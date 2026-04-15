@@ -3193,41 +3193,80 @@ void resize_monomers(
     RDKit::ROMol& mol,
     std::unordered_map<unsigned int, RDGeom::Point3D> monomer_sizes)
 {
+    std::cout << "resize_monomers: entry, monomer_sizes.size()="
+              << monomer_sizes.size() << std::endl;
     if (monomer_sizes.empty()) {
+        std::cout << "resize_monomers: empty, returning" << std::endl;
         return;
     }
 
+    std::cout << "resize_monomers: before compute_full_ring_info" << std::endl;
     // override ring info to ensure rings are fully perceived.
     compute_full_ring_info(mol);
+    std::cout << "resize_monomers: after compute_full_ring_info" << std::endl;
 
+    std::cout << "resize_monomers: before compute_ring_info_for_resize"
+              << std::endl;
     auto ring_resize_info = compute_ring_info_for_resize(mol);
+    std::cout << "resize_monomers: after compute_ring_info_for_resize"
+              << std::endl;
 
+    std::cout << "resize_monomers: before collect_linear_resize_data"
+              << std::endl;
     auto linear_resize_data =
         collect_linear_resize_data(mol, monomer_sizes, ring_resize_info);
+    std::cout << "resize_monomers: after collect_linear_resize_data"
+              << std::endl;
 
+    std::cout << "resize_monomers: before collect_ring_resize_data"
+              << std::endl;
     auto ring_resize_data =
         collect_ring_resize_data(mol, monomer_sizes, ring_resize_info);
+    std::cout << "resize_monomers: after collect_ring_resize_data" << std::endl;
+
     if (linear_resize_data.empty() && ring_resize_data.empty()) {
+        std::cout << "resize_monomers: both empty, returning" << std::endl;
         return;
     }
 
+    std::cout << "resize_monomers: before compute_linear_displacements"
+              << std::endl;
     // compute displacements caused by monomers in chains
     auto linear_displacements =
         compute_linear_displacements(mol, linear_resize_data, ring_resize_info);
+    std::cout << "resize_monomers: after compute_linear_displacements"
+              << std::endl;
 
+    std::cout << "resize_monomers: before compute_ring_expansion_displacements"
+              << std::endl;
     // compute displacements caused by monomers in rings
     auto ring_displacements = compute_ring_expansion_displacements(
         mol, ring_resize_data, ring_resize_info);
+    std::cout << "resize_monomers: after compute_ring_expansion_displacements"
+              << std::endl;
 
+    std::cout << "resize_monomers: before apply_displacements (linear)"
+              << std::endl;
     // apply movement
     apply_displacements(mol, linear_displacements);
-    apply_displacements(mol, ring_displacements);
+    std::cout << "resize_monomers: after apply_displacements (linear)"
+              << std::endl;
 
+    std::cout << "resize_monomers: before apply_displacements (ring)"
+              << std::endl;
+    apply_displacements(mol, ring_displacements);
+    std::cout << "resize_monomers: after apply_displacements (ring)"
+              << std::endl;
+
+    std::cout << "resize_monomers: before update_monomer_sizes" << std::endl;
     // persist new sizes
     update_monomer_sizes(mol, monomer_sizes);
+    std::cout << "resize_monomers: after update_monomer_sizes" << std::endl;
 
+    std::cout << "resize_monomers: before reset ring info" << std::endl;
     // reset ring info to avoid leaking "internal" perception of rings
     mol.getRingInfo()->reset();
+    std::cout << "resize_monomers: after reset ring info" << std::endl;
 }
 
 unsigned int compute_monomer_mol_coords(RDKit::ROMol& monomer_mol)
