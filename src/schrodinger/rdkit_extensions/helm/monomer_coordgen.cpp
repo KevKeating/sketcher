@@ -136,6 +136,25 @@ RDGeom::Point3D compute_centroid(const RDKit::ROMol& mol,
 }
 
 /**
+ * Compute the centroid of a set of atom indices in a molecule (unsigned int
+ * overload).
+ */
+RDGeom::Point3D compute_centroid(const RDKit::ROMol& mol,
+                                 const std::vector<unsigned int>& atom_indices)
+{
+    if (atom_indices.empty()) {
+        return RDGeom::Point3D(0, 0, 0);
+    }
+    const auto& conformer = mol.getConformer();
+    std::vector<RDGeom::Point3D> positions(atom_indices.size());
+    std::transform(
+        atom_indices.begin(), atom_indices.end(), positions.begin(),
+        [&conformer](unsigned int idx) { return conformer.getAtomPos(idx); });
+
+    return compute_centroid(positions);
+}
+
+/**
  * Check if a bond contains a backbone linkage
  * @return true if the bond is a backbone connection, or if it has more than one
  * connection (i.e., the LINKAGE property contains more than just the
@@ -2732,8 +2751,8 @@ inline RDGeom::Point3D get_monomer_size(const RDKit::ROMol& mol,
 }
 
 struct RingResizeInfo {
-    std::vector<std::vector<int>> rings; // list of resizeable rings
-    std::unordered_map<int, std::set<int>>
+    std::vector<std::vector<unsigned int>> rings; // list of resizeable rings
+    std::unordered_map<unsigned int, std::set<unsigned int>>
         atom_to_ring_map; // atom index -> set of ring indices
 };
 
@@ -3004,6 +3023,41 @@ find_all_connected_monomers_outside_ring(const RDKit::ROMol& mol, int start_idx,
     return result;
 }
 
+std::set<unsigned int>
+find_all_connected_monomers_outside_ring(const RDKit::ROMol& mol,
+                                         unsigned int start_idx,
+                                         const std::vector<unsigned int>& ring)
+{
+    std::set<unsigned int> result;
+    std::set<unsigned int> visited;
+    std::queue<unsigned int> to_visit;
+
+    to_visit.push(start_idx);
+    for (auto monomer_idx : ring) {
+        visited.insert(monomer_idx);
+    }
+    visited.insert(start_idx);
+
+    std::set<unsigned int> ring_set(ring.begin(), ring.end());
+
+    while (!to_visit.empty()) {
+        unsigned int current_idx = to_visit.front();
+        to_visit.pop();
+
+        for (auto neighbor :
+             mol.atomNeighbors(mol.getAtomWithIdx(current_idx))) {
+            unsigned int neighbor_idx = neighbor->getIdx();
+            if (visited.contains(neighbor_idx)) {
+                continue;
+            }
+            result.insert(neighbor_idx);
+            visited.insert(neighbor_idx);
+            to_visit.push(neighbor_idx);
+        }
+    }
+    return result;
+}
+
 /**
  * Compute per-monomer displacement vectors based on ring expansion data.
  *
@@ -3169,9 +3223,15 @@ RingResizeInfo compute_ring_info_for_resize(RDKit::ROMol& mol)
         candidate_rings.push_back(ring);
     }
     for (const auto& ring : candidate_rings) {
-        int ring_idx = static_cast<int>(result.rings.size());
-        result.rings.push_back(ring);
+        unsigned int ring_idx = static_cast<unsigned int>(result.rings.size());
+        // Convert from int to unsigned int
+        std::vector<unsigned int> unsigned_ring;
+        unsigned_ring.reserve(ring.size());
         for (int atom_idx : ring) {
+            unsigned_ring.push_back(static_cast<unsigned int>(atom_idx));
+        }
+        result.rings.push_back(unsigned_ring);
+        for (unsigned int atom_idx : unsigned_ring) {
             result.atom_to_ring_map[atom_idx].insert(ring_idx);
         }
     }

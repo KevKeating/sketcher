@@ -163,5 +163,10 @@ bool RDKIT_EXTENSIONS_API is_geometrically_regular_ring_2d(
 std::set<int> RDKIT_EXTENSIONS_API find_all_connected_monomers_outside_ring(
     const RDKit::ROMol& mol, int start_idx, const std::vector<int>& ring);
 
+std::set<unsigned int> RDKIT_EXTENSIONS_API
+find_all_connected_monomers_outside_ring(const RDKit::ROMol& mol,
+                                         unsigned int start_idx,
+                                         const std::vector<unsigned int>& ring);
+
 } // namespace rdkit_extensions
 } // namespace schrodinger
