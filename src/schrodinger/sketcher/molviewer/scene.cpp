@@ -144,33 +144,72 @@ void Scene::moveInteractiveItems()
 
 void Scene::updateItems(const WhatChangedType what_changed)
 {
+    std::cout << "Scene::updateItems: entry, what_changed=" << what_changed
+              << std::endl;
     Scene::SelectionChangeSignalBlocker signal_blocker(this);
 
     if (what_changed & WhatChanged::MOLECULE) {
+        std::cout << "Scene::updateItems: before updateMonomerLabelSizeOnModel"
+                  << std::endl;
         updateMonomerLabelSizeOnModel();
+        std::cout << "Scene::updateItems: after updateMonomerLabelSizeOnModel"
+                  << std::endl;
+
+        std::cout << "Scene::updateItems: before clearInteractiveItems"
+                  << std::endl;
         clearInteractiveItems(InteractiveItemFlag::MOLECULAR_OR_MONOMERIC);
+        std::cout << "Scene::updateItems: after clearInteractiveItems"
+                  << std::endl;
+
         const auto* mol = m_mol_model->getMol();
         std::vector<QGraphicsItem*> all_items;
+
+        std::cout << "Scene::updateItems: before getAtomDisplaySettingsPtr"
+                  << std::endl;
         auto atom_display_settings_ptr =
             m_sketcher_model->getAtomDisplaySettingsPtr();
+        std::cout << "Scene::updateItems: after getAtomDisplaySettingsPtr"
+                  << std::endl;
+
+        std::cout << "Scene::updateItems: before getBondDisplaySettingsPtr"
+                  << std::endl;
         auto bond_display_settings_ptr =
             m_sketcher_model->getBondDisplaySettingsPtr();
+        std::cout << "Scene::updateItems: after getBondDisplaySettingsPtr"
+                  << std::endl;
 
+        std::cout << "Scene::updateItems: before hasDarkColorScheme"
+                  << std::endl;
+        bool dark_scheme = m_sketcher_model->hasDarkColorScheme();
+        std::cout
+            << "Scene::updateItems: after hasDarkColorScheme, dark_scheme="
+            << dark_scheme << std::endl;
+
+        std::cout << "Scene::updateItems: before create_graphics_items_for_mol"
+                  << std::endl;
         std::tie(all_items, m_atom_to_atom_item, m_bond_to_bond_item,
                  m_bond_to_secondary_connection_item,
                  m_s_group_to_s_group_item) =
             create_graphics_items_for_mol(
                 mol, m_fonts, *atom_display_settings_ptr,
-                *bond_display_settings_ptr,
-                m_sketcher_model->hasDarkColorScheme());
+                *bond_display_settings_ptr, dark_scheme);
+        std::cout << "Scene::updateItems: after create_graphics_items_for_mol"
+                  << std::endl;
 
+        std::cout << "Scene::updateItems: before adding items" << std::endl;
         for (auto* item : all_items) {
             addItem(item);
             m_interactive_items.insert(item);
         }
+        std::cout << "Scene::updateItems: after adding items" << std::endl;
+
+        std::cout << "Scene::updateItems: before clearHovered" << std::endl;
         clearHovered();
+        std::cout << "Scene::updateItems: after clearHovered" << std::endl;
     }
     if (what_changed & WhatChanged::NON_MOL_OBJS) {
+        std::cout << "Scene::updateItems: before NON_MOL_OBJS processing"
+                  << std::endl;
         clearInteractiveItems(InteractiveItemFlag::NON_MOLECULAR);
         QColor color =
             m_sketcher_model->getAtomDisplaySettingsPtr()->getAtomColor(-1);
@@ -183,12 +222,28 @@ void Scene::updateItems(const WhatChangedType what_changed)
             addItem(item);
             m_interactive_items.insert(item);
         }
+        std::cout << "Scene::updateItems: after NON_MOL_OBJS processing"
+                  << std::endl;
     }
+    std::cout << "Scene::updateItems: before updateItemSelection" << std::endl;
     updateItemSelection();
-    updateSelectionHighlighting();
-    updateHaloHighlighting();
+    std::cout << "Scene::updateItems: after updateItemSelection" << std::endl;
 
+    std::cout << "Scene::updateItems: before updateSelectionHighlighting"
+              << std::endl;
+    updateSelectionHighlighting();
+    std::cout << "Scene::updateItems: after updateSelectionHighlighting"
+              << std::endl;
+
+    std::cout << "Scene::updateItems: before updateHaloHighlighting"
+              << std::endl;
+    updateHaloHighlighting();
+    std::cout << "Scene::updateItems: after updateHaloHighlighting"
+              << std::endl;
+
+    std::cout << "Scene::updateItems: before onStructureUpdated" << std::endl;
     m_scene_tool->onStructureUpdated();
+    std::cout << "Scene::updateItems: after onStructureUpdated" << std::endl;
 }
 
 void Scene::updateItemSelection()
