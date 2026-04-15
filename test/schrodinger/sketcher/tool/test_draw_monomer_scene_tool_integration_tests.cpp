@@ -32,6 +32,12 @@ namespace schrodinger
 namespace sketcher
 {
 
+#ifdef __APPLE__
+// Disable this entire file on Mac due to crash
+BOOST_AUTO_TEST_SUITE(TestDrawMonomerSceneToolIntegrationTestsSuite,
+                      *boost::unit_test::disabled())
+#endif
+
 /**
  * Process all Qt events, includeing DeferredDelete events.
  */
