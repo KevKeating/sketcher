@@ -2746,7 +2746,7 @@ struct RingResizeInfo {
  */
 std::vector<RingResizeData> collect_ring_resize_data(
     const RDKit::ROMol& mol,
-    const std::unordered_map<int, RDGeom::Point3D>& resizes,
+    const std::unordered_map<unsigned int, RDGeom::Point3D>& resizes,
     const RingResizeInfo& ring_resize_info)
 {
     std::vector<RingResizeData> result;
@@ -2818,7 +2818,7 @@ std::vector<RingResizeData> collect_ring_resize_data(
  */
 std::vector<MonomerResizeData> collect_linear_resize_data(
     const RDKit::ROMol& mol,
-    const std::unordered_map<int, RDGeom::Point3D>& resizes,
+    const std::unordered_map<unsigned int, RDGeom::Point3D>& resizes,
     const RingResizeInfo& ring_resize_info)
 {
     std::vector<MonomerResizeData> result;
@@ -3085,7 +3085,7 @@ void apply_displacements(RDKit::ROMol& mol,
  */
 void update_monomer_sizes(
     RDKit::ROMol& mol,
-    const std::unordered_map<int, RDGeom::Point3D>& monomer_sizes)
+    const std::unordered_map<unsigned int, RDGeom::Point3D>& monomer_sizes)
 {
     for (const auto& r : monomer_sizes) {
         mol.getAtomWithIdx(r.first)->setProp<RDGeom::Point3D>(MONOMER_ITEM_SIZE,
@@ -3189,8 +3189,9 @@ RingResizeInfo compute_ring_info_for_resize(RDKit::ROMol& mol)
  * @param mol           The molecule containing the monomers to resize.
  * @param monomer_sizes A map from atom indices to their new desired sizes.
  */
-void resize_monomers(RDKit::ROMol& mol,
-                     std::unordered_map<int, RDGeom::Point3D> monomer_sizes)
+void resize_monomers(
+    RDKit::ROMol& mol,
+    std::unordered_map<unsigned int, RDGeom::Point3D> monomer_sizes)
 {
     if (monomer_sizes.empty()) {
         return;

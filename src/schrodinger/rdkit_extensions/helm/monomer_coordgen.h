@@ -82,9 +82,9 @@ double RDKIT_EXTENSIONS_API get_position_in_coils_double(
  * Resize the monomer at the given index to the new size by moving other
  * monomers accordingly
  */
-void RDKIT_EXTENSIONS_API
-resize_monomers(RDKit::ROMol& monomer_mol,
-                std::unordered_map<int, RDGeom::Point3D> monomer_sizes);
+void RDKIT_EXTENSIONS_API resize_monomers(
+    RDKit::ROMol& monomer_mol,
+    std::unordered_map<unsigned int, RDGeom::Point3D> monomer_sizes);
 
 /**
  * Check whether any bonds in the given monomer mol cross each other or are

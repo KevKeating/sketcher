@@ -934,7 +934,7 @@ void Scene::updateMonomerLabelSizeOnModel()
         return;
     }
     std::cout << "updateMonomerLabelSizeOnModel: is monomeric" << std::endl;
-    std::unordered_map<int, RDGeom::Point3D> sizes;
+    std::unordered_map<unsigned int, RDGeom::Point3D> sizes;
     std::cout << "updateMonomerLabelSizeOnModel: before atom loop" << std::endl;
     for (auto atom : m_mol_model->getMol()->atoms()) {
         std::cout << "updateMonomerLabelSizeOnModel: processing atom "

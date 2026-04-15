@@ -974,8 +974,8 @@ class SKETCHER_API MolModel : public AbstractUndoableModel
      * @param monomer_sizes A map from monomer index to its size in mol
      * coordinates (x is width, y is height, z is ignored)
      */
-    void
-    setMonomerSizes(std::unordered_map<int, RDGeom::Point3D> monomer_sizes);
+    void setMonomerSizes(
+        std::unordered_map<unsigned int, RDGeom::Point3D> monomer_sizes);
 
   signals:
 
