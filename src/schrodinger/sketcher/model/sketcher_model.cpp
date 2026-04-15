@@ -18,8 +18,6 @@
 #include "schrodinger/sketcher/molviewer/nucleic_acid_sugar_item.h"
 #include "schrodinger/sketcher/rdkit/rgroup.h"
 
-// Metatype declarations moved to sketcher_model.h for cross-translation-unit visibility
-
 namespace schrodinger
 {
 namespace sketcher

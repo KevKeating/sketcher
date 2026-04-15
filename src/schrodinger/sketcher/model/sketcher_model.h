@@ -418,12 +418,6 @@ SKETCHER_API QString std_nucleobase_to_qstring(StdNucleobase base,
  */
 SKETCHER_API std::vector<ModelKey> get_model_keys();
 
-// Qt metatype declarations - must be in header for cross-translation-unit visibility
-// IMPORTANT: These declarations must be in the header (not .cpp) to ensure metatype
-// registration is visible across all translation units. This is critical for Qt6 on
-// macOS which uses std::any internally in QVariant and requires proper type
-// registration for QVariant::value<T>() to work correctly.
-
 using MonomericNucleotide = std::tuple<QString, QString, QString>;
 
 Q_DECLARE_METATYPE(MonomericNucleotide);
