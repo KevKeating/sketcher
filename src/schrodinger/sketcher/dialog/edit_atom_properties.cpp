@@ -25,6 +25,7 @@
 
 Q_DECLARE_METATYPE(RDKit::StereoGroupType);
 Q_DECLARE_METATYPE(schrodinger::sketcher::QueryType);
+Q_DECLARE_METATYPE(schrodinger::sketcher::AtomQuery);
 Q_DECLARE_METATYPE(schrodinger::sketcher::QueryAromaticity);
 Q_DECLARE_METATYPE(schrodinger::sketcher::QueryCount);
 

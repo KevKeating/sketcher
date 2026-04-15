@@ -144,72 +144,33 @@ void Scene::moveInteractiveItems()
 
 void Scene::updateItems(const WhatChangedType what_changed)
 {
-    std::cout << "Scene::updateItems: entry, what_changed="
-              << static_cast<int>(what_changed) << std::endl;
     Scene::SelectionChangeSignalBlocker signal_blocker(this);
 
     if (what_changed & WhatChanged::MOLECULE) {
-        std::cout << "Scene::updateItems: before updateMonomerLabelSizeOnModel"
-                  << std::endl;
         updateMonomerLabelSizeOnModel();
-        std::cout << "Scene::updateItems: after updateMonomerLabelSizeOnModel"
-                  << std::endl;
-
-        std::cout << "Scene::updateItems: before clearInteractiveItems"
-                  << std::endl;
         clearInteractiveItems(InteractiveItemFlag::MOLECULAR_OR_MONOMERIC);
-        std::cout << "Scene::updateItems: after clearInteractiveItems"
-                  << std::endl;
-
         const auto* mol = m_mol_model->getMol();
         std::vector<QGraphicsItem*> all_items;
-
-        std::cout << "Scene::updateItems: before getAtomDisplaySettingsPtr"
-                  << std::endl;
         auto atom_display_settings_ptr =
             m_sketcher_model->getAtomDisplaySettingsPtr();
-        std::cout << "Scene::updateItems: after getAtomDisplaySettingsPtr"
-                  << std::endl;
-
-        std::cout << "Scene::updateItems: before getBondDisplaySettingsPtr"
-                  << std::endl;
         auto bond_display_settings_ptr =
             m_sketcher_model->getBondDisplaySettingsPtr();
-        std::cout << "Scene::updateItems: after getBondDisplaySettingsPtr"
-                  << std::endl;
 
-        std::cout << "Scene::updateItems: before hasDarkColorScheme"
-                  << std::endl;
-        bool dark_scheme = m_sketcher_model->hasDarkColorScheme();
-        std::cout
-            << "Scene::updateItems: after hasDarkColorScheme, dark_scheme="
-            << dark_scheme << std::endl;
-
-        std::cout << "Scene::updateItems: before create_graphics_items_for_mol"
-                  << std::endl;
         std::tie(all_items, m_atom_to_atom_item, m_bond_to_bond_item,
                  m_bond_to_secondary_connection_item,
                  m_s_group_to_s_group_item) =
             create_graphics_items_for_mol(
                 mol, m_fonts, *atom_display_settings_ptr,
-                *bond_display_settings_ptr, dark_scheme);
-        std::cout << "Scene::updateItems: after create_graphics_items_for_mol"
-                  << std::endl;
+                *bond_display_settings_ptr,
+                m_sketcher_model->hasDarkColorScheme());
 
-        std::cout << "Scene::updateItems: before adding items" << std::endl;
         for (auto* item : all_items) {
             addItem(item);
             m_interactive_items.insert(item);
         }
-        std::cout << "Scene::updateItems: after adding items" << std::endl;
-
-        std::cout << "Scene::updateItems: before clearHovered" << std::endl;
         clearHovered();
-        std::cout << "Scene::updateItems: after clearHovered" << std::endl;
     }
     if (what_changed & WhatChanged::NON_MOL_OBJS) {
-        std::cout << "Scene::updateItems: before NON_MOL_OBJS processing"
-                  << std::endl;
         clearInteractiveItems(InteractiveItemFlag::NON_MOLECULAR);
         QColor color =
             m_sketcher_model->getAtomDisplaySettingsPtr()->getAtomColor(-1);
@@ -222,28 +183,12 @@ void Scene::updateItems(const WhatChangedType what_changed)
             addItem(item);
             m_interactive_items.insert(item);
         }
-        std::cout << "Scene::updateItems: after NON_MOL_OBJS processing"
-                  << std::endl;
     }
-    std::cout << "Scene::updateItems: before updateItemSelection" << std::endl;
     updateItemSelection();
-    std::cout << "Scene::updateItems: after updateItemSelection" << std::endl;
-
-    std::cout << "Scene::updateItems: before updateSelectionHighlighting"
-              << std::endl;
     updateSelectionHighlighting();
-    std::cout << "Scene::updateItems: after updateSelectionHighlighting"
-              << std::endl;
-
-    std::cout << "Scene::updateItems: before updateHaloHighlighting"
-              << std::endl;
     updateHaloHighlighting();
-    std::cout << "Scene::updateItems: after updateHaloHighlighting"
-              << std::endl;
 
-    std::cout << "Scene::updateItems: before onStructureUpdated" << std::endl;
     m_scene_tool->onStructureUpdated();
-    std::cout << "Scene::updateItems: after onStructureUpdated" << std::endl;
 }
 
 void Scene::updateItemSelection()
@@ -497,13 +442,7 @@ void Scene::clearHovered()
 
 void Scene::mouseReleaseEvent(QGraphicsSceneMouseEvent* event)
 {
-    std::cout << "In Scene::mouseReleaseEvent, about to call "
-                 "m_scene_tool->mouseReleaseEvent"
-              << std::endl;
     m_scene_tool->mouseReleaseEvent(event);
-    std::cout << "In Scene::mouseReleaseEvent, finished "
-                 "m_scene_tool->mouseReleaseEvent"
-              << std::endl;
     event->accept();
     m_scene_tool_from_mouse_press = nullptr;
 }
@@ -925,55 +864,23 @@ QRectF Scene::getSelectionRect() const
 
 void Scene::updateMonomerLabelSizeOnModel()
 {
-    std::cout << "updateMonomerLabelSizeOnModel: entry" << std::endl;
-    std::cout << "updateMonomerLabelSizeOnModel: before isMonomeric"
-              << std::endl;
     if (!m_mol_model->isMonomeric()) {
-        std::cout << "updateMonomerLabelSizeOnModel: not monomeric, returning"
-                  << std::endl;
         return;
     }
-    std::cout << "updateMonomerLabelSizeOnModel: is monomeric" << std::endl;
-    std::unordered_map<unsigned int, RDGeom::Point3D> sizes;
-    std::cout << "updateMonomerLabelSizeOnModel: before atom loop" << std::endl;
+    std::unordered_map<int, RDGeom::Point3D> sizes;
     for (auto atom : m_mol_model->getMol()->atoms()) {
-        std::cout << "updateMonomerLabelSizeOnModel: processing atom "
-                  << atom->getIdx() << std::endl;
         if (!is_atom_monomeric(atom)) {
-            std::cout << "updateMonomerLabelSizeOnModel: atom "
-                      << atom->getIdx() << " not monomeric" << std::endl;
             continue;
         }
-        std::cout << "updateMonomerLabelSizeOnModel: atom " << atom->getIdx()
-                  << " is monomeric" << std::endl;
         // create a temporary graphics item to figure out the label size
-        std::cout << "updateMonomerLabelSizeOnModel: before "
-                     "get_monomer_graphics_item for atom "
-                  << atom->getIdx() << std::endl;
         auto* item = get_monomer_graphics_item(atom, m_fonts);
-        std::cout << "updateMonomerLabelSizeOnModel: after "
-                     "get_monomer_graphics_item for atom "
-                  << atom->getIdx() << std::endl;
-        std::cout
-            << "updateMonomerLabelSizeOnModel: before boundingRect for atom "
-            << atom->getIdx() << std::endl;
         const auto bounding_rect = item->boundingRect();
-        std::cout
-            << "updateMonomerLabelSizeOnModel: after boundingRect for atom "
-            << atom->getIdx() << std::endl;
         sizes[atom->getIdx()] =
             RDGeom::Point3D(bounding_rect.width() / VIEW_SCALE,
                             bounding_rect.height() / VIEW_SCALE, 0);
         delete item;
-        std::cout << "updateMonomerLabelSizeOnModel: deleted item for atom "
-                  << atom->getIdx() << std::endl;
     }
-    std::cout << "updateMonomerLabelSizeOnModel: after atom loop" << std::endl;
-    std::cout << "updateMonomerLabelSizeOnModel: before setMonomerSizes"
-              << std::endl;
     m_mol_model->setMonomerSizes(sizes);
-    std::cout << "updateMonomerLabelSizeOnModel: after setMonomerSizes"
-              << std::endl;
 }
 
 const QGraphicsItem*

@@ -404,30 +404,6 @@ enum class StdNucleobase {
     N,
 };
 
-using MonomericNucleotide = std::tuple<QString, QString, QString>;
-} // namespace sketcher
-} // namespace schrodinger
-
-Q_DECLARE_METATYPE(schrodinger::sketcher::MonomericNucleotide);
-Q_DECLARE_METATYPE(schrodinger::sketcher::SelectionTool);
-Q_DECLARE_METATYPE(schrodinger::sketcher::DrawTool);
-Q_DECLARE_METATYPE(schrodinger::sketcher::AtomTool);
-Q_DECLARE_METATYPE(schrodinger::sketcher::BondTool);
-Q_DECLARE_METATYPE(schrodinger::sketcher::ChargeTool);
-Q_DECLARE_METATYPE(schrodinger::sketcher::RingTool);
-Q_DECLARE_METATYPE(schrodinger::sketcher::EnumerationTool);
-Q_DECLARE_METATYPE(schrodinger::sketcher::Element);
-Q_DECLARE_METATYPE(schrodinger::sketcher::AtomQuery);
-Q_DECLARE_METATYPE(schrodinger::sketcher::MonomerToolType);
-Q_DECLARE_METATYPE(schrodinger::sketcher::AminoAcidTool);
-Q_DECLARE_METATYPE(schrodinger::sketcher::NucleicAcidTool);
-Q_DECLARE_METATYPE(schrodinger::sketcher::StdNucleobase);
-Q_DECLARE_METATYPE(schrodinger::sketcher::ToolSet);
-Q_DECLARE_METATYPE(schrodinger::sketcher::MoleculeType);
-
-namespace schrodinger::sketcher
-{
-
 /**
  * Convert a StdNucleobase instance to a string
  *
@@ -787,4 +763,5 @@ class SKETCHER_API SketcherModel : public QObject
     ColorScheme m_color_scheme = ColorScheme::DEFAULT;
 };
 
-} // namespace schrodinger::sketcher
+} // namespace sketcher
+} // namespace schrodinger

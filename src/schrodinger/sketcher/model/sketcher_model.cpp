@@ -18,6 +18,9 @@
 #include "schrodinger/sketcher/molviewer/nucleic_acid_sugar_item.h"
 #include "schrodinger/sketcher/rdkit/rgroup.h"
 
+using MonomericNucleotide = std::tuple<QString, QString, QString>;
+Q_DECLARE_METATYPE(MonomericNucleotide);
+
 namespace schrodinger
 {
 namespace sketcher
@@ -187,7 +190,7 @@ SketcherModel::getNucleotide() const
 
 InterfaceTypeType SketcherModel::getInterfaceType() const
 {
-    return m_model_map.at(ModelKey::INTERFACE_TYPE).toInt();
+    return m_model_map.at(ModelKey::INTERFACE_TYPE).value<InterfaceTypeType>();
 }
 
 ToolSet SketcherModel::getToolSet() const
@@ -249,7 +252,7 @@ void SketcherModel::reset()
         {ModelKey::DNA_NUCLEOBASE, QVariant::fromValue(StdNucleobase::A)},
         {ModelKey::CUSTOM_NUCLEOTIDE,
          QVariant::fromValue(MonomericNucleotide("R", "N", "P"))},
-        {ModelKey::INTERFACE_TYPE, static_cast<int>(InterfaceType::ATOMISTIC)},
+        {ModelKey::INTERFACE_TYPE, InterfaceType::ATOMISTIC},
         {ModelKey::TOOL_SET, QVariant::fromValue(ToolSet::ATOMISTIC)},
         {ModelKey::MOLECULE_TYPE, QVariant::fromValue(MoleculeType::EMPTY)},
     };
@@ -272,8 +275,7 @@ void SketcherModel::setValues(
         // Outright forbid setting a value of a different type
         if (current_value.typeId() != value.typeId()) {
             throw std::runtime_error(std::string("ModelKey must be type ") +
-                                     current_value.typeName() + ", not " +
-                                     value.typeName());
+                                     current_value.typeName());
         }
         if (current_value != value) {
             m_model_map[key] = value;

@@ -485,8 +485,7 @@ void SketcherWidget::fitToScreen(bool selection_only)
 
 void SketcherWidget::setInterfaceType(InterfaceTypeType interface_type)
 {
-    m_sketcher_model->setValue(ModelKey::INTERFACE_TYPE,
-                               static_cast<int>(interface_type));
+    m_sketcher_model->setValue(ModelKey::INTERFACE_TYPE, interface_type);
 }
 
 std::string SketcherWidget::getClipboardContents() const

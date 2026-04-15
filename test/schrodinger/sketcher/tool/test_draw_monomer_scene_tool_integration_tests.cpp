@@ -21,8 +21,6 @@
 #include "schrodinger/sketcher/public_constants.h"
 #include "schrodinger/sketcher/rdkit/monomeric.h"
 
-// #include <QtDebug>
-
 BOOST_GLOBAL_FIXTURE(QApplicationRequiredFixture);
 
 namespace schrodinger
@@ -70,37 +68,31 @@ struct MonomerToolTestFixture {
         m_scene = TestScene::getScene();
         m_mol_model = m_scene->m_mol_model;
         m_sketcher_model = m_scene->m_sketcher_model;
-        std::cout << "About to set interface type\n";
         m_sketcher_model->setValue(
             ModelKey::INTERFACE_TYPE,
             static_cast<int>(InterfaceType::ATOMISTIC_OR_MONOMERIC));
-        std::cout << "finished setting interface type\n";
         process_qt_events();
     }
 
     void setAminoAcidTool(AminoAcidTool tool)
     {
-        std::cout << "About to set amino acid tool\n";
-        m_sketcher_model->setValue(ModelKey::DRAW_TOOL, DrawTool::MONOMER);
-        m_sketcher_model->setValue(ModelKey::MONOMER_TOOL_TYPE,
-                                   MonomerToolType::AMINO_ACID);
-        m_sketcher_model->setValue(ModelKey::AMINO_ACID_TOOL, tool);
-        m_sketcher_model->setValue(ModelKey::AMINO_ACID_SYMBOL, QString());
-        std::cout << "\tabout to process events\n";
+        m_sketcher_model->setValues(
+            {{ModelKey::DRAW_TOOL, QVariant::fromValue(DrawTool::MONOMER)},
+             {ModelKey::MONOMER_TOOL_TYPE,
+              QVariant::fromValue(MonomerToolType::AMINO_ACID)},
+             {ModelKey::AMINO_ACID_TOOL, QVariant::fromValue(tool)},
+             {ModelKey::AMINO_ACID_SYMBOL, QString("")}});
         process_qt_events();
-        std::cout << "\tfinished processing events\n";
     }
 
     void setNucleicAcidTool(NucleicAcidTool tool)
     {
-        std::cout << "About to set nucleic acid tool\n";
-        m_sketcher_model->setValue(ModelKey::DRAW_TOOL, DrawTool::MONOMER);
-        m_sketcher_model->setValue(ModelKey::MONOMER_TOOL_TYPE,
-                                   MonomerToolType::NUCLEIC_ACID);
-        m_sketcher_model->setValue(ModelKey::NUCLEIC_ACID_TOOL, tool);
-        std::cout << "\tabout to process events\n";
+        m_sketcher_model->setValues(
+            {{ModelKey::DRAW_TOOL, QVariant::fromValue(DrawTool::MONOMER)},
+             {ModelKey::MONOMER_TOOL_TYPE,
+              QVariant::fromValue(MonomerToolType::NUCLEIC_ACID)},
+             {ModelKey::NUCLEIC_ACID_TOOL, QVariant::fromValue(tool)}});
         process_qt_events();
-        std::cout << "\tfinished processing events\n";
     }
 
     void importMolText(const std::string& text)
@@ -152,65 +144,39 @@ struct MonomerToolTestFixture {
     void mouseMove(const QPointF& pos,
                    const Qt::MouseButtons btns = Qt::NoButton)
     {
-        std::cout << "In mouseMove, about to construct event" << std::endl;
         QGraphicsSceneMouseEvent event(QEvent::GraphicsSceneMouseMove);
-        std::cout << "In mouseMove, about to set event pos" << std::endl;
         set_event_pos(event, pos);
-        std::cout << "In mouseMove, about to set button" << std::endl;
         event.setButton(Qt::NoButton);
-        std::cout << "In mouseMove, about to set buttons" << std::endl;
         event.setButtons(btns);
-        std::cout << "In mouseMove, about call mouseMoveEvent" << std::endl;
         m_scene->mouseMoveEvent(&event);
-        std::cout << "In mouseMove, about process events" << std::endl;
         process_qt_events();
-        std::cout << "Finished mouseMove" << std::endl;
     }
 
     void mousePress(const QPointF& pos)
     {
-        std::cout << "In mousePress, about to construct event" << std::endl;
         QGraphicsSceneMouseEvent event(QEvent::GraphicsSceneMousePress);
-        std::cout << "In mousePress, about to set event pos" << std::endl;
         set_event_pos(event, pos);
-        std::cout << "In mousePress, about to set button" << std::endl;
         event.setButton(Qt::LeftButton);
-        std::cout << "In mousePress, about to set buttons" << std::endl;
         event.setButtons(Qt::LeftButton);
-        std::cout << "In mousePress, about call mousePressEvent" << std::endl;
         m_scene->mousePressEvent(&event);
-        std::cout << "In mousePress, about process events" << std::endl;
         process_qt_events();
-        std::cout << "Finished mousePress" << std::endl;
     }
 
     void mouseRelease(const QPointF& pos)
     {
-        std::cout << "In mouseRelease, about to construct event" << std::endl;
         QGraphicsSceneMouseEvent event(QEvent::GraphicsSceneMouseRelease);
-        std::cout << "In mouseRelease, about to set event pos" << std::endl;
         set_event_pos(event, pos);
-        std::cout << "In mouseRelease, about to set button" << std::endl;
         event.setButton(Qt::LeftButton);
-        std::cout << "In mouseRelease, about to set buttons" << std::endl;
         event.setButtons(Qt::NoButton);
-        std::cout << "In mouseRelease, about call mouseReleaseEvent"
-                  << std::endl;
         m_scene->mouseReleaseEvent(&event);
-        std::cout << "In mouseRelease, about process events" << std::endl;
         process_qt_events();
-        std::cout << "Finished mouseRelease" << std::endl;
     }
 
     void mouseClick(const QPointF& pos)
     {
-        std::cout << "In mouseClick, about to call mouseMove" << std::endl;
         mouseMove(pos);
-        std::cout << "In mouseClick, about to call mousePress" << std::endl;
         mousePress(pos);
-        std::cout << "In mouseClick, about to call mouseRelease" << std::endl;
         mouseRelease(pos);
-        std::cout << "Finished mouseClick" << std::endl;
     }
 
     void mouseDrag(const QPointF& start, const QPointF& end)
@@ -231,18 +197,13 @@ struct MonomerToolTestFixture {
 /**
  * Confirm that clicking in empty space adds the appropriate monomer
  */
-// BOOST_AUTO_TEST_CASE(test_click_empty_space_adds_monomer)
-// {
-//     std::cout << "starting test_click_empty_space_adds_monomer\n";
-//     MonomerToolTestFixture fix;
-//     std::cout << "Declared fixture\n";
-//     fix.setAminoAcidTool(AminoAcidTool::ALA);
-//     std::cout << "Set amino acid tool\n";
-//     fix.mouseClick({0, 0});
-//     std::cout << "clicked\n";
-//     fix.verifyHELM("PEPTIDE1{A}$$$$V2.0");
-//     std::cout << "verified HELM\n";
-// }
+BOOST_AUTO_TEST_CASE(test_click_empty_space_adds_monomer)
+{
+    MonomerToolTestFixture fix;
+    fix.setAminoAcidTool(AminoAcidTool::ALA);
+    fix.mouseClick({0, 0});
+    fix.verifyHELM("PEPTIDE1{A}$$$$V2.0");
+}
 
 /**
  * Confirm that clicking on an existing monomer with the equivalent monomer tool
@@ -250,314 +211,288 @@ struct MonomerToolTestFixture {
  */
 BOOST_AUTO_TEST_CASE(test_click_existing_monomer_same_residue_adds_residue)
 {
-    std::cout
-        << "starting test_click_existing_monomer_same_residue_adds_residue\n";
     MonomerToolTestFixture fix;
-    std::cout << "Declared fixture\n";
     fix.importMolText("PEPTIDE1{A}$$$$V2.0");
-    std::cout << "imported mol\n";
     auto pos = fix.getMonomerPos(0);
-    std::cout << "got monomer pos\n";
     fix.setAminoAcidTool(AminoAcidTool::ALA);
-    std::cout << "set amino acid tool\n";
     fix.mouseClick(pos);
-    std::cout << "clicked\n";
     fix.verifyHELM("PEPTIDE1{A.A}$$$$V2.0");
-    std::cout << "verified HELM\n";
 }
 
 /**
  * Confirm that clicking on an existing monomer with a different monomer tool of
  * the same monomer type mutates the monomer.
  */
-// BOOST_AUTO_TEST_CASE(test_click_existing_monomer_different_residue_mutates)
-// {
-//     std::cout
-//         << "starting
-//         test_click_existing_monomer_different_residue_mutates\n";
-//     MonomerToolTestFixture fix;
+BOOST_AUTO_TEST_CASE(test_click_existing_monomer_different_residue_mutates)
+{
+    MonomerToolTestFixture fix;
 
-//     fix.importMolText("PEPTIDE1{A}$$$$V2.0");
-//     auto pos = fix.getMonomerPos(0);
-//     fix.setAminoAcidTool(AminoAcidTool::CYS);
-//     fix.mouseClick(pos);
-//     fix.verifyHELM("PEPTIDE1{C}$$$$V2.0");
-// }
+    fix.importMolText("PEPTIDE1{A}$$$$V2.0");
+    auto pos = fix.getMonomerPos(0);
+    fix.setAminoAcidTool(AminoAcidTool::CYS);
+    fix.mouseClick(pos);
+    fix.verifyHELM("PEPTIDE1{C}$$$$V2.0");
+}
 
 /**
  * Confirm that clicking on an existing monomer with a monomer tool of
  * a different monomer type has no effect.
  */
-// BOOST_AUTO_TEST_CASE(test_click_existing_monomer_different_monomer_type)
-// {
-//     std::cout
-//         << "starting test_click_existing_monomer_different_monomer_type\n";
-//     MonomerToolTestFixture fix;
-//     fix.importMolText("PEPTIDE1{A}$$$$V2.0");
-//     auto pos = fix.getMonomerPos(0);
-//     fix.setNucleicAcidTool(NucleicAcidTool::P);
-//     fix.mouseClick(pos);
-//     fix.verifyHELM("PEPTIDE1{A}$$$$V2.0");
-// }
+BOOST_AUTO_TEST_CASE(test_click_existing_monomer_different_monomer_type)
+{
+    MonomerToolTestFixture fix;
+    fix.importMolText("PEPTIDE1{A}$$$$V2.0");
+    auto pos = fix.getMonomerPos(0);
+    fix.setNucleicAcidTool(NucleicAcidTool::P);
+    fix.mouseClick(pos);
+    fix.verifyHELM("PEPTIDE1{A}$$$$V2.0");
+}
 
 /**
  * Confirm that clicking on an unbounnd attachment point of an existing monomer
  * adds a new monomer via the clicked attachment point.
  */
-// BOOST_AUTO_TEST_CASE(test_click_attachment_point)
-// {
-//     std::cout << "starting test_click_attachment_point\n";
-//     MonomerToolTestFixture fix;
-//     fix.importMolText("PEPTIDE1{A}$$$$V2.0");
-//     auto monomer_pos = fix.getMonomerPos(0);
-//     fix.setAminoAcidTool(AminoAcidTool::CYS);
-//     // hover over the monomer to trigger AP label creation
-//     fix.mouseMove(monomer_pos);
+BOOST_AUTO_TEST_CASE(test_click_attachment_point)
+{
+    MonomerToolTestFixture fix;
+    fix.importMolText("PEPTIDE1{A}$$$$V2.0");
+    auto monomer_pos = fix.getMonomerPos(0);
+    fix.setAminoAcidTool(AminoAcidTool::CYS);
+    // hover over the monomer to trigger AP label creation
+    fix.mouseMove(monomer_pos);
 
-//     // click on the N terminus attachment point
-//     fix.setAminoAcidTool(AminoAcidTool::CYS);
-//     fix.mouseMove(monomer_pos);
-//     auto n_ap_pos = fix.getAttachmentPointPos(0, "N");
-//     fix.mouseClick(n_ap_pos);
-//     fix.verifyHELM("PEPTIDE1{C.A}$$$$V2.0");
+    // click on the N terminus attachment point
+    fix.setAminoAcidTool(AminoAcidTool::CYS);
+    fix.mouseMove(monomer_pos);
+    auto n_ap_pos = fix.getAttachmentPointPos(0, "N");
+    fix.mouseClick(n_ap_pos);
+    fix.verifyHELM("PEPTIDE1{C.A}$$$$V2.0");
 
-//     // click on the C terminus attachment point
-//     fix.setAminoAcidTool(AminoAcidTool::PHE);
-//     fix.mouseMove(monomer_pos);
-//     auto c_ap_pos = fix.getAttachmentPointPos(0, "C");
-//     fix.mouseClick(c_ap_pos);
-//     fix.verifyHELM("PEPTIDE1{C.A.F}$$$$V2.0");
+    // click on the C terminus attachment point
+    fix.setAminoAcidTool(AminoAcidTool::PHE);
+    fix.mouseMove(monomer_pos);
+    auto c_ap_pos = fix.getAttachmentPointPos(0, "C");
+    fix.mouseClick(c_ap_pos);
+    fix.verifyHELM("PEPTIDE1{C.A.F}$$$$V2.0");
 
-//     // click on the side chain attachment point
-//     fix.setAminoAcidTool(AminoAcidTool::TRP);
-//     fix.mouseMove(monomer_pos);
-//     auto x_ap_pos = fix.getAttachmentPointPos(0, "X");
-//     fix.mouseClick(x_ap_pos);
-//     fix.verifyHELM(
-//         "PEPTIDE1{C.A.F}|PEPTIDE2{W}$PEPTIDE1,PEPTIDE2,2:R3-1:R3$$$V2.0");
-// }
+    // click on the side chain attachment point
+    fix.setAminoAcidTool(AminoAcidTool::TRP);
+    fix.mouseMove(monomer_pos);
+    auto x_ap_pos = fix.getAttachmentPointPos(0, "X");
+    fix.mouseClick(x_ap_pos);
+    fix.verifyHELM(
+        "PEPTIDE1{C.A.F}|PEPTIDE2{W}$PEPTIDE1,PEPTIDE2,2:R3-1:R3$$$V2.0");
+}
 
-// /**
-//  * Confirm that click-and-drag from an existing monomer adds a new monomer
-//  using
-//  * the default attachment point
-//  */
-// BOOST_AUTO_TEST_CASE(test_drag_monomer_to_empty_adds_connected_default_ap)
-// {
-//     MonomerToolTestFixture fix;
-//     fix.importMolText("PEPTIDE1{A}$$$$V2.0");
-//     fix.setAminoAcidTool(AminoAcidTool::CYS);
+/**
+ * Confirm that click-and-drag from an existing monomer adds a new monomer using
+ * the default attachment point
+ */
+BOOST_AUTO_TEST_CASE(test_drag_monomer_to_empty_adds_connected_default_ap)
+{
+    MonomerToolTestFixture fix;
+    fix.importMolText("PEPTIDE1{A}$$$$V2.0");
+    fix.setAminoAcidTool(AminoAcidTool::CYS);
 
-//     // Drag from the monomer to the right
-//     auto start_pos = fix.getMonomerPos(0);
-//     auto end_pos = start_pos + QPointF(100, 0);
-//     fix.mouseDrag(start_pos, end_pos);
+    // Drag from the monomer to the right
+    auto start_pos = fix.getMonomerPos(0);
+    auto end_pos = start_pos + QPointF(100, 0);
+    fix.mouseDrag(start_pos, end_pos);
 
-//     fix.verifyHELM("PEPTIDE1{A.C}$$$$V2.0");
-// }
+    fix.verifyHELM("PEPTIDE1{A.C}$$$$V2.0");
+}
 
-// /**
-//  * Confirm that click-and-drag from an existing monomer adds a new monomer
-//  using
-//  * the default attachment point, even when the monomer tool is equivalent to
-//  the
-//  * existing monomer (e.g. ALA tool on an A monomer).
-//  */
-// BOOST_AUTO_TEST_CASE(
-//     test_drag_monomer_to_empty_adds_connected_default_ap_same_monomer)
-// {
-//     MonomerToolTestFixture fix;
-//     fix.importMolText("PEPTIDE1{A}$$$$V2.0");
-//     fix.setAminoAcidTool(AminoAcidTool::ALA);
+/**
+ * Confirm that click-and-drag from an existing monomer adds a new monomer using
+ * the default attachment point, even when the monomer tool is equivalent to the
+ * existing monomer (e.g. ALA tool on an A monomer).
+ */
+BOOST_AUTO_TEST_CASE(
+    test_drag_monomer_to_empty_adds_connected_default_ap_same_monomer)
+{
+    MonomerToolTestFixture fix;
+    fix.importMolText("PEPTIDE1{A}$$$$V2.0");
+    fix.setAminoAcidTool(AminoAcidTool::ALA);
 
-//     // Drag from the monomer to the right
-//     auto start_pos = fix.getMonomerPos(0);
-//     auto end_pos = start_pos + QPointF(100, 0);
-//     fix.mouseDrag(start_pos, end_pos);
+    // Drag from the monomer to the right
+    auto start_pos = fix.getMonomerPos(0);
+    auto end_pos = start_pos + QPointF(100, 0);
+    fix.mouseDrag(start_pos, end_pos);
 
-//     fix.verifyHELM("PEPTIDE1{A.A}$$$$V2.0");
-// }
+    fix.verifyHELM("PEPTIDE1{A.A}$$$$V2.0");
+}
 
-// /**
-//  * Confirm that click-and-drag from the attachment point of an existing
-//  monomer
-//  * to empty space adds a new monomer via the specified attachment point of
-//  the
-//  * existing monomer
-//  */
-// BOOST_AUTO_TEST_CASE(test_drag_ap_to_empty_adds_connected_via_dragged_ap)
-// {
-//     MonomerToolTestFixture fix;
-//     fix.setAminoAcidTool(AminoAcidTool::CYS);
+/**
+ * Confirm that click-and-drag from the attachment point of an existing monomer
+ * to empty space adds a new monomer via the specified attachment point of the
+ * existing monomer
+ */
+BOOST_AUTO_TEST_CASE(test_drag_ap_to_empty_adds_connected_via_dragged_ap)
+{
+    MonomerToolTestFixture fix;
+    fix.setAminoAcidTool(AminoAcidTool::CYS);
 
-//     // Add initial monomer
-//     fix.importMolText("PEPTIDE1{A}$$$$V2.0");
+    // Add initial monomer
+    fix.importMolText("PEPTIDE1{A}$$$$V2.0");
 
-//     // hover over the monomer so that the attachment point graphics items are
-//     // created
-//     auto ala_pos = fix.getMonomerPos(0);
-//     fix.mouseMove(ala_pos);
+    // hover over the monomer so that the attachment point graphics items are
+    // created
+    auto ala_pos = fix.getMonomerPos(0);
+    fix.mouseMove(ala_pos);
 
-//     // Drag from N attachment point to empty space
-//     auto start_pos = fix.getAttachmentPointPos(0, "N");
-//     auto end_pos = start_pos + QPointF(-100, 0);
-//     fix.mouseDrag(start_pos, end_pos);
+    // Drag from N attachment point to empty space
+    auto start_pos = fix.getAttachmentPointPos(0, "N");
+    auto end_pos = start_pos + QPointF(-100, 0);
+    fix.mouseDrag(start_pos, end_pos);
 
-//     fix.verifyHELM("PEPTIDE1{C.A}$$$$V2.0");
+    fix.verifyHELM("PEPTIDE1{C.A}$$$$V2.0");
 
-//     // hover over the first monomer so that its attachment point graphics
-//     items
-//     // are created again
-//     fix.setAminoAcidTool(AminoAcidTool::PHE);
-//     fix.mouseMove(ala_pos);
+    // hover over the first monomer so that its attachment point graphics items
+    // are created again
+    fix.setAminoAcidTool(AminoAcidTool::PHE);
+    fix.mouseMove(ala_pos);
 
-//     // Drag from C attachment point to empty space
-//     start_pos = fix.getAttachmentPointPos(0, "C");
-//     end_pos = start_pos + QPointF(100, 100);
-//     fix.mouseDrag(start_pos, end_pos);
+    // Drag from C attachment point to empty space
+    start_pos = fix.getAttachmentPointPos(0, "C");
+    end_pos = start_pos + QPointF(100, 100);
+    fix.mouseDrag(start_pos, end_pos);
 
-//     fix.verifyHELM("PEPTIDE1{C.A.F}$$$$V2.0");
+    fix.verifyHELM("PEPTIDE1{C.A.F}$$$$V2.0");
 
-//     // hover over the first monomer so that its attachment point graphics
-//     items
-//     // are created again
-//     fix.setAminoAcidTool(AminoAcidTool::ALA);
-//     fix.mouseMove(ala_pos);
+    // hover over the first monomer so that its attachment point graphics items
+    // are created again
+    fix.setAminoAcidTool(AminoAcidTool::ALA);
+    fix.mouseMove(ala_pos);
 
-//     // Drag from C attachment point to empty space
-//     start_pos = fix.getAttachmentPointPos(0, "X");
-//     end_pos = start_pos + QPointF(-50, 100);
-//     fix.mouseDrag(start_pos, end_pos);
+    // Drag from C attachment point to empty space
+    start_pos = fix.getAttachmentPointPos(0, "X");
+    end_pos = start_pos + QPointF(-50, 100);
+    fix.mouseDrag(start_pos, end_pos);
 
-//     fix.verifyHELM(
-//         "PEPTIDE1{C.A.F}|PEPTIDE2{A}$PEPTIDE1,PEPTIDE2,2:R3-1:R3$$$V2.0");
-// }
+    fix.verifyHELM(
+        "PEPTIDE1{C.A.F}|PEPTIDE2{A}$PEPTIDE1,PEPTIDE2,2:R3-1:R3$$$V2.0");
+}
 
-// /**
-//  * Confirm that click-and-drag from an existing monomer to an existing
-//  monomer
-//  * connects them via the default attachment points
-//  */
-// BOOST_AUTO_TEST_CASE(test_drag_monomer_to_monomer_connects_default_aps)
-// {
-//     MonomerToolTestFixture fix;
-//     fix.setAminoAcidTool(AminoAcidTool::ALA);
-//     fix.importMolText("PEPTIDE1{A}|PEPTIDE2{C}$$$$V2.0");
-//     auto pos1 = fix.getMonomerPos(0);
-//     auto pos2 = fix.getMonomerPos(1);
-//     fix.mouseDrag(pos1, pos2);
-//     fix.verifyHELM("PEPTIDE1{A.C}$$$$V2.0");
-// }
+/**
+ * Confirm that click-and-drag from an existing monomer to an existing monomer
+ * connects them via the default attachment points
+ */
+BOOST_AUTO_TEST_CASE(test_drag_monomer_to_monomer_connects_default_aps)
+{
+    MonomerToolTestFixture fix;
+    fix.setAminoAcidTool(AminoAcidTool::ALA);
+    fix.importMolText("PEPTIDE1{A}|PEPTIDE2{C}$$$$V2.0");
+    auto pos1 = fix.getMonomerPos(0);
+    auto pos2 = fix.getMonomerPos(1);
+    fix.mouseDrag(pos1, pos2);
+    fix.verifyHELM("PEPTIDE1{A.C}$$$$V2.0");
+}
 
-// /**
-//  * Confirm that click-and-drag from the attachment point of one existing
-//  monomer
-//  * to the attachment point of another existing monomer connects the monomer
-//  via
-//  * the specified attachment points.
-//  */
-// BOOST_AUTO_TEST_CASE(test_drag_ap_to_ap_connects_via_both_aps)
-// {
-//     MonomerToolTestFixture fix;
-//     fix.setAminoAcidTool(AminoAcidTool::ALA);
-//     fix.importMolText("PEPTIDE1{A}|PEPTIDE2{C}$$$$V2.0");
-//     auto ala_pos = fix.getMonomerPos(0);
-//     auto cys_pos = fix.getMonomerPos(1);
-//     fix.mouseMove(ala_pos);
-//     auto start_pos = fix.getAttachmentPointPos(0, "N");
-//     fix.mouseMove(start_pos);
-//     fix.mousePress(start_pos);
-//     // first, drag to the cysteine to make its attachment points appear
-//     fix.mouseMove(cys_pos, Qt::LeftButton);
-//     auto end_pos = fix.getAttachmentPointPos(1, "N");
-//     fix.mouseMove(end_pos, Qt::LeftButton);
-//     fix.mouseRelease(end_pos);
-//     fix.verifyHELM(
-//         "PEPTIDE1{A}|PEPTIDE2{C}$PEPTIDE1,PEPTIDE2,1:R1-1:R1$$$V2.0");
-// }
+/**
+ * Confirm that click-and-drag from the attachment point of one existing monomer
+ * to the attachment point of another existing monomer connects the monomer via
+ * the specified attachment points.
+ */
+BOOST_AUTO_TEST_CASE(test_drag_ap_to_ap_connects_via_both_aps)
+{
+    MonomerToolTestFixture fix;
+    fix.setAminoAcidTool(AminoAcidTool::ALA);
+    fix.importMolText("PEPTIDE1{A}|PEPTIDE2{C}$$$$V2.0");
+    auto ala_pos = fix.getMonomerPos(0);
+    auto cys_pos = fix.getMonomerPos(1);
+    fix.mouseMove(ala_pos);
+    auto start_pos = fix.getAttachmentPointPos(0, "N");
+    fix.mouseMove(start_pos);
+    fix.mousePress(start_pos);
+    // first, drag to the cysteine to make its attachment points appear
+    fix.mouseMove(cys_pos, Qt::LeftButton);
+    auto end_pos = fix.getAttachmentPointPos(1, "N");
+    fix.mouseMove(end_pos, Qt::LeftButton);
+    fix.mouseRelease(end_pos);
+    fix.verifyHELM(
+        "PEPTIDE1{A}|PEPTIDE2{C}$PEPTIDE1,PEPTIDE2,1:R1-1:R1$$$V2.0");
+}
 
-// /**
-//  * Confirm that dragging from empty space to empty space with a peptide
-//  monomer
-//  * creates a dimer with a backbone connection
-//  */
-// BOOST_AUTO_TEST_CASE(test_drag_empty_to_empty_adds_two_connected_default_aps)
-// {
-//     MonomerToolTestFixture fix;
-//     fix.setAminoAcidTool(AminoAcidTool::ALA);
-//     auto start_pos = QPointF(100, 100);
-//     auto end_pos = start_pos + QPointF(100, 0);
-//     fix.mouseDrag(start_pos, end_pos);
-//     fix.verifyHELM("PEPTIDE1{A.A}$$$$V2.0");
-// }
+/**
+ * Confirm that dragging from empty space to empty space with a peptide monomer
+ * creates a dimer with a backbone connection
+ */
+BOOST_AUTO_TEST_CASE(test_drag_empty_to_empty_adds_two_connected_default_aps)
+{
+    MonomerToolTestFixture fix;
+    fix.setAminoAcidTool(AminoAcidTool::ALA);
+    auto start_pos = QPointF(100, 100);
+    auto end_pos = start_pos + QPointF(100, 0);
+    fix.mouseDrag(start_pos, end_pos);
+    fix.verifyHELM("PEPTIDE1{A.A}$$$$V2.0");
+}
 
-// /**
-//  * Confirm that dragging from empty space to empty space with a nucleic acid
-//  * base monomer creates two paired bases
-//  */
-// BOOST_AUTO_TEST_CASE(test_nucleic_acid_base_drag_empty_to_empty_uses_pair_ap)
-// {
-//     MonomerToolTestFixture fix;
-//     fix.setNucleicAcidTool(NucleicAcidTool::A);
-//     auto start_pos = QPointF(100, 100);
-//     auto end_pos = start_pos + QPointF(100, 0);
-//     fix.mouseDrag(start_pos, end_pos);
-//     fix.verifyHELM("RNA1{A}|RNA2{A}$RNA1,RNA2,1:pair-1:pair$$$V2.0");
-// }
+/**
+ * Confirm that dragging from empty space to empty space with a nucleic acid
+ * base monomer creates two paired bases
+ */
+BOOST_AUTO_TEST_CASE(test_nucleic_acid_base_drag_empty_to_empty_uses_pair_ap)
+{
+    MonomerToolTestFixture fix;
+    fix.setNucleicAcidTool(NucleicAcidTool::A);
+    auto start_pos = QPointF(100, 100);
+    auto end_pos = start_pos + QPointF(100, 0);
+    fix.mouseDrag(start_pos, end_pos);
+    fix.verifyHELM("RNA1{A}|RNA2{A}$RNA1,RNA2,1:pair-1:pair$$$V2.0");
+}
 
-// /**
-//  * Confirm that dragging from empty space to empty space with a nucleic acid
-//  * phosphate monomer is ignored and doesn't create any monomers
-//  */
-// BOOST_AUTO_TEST_CASE(test_nucleic_acid_sugar_drag_empty_to_empty_ignored)
-// {
-//     MonomerToolTestFixture fix;
-//     fix.setNucleicAcidTool(NucleicAcidTool::R);
-//     auto start_pos = QPointF(100, 100);
-//     auto end_pos = start_pos + QPointF(100, 0);
-//     fix.mouseDrag(start_pos, end_pos);
-//     fix.confirmIsEmpty();
-// }
+/**
+ * Confirm that dragging from empty space to empty space with a nucleic acid
+ * phosphate monomer is ignored and doesn't create any monomers
+ */
+BOOST_AUTO_TEST_CASE(test_nucleic_acid_sugar_drag_empty_to_empty_ignored)
+{
+    MonomerToolTestFixture fix;
+    fix.setNucleicAcidTool(NucleicAcidTool::R);
+    auto start_pos = QPointF(100, 100);
+    auto end_pos = start_pos + QPointF(100, 0);
+    fix.mouseDrag(start_pos, end_pos);
+    fix.confirmIsEmpty();
+}
 
-// /**
-//  * Confirm that dragging from empty space to an existing monomer creates a
-//  new
-//  * monomer and connects it to the default attachment point of the existing
-//  * monomer
-//  */
-// BOOST_AUTO_TEST_CASE(test_drag_empty_to_monomer_adds_connected_default_aps)
-// {
-//     MonomerToolTestFixture fix;
-//     fix.importMolText("PEPTIDE1{C}$$$$V2.0");
-//     fix.setAminoAcidTool(AminoAcidTool::ALA);
-//     auto start_pos = QPointF(100, 100);
-//     auto end_pos = fix.getMonomerPos(0);
-//     fix.mouseDrag(start_pos, end_pos);
-//     fix.verifyHELM("PEPTIDE1{A.C}$$$$V2.0");
-// }
+/**
+ * Confirm that dragging from empty space to an existing monomer creates a new
+ * monomer and connects it to the default attachment point of the existing
+ * monomer
+ */
+BOOST_AUTO_TEST_CASE(test_drag_empty_to_monomer_adds_connected_default_aps)
+{
+    MonomerToolTestFixture fix;
+    fix.importMolText("PEPTIDE1{C}$$$$V2.0");
+    fix.setAminoAcidTool(AminoAcidTool::ALA);
+    auto start_pos = QPointF(100, 100);
+    auto end_pos = fix.getMonomerPos(0);
+    fix.mouseDrag(start_pos, end_pos);
+    fix.verifyHELM("PEPTIDE1{A.C}$$$$V2.0");
+}
 
-// /**
-//  * Confirm that dragging from empty space to an existing monomer creates a
-//  new
-//  * monomer and connects it to the specified attachment point of the existing
-//  * monomer
-//  */
-// BOOST_AUTO_TEST_CASE(test_drag_empty_to_ap_adds_connected_correct_aps)
-// {
-//     MonomerToolTestFixture fix;
-//     fix.importMolText("PEPTIDE1{C}$$$$V2.0");
-//     fix.setAminoAcidTool(AminoAcidTool::ALA);
-//     auto start_pos = QPointF(100, 100);
-//     auto monomer_pos = fix.getMonomerPos(0);
-//     fix.mouseMove(start_pos);
-//     fix.mousePress(start_pos);
-//     // first, drag to the existing monomer to make its attachment points
-//     appear fix.mouseMove(monomer_pos); auto end_pos =
-//     fix.getAttachmentPointPos(0, "X"); fix.mouseMove(end_pos);
-//     fix.mouseRelease(end_pos);
-//     fix.verifyHELM(
-//         "PEPTIDE1{C}|PEPTIDE2{A}$PEPTIDE1,PEPTIDE2,1:R3-1:R2$$$V2.0");
-// }
+/**
+ * Confirm that dragging from empty space to an existing monomer creates a new
+ * monomer and connects it to the specified attachment point of the existing
+ * monomer
+ */
+BOOST_AUTO_TEST_CASE(test_drag_empty_to_ap_adds_connected_correct_aps)
+{
+    MonomerToolTestFixture fix;
+    fix.importMolText("PEPTIDE1{C}$$$$V2.0");
+    fix.setAminoAcidTool(AminoAcidTool::ALA);
+    auto start_pos = QPointF(100, 100);
+    auto monomer_pos = fix.getMonomerPos(0);
+    fix.mouseMove(start_pos);
+    fix.mousePress(start_pos);
+    // first, drag to the existing monomer to make its attachment points appear
+    fix.mouseMove(monomer_pos);
+    auto end_pos = fix.getAttachmentPointPos(0, "X");
+    fix.mouseMove(end_pos);
+    fix.mouseRelease(end_pos);
+    fix.verifyHELM(
+        "PEPTIDE1{C}|PEPTIDE2{A}$PEPTIDE1,PEPTIDE2,1:R3-1:R2$$$V2.0");
+}
 
 } // namespace sketcher
 } // namespace schrodinger

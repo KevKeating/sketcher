@@ -106,16 +106,14 @@ struct ProtectedRegion {
     unsigned int end;   // One past last monomer (exclusive, like segment_end)
 };
 
-static void
-place_monomer_at(RDKit::Conformer& conformer,
-                 const RDKit::Atom* monomer_to_place,
-                 const RDGeom::Point3D& position,
-                 std::unordered_set<unsigned int>& placed_monomers_idcs)
+static void place_monomer_at(RDKit::Conformer& conformer,
+                             const RDKit::Atom* monomer_to_place,
+                             const RDGeom::Point3D& position,
+                             std::unordered_set<int>& placed_monomers_idcs)
 {
     auto monomer_idx = monomer_to_place->getIdx();
     conformer.setAtomPos(monomer_idx, position);
-    placed_monomers_idcs.insert(
-        monomer_to_place->getProp<unsigned int>(ORIGINAL_INDEX));
+    placed_monomers_idcs.insert(monomer_to_place->getProp<int>(ORIGINAL_INDEX));
 }
 
 /**
@@ -131,25 +129,6 @@ RDGeom::Point3D compute_centroid(const RDKit::ROMol& mol,
     std::vector<RDGeom::Point3D> positions(atom_indices.size());
     std::transform(atom_indices.begin(), atom_indices.end(), positions.begin(),
                    [&conformer](int idx) { return conformer.getAtomPos(idx); });
-
-    return compute_centroid(positions);
-}
-
-/**
- * Compute the centroid of a set of atom indices in a molecule (unsigned int
- * overload).
- */
-RDGeom::Point3D compute_centroid(const RDKit::ROMol& mol,
-                                 const std::vector<unsigned int>& atom_indices)
-{
-    if (atom_indices.empty()) {
-        return RDGeom::Point3D(0, 0, 0);
-    }
-    const auto& conformer = mol.getConformer();
-    std::vector<RDGeom::Point3D> positions(atom_indices.size());
-    std::transform(
-        atom_indices.begin(), atom_indices.end(), positions.begin(),
-        [&conformer](unsigned int idx) { return conformer.getAtomPos(idx); });
 
     return compute_centroid(positions);
 }
@@ -250,7 +229,7 @@ static std::vector<Direction> get_available_directions(
  */
 template <typename _Cond = decltype(default_stop_condition)> static void
 lay_out_chain(RDKit::ROMol& polymer, const RDKit::Atom* start_monomer,
-              std::unordered_set<unsigned int>& placed_monomers_idcs,
+              std::unordered_set<int>& placed_monomers_idcs,
               const RDGeom::Point3D& start_pos = RDGeom::Point3D(0, 0, 0),
               ChainDirection chain_dir = ChainDirection::LTR,
               BranchDirection branch_direction = BranchDirection::UP,
@@ -270,8 +249,8 @@ lay_out_chain(RDKit::ROMol& polymer, const RDKit::Atom* start_monomer,
         auto monomer_neighbors = polymer.atomNeighbors(monomer_to_place);
         bool bonded_to_parent_polymer = false;
         bool bonded_to_child_polymer = false;
-        std::vector<unsigned int> neighbor_monomer_idcs;
-        monomer_to_place->getPropIfPresent<std::vector<unsigned int>>(
+        std::vector<int> neighbor_monomer_idcs;
+        monomer_to_place->getPropIfPresent<std::vector<int>>(
             BOND_TO, neighbor_monomer_idcs);
         for (auto neighbor_idx : neighbor_monomer_idcs) {
             if (placed_monomers_idcs.contains(neighbor_idx)) {
@@ -287,7 +266,7 @@ lay_out_chain(RDKit::ROMol& polymer, const RDKit::Atom* start_monomer,
         std::vector<const RDKit::Atom*> branches;
         for (auto neighbor : monomer_neighbors) {
             if (placed_monomers_idcs.contains(
-                    neighbor->getProp<unsigned int>(ORIGINAL_INDEX)) ||
+                    neighbor->getProp<int>(ORIGINAL_INDEX)) ||
                 // Skip if the bond to this neighbor is not a backbone
                 // connection)
                 !has_backbone_linkage(polymer.getBondBetweenAtoms(
@@ -519,9 +498,9 @@ static void orient_ring_system(RDKit::ROMol& polymer)
  * neighbors will be marked as placed in `placed_monomers_idcs`, so that the
  * other coordinates can be overwritten later (e.g. to draw straight chains)
  */
-static void generate_coordinates_for_cycles(
-    RDKit::ROMol& polymer,
-    std::unordered_set<unsigned int>& placed_monomers_idcs)
+static void
+generate_coordinates_for_cycles(RDKit::ROMol& polymer,
+                                std::unordered_set<int>& placed_monomers_idcs)
 {
     // generate ring coordinates using RDKit's small-molecule built-in
     // coordinate generation
@@ -800,7 +779,7 @@ compute_turn_positions_for_chain(const RDKit::ROMol& polymer)
  */
 static RDGeom::Point3D
 lay_out_turn(RDKit::ROMol& polymer, RDKit::Conformer& conformer,
-             std::unordered_set<unsigned int>& placed_monomers_idcs,
+             std::unordered_set<int>& placed_monomers_idcs,
              const RDGeom::Point3D& turn_start_pos, unsigned int segment_end,
              unsigned int turn_size, unsigned int total_monomers,
              ChainDirection chain_dir, bool downward = true,
@@ -1119,7 +1098,7 @@ compute_coiling_turns_for_chain(const RDKit::ROMol& polymer)
  */
 static void
 lay_out_chain_with_turns(RDKit::ROMol& polymer,
-                         std::unordered_set<unsigned int>& placed_monomers_idcs,
+                         std::unordered_set<int>& placed_monomers_idcs,
                          const std::vector<TurnInfo>& turn_positions)
 {
     auto& conformer = polymer.getConformer();
@@ -1352,8 +1331,7 @@ addTurnsBreakLongLinearSegments(const std::vector<TurnInfo>& turns,
  * updated
  */
 static bool maybe_lay_out_cyclic_polymer_as_snaking_chain(
-    RDKit::ROMol& polymer,
-    std::unordered_set<unsigned int>& placed_monomers_idcs)
+    RDKit::ROMol& polymer, std::unordered_set<int>& placed_monomers_idcs)
 {
     auto turns = compute_turn_positions_for_chain(polymer);
 
@@ -1469,8 +1447,7 @@ static bool optimize_coiling_layout(RDKit::ROMol& polymer,
  * not be updated
  */
 static bool maybe_lay_out_cyclic_polymer_as_coiling_chain(
-    RDKit::ROMol& polymer,
-    std::unordered_set<unsigned int>& placed_monomers_idcs)
+    RDKit::ROMol& polymer, std::unordered_set<int>& placed_monomers_idcs)
 {
     // Analyze CUSTOM_BONDs to determine if pattern fits coiling layout
     auto turns = compute_coiling_turns_for_chain(polymer);
@@ -1490,7 +1467,7 @@ static bool maybe_lay_out_cyclic_polymer_as_coiling_chain(
 
 static void
 lay_out_cyclic_polymer(RDKit::ROMol& polymer,
-                       std::unordered_set<unsigned int>& placed_monomers_idcs)
+                       std::unordered_set<int>& placed_monomers_idcs)
 {
 
     if (is_a_chain(polymer)) {
@@ -1615,7 +1592,7 @@ find_hairpin_turn(const RDKit::ROMol& polymer)
  */
 static void
 layout_hairpin_polymer(RDKit::ROMol& polymer,
-                       std::unordered_set<unsigned int>& placed_monomers_idcs)
+                       std::unordered_set<int>& placed_monomers_idcs)
 {
     auto hairpin_turn = find_hairpin_turn(polymer);
     auto& conformer = polymer.getConformer();
@@ -1660,7 +1637,7 @@ layout_hairpin_polymer(RDKit::ROMol& polymer,
 
 static void
 lay_out_linear_polymer(RDKit::ROMol& polymer,
-                       std::unordered_set<unsigned int>& placed_monomers_idcs,
+                       std::unordered_set<int>& placed_monomers_idcs,
                        const bool rotate = false)
 {
     auto monomers = polymer.atoms();
@@ -1698,10 +1675,9 @@ lay_out_linear_polymer(RDKit::ROMol& polymer,
  * @param rotate This only applies for linear polymers. Rotates the direction of
  * monomer chains and branches 180° (chains go RTL and branches go UP).
  */
-static void
-lay_out_polymer(RDKit::ROMol& polymer,
-                std::unordered_set<unsigned int>& placed_monomers_idcs,
-                const bool rotate = false)
+static void lay_out_polymer(RDKit::ROMol& polymer,
+                            std::unordered_set<int>& placed_monomers_idcs,
+                            const bool rotate = false)
 {
     if (!polymer.getRingInfo()->isInitialized()) {
         constexpr bool include_dative_bonds = true;
@@ -1728,7 +1704,7 @@ lay_out_polymer(RDKit::ROMol& polymer,
  */
 static void lay_out_snaked_linear_polymer(RDKit::ROMol& polymer)
 {
-    auto placed_monomers_idcs = std::unordered_set<unsigned int>{};
+    auto placed_monomers_idcs = std::unordered_set<int>{};
     auto turn_positions =
         compute_turn_positions_for_linear_segment(0, polymer.getNumAtoms() - 1);
     // Use the calculated turn positions to lay out the snaking chain
@@ -1773,8 +1749,8 @@ sort_polymers_by_connectivity(const std::vector<RDKit::ROMOL_SPTR>& polymers)
                 if (!monomer->hasProp(BOND_TO)) {
                     continue;
                 }
-                std::vector<unsigned int> neighbor_monomer_idcs;
-                monomer->getPropIfPresent<std::vector<unsigned int>>(
+                std::vector<int> neighbor_monomer_idcs;
+                monomer->getPropIfPresent<std::vector<int>>(
                     BOND_TO, neighbor_monomer_idcs);
                 for (auto neighbor_monomer_idx : neighbor_monomer_idcs) {
                     auto neighbor_polymer =
@@ -1809,17 +1785,17 @@ break_into_polymers(const RDKit::ROMol& monomer_mol)
         }
         // store the connected indices as comma separated values in the
         // BOND_TO prop
-        std::vector<unsigned int> begin_monomer_bond_to;
+        std::vector<int> begin_monomer_bond_to;
         if (beginMonomer->hasProp(BOND_TO)) {
             begin_monomer_bond_to =
-                beginMonomer->getProp<std::vector<unsigned int>>(BOND_TO);
+                beginMonomer->getProp<std::vector<int>>(BOND_TO);
         }
         begin_monomer_bond_to.push_back(endMonomer->getIdx());
         beginMonomer->setProp(BOND_TO, begin_monomer_bond_to);
-        std::vector<unsigned int> end_monomer_bond_to;
+        std::vector<int> end_monomer_bond_to;
         if (endMonomer->hasProp(BOND_TO)) {
             end_monomer_bond_to =
-                endMonomer->getProp<std::vector<unsigned int>>(BOND_TO);
+                endMonomer->getProp<std::vector<int>>(BOND_TO);
         }
         end_monomer_bond_to.push_back(beginMonomer->getIdx());
         endMonomer->setProp(BOND_TO, end_monomer_bond_to);
@@ -1847,9 +1823,9 @@ static BOND_IDX_VEC get_bonds_between_polymers(const RDKit::ROMol& from,
 
     BOND_IDX_VEC bonds{};
     for (auto monomer : from.atoms()) {
-        std::vector<unsigned int> bonded_monomers_indices;
-        monomer->getPropIfPresent<std::vector<unsigned int>>(
-            BOND_TO, bonded_monomers_indices);
+        std::vector<int> bonded_monomers_indices;
+        monomer->getPropIfPresent<std::vector<int>>(BOND_TO,
+                                                    bonded_monomers_indices);
         if (bonded_monomers_indices.empty()) {
             continue;
         }
@@ -2518,7 +2494,7 @@ void lay_out_polymers(
     const std::vector<RDKit::ROMOL_SPTR>& polymers,
     const std::map<RDKit::ROMOL_SPTR, RDKit::ROMOL_SPTR>& parent_polymer)
 {
-    std::unordered_set<unsigned int> placed_monomers_idcs{};
+    std::unordered_set<int> placed_monomers_idcs{};
     std::vector<RDKit::ROMOL_SPTR> placed_polymers;
 
     // lay out the polymers in connection order so connected polymers are laid
@@ -2747,14 +2723,16 @@ inline RDGeom::Point3D get_monomer_size(const RDKit::ROMol& mol,
     try {
         atom->getPropIfPresent<RDGeom::Point3D>(MONOMER_ITEM_SIZE, size);
     } catch (const std::bad_any_cast&) {
+        // getPropIfPresent sometimes leaks an exception to the caller, so use
+        // the default size when that happens
         return {MONOMER_MINIMUM_SIZE, MONOMER_MINIMUM_SIZE, 0};
     }
     return size;
 }
 
 struct RingResizeInfo {
-    std::vector<std::vector<unsigned int>> rings; // list of resizeable rings
-    std::unordered_map<unsigned int, std::set<unsigned int>>
+    std::vector<std::vector<int>> rings; // list of resizeable rings
+    std::unordered_map<int, std::set<int>>
         atom_to_ring_map; // atom index -> set of ring indices
 };
 
@@ -2767,7 +2745,7 @@ struct RingResizeInfo {
  */
 std::vector<RingResizeData> collect_ring_resize_data(
     const RDKit::ROMol& mol,
-    const std::unordered_map<unsigned int, RDGeom::Point3D>& resizes,
+    const std::unordered_map<int, RDGeom::Point3D>& resizes,
     const RingResizeInfo& ring_resize_info)
 {
     std::vector<RingResizeData> result;
@@ -2839,67 +2817,40 @@ std::vector<RingResizeData> collect_ring_resize_data(
  */
 std::vector<MonomerResizeData> collect_linear_resize_data(
     const RDKit::ROMol& mol,
-    const std::unordered_map<unsigned int, RDGeom::Point3D>& resizes,
+    const std::unordered_map<int, RDGeom::Point3D>& resizes,
     const RingResizeInfo& ring_resize_info)
 {
-    std::cout << "collect_linear_resize_data: entry, resizes.size()="
-              << resizes.size() << std::endl;
     std::vector<MonomerResizeData> result;
     auto& conformer = mol.getConformer();
 
     result.reserve(resizes.size());
 
-    std::cout << "collect_linear_resize_data: before loop" << std::endl;
     for (const auto& r : resizes) {
         const unsigned int index = r.first;
-        std::cout << "collect_linear_resize_data: processing index " << index
-                  << std::endl;
         // if the monomer is in a ring, skip it
         if (ring_resize_info.atom_to_ring_map.contains(index)) {
-            std::cout << "collect_linear_resize_data: index " << index
-                      << " is in a ring, skipping" << std::endl;
             continue;
         }
-        std::cout
-            << "collect_linear_resize_data: before getting new_size for index "
-            << index << std::endl;
         const RDGeom::Point3D& new_size = r.second;
 
-        std::cout
-            << "collect_linear_resize_data: before get_monomer_size for index "
-            << index << std::endl;
         const RDGeom::Point3D current_size = get_monomer_size(mol, index);
 
-        std::cout
-            << "collect_linear_resize_data: before computing delta for index "
-            << index << std::endl;
         RDGeom::Point3D delta = new_size - current_size;
         // Skip no-op resizes
         if (delta.x == 0. && delta.y == 0.) {
-            std::cout << "collect_linear_resize_data: index " << index
-                      << " has zero delta, skipping" << std::endl;
             continue;
         }
 
-        std::cout << "collect_linear_resize_data: before push_back for index "
-                  << index << std::endl;
         result.push_back({index, conformer.getAtomPos(index), delta});
-        std::cout << "collect_linear_resize_data: after push_back for index "
-                  << index << std::endl;
     }
 
     // group vertically stacked monomers to avoid compound horizontal shifts
     assign_clusters(result, &RDGeom::Point3D::x, &MonomerResizeData::x_cluster,
                     MONOMER_MINIMUM_SIZE);
-    std::cout << "collect_linear_resize_data: after first assign_clusters call "
-              << std::endl;
 
     // group horizontally stacked monomers to avoid compound vertical shifts
     assign_clusters(result, &RDGeom::Point3D::y, &MonomerResizeData::y_cluster,
                     MONOMER_MINIMUM_SIZE);
-    std::cout
-        << "collect_linear_resize_data: after second assign_clusters call "
-        << std::endl;
 
     return result;
 }
@@ -3052,41 +3003,6 @@ find_all_connected_monomers_outside_ring(const RDKit::ROMol& mol, int start_idx,
     return result;
 }
 
-std::set<unsigned int>
-find_all_connected_monomers_outside_ring(const RDKit::ROMol& mol,
-                                         unsigned int start_idx,
-                                         const std::vector<unsigned int>& ring)
-{
-    std::set<unsigned int> result;
-    std::set<unsigned int> visited;
-    std::queue<unsigned int> to_visit;
-
-    to_visit.push(start_idx);
-    for (auto monomer_idx : ring) {
-        visited.insert(monomer_idx);
-    }
-    visited.insert(start_idx);
-
-    std::set<unsigned int> ring_set(ring.begin(), ring.end());
-
-    while (!to_visit.empty()) {
-        unsigned int current_idx = to_visit.front();
-        to_visit.pop();
-
-        for (auto neighbor :
-             mol.atomNeighbors(mol.getAtomWithIdx(current_idx))) {
-            unsigned int neighbor_idx = neighbor->getIdx();
-            if (visited.contains(neighbor_idx)) {
-                continue;
-            }
-            result.insert(neighbor_idx);
-            visited.insert(neighbor_idx);
-            to_visit.push(neighbor_idx);
-        }
-    }
-    return result;
-}
-
 /**
  * Compute per-monomer displacement vectors based on ring expansion data.
  *
@@ -3168,7 +3084,7 @@ void apply_displacements(RDKit::ROMol& mol,
  */
 void update_monomer_sizes(
     RDKit::ROMol& mol,
-    const std::unordered_map<unsigned int, RDGeom::Point3D>& monomer_sizes)
+    const std::unordered_map<int, RDGeom::Point3D>& monomer_sizes)
 {
     for (const auto& r : monomer_sizes) {
         mol.getAtomWithIdx(r.first)->setProp<RDGeom::Point3D>(MONOMER_ITEM_SIZE,
@@ -3252,15 +3168,9 @@ RingResizeInfo compute_ring_info_for_resize(RDKit::ROMol& mol)
         candidate_rings.push_back(ring);
     }
     for (const auto& ring : candidate_rings) {
-        unsigned int ring_idx = static_cast<unsigned int>(result.rings.size());
-        // Convert from int to unsigned int
-        std::vector<unsigned int> unsigned_ring;
-        unsigned_ring.reserve(ring.size());
+        int ring_idx = static_cast<int>(result.rings.size());
+        result.rings.push_back(ring);
         for (int atom_idx : ring) {
-            unsigned_ring.push_back(static_cast<unsigned int>(atom_idx));
-        }
-        result.rings.push_back(unsigned_ring);
-        for (unsigned int atom_idx : unsigned_ring) {
             result.atom_to_ring_map[atom_idx].insert(ring_idx);
         }
     }
@@ -3278,84 +3188,44 @@ RingResizeInfo compute_ring_info_for_resize(RDKit::ROMol& mol)
  * @param mol           The molecule containing the monomers to resize.
  * @param monomer_sizes A map from atom indices to their new desired sizes.
  */
-void resize_monomers(
-    RDKit::ROMol& mol,
-    std::unordered_map<unsigned int, RDGeom::Point3D> monomer_sizes)
+void resize_monomers(RDKit::ROMol& mol,
+                     std::unordered_map<int, RDGeom::Point3D> monomer_sizes)
 {
-    std::cout << "resize_monomers: entry, monomer_sizes.size()="
-              << monomer_sizes.size() << std::endl;
     if (monomer_sizes.empty()) {
-        std::cout << "resize_monomers: empty, returning" << std::endl;
         return;
     }
 
-    std::cout << "resize_monomers: before compute_full_ring_info" << std::endl;
     // override ring info to ensure rings are fully perceived.
     compute_full_ring_info(mol);
-    std::cout << "resize_monomers: after compute_full_ring_info" << std::endl;
 
-    std::cout << "resize_monomers: before compute_ring_info_for_resize"
-              << std::endl;
     auto ring_resize_info = compute_ring_info_for_resize(mol);
-    std::cout << "resize_monomers: after compute_ring_info_for_resize"
-              << std::endl;
 
-    std::cout << "resize_monomers: before collect_linear_resize_data"
-              << std::endl;
     auto linear_resize_data =
         collect_linear_resize_data(mol, monomer_sizes, ring_resize_info);
-    std::cout << "resize_monomers: after collect_linear_resize_data"
-              << std::endl;
 
-    std::cout << "resize_monomers: before collect_ring_resize_data"
-              << std::endl;
     auto ring_resize_data =
         collect_ring_resize_data(mol, monomer_sizes, ring_resize_info);
-    std::cout << "resize_monomers: after collect_ring_resize_data" << std::endl;
-
     if (linear_resize_data.empty() && ring_resize_data.empty()) {
-        std::cout << "resize_monomers: both empty, returning" << std::endl;
         return;
     }
 
-    std::cout << "resize_monomers: before compute_linear_displacements"
-              << std::endl;
     // compute displacements caused by monomers in chains
     auto linear_displacements =
         compute_linear_displacements(mol, linear_resize_data, ring_resize_info);
-    std::cout << "resize_monomers: after compute_linear_displacements"
-              << std::endl;
 
-    std::cout << "resize_monomers: before compute_ring_expansion_displacements"
-              << std::endl;
     // compute displacements caused by monomers in rings
     auto ring_displacements = compute_ring_expansion_displacements(
         mol, ring_resize_data, ring_resize_info);
-    std::cout << "resize_monomers: after compute_ring_expansion_displacements"
-              << std::endl;
 
-    std::cout << "resize_monomers: before apply_displacements (linear)"
-              << std::endl;
     // apply movement
     apply_displacements(mol, linear_displacements);
-    std::cout << "resize_monomers: after apply_displacements (linear)"
-              << std::endl;
-
-    std::cout << "resize_monomers: before apply_displacements (ring)"
-              << std::endl;
     apply_displacements(mol, ring_displacements);
-    std::cout << "resize_monomers: after apply_displacements (ring)"
-              << std::endl;
 
-    std::cout << "resize_monomers: before update_monomer_sizes" << std::endl;
     // persist new sizes
     update_monomer_sizes(mol, monomer_sizes);
-    std::cout << "resize_monomers: after update_monomer_sizes" << std::endl;
 
-    std::cout << "resize_monomers: before reset ring info" << std::endl;
     // reset ring info to avoid leaking "internal" perception of rings
     mol.getRingInfo()->reset();
-    std::cout << "resize_monomers: after reset ring info" << std::endl;
 }
 
 unsigned int compute_monomer_mol_coords(RDKit::ROMol& monomer_mol)
