@@ -152,39 +152,65 @@ struct MonomerToolTestFixture {
     void mouseMove(const QPointF& pos,
                    const Qt::MouseButtons btns = Qt::NoButton)
     {
+        std::cout << "In mouseMove, about to construct event" << std::endl;
         QGraphicsSceneMouseEvent event(QEvent::GraphicsSceneMouseMove);
+        std::cout << "In mouseMove, about to set event pos" << std::endl;
         set_event_pos(event, pos);
+        std::cout << "In mouseMove, about to set button" << std::endl;
         event.setButton(Qt::NoButton);
+        std::cout << "In mouseMove, about to set buttons" << std::endl;
         event.setButtons(btns);
+        std::cout << "In mouseMove, about call mouseMoveEvent" << std::endl;
         m_scene->mouseMoveEvent(&event);
+        std::cout << "In mouseMove, about process events" << std::endl;
         process_qt_events();
+        std::cout << "Finished mouseMove" << std::endl;
     }
 
     void mousePress(const QPointF& pos)
     {
+        std::cout << "In mousePress, about to construct event" << std::endl;
         QGraphicsSceneMouseEvent event(QEvent::GraphicsSceneMousePress);
+        std::cout << "In mousePress, about to set event pos" << std::endl;
         set_event_pos(event, pos);
+        std::cout << "In mousePress, about to set button" << std::endl;
         event.setButton(Qt::LeftButton);
+        std::cout << "In mousePress, about to set buttons" << std::endl;
         event.setButtons(Qt::LeftButton);
+        std::cout << "In mousePress, about call mousePressEvent" << std::endl;
         m_scene->mousePressEvent(&event);
+        std::cout << "In mousePress, about process events" << std::endl;
         process_qt_events();
+        std::cout << "Finished mousePress" << std::endl;
     }
 
     void mouseRelease(const QPointF& pos)
     {
+        std::cout << "In mouseRelease, about to construct event" << std::endl;
         QGraphicsSceneMouseEvent event(QEvent::GraphicsSceneMouseRelease);
+        std::cout << "In mouseRelease, about to set event pos" << std::endl;
         set_event_pos(event, pos);
+        std::cout << "In mouseRelease, about to set button" << std::endl;
         event.setButton(Qt::LeftButton);
+        std::cout << "In mouseRelease, about to set buttons" << std::endl;
         event.setButtons(Qt::NoButton);
+        std::cout << "In mouseRelease, about call mouseReleaseEvent"
+                  << std::endl;
         m_scene->mouseReleaseEvent(&event);
+        std::cout << "In mouseRelease, about process events" << std::endl;
         process_qt_events();
+        std::cout << "Finished mouseRelease" << std::endl;
     }
 
     void mouseClick(const QPointF& pos)
     {
+        std::cout << "In mouseClick, about to call mouseMove" << std::endl;
         mouseMove(pos);
+        std::cout << "In mouseClick, about to call mousePress" << std::endl;
         mousePress(pos);
+        std::cout << "In mouseClick, about to call mouseRelease" << std::endl;
         mouseRelease(pos);
+        std::cout << "Finished mouseClick" << std::endl;
     }
 
     void mouseDrag(const QPointF& start, const QPointF& end)
