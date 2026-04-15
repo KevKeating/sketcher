@@ -1709,7 +1709,7 @@ lay_out_polymer(RDKit::ROMol& polymer,
  */
 static void lay_out_snaked_linear_polymer(RDKit::ROMol& polymer)
 {
-    auto placed_monomers_idcs = std::unordered_set<int>{};
+    auto placed_monomers_idcs = std::unordered_set<unsigned int>{};
     auto turn_positions =
         compute_turn_positions_for_linear_segment(0, polymer.getNumAtoms() - 1);
     // Use the calculated turn positions to lay out the snaking chain
