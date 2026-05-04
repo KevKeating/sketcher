@@ -51,6 +51,13 @@ runs:
             $name = $matches[1]
             $value = $matches[2]
 
+            # Skip vars that already had a multi-line value: cmd's `set` output
+            # is line-oriented, so we can't reliably reconstruct them here, and
+            # vcvarsall.bat doesn't modify user-defined multi-line vars.
+            if ($envBefore.ContainsKey($name) -and $envBefore[$name].Contains("`n")) {
+                continue
+            }
+
             if (-not $envBefore.ContainsKey($name) -or $envBefore[$name] -ne $value) {
                 Add-Content -Path $env:GITHUB_ENV -Value "$name=$value"
             }
