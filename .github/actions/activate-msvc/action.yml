@@ -51,18 +51,7 @@ runs:
             $name = $matches[1]
             $value = $matches[2]
 
-            if ($name -ieq 'PATH') {
-                $oldEntries = @()
-                if ($envBefore.ContainsKey('PATH')) {
-                    $oldEntries = $envBefore['PATH'] -split ';' | Where-Object { $_ }
-                }
-                $newEntries = $value -split ';' | Where-Object { $_ }
-                foreach ($entry in $newEntries) {
-                    if ($oldEntries -notcontains $entry) {
-                        Add-Content -Path $env:GITHUB_PATH -Value $entry
-                    }
-                }
-            } elseif (-not $envBefore.ContainsKey($name) -or $envBefore[$name] -ne $value) {
+            if (-not $envBefore.ContainsKey($name) -or $envBefore[$name] -ne $value) {
                 Add-Content -Path $env:GITHUB_ENV -Value "$name=$value"
             }
         }
