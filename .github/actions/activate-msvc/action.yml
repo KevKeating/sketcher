@@ -29,4 +29,40 @@ runs:
       run: echo FC=${{ steps.install-fortran.outputs.fc }} >> $GITHUB_ENV
 
     - name: Activate MSVC
-      uses: ilammy/msvc-dev-cmd@v1.13.0
+      shell: pwsh
+      run: |
+        $vswhere = "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe"
+        if (-not (Test-Path $vswhere)) { throw "vswhere.exe not found at $vswhere" }
+
+        $installPath = & $vswhere -latest -property installationPath
+        if (-not $installPath) { throw "vswhere did not find a Visual Studio installation" }
+
+        $vcvarsall = Join-Path $installPath 'VC\Auxiliary\Build\vcvarsall.bat'
+        if (-not (Test-Path $vcvarsall)) { throw "vcvarsall.bat not found at $vcvarsall" }
+
+        $envBefore = New-Object 'System.Collections.Generic.Dictionary[String,String]' ([StringComparer]::OrdinalIgnoreCase)
+        Get-ChildItem env: | ForEach-Object { $envBefore[$_.Name] = $_.Value }
+
+        $output = cmd /c "`"$vcvarsall`" x64 > nul && set"
+        if ($LASTEXITCODE -ne 0) { throw "vcvarsall.bat failed with exit code $LASTEXITCODE" }
+
+        foreach ($line in $output) {
+            if ($line -notmatch '^([^=]+)=(.*)$') { continue }
+            $name = $matches[1]
+            $value = $matches[2]
+
+            if ($name -ieq 'PATH') {
+                $oldEntries = @()
+                if ($envBefore.ContainsKey('PATH')) {
+                    $oldEntries = $envBefore['PATH'] -split ';' | Where-Object { $_ }
+                }
+                $newEntries = $value -split ';' | Where-Object { $_ }
+                foreach ($entry in $newEntries) {
+                    if ($oldEntries -notcontains $entry) {
+                        Add-Content -Path $env:GITHUB_PATH -Value $entry
+                    }
+                }
+            } elseif (-not $envBefore.ContainsKey($name) -or $envBefore[$name] -ne $value) {
+                Add-Content -Path $env:GITHUB_ENV -Value "$name=$value"
+            }
+        }
