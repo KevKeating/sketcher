@@ -28,6 +28,8 @@ runs:
       shell: bash
       run: echo FC=${{ steps.install-fortran.outputs.fc }} >> $GITHUB_ENV
 
+      # Find MSVC using vswhere.exe, then use vcvarsall.bat to output the
+      # appropriate environment variable updates and put them into $GITHUB_ENV
     - name: Activate MSVC
       shell: pwsh
       run: |
@@ -51,9 +53,8 @@ runs:
             $name = $matches[1]
             $value = $matches[2]
 
-            # Skip vars that already had a multi-line value: cmd's `set` output
-            # is line-oriented, so we can't reliably reconstruct them here, and
-            # vcvarsall.bat doesn't modify user-defined multi-line vars.
+            # Skip variables that contain a multi-line value since vcvarsall.bat
+            # shouldn't modify them
             if ($envBefore.ContainsKey($name) -and $envBefore[$name].Contains("`n")) {
                 continue
             }
