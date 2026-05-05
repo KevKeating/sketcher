@@ -53,8 +53,8 @@ runs:
             $name = $matches[1]
             $value = $matches[2]
 
-            # Skip variables that contain a multi-line value since vcvarsall.bat
-            # shouldn't modify them
+            # Skip variables that contain a multi-line value (e.g. VERSIONS_JSON) 
+            # since vcvarsall.bat shouldn't modify them
             if ($envBefore.ContainsKey($name) -and $envBefore[$name].Contains("`n")) {
                 continue
             }
