@@ -14,11 +14,8 @@
 #include <boost/test/unit_test.hpp>
 
 #include "schrodinger/rdkit_extensions/convert.h"
-<<<<<<< HEAD
 #include "schrodinger/sketcher/menu/cut_copy_action_manager.h"
-=======
 #include "schrodinger/rdkit_extensions/monomer_database.h"
->>>>>>> main
 #include "schrodinger/sketcher/molviewer/monomer_utils.h"
 #include "schrodinger/sketcher/rdkit/monomeric.h"
 #include "schrodinger/sketcher/rdkit/coord_utils.h"
