@@ -537,6 +537,22 @@ const QString SKETCHER_MIME_TYPE =
     QStringLiteral("application/x-schrodinger-sketcher");
 
 #ifdef __EMSCRIPTEN__
+// EM_ASYNC_JS (rather than emscripten::val::await()) is required so ASYNCIFY
+// instruments this as an async import; routing the await through embind hits
+// "null function or signature mismatch" when the suspended stack resumes.
+// Returns a malloc'd UTF-8 C string (caller frees) or null on failure.
+EM_ASYNC_JS(char*, sketcher_read_clipboard_text, (), {
+    try {
+        const text = await navigator.clipboard.readText();
+        const byteLength = lengthBytesUTF8(text) + 1;
+        const ptr = _malloc(byteLength);
+        stringToUTF8(text, ptr, byteLength);
+        return ptr;
+    } catch (err) {
+        return 0;
+    }
+});
+
 std::string SketcherWidget::getClipboardContents() const
 {
     // Qt's clipboard retains intra-app pickle data that the browser clipboard
@@ -546,16 +562,16 @@ std::string SketcherWidget::getClipboardContents() const
         return data->data(SKETCHER_MIME_TYPE).toStdString();
     }
     // Use the browser's async clipboard API so the browser prompts the user
-    // for read permission. await() suspends the C++ stack via ASYNCIFY until
-    // the Promise resolves; on rejection (denied permission, no text) it
-    // throws, and we fall through to the empty-string no-op in pasteAt().
-    emscripten::val navigator = emscripten::val::global("navigator");
-    try {
-        auto promise = navigator["clipboard"].call<emscripten::val>("readText");
-        return promise.await().as<std::string>();
-    } catch (...) {
+    // for read permission. The call suspends the C++ stack via ASYNCIFY until
+    // the Promise resolves; on rejection (denied permission, no text) the JS
+    // returns null, and we fall through to the empty-string no-op in pasteAt().
+    char* raw = sketcher_read_clipboard_text();
+    if (!raw) {
         return "";
     }
+    std::string result(raw);
+    std::free(raw);
+    return result;
 }
 #else
 std::string SketcherWidget::getClipboardContents() const
