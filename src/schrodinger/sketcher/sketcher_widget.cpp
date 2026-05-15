@@ -551,8 +551,7 @@ std::string SketcherWidget::getClipboardContents() const
     // throws, and we fall through to the empty-string no-op in pasteAt().
     emscripten::val navigator = emscripten::val::global("navigator");
     try {
-        auto promise =
-            navigator["clipboard"].call<emscripten::val>("readText");
+        auto promise = navigator["clipboard"].call<emscripten::val>("readText");
         return promise.await().as<std::string>();
     } catch (...) {
         return "";
