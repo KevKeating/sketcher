@@ -348,6 +348,7 @@ if(ENABLE_TESTING)
       Boost::unit_test_framework
       Eigen3::Eigen
       fmt::fmt
+      Qt6::SvgWidgets
       Qt6::Test
       Qt6::Widgets
       RDKit::ChemReactions
@@ -371,6 +372,7 @@ if(ENABLE_TESTING)
       test_atom_query_popup
       test_bond_order_popup
       test_bond_query_popup
+      test_nucleic_acid_symbol_popup
       test_bracket_subgroup_dialog
       test_draw_tools_widget
       test_edit_atom_properties
