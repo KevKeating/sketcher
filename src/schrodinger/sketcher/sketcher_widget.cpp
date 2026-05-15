@@ -536,6 +536,29 @@ void SketcherWidget::setInterfaceType(InterfaceTypeType interface_type)
 const QString SKETCHER_MIME_TYPE =
     QStringLiteral("application/x-schrodinger-sketcher");
 
+#ifdef __EMSCRIPTEN__
+std::string SketcherWidget::getClipboardContents() const
+{
+    // Qt's clipboard retains intra-app pickle data that the browser clipboard
+    // cannot carry, so check it first for sketcher-formatted content.
+    auto data = QApplication::clipboard()->mimeData();
+    if (data->hasFormat(SKETCHER_MIME_TYPE)) {
+        return data->data(SKETCHER_MIME_TYPE).toStdString();
+    }
+    // Use the browser's async clipboard API so the browser prompts the user
+    // for read permission. await() suspends the C++ stack via ASYNCIFY until
+    // the Promise resolves; on rejection (denied permission, no text) it
+    // throws, and we fall through to the empty-string no-op in pasteAt().
+    emscripten::val navigator = emscripten::val::global("navigator");
+    try {
+        auto promise =
+            navigator["clipboard"].call<emscripten::val>("readText");
+        return promise.await().as<std::string>();
+    } catch (...) {
+        return "";
+    }
+}
+#else
 std::string SketcherWidget::getClipboardContents() const
 {
     auto data = QApplication::clipboard()->mimeData();
@@ -547,6 +570,7 @@ std::string SketcherWidget::getClipboardContents() const
     }
     return "";
 }
+#endif
 
 void SketcherWidget::setClipboardContents(std::string text,
                                           std::string binary) const
@@ -557,6 +581,13 @@ void SketcherWidget::setClipboardContents(std::string text,
         data->setData(SKETCHER_MIME_TYPE, QByteArray::fromStdString(binary));
     }
     QApplication::clipboard()->setMimeData(data);
+
+#ifdef __EMSCRIPTEN__
+    // Use the browser's aync clipboard api to enable copy for the wasm build
+    emscripten::val navigator = emscripten::val::global("navigator");
+    navigator["clipboard"].call<emscripten::val>("writeText",
+                                                 emscripten::val(text));
+#endif
 }
 
 void SketcherWidget::cut(Format format)
@@ -589,13 +620,6 @@ void SketcherWidget::copy(Format format, SceneSubset subset)
     }
     setClipboardContents(text, binary);
     // SKETCH-2091: Add image content to the clipboard; blocked by SKETCH-1975
-
-#ifdef __EMSCRIPTEN__
-    // Use the browser's aync clipboard api to enable copy for the wasm build
-    emscripten::val navigator = emscripten::val::global("navigator");
-    navigator["clipboard"].call<emscripten::val>("writeText",
-                                                 emscripten::val(text));
-#endif
 }
 
 void SketcherWidget::copyAsImage()
