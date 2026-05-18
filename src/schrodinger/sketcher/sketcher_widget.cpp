@@ -541,7 +541,7 @@ std::string SketcherWidget::getClipboardContents() const
     // Qt's clipboard retains intra-app pickle data that the browser clipboard
     // cannot carry, so check it first for sketcher-formatted content.
     auto data = QApplication::clipboard()->mimeData();
-    if (data != nullptr) {
+    if (data == nullptr) {
         // mimeData can return a nullptr
         return "";
     }
