@@ -267,7 +267,8 @@ if(EMSCRIPTEN)
       -sEXPORTED_RUNTIME_METHODS=[callMain,FS,JSEvents,specialHTMLTargets,stringToUTF8,stringToUTF16,UTF16ToString,lengthBytesUTF8,getExceptionMessage]
       -sASYNCIFY
       -sASYNCIFY_STACK_SIZE=131072
-      # TEMP DEBUG: symbolicated wasm for stack traces. Remove once paste is fixed.
+      # TEMP DEBUG: symbolicated wasm for stack traces. Remove once paste is
+      # fixed.
       -g2
       -lembind
       -fexceptions
