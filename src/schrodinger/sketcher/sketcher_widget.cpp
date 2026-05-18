@@ -631,14 +631,15 @@ std::optional<QPointF> g_pending_paste_position;
 // fresh wasm stack (see sketcher_finish_browser_paste below).
 EM_JS(void, sketcher_start_browser_clipboard_read, (), {
     navigator.clipboard.readText()
-        .then(text => {
-            const byteLength = lengthBytesUTF8(text) + 1;
-            const ptr = _malloc(byteLength);
-            stringToUTF8(text, ptr, byteLength);
-            _sketcher_finish_browser_paste(ptr);
-            _free(ptr);
-        })
-        .catch(err => {
+        .then(text = >
+                     {
+                         const byteLength = lengthBytesUTF8(text) + 1;
+                         const ptr = _malloc(byteLength);
+                         stringToUTF8(text, ptr, byteLength);
+                         _sketcher_finish_browser_paste(ptr);
+                         _free(ptr);
+                     })
+        .catch(err = > {
             // No text, permission denied, document not focused, etc.
             _sketcher_finish_browser_paste(0);
         });
