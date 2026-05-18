@@ -267,6 +267,10 @@ if(EMSCRIPTEN)
       -sEXPORTED_RUNTIME_METHODS=[callMain,FS,JSEvents,specialHTMLTargets,stringToUTF16,UTF16ToString,getExceptionMessage]
       -sASYNCIFY
       -sASYNCIFY_STACK_SIZE=131072
+      # TEMP DEBUG: symbolicated wasm + asyncify call-graph dump at link time.
+      # Remove these once the clipboard paste crash is diagnosed.
+      -g2
+      -sASYNCIFY_ADVISE
       -lembind
       -fexceptions
       -sDISABLE_EXCEPTION_CATCHING=0
