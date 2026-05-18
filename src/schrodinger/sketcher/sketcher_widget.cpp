@@ -548,14 +548,9 @@ std::string SketcherWidget::getClipboardContents() const
     if (data->hasFormat(SKETCHER_MIME_TYPE)) {
         return data->data(SKETCHER_MIME_TYPE).toStdString();
     }
-#ifndef __EMSCRIPTEN__
-    // On native builds Qt's clipboard mirrors the OS clipboard, so a text read
-    // is synchronous. On emscripten Qt's clipboard is process-local; cross-app
-    // pastes must go through navigator.clipboard.readText() in pasteAt().
     if (data->hasText()) {
         return data->text().toStdString();
     }
-#endif
     return "";
 }
 
