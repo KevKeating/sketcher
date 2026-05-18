@@ -17,6 +17,12 @@ class QGraphicsSvgItem;
 class QGraphicsSceneMouseEvent;
 class QUndoStack;
 
+#ifdef __EMSCRIPTEN__
+// Callback invoked by JavaScript after navigator.clipboard.readText() resolves;
+// see SketcherWidget::pasteAt() for context.
+extern "C" void sketcher_finish_browser_paste(const char* text);
+#endif
+
 namespace RDGeom
 {
 class Point3D;
@@ -393,6 +399,20 @@ class SKETCHER_API SketcherWidget : public QWidget
     virtual std::string getClipboardContents() const;
     virtual void setClipboardContents(std::string text,
                                       std::string binary = "") const;
+
+    /**
+     * Perform the actual paste of clipboard text into the scene at the given
+     * position. Extracted from pasteAt() so the asynchronous browser-clipboard
+     * path on emscripten can complete the paste from a .then() callback.
+     */
+    void completePaste(std::string text, std::optional<QPointF> position);
+
+#ifdef __EMSCRIPTEN__
+    // pasteAt() stashes paste state in a translation-unit-local pointer and
+    // kicks off navigator.clipboard.readText(); this friend completes the
+    // paste from the Promise's .then() callback on a fresh wasm stack.
+    friend void ::sketcher_finish_browser_paste(const char* text);
+#endif
 
     /**
      *  Connects slots to the model and various widget tool bars

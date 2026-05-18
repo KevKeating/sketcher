@@ -264,13 +264,9 @@ if(EMSCRIPTEN)
   set(EXTRA_SKETCHER_APP_LINK_FLAGS
       -sEXPORT_NAME=schrodinger_sketcher_entry
       -sMODULARIZE=1
-      -sEXPORTED_RUNTIME_METHODS=[callMain,FS,JSEvents,specialHTMLTargets,stringToUTF16,UTF16ToString,getExceptionMessage]
+      -sEXPORTED_RUNTIME_METHODS=[callMain,FS,JSEvents,specialHTMLTargets,stringToUTF8,stringToUTF16,UTF16ToString,lengthBytesUTF8,getExceptionMessage]
       -sASYNCIFY
       -sASYNCIFY_STACK_SIZE=131072
-      # TEMP DEBUG: symbolicated wasm + asyncify call-graph dump at link time.
-      # Remove these once the clipboard paste crash is diagnosed.
-      -g2
-      -sASYNCIFY_ADVISE
       -lembind
       -fexceptions
       -sDISABLE_EXCEPTION_CATCHING=0

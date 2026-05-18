@@ -536,23 +536,6 @@ void SketcherWidget::setInterfaceType(InterfaceTypeType interface_type)
 const QString SKETCHER_MIME_TYPE =
     QStringLiteral("application/x-schrodinger-sketcher");
 
-#ifdef __EMSCRIPTEN__
-// EM_ASYNC_JS (rather than emscripten::val::await()) is required so ASYNCIFY
-// instruments this as an async import; routing the await through embind hits
-// "null function or signature mismatch" when the suspended stack resumes.
-// Returns a malloc'd UTF-8 C string (caller frees) or null on failure.
-EM_ASYNC_JS(char*, sketcher_read_clipboard_text, (), {
-    try {
-        const text = await navigator.clipboard.readText();
-        const byteLength = lengthBytesUTF8(text) + 1;
-        const ptr = _malloc(byteLength);
-        stringToUTF8(text, ptr, byteLength);
-        return ptr;
-    } catch (err) {
-        return 0;
-    }
-});
-
 std::string SketcherWidget::getClipboardContents() const
 {
     // Qt's clipboard retains intra-app pickle data that the browser clipboard
@@ -561,31 +544,16 @@ std::string SketcherWidget::getClipboardContents() const
     if (data->hasFormat(SKETCHER_MIME_TYPE)) {
         return data->data(SKETCHER_MIME_TYPE).toStdString();
     }
-    // Use the browser's async clipboard API so the browser prompts the user
-    // for read permission. The call suspends the C++ stack via ASYNCIFY until
-    // the Promise resolves; on rejection (denied permission, no text) the JS
-    // returns null, and we fall through to the empty-string no-op in pasteAt().
-    char* raw = sketcher_read_clipboard_text();
-    if (!raw) {
-        return "";
-    }
-    std::string result(raw);
-    std::free(raw);
-    return result;
-}
-#else
-std::string SketcherWidget::getClipboardContents() const
-{
-    auto data = QApplication::clipboard()->mimeData();
-    if (data->hasFormat(SKETCHER_MIME_TYPE)) {
-        return data->data(SKETCHER_MIME_TYPE).toStdString();
-    }
+#ifndef __EMSCRIPTEN__
+    // On native builds Qt's clipboard mirrors the OS clipboard, so a text read
+    // is synchronous. On emscripten Qt's clipboard is process-local; cross-app
+    // pastes must go through navigator.clipboard.readText() in pasteAt().
     if (data->hasText()) {
         return data->text().toStdString();
     }
+#endif
     return "";
 }
-#endif
 
 void SketcherWidget::setClipboardContents(std::string text,
                                           std::string binary) const
@@ -647,6 +615,48 @@ void SketcherWidget::copyAsImage()
     QApplication::clipboard()->setImage(image);
 }
 
+#ifdef __EMSCRIPTEN__
+namespace
+{
+// State for the in-flight browser clipboard read kicked off by pasteAt(). The
+// .then() callback in sketcher_start_browser_clipboard_read re-enters via
+// sketcher_finish_browser_paste(), which uses these to complete the paste.
+SketcherWidget* g_pending_paste_widget = nullptr;
+std::optional<QPointF> g_pending_paste_position;
+} // namespace
+
+// Non-suspending: starts readText() and attaches a .then() that calls back
+// into C++. We must NOT await here -- ASYNCIFY cannot suspend through the JS
+// trampoline Qt uses for slot dispatch, so the read has to complete on a
+// fresh wasm stack (see sketcher_finish_browser_paste below).
+EM_JS(void, sketcher_start_browser_clipboard_read, (), {
+    navigator.clipboard.readText()
+        .then(text => {
+            const byteLength = lengthBytesUTF8(text) + 1;
+            const ptr = _malloc(byteLength);
+            stringToUTF8(text, ptr, byteLength);
+            _sketcher_finish_browser_paste(ptr);
+            _free(ptr);
+        })
+        .catch(err => {
+            // No text, permission denied, document not focused, etc.
+            _sketcher_finish_browser_paste(0);
+        });
+});
+
+extern "C" EMSCRIPTEN_KEEPALIVE void
+sketcher_finish_browser_paste(const char* text)
+{
+    auto* widget = g_pending_paste_widget;
+    auto position = g_pending_paste_position;
+    g_pending_paste_widget = nullptr;
+    g_pending_paste_position.reset();
+    if (widget && text && *text) {
+        widget->completePaste(text, position);
+    }
+}
+#endif
+
 /**
  * @internal
  * paste is agnostic of NEW_STRUCTURES_REPLACE_CONTENT
@@ -654,9 +664,22 @@ void SketcherWidget::copyAsImage()
 void SketcherWidget::pasteAt(std::optional<QPointF> position)
 {
     auto text = getClipboardContents();
-    if (text.empty()) {
+    if (!text.empty()) {
+        completePaste(std::move(text), position);
         return;
     }
+#ifdef __EMSCRIPTEN__
+    // No sketcher-formatted content in Qt's local clipboard; fall back to the
+    // browser clipboard. Asynchronous by necessity -- see EM_JS comment above.
+    g_pending_paste_widget = this;
+    g_pending_paste_position = position;
+    sketcher_start_browser_clipboard_read();
+#endif
+}
+
+void SketcherWidget::completePaste(std::string text,
+                                   std::optional<QPointF> position)
+{
     // On WASM builds, RDKit doesn't like Windows newline characters, so we
     // explicitly remove the /r's, which converts Windows-style newlines to
     // Unix-style
