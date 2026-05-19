@@ -284,6 +284,9 @@ class SKETCHER_API SketcherWidget : public QWidget
     /**
      * Paste clipboard content into the scene.
      * @param position The position to paste the content at
+     * @note In WASM builds, this function may return before the paste is
+     * completed. If that occurs, completePaste will be automatically called
+     * once the user approves clipboard access.
      */
     void pasteAt(std::optional<QPointF> position);
 

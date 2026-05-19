@@ -628,9 +628,6 @@ std::optional<QPointF> g_pending_paste_position;
 // into C++. We must NOT await here -- ASYNCIFY cannot suspend through the JS
 // trampoline Qt uses for slot dispatch, so the read has to complete on a
 // fresh wasm stack (see sketcher_finish_browser_paste below).
-// Use `function` expressions rather than arrow functions: the C preprocessor
-// (and clang-format) tokenizes `=>` as `= >` and breaks both the JS parse and
-// the C++ formatting.
 EM_JS(void, sketcher_start_browser_clipboard_read, (), {
     navigator.clipboard.readText()
         .then(function(text) {
