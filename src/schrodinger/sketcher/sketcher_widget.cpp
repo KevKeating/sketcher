@@ -533,8 +533,6 @@ void SketcherWidget::setInterfaceType(InterfaceTypeType interface_type)
 
 std::string SketcherWidget::getClipboardContents() const
 {
-    // Qt's clipboard retains intra-app pickle data that the browser clipboard
-    // cannot carry, so check it first for sketcher-formatted content.
     auto data = QApplication::clipboard()->mimeData();
     if (data == nullptr) {
         // mimeData can return a nullptr in WASM builds
@@ -649,8 +647,10 @@ void SketcherWidget::pasteAt(std::optional<QPointF> position)
         return;
     }
 #ifdef __EMSCRIPTEN__
-    // No sketcher-formatted content in Qt's local clipboard; fall back to the
-    // browser clipboard. Asynchronous by necessity -- see EM_JS comment above.
+    // The browser may not not allow us to access the clipboard via Qt. In that
+    // case, use the JavaScript readText API to request permission from the
+    // user. JavaScript will automatically call completePaste once the user has
+    // granted permission.
     g_pending_paste_widget = this;
     g_pending_paste_position = position;
     sketcher_start_browser_clipboard_read();

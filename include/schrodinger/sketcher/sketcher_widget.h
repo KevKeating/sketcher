@@ -403,8 +403,10 @@ class SKETCHER_API SketcherWidget : public QWidget
 
     /**
      * Perform the actual paste of clipboard text into the scene at the given
-     * position. Extracted from pasteAt() so the asynchronous browser-clipboard
-     * path on emscripten can complete the paste from a .then() callback.
+     * position. This is normally called from pasteAt(), but may be called
+     * separately in WASM builds if the user needs to approve the clipboard
+     * access, in which case it will be called automatically from a JavaScript
+     * callback.
      */
     void completePaste(std::string text, std::optional<QPointF> position);
 
