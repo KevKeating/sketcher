@@ -788,11 +788,7 @@ std::string to_string(const RDKit::ROMol& input_mol, const Format format)
         auto is_monomeric = isMonomeric(input_mol);
         auto is_seq_format =
             std::ranges::find(SEQ_FORMATS, format) != SEQ_FORMATS.end();
-        if (is_monomeric && !is_seq_format &&
-            format != Format::RDMOL_BINARY_BASE64) {
-            // RDMOL_BINARY_BASE64 is a lossless pickle round-trip; preserve
-            // the monomeric mol (HELM_MODEL prop and conformer) instead of
-            // downgrading to atomistic.
+        if (is_monomeric && !is_seq_format) {
             auto atomistic_mol = toAtomistic(input_mol);
             // NOTE: MaeWriter will attempt to generate 2D coordinates for this
             // molecule without the dummy conformer. The coordinate generation
