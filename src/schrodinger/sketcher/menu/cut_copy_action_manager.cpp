@@ -66,9 +66,10 @@ SceneSubset CutCopyActionManager::getSubset()
 Format CutCopyActionManager::getCutCopyFormat() const
 {
     if (m_sketcher_model->getMoleculeType() == MoleculeType::MONOMERIC) {
-        // HELM is the user-visible payload; SketcherWidget::copy also stashes
-        // a lossless pickle for intra-sketcher pastes (see its comment).
-        return Format::HELM;
+        // Pickle round-trip preserves the monomeric structure and the 2D
+        // conformer, so pasted monomers land at the same positions instead
+        // of being re-laid-out by the chain layout engine.
+        return Format::RDMOL_BINARY_BASE64;
     }
     return DEFAULT_FORMAT;
 }

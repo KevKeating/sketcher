@@ -86,18 +86,14 @@ class TestSketcherWidget : public SketcherWidget
 
     // using the system clipboard during tests leads to intermittent test
     // failures on buildbot, so we create our own clipboard
-    mutable std::string m_clipboard_text;
-    mutable std::string m_clipboard_binary;
+    mutable std::string m_clipboard;
     std::string getClipboardContents() const override
     {
-        return m_clipboard_binary.empty() ? m_clipboard_text
-                                          : m_clipboard_binary;
+        return m_clipboard;
     }
-    void setClipboardContents(std::string text,
-                              std::string binary = "") const override
+    void setClipboardContents(std::string text) const override
     {
-        m_clipboard_text = text;
-        m_clipboard_binary = binary;
+        m_clipboard = text;
     }
 };
 
