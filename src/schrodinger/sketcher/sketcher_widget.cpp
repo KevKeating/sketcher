@@ -542,7 +542,7 @@ std::string SketcherWidget::getClipboardContents() const
     // cannot carry, so check it first for sketcher-formatted content.
     auto data = QApplication::clipboard()->mimeData();
     if (data == nullptr) {
-        // mimeData can return a nullptr
+        // mimeData can return a nullptr in WASM builds
         return "";
     }
     if (data->hasFormat(SKETCHER_MIME_TYPE)) {
