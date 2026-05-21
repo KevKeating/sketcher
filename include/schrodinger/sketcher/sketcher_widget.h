@@ -404,7 +404,7 @@ class SKETCHER_API SketcherWidget : public QWidget
                                       std::string binary = "") const;
 
     void completeEmscriptenPaste(std::string text,
-                                   std::optional<QPointF> position);
+                                 std::optional<QPointF> position);
 
     /**
      * Perform the actual paste of clipboard text into the scene at the given

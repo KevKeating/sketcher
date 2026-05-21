@@ -676,10 +676,11 @@ void SketcherWidget::pasteAt(std::optional<QPointF> position)
 }
 
 void SketcherWidget::completeEmscriptenPaste(std::string text,
-                                   std::optional<QPointF> position)
+                                             std::optional<QPointF> position)
 {
     auto qclipboard_data = QApplication::clipboard()->mimeData();
-    if (qclipboard_data != nullptr && qclipboard_data->hasFormat(SKETCHER_MIME_TYPE)) {
+    if (qclipboard_data != nullptr &&
+        qclipboard_data->hasFormat(SKETCHER_MIME_TYPE)) {
         // mimeData can return a nullptr in WASM builds
         text = qclipboard_data->data(SKETCHER_MIME_TYPE).toStdString();
     }
