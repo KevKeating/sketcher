@@ -15,6 +15,7 @@
 
 #include "schrodinger/rdkit_extensions/convert.h"
 #include "schrodinger/rdkit_extensions/monomer_database.h"
+#include "schrodinger/sketcher/menu/cut_copy_action_manager.h"
 #include "schrodinger/sketcher/molviewer/monomer_utils.h"
 #include "schrodinger/sketcher/rdkit/monomeric.h"
 #include "schrodinger/sketcher/rdkit/coord_utils.h"
@@ -277,6 +278,109 @@ BOOST_AUTO_TEST_CASE(test_cut_copy_paste)
     sk.cut(Format::SMILES);
     BOOST_TEST(sk.getString(Format::SMILES) == "");
     BOOST_TEST(!sk.m_mol_model->hasSelection());
+}
+
+/**
+ * Cut/copy of monomeric content driven by the menu actions must round-trip
+ * back to monomers on paste, not become atoms.  The convert layer downgrades
+ * monomeric mols to atomistic for non-sequence formats, so the action manager
+ * has to emit a format that preserves the monomeric structure (currently a
+ * lossless pickle, RDMOL_BINARY_BASE64, which also preserves coordinates).
+ */
+BOOST_AUTO_TEST_CASE(test_cut_copy_paste_monomeric)
+{
+    TestSketcherWidget& sk = *TestWidgetFixture::get();
+    sk.setInterfaceType(InterfaceType::ATOMISTIC_OR_MONOMERIC);
+
+    CutCopyActionManager mgr(nullptr);
+    mgr.setModel(sk.m_sketcher_model);
+    QObject::connect(&mgr, &CutCopyActionManager::cutRequested, &sk,
+                     &TestSketcherWidget::cut);
+    QObject::connect(&mgr, &CutCopyActionManager::copyRequested, &sk,
+                     &TestSketcherWidget::copy);
+
+    // 5 peptide monomers
+    sk.importText("PEPTIDE1{A.C.D.E.F}$$$$V2.0", Format::HELM);
+    BOOST_TEST_REQUIRE(sk.m_mol_model->isMonomeric());
+    BOOST_TEST_REQUIRE(sk.getRDKitMolecule()->getNumAtoms() == 5u);
+
+    // Select 4 of the 5 monomers, leaving one in the scene after cut
+    auto* mol = sk.m_mol_model->getMol();
+    std::unordered_set<const RDKit::Atom*> to_select{
+        mol->getAtomWithIdx(0), mol->getAtomWithIdx(1), mol->getAtomWithIdx(2),
+        mol->getAtomWithIdx(3)};
+    sk.m_mol_model->select(to_select, {}, {}, {}, {}, SelectMode::SELECT);
+    BOOST_TEST_REQUIRE(sk.m_mol_model->getSelectedAtoms().size() == 4u);
+
+    mgr.m_cut_action->trigger();
+    BOOST_TEST(sk.m_mol_model->isMonomeric());
+    BOOST_TEST_REQUIRE(sk.getRDKitMolecule()->getNumAtoms() == 1u);
+
+    // Paste must add the 4 cut monomers back; pre-fix the clipboard held
+    // atomistic V3000 and paste was rejected by the type guard against the
+    // monomeric scene (or, in an empty scene, silently produced atoms).
+    sk.paste();
+    BOOST_TEST(sk.m_mol_model->isMonomeric());
+    BOOST_TEST(sk.getRDKitMolecule()->getNumAtoms() == 5u);
+
+    // Copy All of monomers and paste should double the content as monomers
+    sk.clear();
+    sk.importText("PEPTIDE1{A.C.D}$$$$V2.0", Format::HELM);
+    BOOST_TEST_REQUIRE(sk.getRDKitMolecule()->getNumAtoms() == 3u);
+    mgr.m_copy_action->trigger();
+    sk.paste();
+    BOOST_TEST(sk.m_mol_model->isMonomeric());
+    BOOST_TEST(sk.getRDKitMolecule()->getNumAtoms() == 6u);
+
+    // Copy with a partial selection should also round-trip as monomers
+    sk.clear();
+    sk.importText("PEPTIDE1{A.C.D.E}$$$$V2.0", Format::HELM);
+    BOOST_TEST_REQUIRE(sk.getRDKitMolecule()->getNumAtoms() == 4u);
+    auto* mol2 = sk.m_mol_model->getMol();
+    sk.m_mol_model->select({mol2->getAtomWithIdx(0), mol2->getAtomWithIdx(1)},
+                           {}, {}, {}, {}, SelectMode::SELECT);
+    BOOST_TEST_REQUIRE(sk.m_mol_model->getSelectedAtoms().size() == 2u);
+    mgr.m_copy_action->trigger();
+    sk.paste();
+    BOOST_TEST(sk.m_mol_model->isMonomeric());
+    BOOST_TEST(sk.getRDKitMolecule()->getNumAtoms() == 6u);
+
+    // Cut All (everything selected) clears the scene; paste should restore
+    // the monomers preserving their relative layout (the pickle round-trip
+    // carries the conformer through, so the chain layout engine doesn't
+    // re-spread them on import).
+    sk.clear();
+    sk.importText("PEPTIDE1{A.C.D}$$$$V2.0", Format::HELM);
+    BOOST_TEST_REQUIRE(sk.getRDKitMolecule()->getNumAtoms() == 3u);
+    std::vector<RDGeom::Point3D> original_offsets;
+    {
+        const auto& conf = sk.getRDKitMolecule()->getConformer();
+        const auto& origin = conf.getAtomPos(0);
+        for (unsigned int i = 1; i < 3; ++i) {
+            original_offsets.push_back(conf.getAtomPos(i) - origin);
+        }
+    }
+    sk.m_mol_model->selectAll();
+    mgr.m_cut_action->trigger();
+    BOOST_TEST_REQUIRE(sk.getRDKitMolecule()->getNumAtoms() == 0u);
+    // Other apps see HELM; the pickle stays on the sketcher-private MIME.
+    BOOST_TEST(sk.m_clipboard_text.find("PEPTIDE1") != std::string::npos);
+    BOOST_TEST(!sk.m_clipboard_binary.empty());
+    sk.paste();
+    BOOST_TEST(sk.m_mol_model->isMonomeric());
+    BOOST_TEST_REQUIRE(sk.getRDKitMolecule()->getNumAtoms() == 3u);
+    {
+        const auto& conf = sk.getRDKitMolecule()->getConformer();
+        const auto& origin = conf.getAtomPos(0);
+        for (unsigned int i = 1; i < 3; ++i) {
+            const auto pasted_offset = conf.getAtomPos(i) - origin;
+            const auto& original_offset = original_offsets[i - 1];
+            BOOST_TEST(pasted_offset.x == original_offset.x,
+                       boost::test_tools::tolerance(1e-6));
+            BOOST_TEST(pasted_offset.y == original_offset.y,
+                       boost::test_tools::tolerance(1e-6));
+        }
+    }
 }
 
 /**
@@ -1113,14 +1217,14 @@ BOOST_AUTO_TEST_CASE(test_copy_partial_reaction)
     BOOST_TEST(mol_model->hasSelection());
     BOOST_TEST(mol_model->getSelectedNonMolecularObjects().empty());
     sk.copy(Format::SMILES, SceneSubset::SELECTION);
-    BOOST_TEST(sk.getClipboardContents() == "CC");
+    BOOST_TEST(sk.m_clipboard_text == "CC");
 
     // Select products only (no arrow) - should succeed
     mol_model->select(product_atoms, {}, {}, {}, {}, SelectMode::SELECT_ONLY);
     BOOST_TEST(mol_model->hasSelection());
     BOOST_TEST(mol_model->getSelectedNonMolecularObjects().empty());
     sk.copy(Format::SMILES, SceneSubset::SELECTION);
-    BOOST_TEST(sk.getClipboardContents() == "CCC");
+    BOOST_TEST(sk.m_clipboard_text == "CCC");
 
     // Select reactants + arrow - should fail (clipboard unchanged)
     auto arrow = mol_model->getReactionArrow();
@@ -1129,23 +1233,23 @@ BOOST_AUTO_TEST_CASE(test_copy_partial_reaction)
                       SelectMode::SELECT_ONLY);
     BOOST_TEST(mol_model->hasSelection());
     BOOST_TEST(!mol_model->getSelectedNonMolecularObjects().empty());
-    std::string clipboard_before = sk.getClipboardContents();
+    std::string clipboard_before = sk.m_clipboard_text;
     sk.copy(Format::SMILES, SceneSubset::SELECTION);
     // Error shown internally, clipboard should not update
-    BOOST_TEST(sk.getClipboardContents() == clipboard_before);
+    BOOST_TEST(sk.m_clipboard_text == clipboard_before);
 
     // Select products + arrow - should fail (clipboard unchanged)
     mol_model->select(product_atoms, {}, {}, {}, {arrow},
                       SelectMode::SELECT_ONLY);
     BOOST_TEST(mol_model->hasSelection());
     BOOST_TEST(!mol_model->getSelectedNonMolecularObjects().empty());
-    clipboard_before = sk.getClipboardContents();
+    clipboard_before = sk.m_clipboard_text;
     sk.copy(Format::SMILES, SceneSubset::SELECTION);
-    BOOST_TEST(sk.getClipboardContents() == clipboard_before);
+    BOOST_TEST(sk.m_clipboard_text == clipboard_before);
 
     // Copy all - should work as complete reaction
     sk.copy(Format::SMILES, SceneSubset::ALL);
-    BOOST_TEST(sk.getClipboardContents() == "CC>>CCC");
+    BOOST_TEST(sk.m_clipboard_text == "CC>>CCC");
 
     // Test with multi-component reaction: A + B >> C
     sk.clear();
@@ -1168,7 +1272,7 @@ BOOST_AUTO_TEST_CASE(test_copy_partial_reaction)
     mol_model->select(reactantA_atoms, {}, {}, {}, {}, SelectMode::SELECT_ONLY);
     BOOST_TEST(mol_model->getSelectedNonMolecularObjects().empty());
     sk.copy(Format::SMILES, SceneSubset::SELECTION);
-    BOOST_TEST(sk.getClipboardContents() == "CC");
+    BOOST_TEST(sk.m_clipboard_text == "CC");
 
     // Select both reactant components - should succeed
     auto both_reactants = reactantA_atoms;
@@ -1177,7 +1281,7 @@ BOOST_AUTO_TEST_CASE(test_copy_partial_reaction)
     BOOST_TEST(mol_model->getSelectedNonMolecularObjects().empty());
     sk.copy(Format::SMILES, SceneSubset::SELECTION);
     // Result may be "CC.CCC" or "CCC.CC" depending on atom ordering
-    auto clip = sk.getClipboardContents();
+    auto clip = sk.m_clipboard_text;
     BOOST_TEST((clip == "CC.CCC" || clip == "CCC.CC"));
 
     // Select reactants + plus sign - should fail
@@ -1195,19 +1299,19 @@ BOOST_AUTO_TEST_CASE(test_copy_partial_reaction)
     mol_model->select(both_reactants, {}, {}, {}, {plus_sign},
                       SelectMode::SELECT_ONLY);
     BOOST_TEST(!mol_model->getSelectedNonMolecularObjects().empty());
-    clipboard_before = sk.getClipboardContents();
+    clipboard_before = sk.m_clipboard_text;
     sk.copy(Format::SMILES, SceneSubset::SELECTION);
-    BOOST_TEST(sk.getClipboardContents() == clipboard_before);
+    BOOST_TEST(sk.m_clipboard_text == clipboard_before);
 
     // Select product component - should succeed
     mol_model->select(productC_atoms, {}, {}, {}, {}, SelectMode::SELECT_ONLY);
     BOOST_TEST(mol_model->getSelectedNonMolecularObjects().empty());
     sk.copy(Format::SMILES, SceneSubset::SELECTION);
-    BOOST_TEST(sk.getClipboardContents() == "CCCCC");
+    BOOST_TEST(sk.m_clipboard_text == "CCCCC");
 
     // Copy all - complete multi-component reaction
     sk.copy(Format::SMILES, SceneSubset::ALL);
     // RDKit may reorder components
-    clip = sk.getClipboardContents();
+    clip = sk.m_clipboard_text;
     BOOST_TEST((clip == "CC.CCC>>CCCCC" || clip == "CCC.CC>>CCCCC"));
 }
