@@ -539,14 +539,12 @@ const QString SKETCHER_MIME_TYPE =
 std::string SketcherWidget::getClipboardContents() const
 {
     auto data = QApplication::clipboard()->mimeData();
-<<<<<<< HEAD
     if (data == nullptr) {
         // mimeData can return a nullptr in WASM builds
         return "";
-=======
+    }
     if (data->hasFormat(SKETCHER_MIME_TYPE)) {
         return data->data(SKETCHER_MIME_TYPE).toStdString();
->>>>>>> github/pr/SKETCH-2751
     }
     if (data->hasText()) {
         return data->text().toStdString();
@@ -649,7 +647,7 @@ sketcher_finish_browser_paste(const char* text)
     g_pending_paste_widget = nullptr;
     g_pending_paste_position.reset();
     if (widget && text && *text) {
-        widget->completePaste(text, position);
+        widget->completeEmscriptenPaste(text, position);
     }
 }
 #endif
@@ -660,11 +658,6 @@ sketcher_finish_browser_paste(const char* text)
  */
 void SketcherWidget::pasteAt(std::optional<QPointF> position)
 {
-    auto text = getClipboardContents();
-    if (!text.empty()) {
-        completePaste(std::move(text), position);
-        return;
-    }
 #ifdef __EMSCRIPTEN__
     // The browser may not not allow us to access the clipboard via Qt. In that
     // case, use the JavaScript readText API to request permission from the
@@ -673,7 +666,24 @@ void SketcherWidget::pasteAt(std::optional<QPointF> position)
     g_pending_paste_widget = this;
     g_pending_paste_position = position;
     sketcher_start_browser_clipboard_read();
+#else
+    auto text = getClipboardContents();
+    if (!text.empty()) {
+        completePaste(std::move(text), position);
+        return;
+    }
 #endif
+}
+
+void SketcherWidget::completeEmscriptenPaste(std::string text,
+                                   std::optional<QPointF> position)
+{
+    auto qclipboard_data = QApplication::clipboard()->mimeData();
+    if (qclipboard_data != nullptr && qclipboard_data->hasFormat(SKETCHER_MIME_TYPE)) {
+        // mimeData can return a nullptr in WASM builds
+        text = qclipboard_data->data(SKETCHER_MIME_TYPE).toStdString();
+    }
+    completePaste(text, position);
 }
 
 void SketcherWidget::completePaste(std::string text,

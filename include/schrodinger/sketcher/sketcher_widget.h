@@ -403,6 +403,9 @@ class SKETCHER_API SketcherWidget : public QWidget
     virtual void setClipboardContents(std::string text,
                                       std::string binary = "") const;
 
+    void completeEmscriptenPaste(std::string text,
+                                   std::optional<QPointF> position);
+
     /**
      * Perform the actual paste of clipboard text into the scene at the given
      * position. This is normally called from pasteAt(), but may be called
