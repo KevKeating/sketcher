@@ -538,6 +538,47 @@ const QString SKETCHER_MIME_TYPE =
 
 #ifdef __EMSCRIPTEN__
 const QString SKETCHER_WEB_MIME_TYPE = QStringLiteral("web ") + SKETCHER_MIME_TYPE;
+
+// Returns 1 iff the browser implements the Web Custom Formats extension to the
+// async clipboard API for the given MIME (Chromium-based browsers, currently).
+EM_JS(int, sketcher_browser_supports_web_mime, (const char* web_mime_ptr), {
+    if (typeof ClipboardItem === 'undefined') return 0;
+    if (typeof ClipboardItem.supports !== 'function') return 0;
+    return ClipboardItem.supports(UTF8ToString(web_mime_ptr)) ? 1 : 0;
+});
+
+namespace
+{
+// Browser feature detection is fixed for the life of the page, so cache it.
+bool browser_supports_web_mime()
+{
+    static const bool result = sketcher_browser_supports_web_mime(
+        SKETCHER_WEB_MIME_TYPE.toUtf8().constData()) != 0;
+    return result;
+}
+} // namespace
+
+// Writes both `text` and `binary` to the system clipboard in a single
+// ClipboardItem so that intra-sketcher pastes recover the lossless pickle and
+// pastes into other apps still get the text payload. Only safe to call when
+// browser_supports_web_mime() is true.
+EM_JS(void, sketcher_write_clipboard_with_binary,
+      (const char* text_ptr, const char* binary_ptr,
+       const char* web_mime_ptr), {
+    const text = UTF8ToString(text_ptr);
+    const binary = UTF8ToString(binary_ptr);
+    const webMime = UTF8ToString(web_mime_ptr);
+    const items = {
+        'text/plain': new Blob([text], {type: 'text/plain'})
+    };
+    if (binary.length > 0) {
+        items[webMime] = new Blob([binary], {type: webMime});
+    }
+    navigator.clipboard.write([new ClipboardItem(items)])
+        .catch(function(err) {
+            // Best-effort; user may have denied clipboard permission.
+        });
+});
 #endif
 
 std::string SketcherWidget::getClipboardContents() const
@@ -559,6 +600,18 @@ std::string SketcherWidget::getClipboardContents() const
 void SketcherWidget::setClipboardContents(std::string text,
                                           std::string binary) const
 {
+#ifdef __EMSCRIPTEN__
+    if (browser_supports_web_mime()) {
+        // Push both payloads straight to the system clipboard and skip Qt
+        // entirely -- the Qt clipboard can drift from the system clipboard on
+        // WASM, so having a single source of truth avoids stale-paste bugs.
+        sketcher_write_clipboard_with_binary(
+            text.c_str(), binary.c_str(),
+            SKETCHER_WEB_MIME_TYPE.toUtf8().constData());
+        return;
+    }
+#endif
+
     auto data = new QMimeData;
     data->setText(QString::fromStdString(text));
     if (!binary.empty()) {
@@ -567,7 +620,10 @@ void SketcherWidget::setClipboardContents(std::string text,
     QApplication::clipboard()->setMimeData(data);
 
 #ifdef __EMSCRIPTEN__
-    // Use the browser's aync clipboard api to enable copy for the wasm build
+    // Browser lacks custom-MIME write support, so the binary payload stays on
+    // the Qt clipboard as a sidecar. Mirror the text to the system clipboard
+    // so other apps can paste it; sketcher_finish_browser_paste() recovers the
+    // binary from Qt when the system text still matches.
     emscripten::val navigator = emscripten::val::global("navigator");
     navigator["clipboard"].call<emscripten::val>("writeText",
                                                  emscripten::val(text));
@@ -627,7 +683,10 @@ std::optional<QPointF> g_pending_paste_position;
 // Non-suspending: starts readText() and attaches a .then() that calls back
 // into C++. We must NOT await here -- ASYNCIFY cannot suspend through the JS
 // trampoline Qt uses for slot dispatch, so the read has to complete on a
-// fresh wasm stack (see sketcher_finish_browser_paste below).
+// fresh wasm stack (see sketcher_finish_browser_paste below). Used in the
+// fallback path when the browser does not support custom-MIME clipboard
+// reads; the callback then consults the Qt clipboard to recover any binary
+// sidecar payload.
 EM_JS(void, sketcher_start_browser_clipboard_read, (), {
     navigator.clipboard.readText()
         .then(function(text) {
@@ -643,6 +702,47 @@ EM_JS(void, sketcher_start_browser_clipboard_read, (), {
         });
 });
 
+// Read variant for browsers that support the Web Custom Formats extension:
+// pulls the sketcher binary payload directly off the system clipboard when
+// present, otherwise the plain text. Same ASYNCIFY caveat as above -- the
+// await runs inside the .then() callback on a fresh wasm stack.
+EM_JS(void, sketcher_start_browser_clipboard_read_with_binary,
+      (const char* web_mime_ptr), {
+    const webMime = UTF8ToString(web_mime_ptr);
+    navigator.clipboard.read()
+        .then(async function(items) {
+            let chosen = null;
+            for (const it of items) {
+                if (it.types.includes(webMime)) {
+                    chosen = {item: it, mime: webMime};
+                    break;
+                }
+            }
+            if (!chosen) {
+                for (const it of items) {
+                    if (it.types.includes('text/plain')) {
+                        chosen = {item: it, mime: 'text/plain'};
+                        break;
+                    }
+                }
+            }
+            if (!chosen) {
+                _sketcher_finish_browser_paste(0);
+                return;
+            }
+            const blob = await chosen.item.getType(chosen.mime);
+            const text = await blob.text();
+            const byteLength = lengthBytesUTF8(text) + 1;
+            const ptr = _malloc(byteLength);
+            stringToUTF8(text, ptr, byteLength);
+            _sketcher_finish_browser_paste(ptr);
+            _free(ptr);
+        })
+        .catch(function(err) {
+            _sketcher_finish_browser_paste(0);
+        });
+});
+
 extern "C" EMSCRIPTEN_KEEPALIVE void
 sketcher_finish_browser_paste(const char* text)
 {
@@ -650,9 +750,23 @@ sketcher_finish_browser_paste(const char* text)
     auto position = g_pending_paste_position;
     g_pending_paste_widget = nullptr;
     g_pending_paste_position.reset();
-    if (widget && text && *text) {
-        widget->completePaste(text, position);
+    if (!widget || !text || !*text) {
+        return;
     }
+    std::string payload = text;
+    if (!browser_supports_web_mime()) {
+        // Fallback path: JS returned the system clipboard text. If the Qt
+        // clipboard's text still matches, the user just copied within
+        // sketcher and the lossless binary payload is on Qt; otherwise the
+        // user copied from somewhere else and the system text wins.
+        auto data = QApplication::clipboard()->mimeData();
+        if (data && data->hasText() &&
+            data->text().toStdString() == payload &&
+            data->hasFormat(SKETCHER_MIME_TYPE)) {
+            payload = data->data(SKETCHER_MIME_TYPE).toStdString();
+        }
+    }
+    widget->completePaste(std::move(payload), position);
 }
 #endif
 
@@ -662,19 +776,23 @@ sketcher_finish_browser_paste(const char* text)
  */
 void SketcherWidget::pasteAt(std::optional<QPointF> position)
 {
+#ifdef __EMSCRIPTEN__
+    // The Qt clipboard and the browser/system clipboard can drift on WASM, so
+    // always read the system clipboard via the async API and let the .then()
+    // callback re-enter through sketcher_finish_browser_paste().
+    g_pending_paste_widget = this;
+    g_pending_paste_position = position;
+    if (browser_supports_web_mime()) {
+        sketcher_start_browser_clipboard_read_with_binary(
+            SKETCHER_WEB_MIME_TYPE.toUtf8().constData());
+    } else {
+        sketcher_start_browser_clipboard_read();
+    }
+#else
     auto text = getClipboardContents();
     if (!text.empty()) {
         completePaste(std::move(text), position);
-        return;
     }
-#ifdef __EMSCRIPTEN__
-    // The browser may not not allow us to access the clipboard via Qt. In that
-    // case, use the JavaScript readText API to request permission from the
-    // user. JavaScript will automatically call completePaste once the user has
-    // granted permission.
-    g_pending_paste_widget = this;
-    g_pending_paste_position = position;
-    sketcher_start_browser_clipboard_read();
 #endif
 }
 
