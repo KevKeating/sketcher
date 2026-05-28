@@ -536,6 +536,10 @@ void SketcherWidget::setInterfaceType(InterfaceTypeType interface_type)
 const QString SKETCHER_MIME_TYPE =
     QStringLiteral("application/x-schrodinger-sketcher");
 
+#ifdef __EMSCRIPTEN__
+const SKETCHER_WEB_MIME_TYPE = QStringLiteral("web ") + SKETCHER_MIME_TYPE;
+#endif
+
 std::string SketcherWidget::getClipboardContents() const
 {
     auto data = QApplication::clipboard()->mimeData();
