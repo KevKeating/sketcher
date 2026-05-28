@@ -543,10 +543,10 @@ const QString SKETCHER_WEB_MIME_TYPE =
 // Returns 1 iff the browser implements the Web Custom Formats extension to the
 // async clipboard API for the given MIME (Chromium-based browsers, currently).
 EM_JS(int, sketcher_browser_supports_web_mime, (const char* web_mime_ptr), {
-    if (typeof ClipboardItem == = 'undefined')
-        return 0;
-    if (typeof ClipboardItem.supports != = 'function')
-        return 0;
+    // Use ==/!= (not ===/!==) so clang-format doesn't split === into "== =".
+    // typeof always returns a string, so loose equality is equivalent here.
+    if (typeof ClipboardItem == 'undefined') return 0;
+    if (typeof ClipboardItem.supports != 'function') return 0;
     return ClipboardItem.supports(UTF8ToString(web_mime_ptr)) ? 1 : 0;
 });
 
