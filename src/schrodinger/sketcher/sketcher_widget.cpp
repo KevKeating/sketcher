@@ -537,13 +537,16 @@ const QString SKETCHER_MIME_TYPE =
     QStringLiteral("application/x-schrodinger-sketcher");
 
 #ifdef __EMSCRIPTEN__
-const QString SKETCHER_WEB_MIME_TYPE = QStringLiteral("web ") + SKETCHER_MIME_TYPE;
+const QString SKETCHER_WEB_MIME_TYPE =
+    QStringLiteral("web ") + SKETCHER_MIME_TYPE;
 
 // Returns 1 iff the browser implements the Web Custom Formats extension to the
 // async clipboard API for the given MIME (Chromium-based browsers, currently).
 EM_JS(int, sketcher_browser_supports_web_mime, (const char* web_mime_ptr), {
-    if (typeof ClipboardItem === 'undefined') return 0;
-    if (typeof ClipboardItem.supports !== 'function') return 0;
+    if (typeof ClipboardItem == = 'undefined')
+        return 0;
+    if (typeof ClipboardItem.supports != = 'function')
+        return 0;
     return ClipboardItem.supports(UTF8ToString(web_mime_ptr)) ? 1 : 0;
 });
 
@@ -552,8 +555,9 @@ namespace
 // Browser feature detection is fixed for the life of the page, so cache it.
 bool browser_supports_web_mime()
 {
-    static const bool result = sketcher_browser_supports_web_mime(
-        SKETCHER_WEB_MIME_TYPE.toUtf8().constData()) != 0;
+    static const bool result =
+        sketcher_browser_supports_web_mime(
+            SKETCHER_WEB_MIME_TYPE.toUtf8().constData()) != 0;
     return result;
 }
 } // namespace
@@ -563,22 +567,29 @@ bool browser_supports_web_mime()
 // pastes into other apps still get the text payload. Only safe to call when
 // browser_supports_web_mime() is true.
 EM_JS(void, sketcher_write_clipboard_with_binary,
-      (const char* text_ptr, const char* binary_ptr,
-       const char* web_mime_ptr), {
-    const text = UTF8ToString(text_ptr);
-    const binary = UTF8ToString(binary_ptr);
-    const webMime = UTF8ToString(web_mime_ptr);
-    const items = {
-        'text/plain': new Blob([text], {type: 'text/plain'})
-    };
-    if (binary.length > 0) {
-        items[webMime] = new Blob([binary], {type: webMime});
-    }
-    navigator.clipboard.write([new ClipboardItem(items)])
-        .catch(function(err) {
-            // Best-effort; user may have denied clipboard permission.
-        });
-});
+      (const char* text_ptr, const char* binary_ptr, const char* web_mime_ptr),
+      {
+          const text = UTF8ToString(text_ptr);
+          const binary = UTF8ToString(binary_ptr);
+          const webMime = UTF8ToString(web_mime_ptr);
+          const items = {
+              'text/plain' : new Blob([text],
+                                      {
+                                          type:
+                                              'text/plain'
+                                      })
+          };
+          if (binary.length > 0) {
+              items[webMime] = new Blob([binary], {
+                  type:
+                      webMime
+              });
+          }
+          navigator.clipboard.write([new ClipboardItem(items)])
+              .catch(function(err){
+                  // Best-effort; user may have denied clipboard permission.
+              });
+      });
 #endif
 
 std::string SketcherWidget::getClipboardContents() const
@@ -708,40 +719,38 @@ EM_JS(void, sketcher_start_browser_clipboard_read, (), {
 // await runs inside the .then() callback on a fresh wasm stack.
 EM_JS(void, sketcher_start_browser_clipboard_read_with_binary,
       (const char* web_mime_ptr), {
-    const webMime = UTF8ToString(web_mime_ptr);
-    navigator.clipboard.read()
-        .then(async function(items) {
-            let chosen = null;
-            for (const it of items) {
-                if (it.types.includes(webMime)) {
-                    chosen = {item: it, mime: webMime};
-                    break;
-                }
-            }
-            if (!chosen) {
-                for (const it of items) {
-                    if (it.types.includes('text/plain')) {
-                        chosen = {item: it, mime: 'text/plain'};
-                        break;
-                    }
-                }
-            }
-            if (!chosen) {
-                _sketcher_finish_browser_paste(0);
-                return;
-            }
-            const blob = await chosen.item.getType(chosen.mime);
-            const text = await blob.text();
-            const byteLength = lengthBytesUTF8(text) + 1;
-            const ptr = _malloc(byteLength);
-            stringToUTF8(text, ptr, byteLength);
-            _sketcher_finish_browser_paste(ptr);
-            _free(ptr);
-        })
-        .catch(function(err) {
-            _sketcher_finish_browser_paste(0);
-        });
-});
+          const webMime = UTF8ToString(web_mime_ptr);
+          navigator.clipboard.read()
+              .then(async function(items) {
+                  let chosen = null;
+                  for (const it of items) {
+                      if (it.types.includes(webMime)) {
+                          chosen = {item : it, mime : webMime};
+                          break;
+                      }
+                  }
+                  if (!chosen) {
+                      for (const it of items) {
+                          if (it.types.includes('text/plain')) {
+                              chosen = {item : it, mime : 'text/plain'};
+                              break;
+                          }
+                      }
+                  }
+                  if (!chosen) {
+                      _sketcher_finish_browser_paste(0);
+                      return;
+                  }
+                  const blob = await chosen.item.getType(chosen.mime);
+                  const text = await blob.text();
+                  const byteLength = lengthBytesUTF8(text) + 1;
+                  const ptr = _malloc(byteLength);
+                  stringToUTF8(text, ptr, byteLength);
+                  _sketcher_finish_browser_paste(ptr);
+                  _free(ptr);
+              })
+              .catch(function(err) { _sketcher_finish_browser_paste(0); });
+      });
 
 extern "C" EMSCRIPTEN_KEEPALIVE void
 sketcher_finish_browser_paste(const char* text)
@@ -760,8 +769,7 @@ sketcher_finish_browser_paste(const char* text)
         // sketcher and the lossless binary payload is on Qt; otherwise the
         // user copied from somewhere else and the system text wins.
         auto data = QApplication::clipboard()->mimeData();
-        if (data && data->hasText() &&
-            data->text().toStdString() == payload &&
+        if (data && data->hasText() && data->text().toStdString() == payload &&
             data->hasFormat(SKETCHER_MIME_TYPE)) {
             payload = data->data(SKETCHER_MIME_TYPE).toStdString();
         }
