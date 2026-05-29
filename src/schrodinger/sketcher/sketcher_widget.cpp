@@ -700,7 +700,7 @@ EM_JS(void, sketcher_start_browser_clipboard_read,
               const byteLength = lengthBytesUTF8(s) + 1;
               const ptr = _malloc(byteLength);
               stringToUTF8(s, ptr, byteLength);
-              _sketcher_finish_browser_paste(ptr);
+              sketcher_finish_browser_paste(ptr);
               _free(ptr);
           };
 
@@ -740,9 +740,9 @@ EM_JS(void, sketcher_start_browser_clipboard_read,
                       sendString(await blob.text());
                       return;
                   }
-                  _sketcher_finish_browser_paste(0);
+                  sketcher_finish_browser_paste(0);
               })
-              .catch(function(err) { _sketcher_finish_browser_paste(0); });
+              .catch(function(err) { sketcher_finish_browser_paste(0); });
       });
 
 extern "C" EMSCRIPTEN_KEEPALIVE void
