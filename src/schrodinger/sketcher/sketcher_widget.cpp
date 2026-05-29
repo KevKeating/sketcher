@@ -555,7 +555,7 @@ EM_JS(int, sketcher_browser_supports_web_mime, (const char* web_mime_ptr), {
 
 namespace
 {
-// Browser feature detection is fixed for the life of the page, so cache it.
+/// @return the cached result of sketcher_browser_supports_web_mime()
 bool browser_supports_web_mime()
 {
     static const bool result =
@@ -564,77 +564,56 @@ bool browser_supports_web_mime()
 }
 } // namespace
 
+// prevent clang from breaking the JavaScript
+// clang-format off
+
 // Writes both `text` and `binary` to the system clipboard in a single
 // ClipboardItem so that intra-sketcher pastes recover the lossless pickle and
 // pastes into other apps still get the text payload. Only safe to call when
 // browser_supports_web_mime() is true.
 EM_JS(void, sketcher_write_clipboard_with_binary,
-      (const char* text_ptr, const char* binary_ptr, const char* web_mime_ptr),
-      {
-          const text = UTF8ToString(text_ptr);
-          const binary = UTF8ToString(binary_ptr);
-          const webMime = UTF8ToString(web_mime_ptr);
-          const items = {
-              'text/plain' : new Blob([text],
-                                      {
-                                          type:
-                                              'text/plain'
-                                      })
-          };
-          if (binary.length > 0) {
-              items[webMime] = new Blob([binary], {
-                  type:
-                      webMime
-              });
-          }
-          navigator.clipboard.write([new ClipboardItem(items)])
-              .catch(function(err){
-                  // Best-effort; user may have denied clipboard permission.
-              });
-      });
+      (const char* text_ptr, const char* binary_ptr, const char* web_mime_ptr), {
+    const text = UTF8ToString(text_ptr);
+    const binary = UTF8ToString(binary_ptr);
+    const webMime = UTF8ToString(web_mime_ptr);
+    const items = {
+        'text/plain': new Blob([text], {type: 'text/plain'}),
+    };
+    if (binary.length > 0) {
+        items[webMime] = new Blob([binary], {type: webMime});
+    }
+    navigator.clipboard.write([new ClipboardItem(items)]).catch((err) => {
+        // Best-effort; user may have denied clipboard permission.
+    });
+});
 
 // Fallback writer for browsers without Web Custom Formats support: stashes the
-// binary pickle inside a `data-${app}` attribute on an empty leading div, then
-// appends the (HTML-escaped) text so other apps still see something meaningful
-// when they paste this HTML. The paste path recovers the binary by parsing the
-// div prefix back out.
+// binary pickle inside a `data-x-schrodinger-sketcher` attribute on an empty
+// leading div, then appends the (HTML-escaped) text so other apps still see
+// something meaningful when they paste this HTML. The paste path recovers the
+// binary by parsing the div prefix back out.
 EM_JS(void, sketcher_write_clipboard_with_html,
-      (const char* text_ptr, const char* binary_ptr, const char* app_name_ptr),
-      {
-          const text = UTF8ToString(text_ptr);
-          const binary = UTF8ToString(binary_ptr);
-          const appName = UTF8ToString(app_name_ptr);
-          const items = {
-              'text/plain' : new Blob([text],
-                                      {
-                                          type:
-                                              'text/plain'
-                                      })
-          };
-          if (binary.length > 0) {
-              // Avoid regex literals so clang-format (which lexes this as C++)
-              // doesn't mangle them; split/join is equivalent.
-              const escapeHtml = function(s)
-              {
-                  return s.split('&')
-                      .join('&amp;')
-                      .split('<')
-                      .join('&lt;')
-                      .split('>')
-                      .join('&gt;');
-              };
-              const html = '<div data-' + appName + '="' + binary + '"></div>' +
-                           escapeHtml(text);
-              items['text/html'] = new Blob([html], {
-                  type:
-                      'text/html'
-              });
-          }
-          navigator.clipboard.write([new ClipboardItem(items)])
-              .catch(function(err){
-                  // Best-effort; user may have denied clipboard permission.
-              });
-      });
+      (const char* text_ptr, const char* binary_ptr, const char* app_name_ptr), {
+    const text = UTF8ToString(text_ptr);
+    const binary = UTF8ToString(binary_ptr);
+    const appName = UTF8ToString(app_name_ptr);
+    const items = {
+        'text/plain': new Blob([text], {type: 'text/plain'}),
+    };
+    if (binary.length > 0) {
+        const escapeHtml = (s) => s
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;');
+        const html = '<div data-' + appName + '="' + binary + '"></div>' +
+                     escapeHtml(text);
+        items['text/html'] = new Blob([html], {type: 'text/html'});
+    }
+    navigator.clipboard.write([new ClipboardItem(items)]).catch((err) => {
+        // Best-effort; user may have denied clipboard permission.
+    });
+});
+// clang-format on
 #endif
 
 std::string SketcherWidget::getClipboardContents() const
