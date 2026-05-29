@@ -618,17 +618,15 @@ EM_JS(void, sketcher_write_clipboard_with_html,
 
 std::string SketcherWidget::getClipboardContents() const
 {
+#ifndef __EMSCRIPTEN__
     auto data = QApplication::clipboard()->mimeData();
-    if (data == nullptr) {
-        // mimeData can return a nullptr in WASM builds
-        return "";
-    }
     if (data->hasFormat(SKETCHER_MIME_TYPE)) {
         return data->data(SKETCHER_MIME_TYPE).toStdString();
     }
     if (data->hasText()) {
         return data->text().toStdString();
     }
+#endif
     return "";
 }
 
