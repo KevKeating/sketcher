@@ -605,12 +605,17 @@ EM_JS(void, sketcher_write_clipboard_with_html,
           const binary = UTF8ToString(binary_ptr);
           const appName = UTF8ToString(app_name_ptr);
           const items = {
-              'text/plain' : new Blob([text], {type : 'text/plain'})
+              'text/plain' : new Blob([text],
+                                      {
+                                          type:
+                                              'text/plain'
+                                      })
           };
           if (binary.length > 0) {
               // Avoid regex literals so clang-format (which lexes this as C++)
               // doesn't mangle them; split/join is equivalent.
-              const escapeHtml = function(s) {
+              const escapeHtml = function(s)
+              {
                   return s.split('&')
                       .join('&amp;')
                       .split('<')
@@ -618,9 +623,12 @@ EM_JS(void, sketcher_write_clipboard_with_html,
                       .split('>')
                       .join('&gt;');
               };
-              const html = '<div data-' + appName + '="' + binary +
-                           '"></div>' + escapeHtml(text);
-              items['text/html'] = new Blob([html], {type : 'text/html'});
+              const html = '<div data-' + appName + '="' + binary + '"></div>' +
+                           escapeHtml(text);
+              items['text/html'] = new Blob([html], {
+                  type:
+                      'text/html'
+              });
           }
           navigator.clipboard.write([new ClipboardItem(items)])
               .catch(function(err){
@@ -740,7 +748,8 @@ EM_JS(void, sketcher_start_browser_clipboard_read,
           const htmlPrefix = '<div data-' + appName + '="';
           const htmlSuffix = '"></div>';
 
-          const sendString = function(s) {
+          const sendString = function(s)
+          {
               const byteLength = lengthBytesUTF8(s) + 1;
               const ptr = _malloc(byteLength);
               stringToUTF8(s, ptr, byteLength);
@@ -748,7 +757,8 @@ EM_JS(void, sketcher_start_browser_clipboard_read,
               _free(ptr);
           };
 
-          const findItem = function(items, mime) {
+          const findItem = function(items, mime)
+          {
               for (const it of items) {
                   if (it.types.includes(mime))
                       return it;
