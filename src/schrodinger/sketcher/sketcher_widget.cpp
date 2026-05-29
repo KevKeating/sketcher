@@ -532,9 +532,10 @@ void SketcherWidget::setInterfaceType(InterfaceTypeType interface_type)
 
 // Sketcher-private MIME for a lossless RDKit pickle stashed alongside the
 // text payload; intra-sketcher pastes prefer it, other apps don't see it.
-const QString SKETCHER_MIME_APP_NAME = QStringLiteral("x-schrodinger-sketcher");
+const std::string SKETCHER_MIME_APP_NAME = "x-schrodinger-sketcher";
 const QString SKETCHER_MIME_TYPE =
-    QStringLiteral("application/") + SKETCHER_MIME_APP_NAME;
+    QStringLiteral("application/") +
+    QString::fromStdString(SKETCHER_MIME_APP_NAME);
 
 #ifdef __EMSCRIPTEN__
 const std::string SKETCHER_WEB_MIME_TYPE =
@@ -665,9 +666,8 @@ void SketcherWidget::setClipboardContents(std::string text,
         sketcher_write_clipboard_with_binary(text.c_str(), binary.c_str(),
                                              SKETCHER_WEB_MIME_TYPE.c_str());
     } else {
-        sketcher_write_clipboard_with_html(
-            text.c_str(), binary.c_str(),
-            SKETCHER_MIME_APP_NAME.toUtf8().constData());
+        sketcher_write_clipboard_with_html(text.c_str(), binary.c_str(),
+                                           SKETCHER_MIME_APP_NAME.c_str());
     }
 #else
     auto data = new QMimeData;
@@ -825,9 +825,8 @@ void SketcherWidget::pasteAt(std::optional<QPointF> position)
     // support.
     g_pending_paste_widget = this;
     g_pending_paste_position = position;
-    sketcher_start_browser_clipboard_read(
-        SKETCHER_WEB_MIME_TYPE.c_str(),
-        SKETCHER_MIME_APP_NAME.toUtf8().constData());
+    sketcher_start_browser_clipboard_read(SKETCHER_WEB_MIME_TYPE.c_str(),
+                                          SKETCHER_MIME_APP_NAME.c_str());
 #else
     auto text = getClipboardContents();
     if (!text.empty()) {
