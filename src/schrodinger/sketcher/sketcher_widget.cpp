@@ -553,49 +553,23 @@ EM_JS(int, sketcher_browser_supports_web_mime, (const char* web_mime_ptr), {
     return ClipboardItem.supports(UTF8ToString(web_mime_ptr)) ? 1 : 0;
 });
 
-namespace
-{
-/// @return the cached result of sketcher_browser_supports_web_mime()
-bool browser_supports_web_mime()
-{
-    static const bool result =
-        sketcher_browser_supports_web_mime(SKETCHER_WEB_MIME_TYPE.c_str()) != 0;
-    return result;
-}
-} // namespace
-
 // prevent clang from breaking the JavaScript
 // clang-format off
 
-// Writes both `text` and `binary` to the system clipboard in a single
-// ClipboardItem so that intra-sketcher pastes recover the lossless pickle and
-// pastes into other apps still get the text payload. Only safe to call when
-// browser_supports_web_mime() is true.
-EM_JS(void, sketcher_write_clipboard_with_binary,
-      (const char* text_ptr, const char* binary_ptr, const char* web_mime_ptr), {
+// Writes `text` and the lossless `binary` pickle to the system clipboard in a
+// single ClipboardItem. The binary is always embedded in a text/html sidecar
+// (a `<div data-${appName}="${binary}">` the paste path locates via
+// DOMParser) so cross-browser pastes work even when the source supports the
+// Web Custom Formats extension and the destination doesn't (e.g.,
+// Chrome -> Firefox). When the source browser also supports web custom MIMEs,
+// the binary is additionally written under SKETCHER_WEB_MIME_TYPE so
+// intra-Chromium pastes can skip the HTML round-trip.
+EM_JS(void, sketcher_write_clipboard,
+      (const char* text_ptr, const char* binary_ptr,
+       const char* web_mime_ptr, const char* app_name_ptr), {
     const text = UTF8ToString(text_ptr);
     const binary = UTF8ToString(binary_ptr);
     const webMime = UTF8ToString(web_mime_ptr);
-    const items = {
-        'text/plain': new Blob([text], {type: 'text/plain'}),
-    };
-    if (binary.length > 0) {
-        items[webMime] = new Blob([binary], {type: webMime});
-    }
-    navigator.clipboard.write([new ClipboardItem(items)]).catch((err) => {
-        // Best-effort; user may have denied clipboard permission.
-    });
-});
-
-// Fallback writer for browsers without Web Custom Formats support: stashes the
-// binary pickle inside a `data-x-schrodinger-sketcher` attribute on an empty
-// leading div, then appends the (HTML-escaped) text so other apps still see
-// something meaningful when they paste this HTML. The paste path recovers the
-// binary by parsing the div prefix back out.
-EM_JS(void, sketcher_write_clipboard_with_html,
-      (const char* text_ptr, const char* binary_ptr, const char* app_name_ptr), {
-    const text = UTF8ToString(text_ptr);
-    const binary = UTF8ToString(binary_ptr);
     const appName = UTF8ToString(app_name_ptr);
     const items = {
         'text/plain': new Blob([text], {type: 'text/plain'}),
@@ -608,6 +582,9 @@ EM_JS(void, sketcher_write_clipboard_with_html,
         const html = '<div data-' + appName + '="' + binary + '"></div>' +
                      escapeHtml(text);
         items['text/html'] = new Blob([html], {type: 'text/html'});
+        if (_sketcher_browser_supports_web_mime(web_mime_ptr)) {
+            items[webMime] = new Blob([binary], {type: webMime});
+        }
     }
     navigator.clipboard.write([new ClipboardItem(items)]).catch((err) => {
         // Best-effort; user may have denied clipboard permission.
@@ -635,17 +612,13 @@ void SketcherWidget::setClipboardContents(std::string text,
 {
 #ifdef __EMSCRIPTEN__
     // On WASM the Qt clipboard and the system clipboard can drift, so write
-    // everything directly to the system clipboard. Path depends on whether
-    // the browser supports the Web Custom Formats extension: if so, stash the
-    // binary under a custom MIME; otherwise embed it in an invisible div on
-    // a text/html payload that the paste path knows how to parse back out.
-    if (browser_supports_web_mime()) {
-        sketcher_write_clipboard_with_binary(text.c_str(), binary.c_str(),
-                                             SKETCHER_WEB_MIME_TYPE.c_str());
-    } else {
-        sketcher_write_clipboard_with_html(text.c_str(), binary.c_str(),
-                                           SKETCHER_MIME_APP_NAME.c_str());
-    }
+    // everything directly to the system clipboard. The writer always embeds
+    // the binary in a text/html sidecar (so Chrome -> Firefox round-trips
+    // through HTML) and additionally adds a custom web MIME when the browser
+    // supports the Web Custom Formats extension.
+    sketcher_write_clipboard(text.c_str(), binary.c_str(),
+                             SKETCHER_WEB_MIME_TYPE.c_str(),
+                             SKETCHER_MIME_APP_NAME.c_str());
 #else
     auto data = new QMimeData;
     data->setText(QString::fromStdString(text));
