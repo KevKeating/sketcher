@@ -537,8 +537,8 @@ const QString SKETCHER_MIME_TYPE =
     QStringLiteral("application/") + SKETCHER_MIME_APP_NAME;
 
 #ifdef __EMSCRIPTEN__
-const QString SKETCHER_WEB_MIME_TYPE =
-    QStringLiteral("web ") + SKETCHER_MIME_TYPE;
+const std::string SKETCHER_WEB_MIME_TYPE =
+    "web " + SKETCHER_MIME_TYPE.toStdString();
 
 // Returns 1 iff the browser implements the Web Custom Formats extension to the
 // async clipboard API for the given MIME (Chromium-based browsers, currently).
@@ -558,8 +558,7 @@ namespace
 bool browser_supports_web_mime()
 {
     static const bool result =
-        sketcher_browser_supports_web_mime(
-            SKETCHER_WEB_MIME_TYPE.toUtf8().constData()) != 0;
+        sketcher_browser_supports_web_mime(SKETCHER_WEB_MIME_TYPE.c_str()) != 0;
     return result;
 }
 } // namespace
@@ -663,9 +662,8 @@ void SketcherWidget::setClipboardContents(std::string text,
     // binary under a custom MIME; otherwise embed it in an invisible div on
     // a text/html payload that the paste path knows how to parse back out.
     if (browser_supports_web_mime()) {
-        sketcher_write_clipboard_with_binary(
-            text.c_str(), binary.c_str(),
-            SKETCHER_WEB_MIME_TYPE.toUtf8().constData());
+        sketcher_write_clipboard_with_binary(text.c_str(), binary.c_str(),
+                                             SKETCHER_WEB_MIME_TYPE.c_str());
     } else {
         sketcher_write_clipboard_with_html(
             text.c_str(), binary.c_str(),
@@ -828,7 +826,7 @@ void SketcherWidget::pasteAt(std::optional<QPointF> position)
     g_pending_paste_widget = this;
     g_pending_paste_position = position;
     sketcher_start_browser_clipboard_read(
-        SKETCHER_WEB_MIME_TYPE.toUtf8().constData(),
+        SKETCHER_WEB_MIME_TYPE.c_str(),
         SKETCHER_MIME_APP_NAME.toUtf8().constData());
 #else
     auto text = getClipboardContents();
