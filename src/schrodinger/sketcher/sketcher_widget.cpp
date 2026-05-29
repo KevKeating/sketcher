@@ -725,10 +725,10 @@ EM_JS(void, sketcher_start_browser_clipboard_read,
                   if (htmlItem) {
                       const blob = await htmlItem.getType('text/html');
                       const html = await blob.text();
-                      const doc = new DOMParser().parseFromString(
-                          html, 'text/html');
-                      const div = doc.querySelector(
-                          'div[data-' + appName + ']');
+                      const doc =
+                          new DOMParser().parseFromString(html, 'text/html');
+                      const div =
+                          doc.querySelector('div[data-' + appName + ']');
                       if (div) {
                           sendString(div.getAttribute('data-' + appName));
                           return;
