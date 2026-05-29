@@ -399,7 +399,7 @@ class SKETCHER_API SketcherWidget : public QWidget
      * overriden in the unit test since using the real clipboard can lead to
      * intermittent failures on buildbot. The optional `binary` payload is
      * stashed under a sketcher-private MIME type and preferred on paste.
-     * 
+     *
      * @note getClipboardContents() always return an empty string on WASM
      * builds. Use sketcher_start_browser_clipboard_read() instead.
      */
