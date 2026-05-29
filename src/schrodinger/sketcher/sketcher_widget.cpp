@@ -709,8 +709,9 @@ std::optional<QPointF> g_pending_paste_position;
 // Reads the system clipboard via the async API and re-enters C++ with whatever
 // payload should be pasted. Priority: the SKETCHER_WEB_MIME_TYPE custom MIME
 // (only present when the writer browser supported it), then the text/html
-// sidecar (a leading `<div data-${app}="${binary}"></div>` written by the
-// fallback path), then plain text.
+// sidecar (a `<div data-${app}="${binary}">` written by the fallback path --
+// found via DOMParser since browsers may wrap clipboard HTML on read-back),
+// then plain text.
 //
 // Non-suspending: we must NOT await in the EM_JS body itself -- ASYNCIFY
 // cannot suspend through the JS trampoline Qt uses for slot dispatch, so the
@@ -720,8 +721,6 @@ EM_JS(void, sketcher_start_browser_clipboard_read,
       (const char* web_mime_ptr, const char* app_name_ptr), {
           const webMime = UTF8ToString(web_mime_ptr);
           const appName = UTF8ToString(app_name_ptr);
-          const htmlPrefix = '<div data-' + appName + '="';
-          const htmlSuffix = '"></div>';
 
           const sendString = function(s)
           {
@@ -753,14 +752,13 @@ EM_JS(void, sketcher_start_browser_clipboard_read,
                   if (htmlItem) {
                       const blob = await htmlItem.getType('text/html');
                       const html = await blob.text();
-                      if (html.startsWith(htmlPrefix)) {
-                          const end =
-                              html.indexOf(htmlSuffix, htmlPrefix.length);
-                          if (end > 0) {
-                              sendString(
-                                  html.substring(htmlPrefix.length, end));
-                              return;
-                          }
+                      const doc = new DOMParser().parseFromString(
+                          html, 'text/html');
+                      const div = doc.querySelector(
+                          'div[data-' + appName + ']');
+                      if (div) {
+                          sendString(div.getAttribute('data-' + appName));
+                          return;
                       }
                   }
                   const textItem = findItem(items, 'text/plain');
