@@ -541,11 +541,14 @@ const QString SKETCHER_MIME_TYPE =
 const std::string SKETCHER_WEB_MIME_TYPE =
     "web " + SKETCHER_MIME_TYPE.toStdString();
 
-// Returns 1 iff the browser implements the Web Custom Formats extension to the
-// async clipboard API for the given MIME (Chromium-based browsers, currently).
+// prevent clang from breaking JavaScript by trying to reformat it
+// clang-format off
+
+// Returns whether the browser supports the given MIME type.  Supporting
+// SKETCHER_WEB_MIME_TYPE requires that the browser support the Web Custom
+// Formats extension to the async clipboard API (which is currently only recent
+// versions of Chromium-based browsers).
 EM_JS(int, sketcher_browser_supports_web_mime, (const char* web_mime_ptr), {
-    // Use ==/!= (not ===/!==) so clang-format doesn't split === into "== =".
-    // typeof always returns a string, so loose equality is equivalent here.
     if (typeof ClipboardItem == 'undefined')
         return 0;
     if (typeof ClipboardItem.supports != 'function')
@@ -553,17 +556,12 @@ EM_JS(int, sketcher_browser_supports_web_mime, (const char* web_mime_ptr), {
     return ClipboardItem.supports(UTF8ToString(web_mime_ptr)) ? 1 : 0;
 });
 
-// prevent clang from breaking the JavaScript
-// clang-format off
-
-// Writes `text` and the lossless `binary` pickle to the system clipboard in a
-// single ClipboardItem. The binary is always embedded in a text/html sidecar
-// (a `<div data-${appName}="${binary}">` the paste path locates via
-// DOMParser) so cross-browser pastes work even when the source supports the
-// Web Custom Formats extension and the destination doesn't (e.g.,
-// Chrome -> Firefox). When the source browser also supports web custom MIMEs,
-// the binary is additionally written under SKETCHER_WEB_MIME_TYPE so
-// intra-Chromium pastes can skip the HTML round-trip.
+// Write `text` and the lossless `binary` pickle to the system clipboard in a
+// single ClipboardItem. The binary is stored in the text/html MIME type using a
+// data property of an empty <div> block. The binary is additionally written to
+// the SKETCHER_WEB_MIME_TYPE if the source browser supports web custom MIMEs,
+// which allows intra-Chromium pastes to skip the HTML round-trip (and the
+// reformatting and security checks that text/html data is subjected to).
 EM_JS(void, sketcher_write_clipboard,
       (const char* text_ptr, const char* binary_ptr,
        const char* web_mime_ptr, const char* app_name_ptr), {
@@ -611,11 +609,11 @@ void SketcherWidget::setClipboardContents(std::string text,
                                           std::string binary) const
 {
 #ifdef __EMSCRIPTEN__
-    // On WASM the Qt clipboard and the system clipboard can drift, so write
-    // everything directly to the system clipboard. The writer always embeds
-    // the binary in a text/html sidecar (so Chrome -> Firefox round-trips
-    // through HTML) and additionally adds a custom web MIME when the browser
-    // supports the Web Custom Formats extension.
+    // QClipboard doesn't interact with the system clipboard on WASM builds, so
+    // we write everything directly to the system clipboard instead. The writer
+    // always embeds the binary in a text/html sidecar (so Chrome -> Firefox
+    // round-trips through HTML) and additionally adds a custom web MIME when
+    // the browser supports the Web Custom Formats extension.
     sketcher_write_clipboard(text.c_str(), binary.c_str(),
                              SKETCHER_WEB_MIME_TYPE.c_str(),
                              SKETCHER_MIME_APP_NAME.c_str());
@@ -765,7 +763,7 @@ sketcher_finish_browser_paste(const char* text)
 void SketcherWidget::pasteAt(std::optional<QPointF> position)
 {
 #ifdef __EMSCRIPTEN__
-    // The Qt clipboard and the system clipboard can drift on WASM, so always
+    // QClipboard doesn't interact with  the system clipboard on WASM, so always
     // read the system clipboard via the async API and let the .then() callback
     // re-enter through sketcher_finish_browser_paste(). The read function
     // checks all three possible payload locations (web custom MIME, text/html
