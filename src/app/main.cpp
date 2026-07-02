@@ -7,10 +7,12 @@
 #ifdef __EMSCRIPTEN__
 #include <emscripten.h>
 #include <emscripten/bind.h>
+#include <emscripten/val.h>
 #else
 #include "crash_handler.h"
 #endif
 
+#include <cstddef>
 #include <stdexcept>
 
 #include <QAbstractButton>
@@ -58,6 +60,18 @@ std::string sketcher_export_image(ImageFormat format)
     auto& sk = get_sketcher_instance();
     return sk.getImageBytes(format).toBase64().toStdString();
 }
+
+#ifdef __EMSCRIPTEN__
+emscripten::val get_image_bytes_from_text(const std::string& text,
+                                          ImageFormat format)
+{
+    auto bytes = schrodinger::sketcher::get_image_bytes(text, format);
+    auto byte_view = emscripten::val(emscripten::typed_memory_view(
+        static_cast<std::size_t>(bytes.size()),
+        reinterpret_cast<unsigned char*>(bytes.data())));
+    return emscripten::val::global("Uint8Array").new_(byte_view);
+}
+#endif
 
 void sketcher_clear()
 {
@@ -208,6 +222,7 @@ EMSCRIPTEN_BINDINGS(sketcher)
     emscripten::function("sketcher_import_text", &sketcher_import_text);
     emscripten::function("sketcher_export_text", &sketcher_export_text);
     emscripten::function("sketcher_export_image", &sketcher_export_image);
+    emscripten::function("get_image_bytes", &get_image_bytes_from_text);
     emscripten::function("sketcher_clear", &sketcher_clear);
     emscripten::function("sketcher_is_empty", &sketcher_is_empty);
     emscripten::function("sketcher_has_monomers", &sketcher_has_monomers);
