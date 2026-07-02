@@ -132,7 +132,7 @@ std::vector<std::string> get_js_object_keys(const emscripten::val& object)
 
 void assert_js_object(const emscripten::val& object, const char* option_name)
 {
-    if (object.typeof().as<std::string>() != "object" || !object.as<bool>()) {
+    if (object.typeOf().as<std::string>() != "object" || !object.as<bool>()) {
         throw std::invalid_argument(
             "RenderOptions." + std::string(option_name) + " must be an object");
     }
@@ -196,7 +196,7 @@ void read_size_option(const emscripten::val& options, RenderOptions& opts)
 RenderOptions render_options_from_js(const emscripten::val& options)
 {
     RenderOptions opts;
-    if (options.typeof().as<std::string>() == "undefined") {
+    if (options.typeOf().as<std::string>() == "undefined") {
         return opts;
     }
     assert_js_object(options, "options");
