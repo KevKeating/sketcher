@@ -72,6 +72,7 @@ std::string sketcher_export_image(ImageFormat format)
 }
 
 #ifdef __EMSCRIPTEN__
+// code required for the get_image_bytes wrapping
 namespace
 {
 
