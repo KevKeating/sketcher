@@ -139,10 +139,7 @@ test.describe('WASM Sketcher API', () => {
   ['SVG', 'PNG'].forEach((imageFormat) => {
     test(`generating a ${imageFormat} image from text`, async ({ page }) => {
       const bytes = await page.evaluate((imageFormat) => {
-        const imageBytes = Module.get_image_bytes(
-          'C=O',
-          Module.ImageFormat[imageFormat],
-        );
+        const imageBytes = Module.get_image_bytes('C=O', Module.ImageFormat[imageFormat]);
         return Array.from(imageBytes);
       }, imageFormat);
 
@@ -151,9 +148,7 @@ test.describe('WASM Sketcher API', () => {
         const svg = Buffer.from(bytes).toString('utf8');
         expect(svg).toContain('<svg');
       } else {
-        expect(bytes.slice(0, 8)).toEqual([
-          0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a,
-        ]);
+        expect(bytes.slice(0, 8)).toEqual([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
       }
     });
   });
