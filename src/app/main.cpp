@@ -72,7 +72,6 @@ std::string sketcher_export_image(ImageFormat format)
 }
 
 #ifdef __EMSCRIPTEN__
-// clang-format off
 namespace
 {
 
@@ -108,8 +107,7 @@ int parse_js_index(const std::string& index, const char* option_name)
     return parsed_index;
 }
 
-QColor parse_js_color(const emscripten::val& color_val,
-                      const char* option_name)
+QColor parse_js_color(const emscripten::val& color_val, const char* option_name)
 {
     auto color_string = color_val.as<std::string>();
     if (color_string == "transparent") {
@@ -118,10 +116,9 @@ QColor parse_js_color(const emscripten::val& color_val,
 
     auto color = QColor::fromString(QString::fromStdString(color_string));
     if (!color.isValid()) {
-        throw std::invalid_argument("RenderOptions." +
-                                    std::string(option_name) +
-                                    " contains invalid color '" +
-                                    color_string + "'");
+        throw std::invalid_argument(
+            "RenderOptions." + std::string(option_name) +
+            " contains invalid color '" + color_string + "'");
     }
     return color;
 }
@@ -135,11 +132,9 @@ std::vector<std::string> get_js_object_keys(const emscripten::val& object)
 
 void assert_js_object(const emscripten::val& object, const char* option_name)
 {
-    if (object.typeof().as<std::string>() != "object" ||
-        !object.as<bool>()) {
-        throw std::invalid_argument("RenderOptions." +
-                                    std::string(option_name) +
-                                    " must be an object");
+    if (object.typeof().as<std::string>() != "object" || !object.as<bool>()) {
+        throw std::invalid_argument(
+            "RenderOptions." + std::string(option_name) + " must be an object");
     }
 }
 
@@ -274,7 +269,6 @@ emscripten::val get_image_bytes_from_text(const std::string& text,
     return qbyte_array_to_uint8_array(schrodinger::sketcher::get_image_bytes(
         text, format, render_options_from_js(options)));
 }
-// clang-format on
 #endif
 
 void sketcher_clear()
