@@ -72,6 +72,7 @@ std::string sketcher_export_image(ImageFormat format)
 }
 
 #ifdef __EMSCRIPTEN__
+// clang-format off
 namespace
 {
 
@@ -273,6 +274,7 @@ emscripten::val get_image_bytes_from_text(const std::string& text,
     return qbyte_array_to_uint8_array(schrodinger::sketcher::get_image_bytes(
         text, format, render_options_from_js(options)));
 }
+// clang-format on
 #endif
 
 void sketcher_clear()
@@ -444,9 +446,8 @@ EMSCRIPTEN_BINDINGS(sketcher)
     emscripten::function("sketcher_export_image", &sketcher_export_image);
     emscripten::function(
         "get_image_bytes",
-        emscripten::select_overload<emscripten::val(const std::string&,
-                                                    ImageFormat)>(
-            &get_image_bytes_from_text));
+        emscripten::select_overload<emscripten::val(
+            const std::string&, ImageFormat)>(&get_image_bytes_from_text));
     emscripten::function(
         "get_image_bytes",
         emscripten::select_overload<emscripten::val(
