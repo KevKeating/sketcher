@@ -351,5 +351,7 @@ BOOST_AUTO_TEST_CASE(test_bond_stereo_tooltips)
     BOOST_TEST(found_stereo_bond);
 }
 
+// TODO: add a test that would've triggered the memory error
+
 } // namespace sketcher
 } // namespace schrodinger
