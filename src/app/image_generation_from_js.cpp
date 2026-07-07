@@ -27,15 +27,12 @@ emscripten::val qbyte_array_to_uint8_array(QByteArray bytes)
     return emscripten::val::global("Uint8Array").new_(byte_view);
 }
 
-namespace
-{
-
-bool has_option(const emscripten::val& options, const char* key)
+static bool has_option(const emscripten::val& options, const char* key)
 {
     return options.hasOwnProperty(key);
 }
 
-int parse_js_index(const std::string& index, const char* option_name)
+static int parse_js_index(const std::string& index, const char* option_name)
 {
     std::size_t parsed_chars = 0;
     int parsed_index = 0;
@@ -54,7 +51,8 @@ int parse_js_index(const std::string& index, const char* option_name)
     return parsed_index;
 }
 
-QColor parse_js_color(const emscripten::val& color_val, const char* option_name)
+static QColor parse_js_color(const emscripten::val& color_val,
+                             const char* option_name)
 {
     auto color_string = color_val.as<std::string>();
     if (color_string == "transparent") {
@@ -70,14 +68,16 @@ QColor parse_js_color(const emscripten::val& color_val, const char* option_name)
     return color;
 }
 
-std::vector<std::string> get_js_object_keys(const emscripten::val& object)
+static std::vector<std::string>
+get_js_object_keys(const emscripten::val& object)
 {
     auto keys =
         emscripten::val::global("Object").call<emscripten::val>("keys", object);
     return emscripten::vecFromJSArray<std::string>(keys);
 }
 
-void assert_js_object(const emscripten::val& object, const char* option_name)
+static void assert_js_object(const emscripten::val& object,
+                             const char* option_name)
 {
     if (object.typeOf().as<std::string>() != "object" || !object.as<bool>()) {
         throw std::invalid_argument(
@@ -85,9 +85,9 @@ void assert_js_object(const emscripten::val& object, const char* option_name)
     }
 }
 
-void read_string_hash_option(const emscripten::val& options,
-                             const char* option_name,
-                             QHash<int, std::string>& target)
+static void read_string_hash_option(const emscripten::val& options,
+                                    const char* option_name,
+                                    QHash<int, std::string>& target)
 {
     if (!has_option(options, option_name)) {
         return;
@@ -101,8 +101,9 @@ void read_string_hash_option(const emscripten::val& options,
     }
 }
 
-void read_color_hash_option(const emscripten::val& options,
-                            const char* option_name, QHash<int, QColor>& target)
+static void read_color_hash_option(const emscripten::val& options,
+                                   const char* option_name,
+                                   QHash<int, QColor>& target)
 {
     if (!has_option(options, option_name)) {
         return;
@@ -116,7 +117,8 @@ void read_color_hash_option(const emscripten::val& options,
     }
 }
 
-void read_size_option(const emscripten::val& options, RenderOptions& opts)
+static void read_size_option(const emscripten::val& options,
+                             RenderOptions& opts)
 {
     if (has_option(options, "width_height")) {
         auto js_size = options["width_height"];
@@ -139,8 +141,6 @@ void read_size_option(const emscripten::val& options, RenderOptions& opts)
         opts.width_height.setHeight(options["height"].as<int>());
     }
 }
-
-} // namespace
 
 RenderOptions render_options_from_js(const emscripten::val& options)
 {
