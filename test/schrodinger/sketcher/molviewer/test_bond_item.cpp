@@ -356,8 +356,8 @@ BOOST_AUTO_TEST_CASE(test_bond_stereo_tooltips)
 /**
  * Paint a bond that has no bond annotation, but is bound to an atom with a
  * chirality label. This test is primarily intended so that Valgrind can confirm
- * we're not trying to paint an empty annotation using an uninitialized angle. 
- * See SKETCH-2801.
+ * that we're not trying to paint an empty annotation using an uninitialized
+ * angle. See SKETCH-2801.
  */
 BOOST_AUTO_TEST_CASE(test_chiral_atom_no_bond_annotation)
 {
