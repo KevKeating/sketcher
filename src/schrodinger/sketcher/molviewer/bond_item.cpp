@@ -710,7 +710,7 @@ void BondItem::paint(QPainter* painter, const QStyleOptionGraphicsItem* option,
         painter->setClipPath(annotation_region);
         paintBondLinesAndPolygons(painter);
         painter->restore();
-        if (!m_annotation_text.isEmpty()) {
+        // if (!m_annotation_text.isEmpty()) {
             // paint the actual annotation
             painter->save();
             painter->setPen(m_chirality_pen);
@@ -718,7 +718,7 @@ void BondItem::paint(QPainter* painter, const QStyleOptionGraphicsItem* option,
             paintAnnotation(painter, m_text_angle, m_text_pos, m_text_size,
                             m_annotation_text);
             painter->restore();
-        }
+        // }
     } else {
         paintBondLinesAndPolygons(painter);
     }
