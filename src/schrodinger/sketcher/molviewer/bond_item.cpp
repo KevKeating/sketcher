@@ -711,7 +711,7 @@ void BondItem::paint(QPainter* painter, const QStyleOptionGraphicsItem* option,
         paintBondLinesAndPolygons(painter);
         painter->restore();
         if (!m_annotation_text.isEmpty()) {
-            // paint the actual annotation text if there is one
+            // paint the annotation text if there is any
             painter->save();
             painter->setPen(m_chirality_pen);
             painter->setFont(m_fonts.m_chirality_font);
