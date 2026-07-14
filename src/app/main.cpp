@@ -69,19 +69,19 @@ std::string sketcher_export_image(ImageFormat format)
 }
 
 #ifdef __EMSCRIPTEN__
-emscripten::val get_image_bytes_from_text(const std::string& text,
-                                          ImageFormat format)
+std::string get_image_bytes_from_text(const std::string& text,
+                                      ImageFormat format)
 {
-    return qbyte_array_to_uint8_array(
-        schrodinger::sketcher::get_image_bytes(text, format));
+    return get_image_bytes_from_text(text, format, RenderOptions());
 }
 
-emscripten::val get_image_bytes_from_text(const std::string& text,
-                                          ImageFormat format,
-                                          const emscripten::val& options)
+std::string get_image_bytes_from_text(const std::string& text,
+                                      ImageFormat format,
+                                      const emscripten::val& options)
 {
-    return qbyte_array_to_uint8_array(schrodinger::sketcher::get_image_bytes(
-        text, format, render_options_from_js(options)));
+    auto image_bytes = schrodinger::sketcher::get_image_bytes(
+        text, format, render_options_from_js(options));
+    return image_byes.toBase64().toStdString();
 }
 #endif
 
