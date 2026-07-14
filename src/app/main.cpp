@@ -283,12 +283,12 @@ EMSCRIPTEN_BINDINGS(sketcher)
     emscripten::function("sketcher_export_image", &sketcher_export_image);
     emscripten::function(
         "get_image_bytes",
-        emscripten::select_overload<emscripten::val(
+        emscripten::select_overload<std::string(
             const std::string&, ImageFormat)>(&get_image_bytes_from_text));
     emscripten::function(
         "get_image_bytes",
-        emscripten::select_overload<emscripten::val(
-            const std::string&, ImageFormat, const emscripten::val&)>(
+        emscripten::select_overload<std::string(const std::string&, ImageFormat,
+                                                const emscripten::val&)>(
             &get_image_bytes_from_text));
     emscripten::function("sketcher_clear", &sketcher_clear);
     emscripten::function("sketcher_is_empty", &sketcher_is_empty);
