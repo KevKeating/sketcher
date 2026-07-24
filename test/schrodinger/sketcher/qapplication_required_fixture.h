@@ -3,8 +3,10 @@
 #pragma once
 
 #include <csignal>
+#include <vector>
 
 #include <QApplication>
+#include <QByteArray>
 #include <fmt/format.h>
 #include <boost/test/unit_test.hpp>
 #include <cstdlib>
@@ -50,10 +52,22 @@ class QApplicationRequiredFixture
         });
 
         // Qt requires argc and argv to stay valid for the entire lifetime of
-        // the QApplication object, so pass boost master test suite variables.
-        d_app.reset(new QApplication(
-            boost::unit_test::framework::master_test_suite().argc,
-            boost::unit_test::framework::master_test_suite().argv));
+        // the QApplication object.
+        const auto& test_suite =
+            boost::unit_test::framework::master_test_suite();
+        d_arguments.reserve(test_suite.argc + 2);
+        for (int i = 0; i < test_suite.argc; ++i) {
+            d_arguments.emplace_back(test_suite.argv[i]);
+        }
+        d_arguments.emplace_back("--platform");
+        d_arguments.emplace_back("offscreen");
+
+        d_argv.reserve(d_arguments.size());
+        for (auto& argument : d_arguments) {
+            d_argv.push_back(argument.data());
+        }
+        d_argc = static_cast<int>(d_argv.size());
+        d_app.reset(new QApplication(d_argc, d_argv.data()));
 
         // Initialize Qt resources (fonts, icons, etc.)
 #ifdef SKETCHER_STATIC_DEFINE
@@ -62,5 +76,8 @@ class QApplicationRequiredFixture
     }
 
   private:
+    int d_argc = 0;
+    std::vector<QByteArray> d_arguments;
+    std::vector<char*> d_argv;
     std::unique_ptr<QApplication> d_app;
 };
