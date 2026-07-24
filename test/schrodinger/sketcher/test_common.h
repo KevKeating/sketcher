@@ -70,9 +70,7 @@ MAKE_ENUM_LOGGABLE(SelectionTool)
 class TestSketcherWidget : public SketcherWidget
 {
   public:
-    TestSketcherWidget() : SketcherWidget(){
-        setAttribute(Qt::WA_DontShowOnScreen);
-    };
+    TestSketcherWidget() : SketcherWidget(){};
     using SketcherWidget::addFromString;
     using SketcherWidget::addTextToMolModel;
     using SketcherWidget::chooseContextMenu;
