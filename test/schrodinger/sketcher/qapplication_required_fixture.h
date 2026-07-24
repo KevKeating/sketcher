@@ -61,10 +61,8 @@ class QApplicationRequiredFixture
         for (int i = 0; i < test_suite.argc; ++i) {
             d_arguments.emplace_back(test_suite.argv[i]);
         }
-#ifndef __APPLE__
         d_arguments.emplace_back("--platform");
         d_arguments.emplace_back("offscreen");
-#endif
 
         d_argv.reserve(d_arguments.size());
         for (auto& argument : d_arguments) {
