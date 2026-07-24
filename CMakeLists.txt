@@ -400,8 +400,7 @@ if(ENABLE_TESTING)
                                PRIVATE ${PROJECT_SOURCE_DIR}/test)
     target_link_libraries(${TEST_TARGET} PRIVATE ${TEST_DEPENDENCIES})
     if(NOT QT6_IS_SHARED_LIBS_BUILD)
-      qt_import_plugins(${TEST_TARGET}
-                        INCLUDE Qt6::QOffscreenIntegrationPlugin)
+      qt_import_plugins(${TEST_TARGET} INCLUDE Qt6::QOffscreenIntegrationPlugin)
     endif()
     if(MSVC)
       # ignore discarded [[nodiscard]] values for the tests
