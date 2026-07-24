@@ -11,6 +11,8 @@
 #include <boost/test/unit_test.hpp>
 #include <cstdlib>
 
+#include "schrodinger/sketcher/font_loader.h"
+
 /// @return true if there is a display
 static bool has_display()
 {
@@ -73,6 +75,7 @@ class QApplicationRequiredFixture
 #ifdef SKETCHER_STATIC_DEFINE
         Q_INIT_RESOURCE(sketcher);
 #endif
+        schrodinger::sketcher::load_font_resources();
     }
 
   private:
