@@ -75,6 +75,8 @@ class QApplicationRequiredFixture
 #ifdef SKETCHER_STATIC_DEFINE
         Q_INIT_RESOURCE(sketcher);
 #endif
+        // load the Arimo font so that font width calculations result in
+        // expected values
         schrodinger::sketcher::load_font_resources();
     }
 
