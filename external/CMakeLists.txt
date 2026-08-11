@@ -292,7 +292,7 @@ endif()
 ExternalProject_Add(
   rdkit
   GIT_REPOSITORY https://github.com/rdkit/rdkit.git
-  GIT_TAG Release_${RDKIT_GIT_TAG}
+  GIT_TAG ${RDKIT_GIT_TAG}
   GIT_SHALLOW TRUE
   PATCH_COMMAND ${RDKIT_PATCH_COMMAND}
   CMAKE_ARGS
