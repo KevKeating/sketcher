@@ -254,7 +254,7 @@ ExternalProject_Add_Step(
   COMMAND cp -rv ${BOOST_BEAST_HEADERS_PATH} ${BOOST_INCLUDE_DIR})
 
 # Build RDKit library
-set(RDKIT_GIT_TAG "fbe0d5535f5b33a86ba72a5cdf2bc352e2e65cd8")
+set(RDKIT_GIT_TAG "7e5eeab06e80628c3ace5d1cee24129a6fc923dc")
 set_cmake_arg(
   RDKIT_CMAKE_PREFIX
   ${CMAKE_CURRENT_BINARY_DIR}/boost-${BOOST_VERSION}
