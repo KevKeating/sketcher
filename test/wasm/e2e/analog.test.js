@@ -18,9 +18,11 @@ test.describe('Amino Acid Analog Tests', () => {
 
     // Import HELM with non-natural analog symbols (brackets required for
     // multi-character HELM symbols)
-    await page.evaluate(() => {
-      Module.sketcher_import_text('PEPTIDE1{[dA].[meA].A}$$$$V2.0');
-    });
+    await page.evaluate(() =>
+      Module.runInQt(() => {
+        Module.sketcher_import_text('PEPTIDE1{[dA].[meA].A}$$$$V2.0');
+      }),
+    );
 
     // Verify the analog symbols survive export
     const helm = await getExportedHelm(page);
@@ -51,9 +53,11 @@ test.describe('Amino Acid Analog Tests', () => {
     await clickWidget(page, 'amino_monomer_btn');
 
     // Import a peptide chain with non-natural analogs
-    await page.evaluate(() => {
-      Module.sketcher_import_text('PEPTIDE1{[dA].[meA].[dC]}$$$$V2.0');
-    });
+    await page.evaluate(() =>
+      Module.runInQt(() => {
+        Module.sketcher_import_text('PEPTIDE1{[dA].[meA].[dC]}$$$$V2.0');
+      }),
+    );
     await clickWidget(page, 'fit_btn');
 
     // Select all monomers

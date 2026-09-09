@@ -16,9 +16,11 @@ test.describe('Monomer Mutation', () => {
     await clickWidget(page, 'monomeric_btn');
     await clickWidget(page, 'amino_monomer_btn');
 
-    await page.evaluate(() => {
-      Module.sketcher_import_text('PEPTIDE1{A.G.L}$$$$V2.0');
-    });
+    await page.evaluate(() =>
+      Module.runInQt(() => {
+        Module.sketcher_import_text('PEPTIDE1{A.G.L}$$$$V2.0');
+      }),
+    );
     await clickWidget(page, 'fit_btn');
 
     await selectAll(page);
@@ -31,9 +33,11 @@ test.describe('Monomer Mutation', () => {
     await clickWidget(page, 'monomeric_btn');
     await clickWidget(page, 'nucleic_monomer_btn');
 
-    await page.evaluate(() => {
-      Module.sketcher_import_text('RNA1{R(A)P.R(G)P.R(C)P}$$$$V2.0');
-    });
+    await page.evaluate(() =>
+      Module.runInQt(() => {
+        Module.sketcher_import_text('RNA1{R(A)P.R(G)P.R(C)P}$$$$V2.0');
+      }),
+    );
     await clickWidget(page, 'fit_btn');
 
     await selectAll(page);
@@ -51,9 +55,11 @@ test.describe('Monomer Mutation', () => {
     await clickWidget(page, 'monomeric_btn');
     await clickWidget(page, 'amino_monomer_btn');
 
-    await page.evaluate(() => {
-      Module.sketcher_import_text('PEPTIDE1{A.G.L}$$$$V2.0');
-    });
+    await page.evaluate(() =>
+      Module.runInQt(() => {
+        Module.sketcher_import_text('PEPTIDE1{A.G.L}$$$$V2.0');
+      }),
+    );
     await clickWidget(page, 'fit_btn');
 
     await selectAll(page);
@@ -73,9 +79,11 @@ test.describe('Monomer Mutation', () => {
     await clickWidget(page, 'monomeric_btn');
     await clickWidget(page, 'amino_monomer_btn');
 
-    await page.evaluate(() => {
-      Module.sketcher_import_text('PEPTIDE1{A.G.L}$$$$V2.0');
-    });
+    await page.evaluate(() =>
+      Module.runInQt(() => {
+        Module.sketcher_import_text('PEPTIDE1{A.G.L}$$$$V2.0');
+      }),
+    );
     await clickWidget(page, 'fit_btn');
 
     await selectAll(page);

@@ -13,9 +13,11 @@ test.beforeEach(async ({ page }) => {
 test.describe('Import', () => {
   test('import molecule via API then extend by drawing', async ({ page }) => {
     // Import a molecule programmatically (the LiveDesign workflow)
-    await page.evaluate(() => {
-      Module.sketcher_import_text('C');
-    });
+    await page.evaluate(() =>
+      Module.runInQt(() => {
+        Module.sketcher_import_text('C');
+      }),
+    );
     await expect.poll(() => getExportedSmiles(page), { timeout: 5000 }).toBe('C');
 
     // Fit the view so the imported atom is centered in the drawing area

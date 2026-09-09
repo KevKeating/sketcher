@@ -16,6 +16,41 @@ test.describe('WASM Sketcher UI', () => {
 });
 
 test.describe('WASM Sketcher API', () => {
+  test('queued bindings return values in order and recover after an exception', async ({
+    page,
+  }) => {
+    const result = await page.evaluate(async () => {
+      // Submit all requests before awaiting, so a failed request cannot hide
+      // problems with subsequent calls in the same timer callback.
+      const initial = Module.runInQt(() => Module.sketcher_is_empty());
+      const failed = Module.runInQt(() => {
+        try {
+          Module.sketcher_import_text('foobar');
+        } catch (error) {
+          // Decode the C++ exception before returning to the browser.
+          throw new Error(Module.getExceptionMessage(error).join(': '));
+        }
+      }).catch((error) => error.message);
+      const imported = Module.runInQt(() => {
+        Module.sketcher_clear();
+        Module.sketcher_import_text('CCO');
+        return Module.sketcher_export_text(Module.Format.SMILES);
+      });
+      const emptyAfterImport = Module.runInQt(() => Module.sketcher_is_empty());
+      return Promise.all([initial, failed, imported, emptyAfterImport]);
+    });
+
+    expect(result[0]).toBe(true);
+    expect(result[1]).toContain('Unable to determine format');
+    expect(result[2]).toBe('CCO');
+    expect(result[3]).toBe(false);
+    // Also exercise a later timer callback, after Qt has suspended again.
+    const exported = await page.evaluate(() =>
+      Module.runInQt(() => Module.sketcher_export_text(Module.Format.SMILES)),
+    );
+    expect(exported).toBe('CCO');
+  });
+
   // Test import and export for all formats
   const FORMATS = [
     { format: 'AUTO_DETECT', skip: [true, "Doesn't make sense to test here"] },
@@ -51,74 +86,100 @@ test.describe('WASM Sketcher API', () => {
       } else {
         test.skip(!!exportUnsupported, `${format} is import only`);
       }
-      const exportedText = await page.evaluate((format) => {
-        Module.sketcher_clear();
-        Module.sketcher_import_text('C[C@H](N)C=O');
-        const exported = Module.sketcher_export_text(Module.Format[format]);
-        return exported;
-      }, format);
+      const exportedText = await page.evaluate(
+        (format) =>
+          Module.runInQt(() => {
+            Module.sketcher_clear();
+            Module.sketcher_import_text('C[C@H](N)C=O');
+            const exported = Module.sketcher_export_text(Module.Format[format]);
+            return exported;
+          }),
+        format,
+      );
       expect(exportedText).toMatchSnapshot(`export_text_${format}.txt`);
 
       // Test importing the exported value (round-trip test)
       if (!importUnsupported) {
-        const importSuccessful = await page.evaluate((exportedText) => {
-          Module.sketcher_clear();
-          Module.sketcher_import_text(exportedText);
-          return !Module.sketcher_is_empty();
-        }, exportedText);
+        const importSuccessful = await page.evaluate(
+          (exportedText) =>
+            Module.runInQt(() => {
+              Module.sketcher_clear();
+              Module.sketcher_import_text(exportedText);
+              return !Module.sketcher_is_empty();
+            }),
+          exportedText,
+        );
         expect(importSuccessful).toBe(true);
       }
     });
   });
 
   test('clearing the sketcher', async ({ page }) => {
-    const isEmptyOnLoad = await page.evaluate(() => Module.sketcher_is_empty());
+    const isEmptyOnLoad = await page.evaluate(() =>
+      Module.runInQt(() => Module.sketcher_is_empty()),
+    );
     expect(isEmptyOnLoad).toBe(true);
 
-    const isEmptyAfterImport = await page.evaluate(() => {
-      Module.sketcher_import_text('C');
-      return Module.sketcher_is_empty();
-    });
+    const isEmptyAfterImport = await page.evaluate(() =>
+      Module.runInQt(() => {
+        Module.sketcher_import_text('C');
+        return Module.sketcher_is_empty();
+      }),
+    );
     expect(isEmptyAfterImport).toBe(false);
 
-    const isEmptyAfterClear = await page.evaluate(() => {
-      Module.sketcher_clear();
-      return Module.sketcher_is_empty();
-    });
+    const isEmptyAfterClear = await page.evaluate(() =>
+      Module.runInQt(() => {
+        Module.sketcher_clear();
+        return Module.sketcher_is_empty();
+      }),
+    );
     expect(isEmptyAfterClear).toBe(true);
   });
 
   test('checking if molecule has monomers', async ({ page }) => {
-    const hasMonomersOnLoad = await page.evaluate(() => Module.sketcher_has_monomers());
+    const hasMonomersOnLoad = await page.evaluate(() =>
+      Module.runInQt(() => Module.sketcher_has_monomers()),
+    );
     expect(hasMonomersOnLoad).toBe(false);
 
-    const hasMonomersAfterSmilesImport = await page.evaluate(() => {
-      Module.sketcher_import_text('c1ccccc1');
-      return Module.sketcher_has_monomers();
-    });
+    const hasMonomersAfterSmilesImport = await page.evaluate(() =>
+      Module.runInQt(() => {
+        Module.sketcher_import_text('c1ccccc1');
+        return Module.sketcher_has_monomers();
+      }),
+    );
     expect(hasMonomersAfterSmilesImport).toBe(false);
 
-    const hasMonomersAfterHelmImport = await page.evaluate(() => {
-      Module.sketcher_clear();
-      Module.sketcher_import_text('PEPTIDE1{A.S.D.F.G.H.W}$$$$V2.0');
-      return Module.sketcher_has_monomers();
-    });
+    const hasMonomersAfterHelmImport = await page.evaluate(() =>
+      Module.runInQt(() => {
+        Module.sketcher_clear();
+        Module.sketcher_import_text('PEPTIDE1{A.S.D.F.G.H.W}$$$$V2.0');
+        return Module.sketcher_has_monomers();
+      }),
+    );
     expect(hasMonomersAfterHelmImport).toBe(true);
 
-    const hasMonomersAfterClear = await page.evaluate(() => {
-      Module.sketcher_clear();
-      return Module.sketcher_has_monomers();
-    });
+    const hasMonomersAfterClear = await page.evaluate(() =>
+      Module.runInQt(() => {
+        Module.sketcher_clear();
+        return Module.sketcher_has_monomers();
+      }),
+    );
     expect(hasMonomersAfterClear).toBe(false);
   });
 
   // Test image export for all formats
   ['SVG', 'PNG'].forEach((imageFormat) => {
     test(`exporting a ${imageFormat} image`, async ({ page }) => {
-      const base64Content = await page.evaluate((imageFormat) => {
-        Module.sketcher_import_text('C=O');
-        return Module.sketcher_export_image(Module.ImageFormat[imageFormat]);
-      }, imageFormat);
+      const base64Content = await page.evaluate(
+        (imageFormat) =>
+          Module.runInQt(() => {
+            Module.sketcher_import_text('C=O');
+            return Module.sketcher_export_image(Module.ImageFormat[imageFormat]);
+          }),
+        imageFormat,
+      );
       const buffer = Buffer.from(base64Content, 'base64');
 
       let actualImage = buffer;
@@ -139,7 +200,8 @@ test.describe('WASM Sketcher API', () => {
   ['SVG', 'PNG'].forEach((imageFormat) => {
     test(`generating a ${imageFormat} image from text`, async ({ page }) => {
       const base64Content = await page.evaluate(
-        (imageFormat) => Module.get_image_bytes('C=O', Module.ImageFormat[imageFormat]),
+        (imageFormat) =>
+          Module.runInQt(() => Module.get_image_bytes('C=O', Module.ImageFormat[imageFormat])),
         imageFormat,
       );
       expect(typeof base64Content).toBe('string');
@@ -159,25 +221,27 @@ test.describe('WASM Sketcher API', () => {
 
   test('generating an image from text with render options', async ({ page }) => {
     const base64Content = await page.evaluate(() =>
-      Module.get_image_bytes('CC', Module.ImageFormat.SVG, {
-        width_height: { width: 222, height: 111 },
-        background_color: '#d4e6f1',
-        scale: 0.5,
-        trim_image: false,
-        font_size: 24,
-        bond_width_scale: 1.5,
-        rdatom_index_to_label: { 0: 'AtomZero' },
-        rdatom_index_to_halo_color: { 0: '#ff0000' },
-        rdbond_index_to_halo_color: { 0: '#00ff00' },
-        rdatom_index_to_line_color: { 0: '#0000ff' },
-        rdbond_index_to_line_color: { 0: '#ff00ff' },
-        show_stereo_annotations: Module.StereoLabels.ALL,
-        show_absolute_stereo_groups: false,
-        show_simplified_stereo_annotation: false,
-        show_symbol_for_H_isotopes: false,
-        carbon_labels: Module.CarbonLabels.ALL,
-        color_scheme: Module.ColorScheme.DEFAULT,
-      }),
+      Module.runInQt(() =>
+        Module.get_image_bytes('CC', Module.ImageFormat.SVG, {
+          width_height: { width: 222, height: 111 },
+          background_color: '#d4e6f1',
+          scale: 0.5,
+          trim_image: false,
+          font_size: 24,
+          bond_width_scale: 1.5,
+          rdatom_index_to_label: { 0: 'AtomZero' },
+          rdatom_index_to_halo_color: { 0: '#ff0000' },
+          rdbond_index_to_halo_color: { 0: '#00ff00' },
+          rdatom_index_to_line_color: { 0: '#0000ff' },
+          rdbond_index_to_line_color: { 0: '#ff00ff' },
+          show_stereo_annotations: Module.StereoLabels.ALL,
+          show_absolute_stereo_groups: false,
+          show_simplified_stereo_annotation: false,
+          show_symbol_for_H_isotopes: false,
+          carbon_labels: Module.CarbonLabels.ALL,
+          color_scheme: Module.ColorScheme.DEFAULT,
+        }),
+      ),
     );
     expect(typeof base64Content).toBe('string');
     const svg = Buffer.from(base64Content, 'base64').toString('utf8');
@@ -224,25 +288,31 @@ test.describe('WASM Sketcher API', () => {
 </CDXML>`;
 
     // Import the CDXML and extract SMILES
-    const exportedSmiles = await page.evaluate((cdxml) => {
-      Module.sketcher_import_text(cdxml);
-      return Module.sketcher_export_text(Module.Format.SMILES);
-    }, cdxmlInput);
+    const exportedSmiles = await page.evaluate(
+      (cdxml) =>
+        Module.runInQt(() => {
+          Module.sketcher_import_text(cdxml);
+          return Module.sketcher_export_text(Module.Format.SMILES);
+        }),
+      cdxmlInput,
+    );
 
     expect(exportedSmiles).toBe('C1=CC=CC=C1');
   });
 
   test('Exception handling for invalid input', async ({ page }) => {
-    const result = await page.evaluate(() => {
-      try {
-        Module.sketcher_import_text('foobar');
-        throw new Error('Expected exception to be thrown');
-      } catch (e) {
-        // Use emscripten's getExceptionMessage to extract C++ exception info
-        const [type, message] = Module.getExceptionMessage(e);
-        return { type, message };
-      }
-    });
+    const result = await page.evaluate(() =>
+      Module.runInQt(() => {
+        try {
+          Module.sketcher_import_text('foobar');
+          throw new Error('Expected exception to be thrown');
+        } catch (e) {
+          // Use emscripten's getExceptionMessage to extract C++ exception info
+          const [type, message] = Module.getExceptionMessage(e);
+          return { type, message };
+        }
+      }),
+    );
 
     // Verify that we can extract the C++ exception message and type
     expect(result.message).toBe('Unable to determine format');
@@ -265,9 +335,13 @@ test.describe('Custom Monomer DB', () => {
       },
     ]);
 
-    const result = await page.evaluate((json) => {
-      return Module.sketcher_load_custom_monomers(json);
-    }, customMonomers);
+    const result = await page.evaluate(
+      (json) =>
+        Module.runInQt(() => {
+          return Module.sketcher_load_custom_monomers(json);
+        }),
+      customMonomers,
+    );
 
     expect(result.succeeded.length).toBe(1);
     expect(result.failed.length).toBe(0);
@@ -277,12 +351,16 @@ test.describe('Custom Monomer DB', () => {
     const sql = `INSERT INTO monomer_definitions (SYMBOL, POLYMER_TYPE, NATURAL_ANALOG, SMILES, CORE_SMILES, NAME, MONOMER_TYPE, AUTHOR)
       VALUES ('SqlMon', 'PEPTIDE', 'A', 'CC(C)(N[H:1])C(=O)[OH:2]', 'CC(C)(N)C=O', 'SQL Monomer', 'Backbone', 'test');`;
 
-    const result = await page.evaluate((sql) => {
-      Module.sketcher_load_custom_monomers_from_sql(sql);
-      Module.sketcher_clear();
-      Module.sketcher_import_text('PEPTIDE1{A.[SqlMon].G}$$$$V2.0');
-      return !Module.sketcher_is_empty();
-    }, sql);
+    const result = await page.evaluate(
+      (sql) =>
+        Module.runInQt(() => {
+          Module.sketcher_load_custom_monomers_from_sql(sql);
+          Module.sketcher_clear();
+          Module.sketcher_import_text('PEPTIDE1{A.[SqlMon].G}$$$$V2.0');
+          return !Module.sketcher_is_empty();
+        }),
+      sql,
+    );
 
     expect(result).toBe(true);
   });
@@ -294,29 +372,41 @@ test.describe('Custom Monomer DB', () => {
     const sql2 = `INSERT INTO monomer_definitions (SYMBOL, POLYMER_TYPE, NATURAL_ANALOG, SMILES, CORE_SMILES, NAME, MONOMER_TYPE, AUTHOR)
       VALUES ('Sql2', 'PEPTIDE', 'A', 'CCC(N[H:1])C(=O)[OH:2]', 'CCC(N)C=O', 'SQL Two', 'Backbone', 'test');`;
 
-    await page.evaluate((sql) => {
-      Module.sketcher_load_custom_monomers_from_sql(sql);
-    }, sql1);
+    await page.evaluate(
+      (sql) =>
+        Module.runInQt(() => {
+          Module.sketcher_load_custom_monomers_from_sql(sql);
+        }),
+      sql1,
+    );
 
     // Verify Sql1 works
-    const sql1Works = await page.evaluate(() => {
-      Module.sketcher_clear();
-      Module.sketcher_import_text('PEPTIDE1{[Sql1].A}$$$$V2.0');
-      return !Module.sketcher_is_empty();
-    });
+    const sql1Works = await page.evaluate(() =>
+      Module.runInQt(() => {
+        Module.sketcher_clear();
+        Module.sketcher_import_text('PEPTIDE1{[Sql1].A}$$$$V2.0');
+        return !Module.sketcher_is_empty();
+      }),
+    );
     expect(sql1Works).toBe(true);
 
     // Load second SQL — should replace, not append
-    await page.evaluate((sql) => {
-      Module.sketcher_load_custom_monomers_from_sql(sql);
-    }, sql2);
+    await page.evaluate(
+      (sql) =>
+        Module.runInQt(() => {
+          Module.sketcher_load_custom_monomers_from_sql(sql);
+        }),
+      sql2,
+    );
 
     // Sql2 should work
-    const sql2Works = await page.evaluate(() => {
-      Module.sketcher_clear();
-      Module.sketcher_import_text('PEPTIDE1{[Sql2].A}$$$$V2.0');
-      return !Module.sketcher_is_empty();
-    });
+    const sql2Works = await page.evaluate(() =>
+      Module.runInQt(() => {
+        Module.sketcher_clear();
+        Module.sketcher_import_text('PEPTIDE1{[Sql2].A}$$$$V2.0');
+        return !Module.sketcher_is_empty();
+      }),
+    );
     expect(sql2Works).toBe(true);
   });
 
@@ -348,34 +438,46 @@ test.describe('Custom Monomer DB', () => {
     ]);
 
     // Load first and verify Mon1 works
-    const monomer1_import_result = await page.evaluate((json) => {
-      return Module.sketcher_load_custom_monomers(json);
-    }, monomer1);
+    const monomer1_import_result = await page.evaluate(
+      (json) =>
+        Module.runInQt(() => {
+          return Module.sketcher_load_custom_monomers(json);
+        }),
+      monomer1,
+    );
 
     expect(monomer1_import_result.succeeded.length).toBe(1);
     expect(monomer1_import_result.failed.length).toBe(0);
 
-    const mon1Works = await page.evaluate(() => {
-      Module.sketcher_clear();
-      Module.sketcher_import_text('PEPTIDE1{[Mon1].A}$$$$V2.0');
-      return !Module.sketcher_is_empty();
-    });
+    const mon1Works = await page.evaluate(() =>
+      Module.runInQt(() => {
+        Module.sketcher_clear();
+        Module.sketcher_import_text('PEPTIDE1{[Mon1].A}$$$$V2.0');
+        return !Module.sketcher_is_empty();
+      }),
+    );
     expect(mon1Works).toBe(true);
 
     // Insert second — both should still be available
-    const monomer2_import_result = await page.evaluate((json) => {
-      return Module.sketcher_insert_custom_monomers(json);
-    }, monomer2);
+    const monomer2_import_result = await page.evaluate(
+      (json) =>
+        Module.runInQt(() => {
+          return Module.sketcher_insert_custom_monomers(json);
+        }),
+      monomer2,
+    );
 
     expect(monomer2_import_result.succeeded.length).toBe(1);
     expect(monomer2_import_result.failed.length).toBe(0);
 
     // Both custom monomers should be usable in a HELM import
-    const result = await page.evaluate(() => {
-      Module.sketcher_clear();
-      Module.sketcher_import_text('PEPTIDE1{[Mon1].[Mon2].A}$$$$V2.0');
-      return !Module.sketcher_is_empty();
-    });
+    const result = await page.evaluate(() =>
+      Module.runInQt(() => {
+        Module.sketcher_clear();
+        Module.sketcher_import_text('PEPTIDE1{[Mon1].[Mon2].A}$$$$V2.0');
+        return !Module.sketcher_is_empty();
+      }),
+    );
 
     expect(result).toBe(true);
   });
@@ -394,18 +496,24 @@ test.describe('Custom Monomer DB', () => {
       },
     ]);
 
-    const monomer_import_result = await page.evaluate((json) => {
-      return Module.sketcher_load_custom_monomers(json);
-    }, customMonomers);
+    const monomer_import_result = await page.evaluate(
+      (json) =>
+        Module.runInQt(() => {
+          return Module.sketcher_load_custom_monomers(json);
+        }),
+      customMonomers,
+    );
 
     expect(monomer_import_result.succeeded.length).toBe(1);
     expect(monomer_import_result.failed.length).toBe(0);
 
-    const result = await page.evaluate(() => {
-      Module.sketcher_clear();
-      Module.sketcher_import_text('PEPTIDE1{A.[Sar].G}$$$$V2.0');
-      return !Module.sketcher_is_empty();
-    });
+    const result = await page.evaluate(() =>
+      Module.runInQt(() => {
+        Module.sketcher_clear();
+        Module.sketcher_import_text('PEPTIDE1{A.[Sar].G}$$$$V2.0');
+        return !Module.sketcher_is_empty();
+      }),
+    );
 
     expect(result).toBe(true);
   });
@@ -419,10 +527,14 @@ test.describe('Custom Monomer DB', () => {
       },
     ]);
 
-    const result = await page.evaluate((json) => {
-      return Module.sketcher_load_custom_monomers(json);
-      const arr = [];
-    }, incomplete);
+    const result = await page.evaluate(
+      (json) =>
+        Module.runInQt(() => {
+          return Module.sketcher_load_custom_monomers(json);
+          const arr = [];
+        }),
+      incomplete,
+    );
 
     expect(result.succeeded.length).toBe(0);
     expect(result.failed.length).toBe(1);
@@ -444,15 +556,19 @@ test.describe('Custom Monomer DB', () => {
       },
     ]);
 
-    const result = await page.evaluate((json) => {
-      try {
-        Module.sketcher_load_custom_monomers(json);
-        return { threw: false };
-      } catch (e) {
-        const [type, message] = Module.getExceptionMessage(e);
-        return { threw: true, type, message };
-      }
-    }, extraFields);
+    const result = await page.evaluate(
+      (json) =>
+        Module.runInQt(() => {
+          try {
+            Module.sketcher_load_custom_monomers(json);
+            return { threw: false };
+          } catch (e) {
+            const [type, message] = Module.getExceptionMessage(e);
+            return { threw: true, type, message };
+          }
+        }),
+      extraFields,
+    );
 
     expect(result.threw).toBe(true);
     expect(result.message).toContain('exception');
@@ -473,23 +589,31 @@ test.describe('Custom Monomer DB', () => {
     ]);
 
     // Load custom monomer, verify it works, then reset
-    const result = await page.evaluate((json) => {
-      return Module.sketcher_load_custom_monomers(json);
-    }, customMonomers);
+    const result = await page.evaluate(
+      (json) =>
+        Module.runInQt(() => {
+          return Module.sketcher_load_custom_monomers(json);
+        }),
+      customMonomers,
+    );
 
     expect(result.succeeded.length).toBe(1);
     expect(result.failed.length).toBe(0);
 
-    const worksBeforeReset = await page.evaluate(() => {
-      Module.sketcher_clear();
-      Module.sketcher_import_text('PEPTIDE1{A.[TmpMon].G}$$$$V2.0');
-      return !Module.sketcher_is_empty();
-    });
+    const worksBeforeReset = await page.evaluate(() =>
+      Module.runInQt(() => {
+        Module.sketcher_clear();
+        Module.sketcher_import_text('PEPTIDE1{A.[TmpMon].G}$$$$V2.0');
+        return !Module.sketcher_is_empty();
+      }),
+    );
     expect(worksBeforeReset).toBe(true);
 
     // Reset should succeed without throwing
-    await page.evaluate(() => {
-      Module.sketcher_reset_custom_monomers();
-    });
+    await page.evaluate(() =>
+      Module.runInQt(() => {
+        Module.sketcher_reset_custom_monomers();
+      }),
+    );
   });
 });

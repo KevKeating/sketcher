@@ -38,7 +38,7 @@ export async function getCanvasCenter(page) {
  */
 export async function getWidgetRect(page, objectName) {
   const rect = await page.evaluate(
-    (name) => JSON.parse(Module._sketcher_get_widget_rect(name)),
+    (name) => Module.runInQt(() => JSON.parse(Module._sketcher_get_widget_rect(name))),
     objectName,
   );
   if (!rect || rect.width === undefined) {
@@ -60,14 +60,16 @@ export async function getDrawingAreaCenter(page) {
  * Return the current molecule as a SMILES string.
  */
 export async function getExportedSmiles(page) {
-  return page.evaluate(() => Module.sketcher_export_text(Module.Format.SMILES));
+  return page.evaluate(() =>
+    Module.runInQt(() => Module.sketcher_export_text(Module.Format.SMILES)),
+  );
 }
 
 /**
  * Return the current molecule as a HELM string.
  */
 export async function getExportedHelm(page) {
-  return page.evaluate(() => Module.sketcher_export_text(Module.Format.HELM));
+  return page.evaluate(() => Module.runInQt(() => Module.sketcher_export_text(Module.Format.HELM)));
 }
 
 /**
@@ -82,7 +84,7 @@ export async function selectAll(page) {
  * Return whether the sketcher is currently empty.
  */
 export async function isSketcherEmpty(page) {
-  return page.evaluate(() => Module.sketcher_is_empty());
+  return page.evaluate(() => Module.runInQt(() => Module.sketcher_is_empty()));
 }
 
 /**
@@ -107,5 +109,5 @@ export async function clickWidget(page, name) {
  * @throws if no button with the given name is found
  */
 export async function clickPopupButton(page, name) {
-  await page.evaluate((n) => Module._sketcher_click_button(n), name);
+  await page.evaluate((n) => Module.runInQt(() => Module._sketcher_click_button(n)), name);
 }

@@ -172,7 +172,8 @@ const Sketcher = forwardRef<SketcherRef, SketcherProps>(function Sketcher(props,
       if (!sketcherInstance) {
         return;
       }
-      const { runInQt, sketcher_clear, sketcher_import_text, getExceptionMessage } = sketcherInstance;
+      const { runInQt, sketcher_clear, sketcher_import_text, getExceptionMessage } =
+        sketcherInstance;
       let cancelled = false;
       void runInQt(() => {
         if (cancelled) {
