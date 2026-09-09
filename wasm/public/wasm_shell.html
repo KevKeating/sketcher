@@ -140,6 +140,24 @@
               }
             },
           });
+          // QTBUG-145012: the QTimer in main.cpp drains these requests while
+          // Qt is awake, so synchronous Embind calls return their real values.
+          // Callbacks must not await or call C++ code that suspends the stack.
+          const requests = [];
+          sketcherInstance.runInQt = (callback) =>
+            new Promise((resolve, reject) => {
+              requests.push({ callback, resolve, reject });
+            });
+          sketcherInstance.drainSketcherRequests = () => {
+            const batch = requests.splice(0);
+            for (const { callback, resolve, reject } of batch) {
+              try {
+                resolve(callback());
+              } catch (error) {
+                reject(error);
+              }
+            }
+          };
           Object.defineProperty(window, 'Module', {
             value: sketcherInstance,
             enumerable: false,

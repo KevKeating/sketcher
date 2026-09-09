@@ -55,6 +55,12 @@ type SketcherWasmFormat = Tagged<{ value: number }, 'SketcherWasmFormat'>;
 type SketcherWasmImageFormat = Tagged<{ value: number }, 'SketcherWasmImageFormat'>;
 
 export type SketcherWASM = {
+  /**
+   * Run synchronous bindings while Qt is awake (QTBUG-145012).
+   * The callback must not await or call C++ code that suspends the stack.
+   * Call the sketcher_* bindings below only inside this callback.
+   */
+  runInQt: <T>(callback: () => T) => Promise<T>;
   Format: { [K in keyof typeof RepresentationFormat]: SketcherWasmFormat };
   ImageFormat: { [K in keyof typeof SketcherImageFormat]: SketcherWasmImageFormat };
   sketcher_import_text: (text: string) => void;
@@ -73,8 +79,8 @@ export type SketcherRef = {
    * Provides a reference to the instance of the WASM sketcher application
    */
   getInstance: () => Promise<SketcherWASM>;
-  sketcherExportStructure: (format: RepresentationFormat) => string | undefined;
-  sketcherImportText: (representation: string, clearSketcher: boolean) => void;
+  sketcherExportStructure: (format: RepresentationFormat) => Promise<string | undefined>;
+  sketcherImportText: (representation: string, clearSketcher: boolean) => Promise<void>;
 };
 
 export type SketcherProps = Merge<
@@ -120,23 +126,25 @@ const Sketcher = forwardRef<SketcherRef, SketcherProps>(function Sketcher(props,
         }
         return sketcherInstanceRef.current;
       },
-      sketcherExportStructure(format) {
+      async sketcherExportStructure(format) {
         if (!sketcherInstanceRef.current) {
           return;
         }
 
-        const { sketcher_export_text, Format } = sketcherInstanceRef.current;
-        return sketcher_export_text(Format[format]);
+        const { runInQt, sketcher_export_text, Format } = sketcherInstanceRef.current;
+        return runInQt(() => sketcher_export_text(Format[format]));
       },
-      sketcherImportText(representation, clearStructure = true) {
+      async sketcherImportText(representation, clearStructure = true) {
         if (!sketcherInstanceRef.current) {
           return;
         }
-        const { sketcher_clear, sketcher_import_text } = sketcherInstanceRef.current;
-        if (clearStructure) {
-          sketcher_clear();
-        }
-        sketcher_import_text(representation);
+        const { runInQt, sketcher_clear, sketcher_import_text } = sketcherInstanceRef.current;
+        return runInQt(() => {
+          if (clearStructure) {
+            sketcher_clear();
+          }
+          sketcher_import_text(representation);
+        });
       },
     }),
     [],
@@ -164,22 +172,30 @@ const Sketcher = forwardRef<SketcherRef, SketcherProps>(function Sketcher(props,
       if (!sketcherInstance) {
         return;
       }
-      const { sketcher_clear, sketcher_import_text, getExceptionMessage } = sketcherInstance;
-
-      sketcher_clear();
-      if (!representation?.trim()) {
-        return;
-      }
-
-      try {
-        sketcher_import_text(representation);
-      } catch (e) {
-        if (typeof e === 'number') {
-          onError?.(`Error importing to sketcher [${getExceptionMessage(e).join(': ')}]`);
-        } else {
-          onError?.(`Error importing to sketcher [${e}]`);
+      const { runInQt, sketcher_clear, sketcher_import_text, getExceptionMessage } = sketcherInstance;
+      let cancelled = false;
+      void runInQt(() => {
+        if (cancelled) {
+          return;
         }
-      }
+        try {
+          sketcher_clear();
+          if (representation?.trim()) {
+            sketcher_import_text(representation);
+          }
+        } catch (e) {
+          // Decode C++ exceptions while Qt is still awake.
+          const message = typeof e === 'number' ? getExceptionMessage(e).join(': ') : String(e);
+          throw new Error(`Error importing to sketcher [${message}]`);
+        }
+      }).catch((e) => {
+        if (!cancelled) {
+          onError?.(e.message);
+        }
+      });
+      return () => {
+        cancelled = true;
+      };
     },
     // omitting onError here because the error handler changing shouldn't re-trigger a sketcher
     // update, we just want to use the onError defined at the time of the representation change

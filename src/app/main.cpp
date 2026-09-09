@@ -8,6 +8,7 @@
 #include <emscripten.h>
 #include <emscripten/bind.h>
 #include <emscripten/val.h>
+#include <QTimer>
 #else
 #include "crash_handler.h"
 #endif
@@ -355,5 +356,20 @@ int main(int argc, char** argv)
 #endif
 
     sk.show();
+#ifdef __EMSCRIPTEN__
+    // QTBUG-145012: invoke JavaScript's queued Embind calls only after Qt has
+    // resumed. Calling them while exec() is suspended makes Embind wait on
+    // the application's Asyncify operation instead of returning their results.
+    QTimer javascript_requests;
+    QObject::connect(&javascript_requests, &QTimer::timeout, [] {
+        EM_ASM({
+            const drain = Module["drainSketcherRequests"];
+            if (drain) {
+                drain();
+            }
+        });
+    });
+    javascript_requests.start(16);
+#endif
     return application.exec();
 }
