@@ -21,7 +21,7 @@ test.describe('WASM Sketcher API', () => {
   }) => {
     const result = await page.evaluate(async () => {
       // Submit all requests before awaiting, so a failed request cannot hide
-      // problems with subsequent calls in the same timer callback.
+      // problems with subsequent calls in the same queued Qt event.
       const initial = Module.runInQt(() => Module.sketcher_is_empty());
       // Let the native exception reach the queue so it exercises conversion
       // to a JavaScript Error, stack restoration, and exception cleanup.
@@ -43,11 +43,42 @@ test.describe('WASM Sketcher API', () => {
     expect(result[1].isError).toBe(true);
     expect(result[2]).toBe('CCO');
     expect(result[3]).toBe(false);
-    // Also exercise a later timer callback, after Qt has suspended again.
+    // Also exercise a later queued Qt event, after Qt has suspended again.
     const exported = await page.evaluate(() =>
       Module.runInQt(() => Module.sketcher_export_text(Module.Format.SMILES)),
     );
     expect(exported).toBe('CCO');
+  });
+
+  test('requests queued by a callback run in a later batch without mouse input', async ({
+    page,
+  }) => {
+    const result = await page.evaluate(async () => {
+      const order = [];
+      let followUp;
+      const first = Module.runInQt(() => {
+        order.push('first');
+        followUp = Module.runInQt(() => {
+          order.push('follow-up');
+          return Module.sketcher_export_text(Module.Format.SMILES);
+        });
+        return Module.sketcher_is_empty();
+      });
+      const second = Module.runInQt(() => {
+        order.push('second');
+        Module.sketcher_import_text('CCO');
+      });
+      const initiallyEmpty = await first;
+      await second;
+      const smiles = await followUp;
+      return { order, initiallyEmpty, smiles };
+    });
+
+    expect(result).toEqual({
+      order: ['first', 'second', 'follow-up'],
+      initiallyEmpty: true,
+      smiles: 'CCO',
+    });
   });
 
   // Test import and export for all formats

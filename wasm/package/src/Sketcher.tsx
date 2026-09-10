@@ -64,7 +64,7 @@ type SketcherWasmException = {
 
 export type SketcherWASM = {
   /**
-   * Run synchronous bindings while Qt is awake (QTBUG-145012).
+   * Wake Qt and run synchronous bindings in submission order (QTBUG-145012).
    * The callback must not await or call C++ code that suspends the stack.
    * Call the sketcher_* bindings below only inside this callback.
    * Uncaught C++ exceptions are released and reject with a JavaScript Error.

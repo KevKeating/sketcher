@@ -8,7 +8,8 @@
 #include <emscripten.h>
 #include <emscripten/bind.h>
 #include <emscripten/val.h>
-#include <QTimer>
+#include <QCoreApplication>
+#include <QMetaObject>
 #else
 #include "crash_handler.h"
 #endif
@@ -232,6 +233,24 @@ void sketcher_changed()
 }
 
 #ifdef __EMSCRIPTEN__
+bool sketcher_schedule_requests()
+{
+    // This JSPI entry point only posts an event; it never drains requests on
+    // the suspended Qt stack. Posting also wakes Qt without relying on a
+    // periodic timer or user input. Run the bindings after Qt has resumed.
+    return QMetaObject::invokeMethod(
+        QCoreApplication::instance(),
+        [] {
+            EM_ASM({
+                const drain = Module["drainSketcherRequests"];
+                if (drain) {
+                    drain();
+                }
+            });
+        },
+        Qt::QueuedConnection);
+}
+
 EMSCRIPTEN_BINDINGS(sketcher)
 {
     emscripten::enum_<Format>("Format")
@@ -279,6 +298,8 @@ EMSCRIPTEN_BINDINGS(sketcher)
         .value("BLACK_WHITE", ColorScheme::BLACK_WHITE)
         .value("WHITE_BLACK", ColorScheme::WHITE_BLACK);
 
+    emscripten::function("_sketcher_schedule_requests",
+                         &sketcher_schedule_requests);
     emscripten::function("sketcher_import_text", &sketcher_import_text);
     emscripten::function("sketcher_export_text", &sketcher_export_text);
     emscripten::function("sketcher_export_image", &sketcher_export_image);
@@ -356,20 +377,5 @@ int main(int argc, char** argv)
 #endif
 
     sk.show();
-#ifdef __EMSCRIPTEN__
-    // Invoke JavaScript's queued Embind calls only after Qt has resumed.
-    // Originally added for QTBUG-145012 with Asyncify, this also keeps JSPI
-    // requests ordered and avoids re-entering Qt while exec() is suspended.
-    QTimer javascript_requests;
-    QObject::connect(&javascript_requests, &QTimer::timeout, [] {
-        EM_ASM({
-            const drain = Module["drainSketcherRequests"];
-            if (drain) {
-                drain();
-            }
-        });
-    });
-    javascript_requests.start(16);
-#endif
     return application.exec();
 }
