@@ -357,9 +357,9 @@ int main(int argc, char** argv)
 
     sk.show();
 #ifdef __EMSCRIPTEN__
-    // QTBUG-145012: invoke JavaScript's queued Embind calls only after Qt has
-    // resumed. Calling them while exec() is suspended makes Embind wait on
-    // the application's Asyncify operation instead of returning their results.
+    // Invoke JavaScript's queued Embind calls only after Qt has resumed.
+    // Originally added for QTBUG-145012 with Asyncify, this also keeps JSPI
+    // requests ordered and avoids re-entering Qt while exec() is suspended.
     QTimer javascript_requests;
     QObject::connect(&javascript_requests, &QTimer::timeout, [] {
         EM_ASM({

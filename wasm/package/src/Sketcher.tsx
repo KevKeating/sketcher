@@ -54,11 +54,20 @@ export type RepresentationFormat = (typeof RepresentationFormat)[keyof typeof Re
 type SketcherWasmFormat = Tagged<{ value: number }, 'SketcherWasmFormat'>;
 type SketcherWasmImageFormat = Tagged<{ value: number }, 'SketcherWasmImageFormat'>;
 
+// Structural types for native WASM exceptions, which are not declared by the
+// TypeScript DOM library used to build this package.
+type SketcherWasmExceptionTag = object;
+type SketcherWasmException = {
+  is: (tag: SketcherWasmExceptionTag) => boolean;
+  getArg: (tag: SketcherWasmExceptionTag, index: number) => unknown;
+};
+
 export type SketcherWASM = {
   /**
    * Run synchronous bindings while Qt is awake (QTBUG-145012).
    * The callback must not await or call C++ code that suspends the stack.
    * Call the sketcher_* bindings below only inside this callback.
+   * Uncaught C++ exceptions are released and reject with a JavaScript Error.
    */
   runInQt: <T>(callback: () => T) => Promise<T>;
   Format: { [K in keyof typeof RepresentationFormat]: SketcherWasmFormat };
@@ -71,7 +80,11 @@ export type SketcherWASM = {
   sketcher_has_monomers: () => boolean;
   sketcher_allow_monomeric: (allowMonomeric: boolean) => void;
   sketcher_changed_callback?: () => void;
-  getExceptionMessage: (pointer: number) => string[];
+  getCppExceptionTag: () => SketcherWasmExceptionTag;
+  getExceptionMessage: (exception: SketcherWasmException) => string[];
+  decrementExceptionRefcount: (exception: SketcherWasmException) => void;
+  stackSave: () => number;
+  stackRestore: (stack: number) => void;
 };
 
 export type SketcherRef = {
@@ -172,26 +185,19 @@ const Sketcher = forwardRef<SketcherRef, SketcherProps>(function Sketcher(props,
       if (!sketcherInstance) {
         return;
       }
-      const { runInQt, sketcher_clear, sketcher_import_text, getExceptionMessage } =
-        sketcherInstance;
+      const { runInQt, sketcher_clear, sketcher_import_text } = sketcherInstance;
       let cancelled = false;
       void runInQt(() => {
         if (cancelled) {
           return;
         }
-        try {
-          sketcher_clear();
-          if (representation?.trim()) {
-            sketcher_import_text(representation);
-          }
-        } catch (e) {
-          // Decode C++ exceptions while Qt is still awake.
-          const message = typeof e === 'number' ? getExceptionMessage(e).join(': ') : String(e);
-          throw new Error(`Error importing to sketcher [${message}]`);
+        sketcher_clear();
+        if (representation?.trim()) {
+          sketcher_import_text(representation);
         }
       }).catch((e) => {
         if (!cancelled) {
-          onError?.(e.message);
+          onError?.(`Error importing to sketcher [${e?.message ?? String(e)}]`);
         }
       });
       return () => {

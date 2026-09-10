@@ -23,14 +23,12 @@ test.describe('WASM Sketcher API', () => {
       // Submit all requests before awaiting, so a failed request cannot hide
       // problems with subsequent calls in the same timer callback.
       const initial = Module.runInQt(() => Module.sketcher_is_empty());
-      const failed = Module.runInQt(() => {
-        try {
-          Module.sketcher_import_text('foobar');
-        } catch (error) {
-          // Decode the C++ exception before returning to the browser.
-          throw new Error(Module.getExceptionMessage(error).join(': '));
-        }
-      }).catch((error) => error.message);
+      // Let the native exception reach the queue so it exercises conversion
+      // to a JavaScript Error, stack restoration, and exception cleanup.
+      const failed = Module.runInQt(() => Module.sketcher_import_text('foobar')).catch((error) => ({
+        message: error.message,
+        isError: error instanceof Error,
+      }));
       const imported = Module.runInQt(() => {
         Module.sketcher_clear();
         Module.sketcher_import_text('CCO');
@@ -41,7 +39,8 @@ test.describe('WASM Sketcher API', () => {
     });
 
     expect(result[0]).toBe(true);
-    expect(result[1]).toContain('Unable to determine format');
+    expect(result[1].message).toContain('Unable to determine format');
+    expect(result[1].isError).toBe(true);
     expect(result[2]).toBe('CCO');
     expect(result[3]).toBe(false);
     // Also exercise a later timer callback, after Qt has suspended again.
@@ -303,20 +302,29 @@ test.describe('WASM Sketcher API', () => {
   test('Exception handling for invalid input', async ({ page }) => {
     const result = await page.evaluate(() =>
       Module.runInQt(() => {
+        const stack = Module.stackSave();
         try {
           Module.sketcher_import_text('foobar');
-          throw new Error('Expected exception to be thrown');
         } catch (e) {
-          // Use emscripten's getExceptionMessage to extract C++ exception info
-          const [type, message] = Module.getExceptionMessage(e);
-          return { type, message };
+          if (!(e instanceof WebAssembly.Exception) || !e.is(Module.getCppExceptionTag())) {
+            throw e;
+          }
+          Module.stackRestore(stack);
+          try {
+            const [type, message] = Module.getExceptionMessage(e);
+            return { type, message, isNativeException: true };
+          } finally {
+            Module.decrementExceptionRefcount(e);
+          }
         }
+        throw new Error('Expected exception to be thrown');
       }),
     );
 
     // Verify that we can extract the C++ exception message and type
     expect(result.message).toBe('Unable to determine format');
     expect(result.type).toBeTruthy();
+    expect(result.isNativeException).toBe(true);
   });
 });
 
@@ -559,14 +567,9 @@ test.describe('Custom Monomer DB', () => {
     const result = await page.evaluate(
       (json) =>
         Module.runInQt(() => {
-          try {
-            Module.sketcher_load_custom_monomers(json);
-            return { threw: false };
-          } catch (e) {
-            const [type, message] = Module.getExceptionMessage(e);
-            return { threw: true, type, message };
-          }
-        }),
+          Module.sketcher_load_custom_monomers(json);
+          return { threw: false };
+        }).catch((error) => ({ threw: true, message: error.message })),
       extraFields,
     );
 

@@ -151,10 +151,25 @@
           sketcherInstance.drainSketcherRequests = () => {
             const batch = requests.splice(0);
             for (const { callback, resolve, reject } of batch) {
+              const stack = sketcherInstance.stackSave();
               try {
                 resolve(callback());
               } catch (error) {
-                reject(error);
+                if (
+                  error instanceof WebAssembly.Exception &&
+                  error.is(sketcherInstance.getCppExceptionTag())
+                ) {
+                  // Decode and release native C++ exceptions while Qt is awake.
+                  // A C++ exception caught in JS also needs its stack restored.
+                  sketcherInstance.stackRestore(stack);
+                  try {
+                    reject(new Error(sketcherInstance.getExceptionMessage(error).join(': ')));
+                  } finally {
+                    sketcherInstance.decrementExceptionRefcount(error);
+                  }
+                } else {
+                  reject(error);
+                }
               }
             }
           };

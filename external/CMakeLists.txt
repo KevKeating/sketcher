@@ -58,15 +58,24 @@ function(generate_sqlite_urls VAR_NAME)
       PARENT_SCOPE)
 endfunction()
 
+set(COMMON_EXTERNAL_PROJECT_CMAKE_ARGS
+    -DCMAKE_CXX_STANDARD=${CMAKE_CXX_STANDARD} -DCMAKE_CXX_STANDARD_REQUIRED=ON
+    -DCMAKE_BUILD_TYPE=Release)
+
 if(EMSCRIPTEN)
+  # All dependencies must use the same exception and setjmp/longjmp model as Qt
+  # and Sketcher. Include C libraries that use longjmp as well as C++ code.
+  set(WASM_EXCEPTION_FLAGS "-fwasm-exceptions -sSUPPORT_LONGJMP=wasm")
+  list(APPEND COMMON_EXTERNAL_PROJECT_CMAKE_ARGS
+       "-DCMAKE_C_FLAGS=${WASM_EXCEPTION_FLAGS}"
+       "-DCMAKE_CXX_FLAGS=${WASM_EXCEPTION_FLAGS}")
   set(EXTRA_BOOST_CMAKE_ARGS
-      -DCMAKE_CXX_FLAGS=-fdeclspec\ -pthread\ -fexceptions\ -sDISABLE_EXCEPTION_CATCHING=0
-  )
+      "-DCMAKE_CXX_FLAGS=${WASM_EXCEPTION_FLAGS} -fdeclspec -pthread")
   set(EXTRA_QT_CMAKE_ARGS
-      -DQT_HOST_PATH=${CMAKE_CURRENT_BINARY_DIR}/host/qt-${QT_VERSION})
-  set(EXTRA_RDKIT_CMAKE_ARGS
-      -DCMAKE_CXX_FLAGS=-fdeclspec\ -pthread\ -fexceptions\ -sDISABLE_EXCEPTION_CATCHING=0
-      -DCMAKE_FIND_ROOT_PATH=${CMAKE_CURRENT_BINARY_DIR})
+      -DQT_HOST_PATH=${CMAKE_CURRENT_BINARY_DIR}/host/qt-${QT_VERSION}
+      -DFEATURE_wasm_jspi=ON -DFEATURE_wasm_exceptions=ON)
+  set(EXTRA_RDKIT_CMAKE_ARGS ${EXTRA_BOOST_CMAKE_ARGS}
+                             -DCMAKE_FIND_ROOT_PATH=${CMAKE_CURRENT_BINARY_DIR})
 else()
   set(EXTRA_QT_CMAKE_ARGS -DINPUT_opengl=no)
 
@@ -75,10 +84,6 @@ else()
          -DFEATURE_xcb_xlib=ON -DFEATURE_xkbcommon=ON)
   endif()
 endif()
-
-set(COMMON_EXTERNAL_PROJECT_CMAKE_ARGS
-    -DCMAKE_CXX_STANDARD=${CMAKE_CXX_STANDARD} -DCMAKE_CXX_STANDARD_REQUIRED=ON
-    -DCMAKE_BUILD_TYPE=Release)
 
 if(CMAKE_TOOLCHAIN_FILE)
   # Emscripten builds specify a toolchain file and a cross-compiling emulator
