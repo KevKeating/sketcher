@@ -3,7 +3,6 @@
 #include <QButtonGroup>
 #include <QDesktopServices>
 #include <QFileDialog>
-#include <QPointer>
 #include <QRegularExpression>
 #include <QToolButton>
 #include <QWidget>
@@ -264,10 +263,10 @@ void SketcherTopBar::onImportFromFileClicked()
 
 void SketcherTopBar::onLoadMonomerDatabaseClicked()
 {
-    auto file_open_completed = [self = QPointer<SketcherTopBar>(this)](
+    auto file_open_completed = [this](
                                   const QString& file_path,
                                   const QByteArray& content) {
-        if (!self || file_path.isEmpty()) {
+        if (file_path.isEmpty()) {
             return;
         }
         try {
@@ -279,11 +278,10 @@ void SketcherTopBar::onLoadMonomerDatabaseClicked()
                     failures.append(QString::fromStdString(failure));
                 }
                 show_error_dialog("Monomer Database Error",
-                                  failures.join("\n"), self.data());
+                                  failures.join("\n"), this);
             }
         } catch (const std::exception& exc) {
-            show_error_dialog("Monomer Database Error", exc.what(),
-                              self.data());
+            show_error_dialog("Monomer Database Error", exc.what(), this);
         }
     };
     QFileDialog::getOpenFileContent("JSON files (*.json)",
