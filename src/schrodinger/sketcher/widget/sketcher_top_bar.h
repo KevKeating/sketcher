@@ -116,6 +116,9 @@ class SKETCHER_API SketcherTopBar : public SketcherView
      */
     void onImportFromFileClicked();
 
+    /** Open a JSON file and load its custom monomer definitions. */
+    void onLoadMonomerDatabaseClicked();
+
     /**
      * Respond to a click on the "Paste in Text..." action.
      *
