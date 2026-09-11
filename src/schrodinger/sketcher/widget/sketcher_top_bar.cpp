@@ -285,7 +285,7 @@ void SketcherTopBar::onLoadMonomerDatabaseClicked()
             } else {
                 auto* dialog = new QMessageBox(
                     QMessageBox::Information, "Monomer Database",
-                    QFileInfo(file_path).fileName() + " read successfully",
+                    QFileInfo(file_path).fileName() + " read successfully.",
                     QMessageBox::Ok, parentWidget());
                 dialog->setTextFormat(Qt::PlainText);
                 dialog->setAttribute(Qt::WA_DeleteOnClose);
