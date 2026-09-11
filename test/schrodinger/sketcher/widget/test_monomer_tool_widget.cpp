@@ -37,9 +37,15 @@ BOOST_AUTO_TEST_CASE(unknown_monomer_button_styles)
     }
 }
 
+/**
+ * Update the monomer database and confirm that the monomer button popups get
+ * updated with the new monomer definitions
+ */
 BOOST_AUTO_TEST_CASE(refresh_monomer_popups)
 {
     auto& db = rdkit_extensions::MonomerDatabase::instance();
+    // make sure that we undo any changes to the monomer database when the test
+    // finishes
     struct ResetDatabase {
         ~ResetDatabase()
         {
@@ -52,6 +58,8 @@ BOOST_AUTO_TEST_CASE(refresh_monomer_popups)
     MonomerToolWidget widget;
     widget.setModel(scene->m_sketcher_model);
 
+    // read in new monomers and confirm that they're added to the relevant pop
+    // ups
     const auto json = R"([
         {"symbol":"testAA","polymer_type":"PEPTIDE","natural_analog":"A",
          "smiles":"CC","name":"Test amino acid","monomer_type":"backbone",
@@ -79,6 +87,8 @@ BOOST_AUTO_TEST_CASE(refresh_monomer_popups)
         button->setEnumItem(1);
     }
 
+    // reset the monomer definitions and confirm that the new monomers have been
+    // removed from the pop ups
     auto* button = widget.findChild<ModularToolButton*>("ala_btn");
     QPointer<QWidget> old_popup = button->getPopupWidget();
     db.resetMonomerDefinitions();
@@ -89,7 +99,8 @@ BOOST_AUTO_TEST_CASE(refresh_monomer_popups)
                nullptr);
     BOOST_TEST(widget.findChild<QAbstractButton*>("na_analog_testNA_btn") ==
                nullptr);
-    // Repeated refreshes must also replace existing core analog popups safely.
+    // Repeated refreshes must also replace existing core analog popups without
+    // throwing an exception
     widget.updateMonomerButtons();
 }
 

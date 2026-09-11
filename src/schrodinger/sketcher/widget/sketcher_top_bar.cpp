@@ -281,12 +281,12 @@ void SketcherTopBar::onLoadMonomerDatabaseClicked()
                     failures.append(QString::fromStdString(failure));
                 }
                 show_error_dialog("Monomer Database Error",
-                                  failures.join("\n"), parentWidget());
+                                  failures.join("\n"), this);
             } else {
                 auto* dialog = new QMessageBox(
                     QMessageBox::Information, "Monomer Database",
                     QFileInfo(file_path).fileName() + " read successfully.",
-                    QMessageBox::Ok, parentWidget());
+                    QMessageBox::Ok, this);
                 dialog->setTextFormat(Qt::PlainText);
                 dialog->setAttribute(Qt::WA_DeleteOnClose);
                 dialog->setWindowModality(Qt::WindowModal);
@@ -294,7 +294,7 @@ void SketcherTopBar::onLoadMonomerDatabaseClicked()
             }
         } catch (const std::exception& exc) {
             show_error_dialog("Monomer Database Error", exc.what(),
-                              parentWidget());
+                              this);
         }
     };
     QFileDialog::getOpenFileContent("JSON files (*.json)",

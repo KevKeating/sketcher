@@ -25,7 +25,9 @@ class SKETCHER_API ToolButtonWithPopup : public QToolButton
      */
     virtual void setPopupWidget(QWidget* popup_wdg);
 
-    /** Delete the assigned popup so a new one can be installed. */
+    /**
+     * Delete the assigned popup so a new one can be installed.
+     */
     void clearPopupWidget();
 
     /**

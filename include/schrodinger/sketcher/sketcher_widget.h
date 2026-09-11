@@ -120,7 +120,9 @@ class SKETCHER_API SketcherWidget : public QWidget
      */
     void clear();
 
-    /** Refresh sidebar monomer buttons after changing the monomer database. */
+    /**
+     * Refresh sidebar monomer buttons after changing the monomer database.
+     */
     void updateMonomerButtons();
 
     /**
