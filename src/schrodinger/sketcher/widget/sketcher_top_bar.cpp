@@ -265,9 +265,8 @@ void SketcherTopBar::onImportFromFileClicked()
 
 void SketcherTopBar::onLoadMonomerDatabaseClicked()
 {
-    auto file_open_completed = [this](
-                                  const QString& file_path,
-                                  const QByteArray& content) {
+    auto file_open_completed = [this](const QString& file_path,
+                                      const QByteArray& content) {
         if (file_path.isEmpty()) {
             return;
         }
@@ -280,8 +279,8 @@ void SketcherTopBar::onLoadMonomerDatabaseClicked()
                 for (const auto& failure : result.second) {
                     failures.append(QString::fromStdString(failure));
                 }
-                show_error_dialog("Monomer Database Error",
-                                  failures.join("\n"), this);
+                show_error_dialog("Monomer Database Error", failures.join("\n"),
+                                  this);
             } else {
                 auto* dialog = new QMessageBox(
                     QMessageBox::Information, "Monomer Database",
@@ -293,12 +292,11 @@ void SketcherTopBar::onLoadMonomerDatabaseClicked()
                 dialog->show();
             }
         } catch (const std::exception& exc) {
-            show_error_dialog("Monomer Database Error", exc.what(),
-                              this);
+            show_error_dialog("Monomer Database Error", exc.what(), this);
         }
     };
-    QFileDialog::getOpenFileContent("JSON files (*.json)",
-                                    file_open_completed, this);
+    QFileDialog::getOpenFileContent("JSON files (*.json)", file_open_completed,
+                                    this);
 }
 
 void SketcherTopBar::onPasteInTextClicked()
