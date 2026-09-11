@@ -50,6 +50,7 @@ class SKETCHER_API SketcherTopBar : public SketcherView
     MoreActionsMenu* m_more_actions_menu = nullptr;
 
   signals:
+    void monomerDatabaseLoaded();
     void clearSketcherRequested();
     void importTextRequested(const std::string& text,
                              const rdkit_extensions::Format format);

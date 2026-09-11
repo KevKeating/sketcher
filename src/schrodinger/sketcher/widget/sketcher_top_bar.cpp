@@ -3,6 +3,8 @@
 #include <QButtonGroup>
 #include <QDesktopServices>
 #include <QFileDialog>
+#include <QFileInfo>
+#include <QMessageBox>
 #include <QRegularExpression>
 #include <QToolButton>
 #include <QWidget>
@@ -261,10 +263,6 @@ void SketcherTopBar::onImportFromFileClicked()
     QFileDialog::getOpenFileContent(name_filter, file_open_completed, this);
 }
 
-// TODO: should have a dialog on success, since otherwise it looks like nothing
-//       happened
-// TODO: need to repopulate the side bar button monomer popup
-// TODO: add unit test?
 void SketcherTopBar::onLoadMonomerDatabaseClicked()
 {
     auto file_open_completed = [this](
@@ -276,16 +274,27 @@ void SketcherTopBar::onLoadMonomerDatabaseClicked()
         try {
             auto& db = rdkit_extensions::MonomerDatabase::instance();
             auto result = db.loadMonomersFromJson(content.toStdString());
+            emit monomerDatabaseLoaded();
             if (!result.second.empty()) {
                 QStringList failures;
                 for (const auto& failure : result.second) {
                     failures.append(QString::fromStdString(failure));
                 }
                 show_error_dialog("Monomer Database Error",
-                                  failures.join("\n"), this);
+                                  failures.join("\n"), parentWidget());
+            } else {
+                auto* dialog = new QMessageBox(
+                    QMessageBox::Information, "Monomer Database",
+                    QFileInfo(file_path).fileName() + " read successfully",
+                    QMessageBox::Ok, parentWidget());
+                dialog->setTextFormat(Qt::PlainText);
+                dialog->setAttribute(Qt::WA_DeleteOnClose);
+                dialog->setWindowModality(Qt::WindowModal);
+                dialog->show();
             }
         } catch (const std::exception& exc) {
-            show_error_dialog("Monomer Database Error", exc.what(), this);
+            show_error_dialog("Monomer Database Error", exc.what(),
+                              parentWidget());
         }
     };
     QFileDialog::getOpenFileContent("JSON files (*.json)",

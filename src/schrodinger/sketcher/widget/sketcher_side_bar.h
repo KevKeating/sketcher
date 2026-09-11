@@ -31,6 +31,7 @@ class SKETCHER_API SketcherSideBar : public SketcherView
     ~SketcherSideBar();
 
     void setModel(SketcherModel* model) override;
+    void updateMonomerButtons();
     void updateWidgetsEnabled() override;
     void updateCheckState() override;
 
