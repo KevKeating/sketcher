@@ -261,6 +261,9 @@ void SketcherTopBar::onImportFromFileClicked()
     QFileDialog::getOpenFileContent(name_filter, file_open_completed, this);
 }
 
+// TODO: should have a dialog on success, since otherwise it looks like nothing
+//       happened
+// TODO: need to repopulate the side bar button monomer popup
 void SketcherTopBar::onLoadMonomerDatabaseClicked()
 {
     auto file_open_completed = [this](
