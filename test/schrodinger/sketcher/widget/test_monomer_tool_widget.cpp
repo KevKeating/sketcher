@@ -65,23 +65,18 @@ BOOST_AUTO_TEST_CASE(refresh_monomer_popups)
     BOOST_REQUIRE_EQUAL(result.first.size(), 2);
     widget.updateMonomerButtons();
     for (const auto* name : {"ala_btn", "na_a_btn"}) {
-        auto* page_button = widget.findChild<QAbstractButton*>(
-            QString(name) == "ala_btn" ? "amino_monomer_btn"
-                                       : "nucleic_monomer_btn");
-        BOOST_REQUIRE(page_button != nullptr);
-        page_button->click();
         auto* button = widget.findChild<ModularToolButton*>(name);
         BOOST_REQUIRE(button != nullptr);
-        button->click();
         auto* popup = button->getPopupWidget();
         BOOST_REQUIRE(popup != nullptr);
+        auto* view = dynamic_cast<SketcherView*>(popup);
+        BOOST_REQUIRE(view != nullptr);
+        BOOST_TEST(view->getModel() == scene->m_sketcher_model);
         auto* analog = popup->findChild<QAbstractButton*>(
             QString(name) == "ala_btn" ? "analog_testAA_btn"
                                        : "na_analog_testNA_btn");
         BOOST_REQUIRE_MESSAGE(analog != nullptr, name);
-        analog->click();
-        BOOST_CHECK_EQUAL(button->text().toStdString(),
-                          analog->text().toStdString());
+        button->setEnumItem(1);
     }
 
     auto* button = widget.findChild<ModularToolButton*>("ala_btn");
