@@ -264,6 +264,7 @@ void SketcherTopBar::onImportFromFileClicked()
 // TODO: should have a dialog on success, since otherwise it looks like nothing
 //       happened
 // TODO: need to repopulate the side bar button monomer popup
+// TODO: add unit test?
 void SketcherTopBar::onLoadMonomerDatabaseClicked()
 {
     auto file_open_completed = [this](
