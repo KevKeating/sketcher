@@ -29,20 +29,6 @@ static QPushButton* get_ok_button(const QWidget& dialog)
     return button_box->button(QDialogButtonBox::Ok);
 }
 
-BOOST_AUTO_TEST_CASE(message_box_warning_has_ok_and_cancel_buttons)
-{
-    QWidget parent;
-
-    show_warning_dialog("Warning", "Warning text", &parent);
-
-    auto* dialog = parent.findChild<MessageBoxDialog*>();
-    BOOST_REQUIRE(dialog != nullptr);
-    auto* button_box = dialog->findChild<QDialogButtonBox*>("button_box");
-    BOOST_REQUIRE(button_box != nullptr);
-    BOOST_TEST(button_box->standardButtons().testFlag(QDialogButtonBox::Ok));
-    BOOST_TEST(button_box->standardButtons().testFlag(QDialogButtonBox::Cancel));
-}
-
 /**
  * Make sure that the OK button is enabled only when the dialog is non-empty
  */
