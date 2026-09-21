@@ -1,12 +1,17 @@
 #include "schrodinger/sketcher/dialog/custom_monomer_dialog.h"
 
+#include <map>
+
 #include <QDialogButtonBox>
 #include <QPushButton>
+#include <QStringList>
 
 #include <rdkit/GraphMol/MolOps.h>
 
 #include "schrodinger/rdkit_extensions/file_format.h"
 #include "schrodinger/rdkit_extensions/monomer_mol.h"
+#include "schrodinger/rdkit_extensions/rgroup.h"
+#include "schrodinger/sketcher/dialog/error_dialog.h"
 #include "schrodinger/sketcher/public_constants.h"
 #include "schrodinger/sketcher/sketcher_css_style.h"
 #include "schrodinger/sketcher/sketcher_widget.h"
@@ -14,11 +19,45 @@
 
 using schrodinger::rdkit_extensions::ChainType;
 using schrodinger::rdkit_extensions::Format;
+using schrodinger::rdkit_extensions::get_r_group_number;
 
 namespace schrodinger
 {
 namespace sketcher
 {
+
+namespace
+{
+
+QString format_duplicate_r_groups(const RDKit::ROMol& mol)
+{
+    std::map<unsigned int, unsigned int> r_group_counts;
+    for (const auto* atom : mol.atoms()) {
+        if (const auto r_group_num = get_r_group_number(atom)) {
+            ++r_group_counts[*r_group_num];
+        }
+    }
+
+    QStringList duplicate_r_groups;
+    for (const auto& [r_group_num, count] : r_group_counts) {
+        if (count > 1) {
+            duplicate_r_groups.append("R" + QString::number(r_group_num));
+        }
+    }
+
+    if (duplicate_r_groups.empty()) {
+        return {};
+    }
+    if (duplicate_r_groups.size() == 1) {
+        return duplicate_r_groups.front();
+    }
+
+    const auto last_r_group = duplicate_r_groups.takeLast();
+    const auto separator = duplicate_r_groups.size() == 1 ? " " : ", ";
+    return duplicate_r_groups.join(", ") + separator + "and " + last_r_group;
+}
+
+} // namespace
 
 CustomMonomerDialog::CustomMonomerDialog(QWidget* parent) : ModalDialog(parent)
 {
@@ -90,6 +129,17 @@ void CustomMonomerDialog::updateOkButton()
 
 void CustomMonomerDialog::accept()
 {
+    const auto mol = ui->sketcher_widget->getRDKitMolecule();
+    const auto duplicate_r_groups = format_duplicate_r_groups(*mol);
+    if (!duplicate_r_groups.isEmpty()) {
+        show_error_dialog(
+            "Invalid Attachment Points",
+            "Multiple " + duplicate_r_groups +
+                " attachment points found. All attachment points must be unique.",
+            this);
+        return;
+    }
+
     auto smiles = ui->sketcher_widget->getString(Format::EXTENDED_SMILES);
     auto type = ui->monomer_type_combo->currentData().value<ChainType>();
     emit customMonomerAccepted(smiles, type);
