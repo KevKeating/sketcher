@@ -9,6 +9,7 @@ namespace sketcher
 
 MessageBoxDialog::MessageBoxDialog(const QString& title, const QString& text,
                                    QStyle::StandardPixmap standard_icon,
+                                   QDialogButtonBox::StandardButtons standard_buttons,
                                    QWidget* parent, Qt::WindowFlags f) :
     ModalDialog(parent, f)
 {
@@ -18,6 +19,7 @@ MessageBoxDialog::MessageBoxDialog(const QString& title, const QString& text,
     setWindowTitle(title);
     m_ui->text_edit->setText(text);
     m_ui->text_edit->setStyleSheet("QTextEdit { background: transparent; }");
+    m_ui->button_box->setStandardButtons(standard_buttons);
 
     auto my_style = style();
     auto icon = my_style->standardIcon(standard_icon);
@@ -32,15 +34,25 @@ void show_error_dialog(const QString& title, const QString& text,
                        QWidget* parent, Qt::WindowFlags f)
 {
     auto error_dlg = new MessageBoxDialog(
-        title, text, QStyle::SP_MessageBoxWarning, parent, f);
+        title, text, QStyle::SP_MessageBoxWarning, QDialogButtonBox::Ok, parent, f);
     error_dlg->show();
+}
+
+void show_warning_dialog(const QString& title, const QString& text,
+                         QWidget* parent, Qt::WindowFlags f)
+{
+    auto warning_dlg = new MessageBoxDialog(
+        title, text, QStyle::SP_MessageBoxWarning,
+        QDialogButtonBox::Ok | QDialogButtonBox::Cancel, parent, f);
+    warning_dlg->show();
 }
 
 void show_information_dialog(const QString& title, const QString& text,
                              QWidget* parent, Qt::WindowFlags f)
 {
     auto information_dlg = new MessageBoxDialog(
-        title, text, QStyle::SP_MessageBoxInformation, parent, f);
+        title, text, QStyle::SP_MessageBoxInformation, QDialogButtonBox::Ok, parent,
+        f);
     information_dlg->show();
 }
 

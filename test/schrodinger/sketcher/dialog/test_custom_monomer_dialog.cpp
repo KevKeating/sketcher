@@ -12,7 +12,7 @@
 
 #include "../test_common.h"
 #include "schrodinger/sketcher/dialog/custom_monomer_dialog.h"
-#include "schrodinger/sketcher/dialog/error_dialog.h"
+#include "schrodinger/sketcher/dialog/message_box_dialog.h"
 #include "schrodinger/sketcher/sketcher_widget.h"
 
 BOOST_GLOBAL_FIXTURE(QApplicationRequiredFixture);
@@ -27,6 +27,20 @@ static QPushButton* get_ok_button(const QWidget& dialog)
     auto* button_box = dialog.findChild<QDialogButtonBox*>("button_box");
     BOOST_REQUIRE(button_box != nullptr);
     return button_box->button(QDialogButtonBox::Ok);
+}
+
+BOOST_AUTO_TEST_CASE(message_box_warning_has_ok_and_cancel_buttons)
+{
+    QWidget parent;
+
+    show_warning_dialog("Warning", "Warning text", &parent);
+
+    auto* dialog = parent.findChild<MessageBoxDialog*>();
+    BOOST_REQUIRE(dialog != nullptr);
+    auto* button_box = dialog->findChild<QDialogButtonBox*>("button_box");
+    BOOST_REQUIRE(button_box != nullptr);
+    BOOST_TEST(button_box->standardButtons().testFlag(QDialogButtonBox::Ok));
+    BOOST_TEST(button_box->standardButtons().testFlag(QDialogButtonBox::Cancel));
 }
 
 /**
@@ -81,9 +95,10 @@ BOOST_AUTO_TEST_CASE(custom_monomer_dialog_rejects_duplicate_attachment_points)
         dialog.accept();
 
         BOOST_TEST(!accepted);
-        auto* error_dialog = dialog.findChild<ErrorDialog*>();
-        BOOST_REQUIRE(error_dialog != nullptr);
-        auto* error_text = error_dialog->findChild<QTextEdit*>("text_edit");
+        auto* message_box_dialog = dialog.findChild<MessageBoxDialog*>();
+        BOOST_REQUIRE(message_box_dialog != nullptr);
+        auto* error_text =
+            message_box_dialog->findChild<QTextEdit*>("text_edit");
         BOOST_REQUIRE(error_text != nullptr);
         BOOST_TEST(error_text->toPlainText() == expected_error);
     }
@@ -101,7 +116,7 @@ BOOST_AUTO_TEST_CASE(custom_monomer_dialog_accepts_unique_attachment_points)
     dialog.accept();
 
     BOOST_TEST(accepted);
-    BOOST_TEST(dialog.findChild<ErrorDialog*>() == nullptr);
+    BOOST_TEST(dialog.findChild<MessageBoxDialog*>() == nullptr);
 }
 
 } // namespace sketcher
