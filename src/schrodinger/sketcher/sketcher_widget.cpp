@@ -881,6 +881,7 @@ void SketcherWidget::showEditMonomerStructureDialog(
     if (!smiles) {
         return;
     }
+    const auto normalized_smiles = normalize_smiles_attachment_points(*smiles);
 
     const auto chain_type = rdkit_extensions::getChainType(*atom);
     const auto monomer_type = get_monomer_type(atom);
@@ -889,11 +890,11 @@ void SketcherWidget::showEditMonomerStructureDialog(
             [this, atom, monomer_type](const std::string& accepted_smiles,
                                        const auto&) {
                 m_mol_model->mutateMonomers({atom}, accepted_smiles,
-                                             monomer_type, /*is_smiles=*/true);
+                                            monomer_type, /*is_smiles=*/true);
             });
     dialog->setMonomerType(chain_type);
     dialog->setMonomerTypeInputEnabled(false);
-    dialog->addSMILES(*smiles);
+    dialog->addSMILES(normalized_smiles);
     dialog->show();
 }
 

@@ -91,6 +91,19 @@ SKETCHER_API std::vector<std::pair<int, std::string>>
 get_attachment_points_for_smiles(const std::string& smiles);
 
 /**
+ * Normalize numbered attachment points in a monomer SMILES string so each is
+ * represented by a dummy atom with a CXSMILES atom label such as "_R1".
+ * Attachment points may initially be represented by atom-map numbers,
+ * isotope-numbered dummy atoms, or CXSMILES atom labels. A labeled hydrogen is
+ * replaced by a labeled dummy atom, while a labeled heavy atom receives a new
+ * bonded dummy atom.
+ *
+ * @throws std::invalid_argument if smiles is not valid extended SMILES
+ */
+SKETCHER_API std::string
+normalize_smiles_attachment_points(const std::string& smiles);
+
+/**
  * Return the numbered attachment points for the given monomer, which must be
  * found in the monomer database. Each attachment point is described using a
  * pair of the attachment point number and the symbol of the heavy atom at that
