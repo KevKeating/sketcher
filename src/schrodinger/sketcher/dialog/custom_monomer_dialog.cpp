@@ -60,6 +60,11 @@ void CustomMonomerDialog::setMonomerType(
     ui->monomer_type_combo->setCurrentIndex(index);
 }
 
+void CustomMonomerDialog::setMonomerTypeInputEnabled(const bool enabled)
+{
+    ui->monomer_type_combo->setEnabled(enabled);
+}
+
 void CustomMonomerDialog::addSMILES(const std::string& smiles)
 {
     ui->sketcher_widget->addFromString(smiles, Format::EXTENDED_SMILES);

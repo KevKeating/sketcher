@@ -4,6 +4,7 @@
 #include <tuple>
 
 #include <QAbstractButton>
+#include <QComboBox>
 #include <QGraphicsSvgItem>
 #include <QKeyEvent>
 #include <QMouseEvent>
@@ -21,6 +22,7 @@
 #include "schrodinger/rdkit_extensions/helm.h"
 #include "schrodinger/rdkit_extensions/monomer_database.h"
 #include "schrodinger/rdkit_extensions/monomer_mol.h"
+#include "schrodinger/sketcher/dialog/custom_monomer_dialog.h"
 #include "schrodinger/sketcher/menu/atom_context_menu.h"
 #include "schrodinger/sketcher/menu/cut_copy_action_manager.h"
 #include "schrodinger/sketcher/menu/monomer_context_menu.h"
@@ -1122,6 +1124,48 @@ BOOST_AUTO_TEST_CASE(test_mutateMonomerRequested_signal_mutates_na_sugar)
     BOOST_TEST(find_atom_by_res_name(*mol_after, "R") == nullptr);
     BOOST_TEST(find_atom_by_res_name(*mol_after, "A") != nullptr);
     BOOST_TEST(find_atom_by_res_name(*mol_after, "P") != nullptr);
+}
+
+/**
+ * Edit Structure opens a locked-type CustomMonomerDialog and mutates the
+ * selected monomer with the accepted SMILES using its existing monomer type.
+ */
+BOOST_AUTO_TEST_CASE(test_edit_structure_dialog_mutates_selected_monomer)
+{
+    TestSketcherWidget& sk = *TestWidgetFixture::get();
+    sk.setInterfaceType(InterfaceType::ATOMISTIC_OR_MONOMERIC);
+    sk.addFromString("PEPTIDE1{A}$$$$V2.0");
+
+    const auto* atom = sk.m_mol_model->getMol()->getAtomWithIdx(0);
+    sk.m_monomer_context_menu->setContextItems({atom}, {}, {}, {}, {}, atom);
+    QAction* edit_structure = nullptr;
+    for (auto* action : sk.m_monomer_context_menu->actions()) {
+        if (action->text() == "Edit Structure...") {
+            edit_structure = action;
+            break;
+        }
+    }
+    BOOST_REQUIRE(edit_structure != nullptr);
+    edit_structure->trigger();
+    QCoreApplication::processEvents();
+
+    auto* dialog = sk.findChild<CustomMonomerDialog*>();
+    BOOST_REQUIRE(dialog != nullptr);
+    auto* combo = dialog->findChild<QComboBox*>("monomer_type_combo");
+    BOOST_REQUIRE(combo != nullptr);
+    BOOST_TEST(!combo->isEnabled());
+    BOOST_TEST(combo->currentText() == "Amino acid");
+
+    auto* dialog_sketcher = dialog->findChild<SketcherWidget*>();
+    BOOST_REQUIRE(dialog_sketcher != nullptr);
+    dialog_sketcher->clear();
+    dialog_sketcher->addFromString("CC", Format::EXTENDED_SMILES);
+    dialog->accept();
+    QCoreApplication::processEvents();
+
+    const auto* mutated_atom = sk.m_mol_model->getMol()->getAtomWithIdx(0);
+    BOOST_TEST(mutated_atom->getProp<std::string>(ATOM_LABEL) == "CC");
+    BOOST_TEST(mutated_atom->getProp<bool>(SMILES_MONOMER));
 }
 
 /**

@@ -1,5 +1,6 @@
 #define BOOST_TEST_MODULE Test_Sketcher
 
+#include <QComboBox>
 #include <QDialogButtonBox>
 #include <QPushButton>
 #include <boost/test/unit_test.hpp>
@@ -37,6 +38,18 @@ BOOST_AUTO_TEST_CASE(custom_monomer_dialog_validation_and_acceptance)
 
     dialog.addSMILES("CC");
     BOOST_TEST(ok_button->isEnabled());
+}
+
+BOOST_AUTO_TEST_CASE(custom_monomer_dialog_monomer_type_input_can_be_disabled)
+{
+    CustomMonomerDialog dialog;
+    auto* combo = dialog.findChild<QComboBox*>("monomer_type_combo");
+    BOOST_REQUIRE(combo != nullptr);
+
+    dialog.setMonomerTypeInputEnabled(false);
+    BOOST_TEST(!combo->isEnabled());
+    dialog.setMonomerTypeInputEnabled(true);
+    BOOST_TEST(combo->isEnabled());
 }
 
 } // namespace sketcher

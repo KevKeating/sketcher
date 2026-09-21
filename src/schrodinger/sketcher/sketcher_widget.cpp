@@ -22,7 +22,10 @@
 #endif
 
 #include "schrodinger/rdkit_extensions/helm.h"
+#include "schrodinger/rdkit_extensions/monomer_database.h"
+#include "schrodinger/rdkit_extensions/monomer_mol.h"
 #include "schrodinger/sketcher/dialog/bracket_subgroup_dialog.h"
+#include "schrodinger/sketcher/dialog/custom_monomer_dialog.h"
 #include "schrodinger/sketcher/dialog/edit_atom_properties.h"
 #include "schrodinger/sketcher/dialog/error_dialog.h"
 #include "schrodinger/sketcher/dialog/file_export_dialog.h"
@@ -127,6 +130,18 @@ static MonomerType nucleic_acid_tool_to_monomer_type(NucleicAcidTool tool)
         default:
             Q_UNREACHABLE_RETURN(MonomerType::NA_BASE);
     }
+}
+
+static std::optional<std::string>
+get_monomer_smiles(const RDKit::Atom* const atom)
+{
+    const auto monomer_label = atom->getProp<std::string>(ATOM_LABEL);
+    bool is_smiles = false;
+    if (atom->getPropIfPresent(SMILES_MONOMER, is_smiles) && is_smiles) {
+        return monomer_label;
+    }
+    return rdkit_extensions::MonomerDatabase::instance().getMonomerSmiles(
+        monomer_label, rdkit_extensions::getChainType(*atom));
 }
 
 /**
@@ -856,6 +871,32 @@ void SketcherWidget::showEditAtomPropertiesDialog(
     dialog->show();
 }
 
+void SketcherWidget::showEditMonomerStructureDialog(
+    const RDKit::Atom* const atom)
+{
+    if (atom == nullptr) {
+        return;
+    }
+    const auto smiles = get_monomer_smiles(atom);
+    if (!smiles) {
+        return;
+    }
+
+    const auto chain_type = rdkit_extensions::getChainType(*atom);
+    const auto monomer_type = get_monomer_type(atom);
+    auto* dialog = new CustomMonomerDialog(this);
+    connect(dialog, &CustomMonomerDialog::customMonomerAccepted, this,
+            [this, atom, monomer_type](const std::string& accepted_smiles,
+                                       const auto&) {
+                m_mol_model->mutateMonomers({atom}, accepted_smiles,
+                                             monomer_type, /*is_smiles=*/true);
+            });
+    dialog->setMonomerType(chain_type);
+    dialog->setMonomerTypeInputEnabled(false);
+    dialog->addSMILES(*smiles);
+    dialog->show();
+}
+
 void SketcherWidget::updateWatermarkVisibilityAndPos()
 {
     bool is_empty = m_sketcher_model->sceneIsEmpty();
@@ -1001,6 +1042,9 @@ void SketcherWidget::connectContextMenu(const MonomerContextMenu& menu)
 {
     connect(&menu, &MonomerContextMenu::deleteRequested, this,
             [this](auto atoms) { m_mol_model->remove(atoms, {}, {}, {}, {}); });
+
+    connect(&menu, &MonomerContextMenu::editStructureRequested, this,
+            &SketcherWidget::showEditMonomerStructureDialog);
 
     connect(&menu, &MonomerContextMenu::mutateMonomerRequested, this,
             [this](auto mutations, const QString& description) {

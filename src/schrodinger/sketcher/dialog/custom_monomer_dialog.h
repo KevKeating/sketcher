@@ -44,6 +44,11 @@ class SKETCHER_API CustomMonomerDialog : public ModalDialog
     void setMonomerType(const rdkit_extensions::ChainType chain_type);
 
     /**
+     * Enable or disable the monomer type combo box.
+     */
+    void setMonomerTypeInputEnabled(const bool enabled);
+
+    /**
      * Load the specified molecule into the dialog's Sketcher workspace
      */
     void addSMILES(const std::string& smiles);
