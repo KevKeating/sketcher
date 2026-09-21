@@ -27,7 +27,7 @@
 #include "schrodinger/sketcher/dialog/bracket_subgroup_dialog.h"
 #include "schrodinger/sketcher/dialog/custom_monomer_dialog.h"
 #include "schrodinger/sketcher/dialog/edit_atom_properties.h"
-#include "schrodinger/sketcher/dialog/error_dialog.h"
+#include "schrodinger/sketcher/dialog/message_box_dialog.h"
 #include "schrodinger/sketcher/dialog/file_export_dialog.h"
 #include "schrodinger/sketcher/dialog/file_import_export.h"
 #include "schrodinger/sketcher/dialog/file_save_image_dialog.h"
