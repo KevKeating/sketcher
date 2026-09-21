@@ -26,10 +26,7 @@ namespace schrodinger
 namespace sketcher
 {
 
-namespace
-{
-
-QString format_duplicate_r_groups(const RDKit::ROMol& mol)
+static QStringList get_duplicate_r_groups(const RDKit::ROMol& mol)
 {
     std::map<unsigned int, unsigned int> r_group_counts;
     for (const auto* atom : mol.atoms()) {
@@ -44,7 +41,11 @@ QString format_duplicate_r_groups(const RDKit::ROMol& mol)
             duplicate_r_groups.append("R" + QString::number(r_group_num));
         }
     }
+    return duplicate_r_groups;
+}
 
+static QString format_duplicate_r_groups(QStringList duplicate_r_groups)
+{
     if (duplicate_r_groups.empty()) {
         return {};
     }
@@ -56,8 +57,6 @@ QString format_duplicate_r_groups(const RDKit::ROMol& mol)
     const auto separator = duplicate_r_groups.size() == 1 ? " " : ", ";
     return duplicate_r_groups.join(", ") + separator + "and " + last_r_group;
 }
-
-} // namespace
 
 CustomMonomerDialog::CustomMonomerDialog(QWidget* parent) : ModalDialog(parent)
 {
@@ -130,11 +129,11 @@ void CustomMonomerDialog::updateOkButton()
 void CustomMonomerDialog::accept()
 {
     const auto mol = ui->sketcher_widget->getRDKitMolecule();
-    const auto duplicate_r_groups = format_duplicate_r_groups(*mol);
-    if (!duplicate_r_groups.isEmpty()) {
+    const auto duplicate_r_groups = get_duplicate_r_groups(*mol);
+    if (!duplicate_r_groups.empty()) {
         show_error_dialog(
             "Invalid Attachment Points",
-            "Multiple " + duplicate_r_groups +
+            "Multiple " + format_duplicate_r_groups(duplicate_r_groups) +
                 " attachment points found. All attachment points must be unique.",
             this);
         return;
