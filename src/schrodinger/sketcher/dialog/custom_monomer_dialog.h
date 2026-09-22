@@ -2,6 +2,7 @@
 
 #include <memory>
 #include <string>
+#include <vector>
 
 #include "schrodinger/sketcher/definitions.h"
 #include "schrodinger/sketcher/dialog/modal_dialog.h"
@@ -49,6 +50,18 @@ class SKETCHER_API CustomMonomerDialog : public ModalDialog
     void setMonomerTypeInputEnabled(const bool enabled);
 
     /**
+     * Specify the numbered attachment points that must remain in the monomer.
+     */
+    void setRequiredAttachmentPoints(
+        std::vector<int> required_attachment_points);
+
+    /**
+     * Return the required attachment point numbers missing from smiles.
+     */
+    std::vector<int>
+    getMissingRequiredAttachmentPoints(const std::string& smiles) const;
+
+    /**
      * Load the specified molecule into the dialog's Sketcher workspace
      */
     void addSMILES(const std::string& smiles);
@@ -76,6 +89,7 @@ class SKETCHER_API CustomMonomerDialog : public ModalDialog
     void updateOkButton();
 
     std::unique_ptr<Ui::CustomMonomerDialog> ui;
+    std::vector<int> m_required_attachment_points;
 };
 
 } // namespace sketcher

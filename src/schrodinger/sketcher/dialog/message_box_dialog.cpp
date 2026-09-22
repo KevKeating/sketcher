@@ -38,13 +38,14 @@ void show_error_dialog(const QString& title, const QString& text,
     error_dlg->show();
 }
 
-void show_warning_dialog(const QString& title, const QString& text,
-                         QWidget* parent, Qt::WindowFlags f)
+MessageBoxDialog* show_warning_dialog(const QString& title, const QString& text,
+                                      QWidget* parent, Qt::WindowFlags f)
 {
     auto warning_dlg = new MessageBoxDialog(
         title, text, QStyle::SP_MessageBoxWarning,
         QDialogButtonBox::Ok | QDialogButtonBox::Cancel, parent, f);
     warning_dlg->show();
+    return warning_dlg;
 }
 
 void show_information_dialog(const QString& title, const QString& text,

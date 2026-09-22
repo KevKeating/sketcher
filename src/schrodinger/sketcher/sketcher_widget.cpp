@@ -1,6 +1,7 @@
 #include "schrodinger/sketcher/sketcher_widget.h"
 
 #include <algorithm>
+#include <unordered_set>
 
 #include <QApplication>
 #include <QClipboard>
@@ -885,15 +886,67 @@ void SketcherWidget::showEditMonomerStructureDialog(
 
     const auto chain_type = rdkit_extensions::getChainType(*atom);
     const auto monomer_type = get_monomer_type(atom);
+    const auto atom_index = atom->getIdx();
+
+    struct RequiredConnection {
+        int attachment_point;
+        unsigned int bound_monomer_index;
+        bool is_secondary_connection;
+    };
+    std::vector<int> required_attachment_points;
+    std::vector<RequiredConnection> required_connections;
+    const auto attachment_points = get_attachment_points_for_monomer(atom);
+    for (const auto& bound_attachment_point : attachment_points.first) {
+        if (bound_attachment_point.num <= 0) {
+            continue;
+        }
+        required_attachment_points.push_back(bound_attachment_point.num);
+        required_connections.push_back(
+            {bound_attachment_point.num,
+             bound_attachment_point.bound_monomer->getIdx(),
+             bound_attachment_point.is_secondary_connection});
+    }
+
     auto* dialog = new CustomMonomerDialog(this);
     connect(dialog, &CustomMonomerDialog::customMonomerAccepted, this,
-            [this, atom, monomer_type](const std::string& accepted_smiles,
-                                       const auto&) {
-                m_mol_model->mutateMonomers({atom}, accepted_smiles,
+            [this, dialog, atom_index, monomer_type,
+             required_connections](const std::string& accepted_smiles,
+                                   const auto&) {
+                const auto missing_attachment_points =
+                    dialog->getMissingRequiredAttachmentPoints(
+                        accepted_smiles);
+                const std::unordered_set<int> missing_attachment_point_set(
+                    missing_attachment_points.begin(),
+                    missing_attachment_points.end());
+
+                std::unordered_set<const RDKit::Bond*> bonds;
+                std::unordered_set<const RDKit::Bond*> secondary_connections;
+                const auto* mol = m_mol_model->getMol();
+                for (const auto& connection : required_connections) {
+                    if (!missing_attachment_point_set.contains(
+                            connection.attachment_point)) {
+                        continue;
+                    }
+                    const auto* bond = mol->getBondBetweenAtoms(
+                        atom_index, connection.bound_monomer_index);
+                    if (connection.is_secondary_connection) {
+                        secondary_connections.insert(bond);
+                    } else {
+                        bonds.insert(bond);
+                    }
+                }
+
+                auto undo_raii = m_mol_model->createUndoMacro(
+                    "Edit monomer structure");
+                m_mol_model->remove({}, bonds, secondary_connections, {}, {});
+                const auto* live_atom =
+                    m_mol_model->getMol()->getAtomWithIdx(atom_index);
+                m_mol_model->mutateMonomers({live_atom}, accepted_smiles,
                                             monomer_type, /*is_smiles=*/true);
             });
     dialog->setMonomerType(chain_type);
     dialog->setMonomerTypeInputEnabled(false);
+    dialog->setRequiredAttachmentPoints(required_attachment_points);
     dialog->addSMILES(normalized_smiles);
     dialog->show();
 }

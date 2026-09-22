@@ -1,6 +1,8 @@
 #include "schrodinger/sketcher/dialog/custom_monomer_dialog.h"
 
+#include <algorithm>
 #include <map>
+#include <unordered_set>
 
 #include <QDialogButtonBox>
 #include <QPushButton>
@@ -13,6 +15,7 @@
 #include "schrodinger/rdkit_extensions/rgroup.h"
 #include "schrodinger/sketcher/dialog/message_box_dialog.h"
 #include "schrodinger/sketcher/public_constants.h"
+#include "schrodinger/sketcher/rdkit/monomeric.h"
 #include "schrodinger/sketcher/sketcher_css_style.h"
 #include "schrodinger/sketcher/sketcher_widget.h"
 #include "schrodinger/sketcher/ui/ui_custom_monomer_dialog.h"
@@ -56,6 +59,15 @@ static QString format_duplicate_r_groups(QStringList duplicate_r_groups)
     const auto last_r_group = duplicate_r_groups.takeLast();
     const auto separator = duplicate_r_groups.size() == 1 ? " " : ", ";
     return duplicate_r_groups.join(", ") + separator + "and " + last_r_group;
+}
+
+static QString format_r_groups(const std::vector<int>& r_group_numbers)
+{
+    QStringList r_groups;
+    for (const auto r_group_num : r_group_numbers) {
+        r_groups.append("R" + QString::number(r_group_num));
+    }
+    return format_duplicate_r_groups(r_groups);
 }
 
 CustomMonomerDialog::CustomMonomerDialog(QWidget* parent) : ModalDialog(parent)
@@ -103,6 +115,38 @@ void CustomMonomerDialog::setMonomerTypeInputEnabled(const bool enabled)
     ui->monomer_type_combo->setEnabled(enabled);
 }
 
+void CustomMonomerDialog::setRequiredAttachmentPoints(
+    std::vector<int> required_attachment_points)
+{
+    std::erase_if(required_attachment_points,
+                  [](const int attachment_point) {
+                      return attachment_point <= 0;
+                  });
+    std::ranges::sort(required_attachment_points);
+    const auto unique_end = std::ranges::unique(required_attachment_points);
+    required_attachment_points.erase(unique_end.begin(), unique_end.end());
+    m_required_attachment_points = std::move(required_attachment_points);
+}
+
+std::vector<int> CustomMonomerDialog::getMissingRequiredAttachmentPoints(
+    const std::string& smiles) const
+{
+    std::unordered_set<int> present_attachment_points;
+    for (const auto& attachment_point :
+         get_attachment_points_for_smiles(smiles)) {
+        present_attachment_points.insert(attachment_point.first);
+    }
+
+    std::vector<int> missing_attachment_points;
+    std::ranges::copy_if(
+        m_required_attachment_points,
+        std::back_inserter(missing_attachment_points),
+        [&present_attachment_points](const int attachment_point) {
+            return !present_attachment_points.contains(attachment_point);
+        });
+    return missing_attachment_points;
+}
+
 void CustomMonomerDialog::addSMILES(const std::string& smiles)
 {
     ui->sketcher_widget->addFromString(smiles, Format::EXTENDED_SMILES);
@@ -139,8 +183,31 @@ void CustomMonomerDialog::accept()
         return;
     }
 
-    auto smiles = ui->sketcher_widget->getString(Format::EXTENDED_SMILES);
-    auto type = ui->monomer_type_combo->currentData().value<ChainType>();
+    const auto smiles =
+        ui->sketcher_widget->getString(Format::EXTENDED_SMILES);
+    const auto type = ui->monomer_type_combo->currentData().value<ChainType>();
+    const auto missing_attachment_points =
+        getMissingRequiredAttachmentPoints(smiles);
+    if (!missing_attachment_points.empty()) {
+        const bool plural = missing_attachment_points.size() != 1;
+        const auto attachment_points =
+            format_r_groups(missing_attachment_points);
+        const auto warning_text =
+            attachment_points + (plural ? " have" : " has") +
+            " been removed from this monomer but " +
+            (plural ? "are" : "is") +
+            " currently bound. Continuing will remove " +
+            (plural ? "these connections." : "this connection.");
+        auto* warning_dialog = show_warning_dialog(
+            "Remove Bound Connections?", warning_text, this);
+        connect(warning_dialog, &MessageBoxDialog::accepted, this,
+                [this, smiles, type]() {
+                    emit customMonomerAccepted(smiles, type);
+                    ModalDialog::accept();
+                });
+        return;
+    }
+
     emit customMonomerAccepted(smiles, type);
     ModalDialog::accept();
 }

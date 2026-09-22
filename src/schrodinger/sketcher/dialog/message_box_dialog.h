@@ -43,7 +43,7 @@ SKETCHER_API void show_error_dialog(
 /**
  * Convenience method for showing a warning dialog
  */
-SKETCHER_API void show_warning_dialog(
+SKETCHER_API MessageBoxDialog* show_warning_dialog(
     const QString& title, const QString& text, QWidget* parent,
     Qt::WindowFlags f = Qt::WindowFlags());
 
