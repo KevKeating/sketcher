@@ -202,7 +202,8 @@ get_attachment_point_num_from_atom_label(const RDKit::Atom& atom)
  * recognized attachment point numbers that are specified using atom-map
  * numbers, isotope-numbers, or CXSMILES atom labels in the format of "_R<#>".
  */
-static std::optional<unsigned int> get_attachment_point_num(const RDKit::Atom& atom)
+static std::optional<unsigned int>
+get_attachment_point_num(const RDKit::Atom& atom)
 {
     unsigned int attachment_point_num = 0;
     if (atom.getPropIfPresent(RDKit::common_properties::molAtomMapNumber,
