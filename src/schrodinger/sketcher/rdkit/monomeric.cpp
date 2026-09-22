@@ -181,7 +181,7 @@ std::string ap_model_name_for(int ap_num)
 
 /**
  * Get the attachment point number, if any, from the atom label of the given
- * atom
+ * atom.
  */
 static std::optional<unsigned int>
 get_attachment_point_num_from_atom_label(const RDKit::Atom& atom)
