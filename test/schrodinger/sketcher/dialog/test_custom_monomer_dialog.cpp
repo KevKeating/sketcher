@@ -114,8 +114,8 @@ BOOST_AUTO_TEST_CASE(
         {{3},
          "R3 has been removed from this monomer but is currently bound. "
          "Continuing will remove this connection."},
-        {{1, 2, 3},
-         "R1 and R3 have been removed from this monomer but are currently "
+        {{1, 2, 3, 4},
+         "R3 and R4 have been removed from this monomer but are currently "
          "bound. Continuing will remove these connections."}};
 
     for (const auto& [required_attachment_points, expected_warning] :
