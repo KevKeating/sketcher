@@ -83,6 +83,8 @@ void MonomerContextMenu::createMutateResidueSubMenu()
 
 void MonomerContextMenu::createEditStructureAction()
 {
+	// TODO: is it worth sanity checking m_atoms and m_bonds in the lambda?
+	//       The menu should be disabled otherwise
     m_edit_structure_action = addAction("Edit Structure...", this, [this]() {
         if (m_atoms.size() != 1 || !m_bonds.empty()) {
             return;

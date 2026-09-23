@@ -228,6 +228,7 @@ get_attachment_point_num(const RDKit::Atom& atom)
     return std::nullopt;
 }
 
+// TODO: add docstring
 static void clear_attachment_point_properties(RDKit::Atom& atom)
 {
     atom.clearProp(RDKit::common_properties::molAtomMapNumber);

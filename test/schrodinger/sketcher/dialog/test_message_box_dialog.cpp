@@ -14,6 +14,8 @@ namespace schrodinger
 namespace sketcher
 {
 
+// TODO: it feels like we should either get rid of this dialog or add tests for
+//       the other message boxes
 BOOST_AUTO_TEST_CASE(message_box_warning_has_ok_and_cancel_buttons)
 {
     QWidget parent;

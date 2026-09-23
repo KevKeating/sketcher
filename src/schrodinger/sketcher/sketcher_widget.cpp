@@ -133,6 +133,8 @@ static MonomerType nucleic_acid_tool_to_monomer_type(NucleicAcidTool tool)
     }
 }
 
+// TODO: add docstring - this function should probably be in monomeric.  Would
+//       it be used elsewhere
 static std::optional<std::string>
 get_monomer_smiles(const RDKit::Atom* const atom)
 {
@@ -884,6 +886,7 @@ void SketcherWidget::showEditMonomerStructureDialog(
     const auto monomer_type = get_monomer_type(atom);
     const auto atom_index = atom->getIdx();
 
+	// TODO: move this to static function
     struct RequiredConnection {
         int attachment_point;
         unsigned int bound_monomer_index;
@@ -908,6 +911,8 @@ void SketcherWidget::showEditMonomerStructureDialog(
             [this, dialog, atom_index, monomer_type,
              required_connections](const std::string& accepted_smiles,
                                    const auto&) {
+                // TODO: move this logic to monomeric instead of accessing it
+                //       from the dialog
                 const auto missing_attachment_points =
                     dialog->getMissingRequiredAttachmentPoints(
                         accepted_smiles);
@@ -935,6 +940,7 @@ void SketcherWidget::showEditMonomerStructureDialog(
                 auto undo_raii = m_mol_model->createUndoMacro(
                     "Edit monomer structure");
                 m_mol_model->remove({}, bonds, secondary_connections, {}, {});
+                // TODO: rename this variable
                 const auto* live_atom =
                     m_mol_model->getMol()->getAtomWithIdx(atom_index);
                 m_mol_model->mutateMonomers({live_atom}, accepted_smiles,

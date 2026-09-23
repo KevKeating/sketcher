@@ -29,6 +29,10 @@ namespace schrodinger
 namespace sketcher
 {
 
+/**
+ * @return a list of all R-groups that appear more than once in the specified
+ * molecule
+ */
 static QStringList get_duplicate_r_groups(const RDKit::ROMol& mol)
 {
     std::map<unsigned int, unsigned int> r_group_counts;
@@ -45,8 +49,15 @@ static QStringList get_duplicate_r_groups(const RDKit::ROMol& mol)
         }
     }
     return duplicate_r_groups;
+    // TODO: have this return integers instead of strings, move stringification
+    //       from format_r_groups to format_duplicate_r_groups, get rid of
+    //       format_r_groups, and change name of format_duplicate_r_groups to
+    //       format_r_group_list
 }
 
+/**
+ * @return formatted text listing all R-groups in the given list of R-groups
+ */
 static QString format_duplicate_r_groups(QStringList duplicate_r_groups)
 {
     if (duplicate_r_groups.empty()) {
@@ -118,11 +129,13 @@ void CustomMonomerDialog::setMonomerTypeInputEnabled(const bool enabled)
 void CustomMonomerDialog::setRequiredAttachmentPoints(
     std::vector<int> required_attachment_points)
 {
+    // TODO: this should probably be the responsibility of the caller
     std::erase_if(required_attachment_points,
                   [](const int attachment_point) {
                       return attachment_point <= 0;
                   });
     std::ranges::sort(required_attachment_points);
+    // TODO: use unique_copy here instead?
     const auto unique_end = std::ranges::unique(required_attachment_points);
     required_attachment_points.erase(unique_end.begin(), unique_end.end());
     m_required_attachment_points = std::move(required_attachment_points);
@@ -186,9 +199,11 @@ void CustomMonomerDialog::accept()
     const auto smiles =
         ui->sketcher_widget->getString(Format::EXTENDED_SMILES);
     const auto type = ui->monomer_type_combo->currentData().value<ChainType>();
+    // TODO: this should mol instead of round-tripping through SMILES
     const auto missing_attachment_points =
         getMissingRequiredAttachmentPoints(smiles);
     if (!missing_attachment_points.empty()) {
+        // TODO: move text formatting to static method
         const bool plural = missing_attachment_points.size() != 1;
         const auto attachment_points =
             format_r_groups(missing_attachment_points);

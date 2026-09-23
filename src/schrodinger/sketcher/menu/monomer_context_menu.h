@@ -22,6 +22,7 @@ namespace schrodinger
 namespace sketcher
 {
 
+// TODO: fix this or get rid of it
 /**
  * Context menu for monomer beads. Dispatches by monomer type:
  *   - all monomers: Edit Structure, Delete
