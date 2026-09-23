@@ -1182,6 +1182,46 @@ BOOST_AUTO_TEST_CASE(test_edit_structure_dialog_mutates_selected_monomer)
 }
 
 /**
+ * Monomers without a database structure can still be edited. The editor opens
+ * with the existing polymer type selected and an empty drawing area.
+ */
+BOOST_DATA_TEST_CASE(
+    test_edit_structure_dialog_is_blank_for_unknown_monomer,
+    boost::unit_test::data::make(
+        {std::make_tuple("PEPTIDE1{X}$$$$V2.0", "X", "Amino acid"),
+         std::make_tuple("RNA1{R(N)P}$$$$V2.0", "N", "Nucleic acid")}),
+    helm, monomer_name, expected_type)
+{
+    TestSketcherWidget& sk = *TestWidgetFixture::get();
+    sk.setInterfaceType(InterfaceType::ATOMISTIC_OR_MONOMERIC);
+    sk.addFromString(helm);
+
+    const auto* atom =
+        find_atom_by_res_name(*sk.m_mol_model->getMol(), monomer_name);
+    BOOST_REQUIRE(atom != nullptr);
+    QCoreApplication::sendPostedEvents(nullptr, QEvent::DeferredDelete);
+    const auto dialog_count_before =
+        sk.findChildren<CustomMonomerDialog*>().size();
+
+    emit sk.m_monomer_context_menu->editStructureRequested(atom);
+    QCoreApplication::processEvents();
+
+    const auto dialogs = sk.findChildren<CustomMonomerDialog*>();
+    BOOST_REQUIRE(dialogs.size() == dialog_count_before + 1);
+    auto* dialog = dialogs.back();
+    auto* combo = dialog->findChild<QComboBox*>("monomer_type_combo");
+    BOOST_REQUIRE(combo != nullptr);
+    BOOST_TEST(!combo->isEnabled());
+    BOOST_TEST(combo->currentText() == expected_type);
+
+    auto* dialog_sketcher = dialog->findChild<SketcherWidget*>();
+    BOOST_REQUIRE(dialog_sketcher != nullptr);
+    BOOST_TEST(dialog_sketcher->isEmpty());
+    dialog->reject();
+    QCoreApplication::sendPostedEvents(nullptr, QEvent::DeferredDelete);
+}
+
+/**
  * Removing a bound attachment point through Edit Structure warns first, then
  * removes the connection and mutates the monomer as a single undo step.
  */
