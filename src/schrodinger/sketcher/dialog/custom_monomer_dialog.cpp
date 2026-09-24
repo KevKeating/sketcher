@@ -196,7 +196,6 @@ void CustomMonomerDialog::accept()
 
     const auto smiles =
         ui->sketcher_widget->getString(Format::EXTENDED_SMILES);
-    const auto type = ui->monomer_type_combo->currentData().value<ChainType>();
     // TODO: this should mol instead of round-tripping through SMILES
     const auto missing_attachment_points =
         getMissingRequiredAttachmentPoints(smiles);
@@ -214,8 +213,8 @@ void CustomMonomerDialog::accept()
         auto* warning_dialog = show_warning_dialog(
             "Remove Bound Connections?", warning_text, this);
         connect(warning_dialog, &MessageBoxDialog::accepted, this,
-                [this, smiles, type]() {
-                    emit customMonomerAccepted(smiles, type);
+                [this, smiles]() {
+                    emit customMonomerAccepted(smiles, m_chain_type);
                     ModalDialog::accept();
                 });
         return;

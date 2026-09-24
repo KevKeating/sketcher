@@ -24,6 +24,8 @@ namespace schrodinger
 namespace sketcher
 {
 
+using rdkit_extensions::ChainType;
+
 static QPushButton* get_ok_button(const QWidget& dialog)
 {
     auto* button_box = dialog.findChild<QDialogButtonBox*>("button_box");
@@ -36,7 +38,7 @@ static QPushButton* get_ok_button(const QWidget& dialog)
  */
 BOOST_AUTO_TEST_CASE(custom_monomer_dialog_validation_and_acceptance)
 {
-    CustomMonomerDialog dialog(rdkit_extensions::ChainType::PEPTIDE);
+    CustomMonomerDialog dialog(ChainType::PEPTIDE);
     auto* sketcher = dialog.findChild<SketcherWidget*>();
     auto* ok_button = get_ok_button(dialog);
     BOOST_REQUIRE(sketcher != nullptr);
@@ -48,42 +50,30 @@ BOOST_AUTO_TEST_CASE(custom_monomer_dialog_validation_and_acceptance)
     BOOST_TEST(ok_button->isEnabled());
 
     bool monomer_accepted = false;
-    auto accepted_chain_type = rdkit_extensions::ChainType::CHEM;
+    auto accepted_chain_type = ChainType::CHEM;
     QObject::connect(
         &dialog, &CustomMonomerDialog::customMonomerAccepted, &dialog,
         [&monomer_accepted, &accepted_chain_type](
-            const std::string&, const rdkit_extensions::ChainType type) {
+            const std::string&, const ChainType type) {
             monomer_accepted = true;
             accepted_chain_type = type;
         });
     dialog.accept();
     BOOST_TEST(monomer_accepted);
     BOOST_TEST(static_cast<int>(accepted_chain_type) ==
-               static_cast<int>(rdkit_extensions::ChainType::PEPTIDE));
+               static_cast<int>(ChainType::PEPTIDE));
 }
 
 BOOST_AUTO_TEST_CASE(custom_monomer_dialog_titles_reflect_chain_type)
 {
-    CustomMonomerDialog peptide_dialog(rdkit_extensions::ChainType::PEPTIDE);
-    CustomMonomerDialog nucleic_acid_dialog(rdkit_extensions::ChainType::RNA);
-    CustomMonomerDialog chem_dialog(rdkit_extensions::ChainType::CHEM);
+    CustomMonomerDialog peptide_dialog(ChainType::PEPTIDE);
+    CustomMonomerDialog nucleic_acid_dialog(ChainType::RNA);
+    CustomMonomerDialog chem_dialog(ChainType::CHEM);
 
     BOOST_TEST(peptide_dialog.windowTitle() == "Sketch Custom Peptide Monomer");
     BOOST_TEST(nucleic_acid_dialog.windowTitle() ==
                "Sketch Custom Nucleic Acid Monomer");
     BOOST_TEST(chem_dialog.windowTitle() == "Sketch Custom Chem Monomer");
-}
-
-BOOST_AUTO_TEST_CASE(custom_monomer_dialog_monomer_type_input_can_be_disabled)
-{
-    CustomMonomerDialog dialog;
-    auto* combo = dialog.findChild<QComboBox*>("monomer_type_combo");
-    BOOST_REQUIRE(combo != nullptr);
-
-    dialog.setMonomerTypeInputEnabled(false);
-    BOOST_TEST(!combo->isEnabled());
-    dialog.setMonomerTypeInputEnabled(true);
-    BOOST_TEST(combo->isEnabled());
 }
 
 /**
@@ -100,7 +90,7 @@ BOOST_AUTO_TEST_CASE(custom_monomer_dialog_rejects_duplicate_attachment_points)
          "points must be unique."}};
 
     for (const auto& [smiles, expected_error] : test_cases) {
-        CustomMonomerDialog dialog;
+        CustomMonomerDialog dialog(ChainType::PEPTIDE);
         bool accepted = false;
         QObject::connect(&dialog, &CustomMonomerDialog::customMonomerAccepted,
                          [&accepted]() { accepted = true; });
@@ -122,7 +112,7 @@ BOOST_AUTO_TEST_CASE(custom_monomer_dialog_rejects_duplicate_attachment_points)
 /** Unique numbered attachment points continue to be accepted. */
 BOOST_AUTO_TEST_CASE(custom_monomer_dialog_accepts_unique_attachment_points)
 {
-    CustomMonomerDialog dialog;
+    CustomMonomerDialog dialog(ChainType::PEPTIDE);
     bool accepted = false;
     QObject::connect(&dialog, &CustomMonomerDialog::customMonomerAccepted,
                      [&accepted]() { accepted = true; });
@@ -147,7 +137,7 @@ BOOST_AUTO_TEST_CASE(
 
     for (const auto& [required_attachment_points, expected_warning] :
          test_cases) {
-        CustomMonomerDialog dialog;
+        CustomMonomerDialog dialog(ChainType::PEPTIDE);
         bool accepted = false;
         QObject::connect(&dialog, &CustomMonomerDialog::customMonomerAccepted,
                          [&accepted]() { accepted = true; });
@@ -176,7 +166,7 @@ BOOST_AUTO_TEST_CASE(
 BOOST_AUTO_TEST_CASE(
     custom_monomer_dialog_continues_after_attachment_point_warning)
 {
-    CustomMonomerDialog dialog;
+    CustomMonomerDialog dialog(ChainType::PEPTIDE);
     bool accepted = false;
     QObject::connect(&dialog, &CustomMonomerDialog::customMonomerAccepted,
                      [&accepted]() { accepted = true; });
