@@ -5,7 +5,6 @@
 #include <tuple>
 
 #include <QAbstractButton>
-#include <QComboBox>
 #include <QDialogButtonBox>
 #include <QGraphicsSvgItem>
 #include <QKeyEvent>
@@ -54,6 +53,7 @@ using schrodinger::rdkit_extensions::to_rdkit_reaction;
 using schrodinger::rdkit_extensions::to_string;
 
 BOOST_TEST_DONT_PRINT_LOG_VALUE(schrodinger::sketcher::ColorScheme)
+BOOST_TEST_DONT_PRINT_LOG_VALUE(ChainType)
 
 // Reuse a single widget instance across all tests for better performance
 // Destroy the widget before the base fixture cleans up the database and app.
@@ -1140,8 +1140,8 @@ BOOST_AUTO_TEST_CASE(test_mutateMonomerRequested_signal_mutates_na_sugar)
 }
 
 /**
- * Edit Structure opens a locked-type CustomMonomerDialog and mutates the
- * selected monomer with the accepted SMILES using its existing monomer type.
+ * Edit Structure opens a CustomMonomerDialog and mutates the selected monomer
+ * with the accepted SMILES using its existing monomer type.
  */
 BOOST_AUTO_TEST_CASE(test_edit_structure_dialog_mutates_selected_monomer)
 {
@@ -1164,11 +1164,6 @@ BOOST_AUTO_TEST_CASE(test_edit_structure_dialog_mutates_selected_monomer)
 
     auto* dialog = sk.findChild<CustomMonomerDialog*>();
     BOOST_REQUIRE(dialog != nullptr);
-    auto* combo = dialog->findChild<QComboBox*>("monomer_type_combo");
-    BOOST_REQUIRE(combo != nullptr);
-    BOOST_TEST(!combo->isEnabled());
-    BOOST_TEST(combo->currentText() == "Amino acid");
-
     auto* dialog_sketcher = dialog->findChild<SketcherWidget*>();
     BOOST_REQUIRE(dialog_sketcher != nullptr);
     dialog_sketcher->clear();
@@ -1179,6 +1174,8 @@ BOOST_AUTO_TEST_CASE(test_edit_structure_dialog_mutates_selected_monomer)
     const auto* mutated_atom = sk.m_mol_model->getMol()->getAtomWithIdx(0);
     BOOST_TEST(mutated_atom->getProp<std::string>(ATOM_LABEL) == "CC");
     BOOST_TEST(mutated_atom->getProp<bool>(SMILES_MONOMER));
+    BOOST_TEST(schrodinger::rdkit_extensions::getChainType(*mutated_atom) ==
+               ChainType::PEPTIDE);
 }
 
 /**
@@ -1188,9 +1185,9 @@ BOOST_AUTO_TEST_CASE(test_edit_structure_dialog_mutates_selected_monomer)
 BOOST_DATA_TEST_CASE(
     test_edit_structure_dialog_is_blank_for_unknown_monomer,
     boost::unit_test::data::make(
-        {std::make_tuple("PEPTIDE1{X}$$$$V2.0", "X", "Amino acid"),
-         std::make_tuple("RNA1{R(N)P}$$$$V2.0", "N", "Nucleic acid")}),
-    helm, monomer_name, expected_type)
+        {std::make_tuple("PEPTIDE1{X}$$$$V2.0", "X"),
+         std::make_tuple("RNA1{R(N)P}$$$$V2.0", "N")}),
+    helm, monomer_name)
 {
     TestSketcherWidget& sk = *TestWidgetFixture::get();
     sk.setInterfaceType(InterfaceType::ATOMISTIC_OR_MONOMERIC);
@@ -1209,11 +1206,6 @@ BOOST_DATA_TEST_CASE(
     const auto dialogs = sk.findChildren<CustomMonomerDialog*>();
     BOOST_REQUIRE(dialogs.size() == dialog_count_before + 1);
     auto* dialog = dialogs.back();
-    auto* combo = dialog->findChild<QComboBox*>("monomer_type_combo");
-    BOOST_REQUIRE(combo != nullptr);
-    BOOST_TEST(!combo->isEnabled());
-    BOOST_TEST(combo->currentText() == expected_type);
-
     auto* dialog_sketcher = dialog->findChild<SketcherWidget*>();
     BOOST_REQUIRE(dialog_sketcher != nullptr);
     BOOST_TEST(dialog_sketcher->isEmpty());
