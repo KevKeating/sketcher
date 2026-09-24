@@ -80,6 +80,9 @@ SKETCHER_API void validate_monomers(const RDKit::ROMol& mol);
  */
 SKETCHER_API std::string ap_model_name_for(int ap_num);
 
+std::vector<std::pair<int, std::string>>
+get_attachment_points_for_mol(const RDKit::ROMol& mol)
+
 /**
  * Return the numbered attachment points in a monomer SMILES string. Each
  * attachment point is described using a pair of the attachment point number and

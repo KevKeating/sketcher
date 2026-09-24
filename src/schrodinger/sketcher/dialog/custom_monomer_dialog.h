@@ -7,6 +7,11 @@
 #include "schrodinger/sketcher/definitions.h"
 #include "schrodinger/sketcher/dialog/modal_dialog.h"
 
+namespace RDKit
+{
+class ROMol;
+}
+
 namespace Ui
 {
 class CustomMonomerDialog;
@@ -47,10 +52,11 @@ class SKETCHER_API CustomMonomerDialog : public ModalDialog
         std::vector<int> required_attachment_points);
 
     /**
-     * Return the required attachment point numbers missing from smiles.
+     * Return the required attachment point numbers missing from the given
+     * molecule.
      */
     std::vector<int>
-    getMissingRequiredAttachmentPoints(const std::string& smiles) const;
+    getMissingRequiredAttachmentPoints(const RDKit::ROMol& mol) const;
 
     /**
      * Load the specified molecule into the dialog's Sketcher workspace

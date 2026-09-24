@@ -131,11 +131,11 @@ void CustomMonomerDialog::setRequiredAttachmentPoints(
 }
 
 std::vector<int> CustomMonomerDialog::getMissingRequiredAttachmentPoints(
-    const std::string& smiles) const
+    const RDKit::ROMol& mol) const
 {
     std::unordered_set<int> present_attachment_points;
     for (const auto& attachment_point :
-         get_attachment_points_for_smiles(smiles)) {
+         get_attachment_points_for_mol(mol)) {
         present_attachment_points.insert(attachment_point.first);
     }
 
@@ -172,6 +172,18 @@ void CustomMonomerDialog::updateOkButton()
     ui->button_box->button(QDialogButtonBox::Ok)->setEnabled(valid);
 }
 
+static QString get_warning_text(const std::vector<int>& missing_attachment_points)
+{
+    const bool plural = missing_attachment_points.size() != 1;
+    const auto attachment_points =
+        format_r_group_list(missing_attachment_points);
+    return
+        attachment_points + (plural ? " have" : " has") +
+        " been removed from this monomer but " + (plural ? "are" : "is") +
+        " currently bound. Continuing will remove " +
+        (plural ? "these connections." : "this connection.");
+}
+
 void CustomMonomerDialog::accept()
 {
     const auto mol = ui->sketcher_widget->getRDKitMolecule();
@@ -186,20 +198,11 @@ void CustomMonomerDialog::accept()
         return;
     }
 
-    const auto smiles = ui->sketcher_widget->getString(Format::EXTENDED_SMILES);
-    // TODO: this should mol instead of round-tripping through SMILES
     const auto missing_attachment_points =
-        getMissingRequiredAttachmentPoints(smiles);
+        getMissingRequiredAttachmentPoints(*mol);
+    const auto smiles = ui->sketcher_widget->getString(Format::EXTENDED_SMILES);
     if (!missing_attachment_points.empty()) {
-        // TODO: move text formatting to static method
-        const bool plural = missing_attachment_points.size() != 1;
-        const auto attachment_points =
-            format_r_group_list(missing_attachment_points);
-        const auto warning_text =
-            attachment_points + (plural ? " have" : " has") +
-            " been removed from this monomer but " + (plural ? "are" : "is") +
-            " currently bound. Continuing will remove " +
-            (plural ? "these connections." : "this connection.");
+        auto warning_text = get_warning_text(missing_attachment_points);
         auto* warning_dialog = show_warning_dialog("Remove Bound Connections?",
                                                    warning_text, this);
         connect(warning_dialog, &MessageBoxDialog::accepted, this,
