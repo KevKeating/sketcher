@@ -120,10 +120,6 @@ CustomMonomerDialog::~CustomMonomerDialog() = default;
 void CustomMonomerDialog::setRequiredAttachmentPoints(
     std::vector<int> required_attachment_points)
 {
-    // TODO: this should probably be the responsibility of the caller
-    std::erase_if(required_attachment_points, [](const int attachment_point) {
-        return attachment_point <= 0;
-    });
     std::ranges::sort(required_attachment_points);
     m_required_attachment_points.clear();
     std::ranges::unique_copy(required_attachment_points,
