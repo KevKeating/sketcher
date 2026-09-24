@@ -35,7 +35,7 @@ namespace sketcher
  * @return a list of all R-groups that appear more than once in the specified
  * molecule
  */
-static QStringList get_duplicate_r_groups(const RDKit::ROMol& mol)
+static std::vector<int> get_duplicate_r_groups(const RDKit::ROMol& mol)
 {
     std::map<unsigned int, unsigned int> r_group_counts;
     for (const auto* atom : mol.atoms()) {
@@ -44,43 +44,36 @@ static QStringList get_duplicate_r_groups(const RDKit::ROMol& mol)
         }
     }
 
-    QStringList duplicate_r_groups;
+    std::vector<int> duplicate_r_groups;
     for (const auto& [r_group_num, count] : r_group_counts) {
         if (count > 1) {
-            duplicate_r_groups.append("R" + QString::number(r_group_num));
+            duplicate_r_groups.push_back(static_cast<int>(r_group_num));
         }
     }
     return duplicate_r_groups;
-    // TODO: have this return integers instead of strings, move stringification
-    //       from format_r_groups to format_duplicate_r_groups, get rid of
-    //       format_r_groups, and change name of format_duplicate_r_groups to
-    //       format_r_group_list
 }
 
 /**
  * @return formatted text listing all R-groups in the given list of R-groups
  */
-static QString format_duplicate_r_groups(QStringList duplicate_r_groups)
+static QString format_r_group_list(const std::vector<int>& r_group_numbers)
 {
-    if (duplicate_r_groups.empty()) {
+    if (r_group_numbers.empty()) {
         return {};
     }
-    if (duplicate_r_groups.size() == 1) {
-        return duplicate_r_groups.front();
-    }
 
-    const auto last_r_group = duplicate_r_groups.takeLast();
-    const auto separator = duplicate_r_groups.size() == 1 ? " " : ", ";
-    return duplicate_r_groups.join(", ") + separator + "and " + last_r_group;
-}
-
-static QString format_r_groups(const std::vector<int>& r_group_numbers)
-{
     QStringList r_groups;
     for (const auto r_group_num : r_group_numbers) {
         r_groups.append("R" + QString::number(r_group_num));
     }
-    return format_duplicate_r_groups(r_groups);
+
+    if (r_groups.size() == 1) {
+        return r_groups.front();
+    }
+
+    const auto last_r_group = r_groups.takeLast();
+    const auto separator = r_groups.size() == 1 ? " " : ", ";
+    return r_groups.join(", ") + separator + "and " + last_r_group;
 }
 
 static QString chain_type_display_name(const ChainType chain_type)
@@ -128,15 +121,13 @@ void CustomMonomerDialog::setRequiredAttachmentPoints(
     std::vector<int> required_attachment_points)
 {
     // TODO: this should probably be the responsibility of the caller
-    std::erase_if(required_attachment_points,
-                  [](const int attachment_point) {
-                      return attachment_point <= 0;
-                  });
+    std::erase_if(required_attachment_points, [](const int attachment_point) {
+        return attachment_point <= 0;
+    });
     std::ranges::sort(required_attachment_points);
-    // TODO: use unique_copy here instead?
-    const auto unique_end = std::ranges::unique(required_attachment_points);
-    required_attachment_points.erase(unique_end.begin(), unique_end.end());
-    m_required_attachment_points = std::move(required_attachment_points);
+    m_required_attachment_points.clear();
+    std::ranges::unique_copy(required_attachment_points,
+                             std::back_inserter(m_required_attachment_points));
 }
 
 std::vector<int> CustomMonomerDialog::getMissingRequiredAttachmentPoints(
@@ -186,16 +177,16 @@ void CustomMonomerDialog::accept()
     const auto mol = ui->sketcher_widget->getRDKitMolecule();
     const auto duplicate_r_groups = get_duplicate_r_groups(*mol);
     if (!duplicate_r_groups.empty()) {
-        show_error_dialog(
-            "Invalid Attachment Points",
-            "Multiple " + format_duplicate_r_groups(duplicate_r_groups) +
-                " attachment points found. All attachment points must be unique.",
-            this);
+        show_error_dialog("Invalid Attachment Points",
+                          "Multiple " +
+                              format_r_group_list(duplicate_r_groups) +
+                              " attachment points found. All attachment points "
+                              "must be unique.",
+                          this);
         return;
     }
 
-    const auto smiles =
-        ui->sketcher_widget->getString(Format::EXTENDED_SMILES);
+    const auto smiles = ui->sketcher_widget->getString(Format::EXTENDED_SMILES);
     // TODO: this should mol instead of round-tripping through SMILES
     const auto missing_attachment_points =
         getMissingRequiredAttachmentPoints(smiles);
@@ -203,15 +194,14 @@ void CustomMonomerDialog::accept()
         // TODO: move text formatting to static method
         const bool plural = missing_attachment_points.size() != 1;
         const auto attachment_points =
-            format_r_groups(missing_attachment_points);
+            format_r_group_list(missing_attachment_points);
         const auto warning_text =
             attachment_points + (plural ? " have" : " has") +
-            " been removed from this monomer but " +
-            (plural ? "are" : "is") +
+            " been removed from this monomer but " + (plural ? "are" : "is") +
             " currently bound. Continuing will remove " +
             (plural ? "these connections." : "this connection.");
-        auto* warning_dialog = show_warning_dialog(
-            "Remove Bound Connections?", warning_text, this);
+        auto* warning_dialog = show_warning_dialog("Remove Bound Connections?",
+                                                   warning_text, this);
         connect(warning_dialog, &MessageBoxDialog::accepted, this,
                 [this, smiles]() {
                     emit customMonomerAccepted(smiles, m_chain_type);
