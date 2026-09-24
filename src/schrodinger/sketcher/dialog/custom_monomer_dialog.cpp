@@ -8,6 +8,8 @@
 #include <QPushButton>
 #include <QStringList>
 
+#include <stdexcept>
+
 #include <rdkit/GraphMol/MolOps.h>
 
 #include "schrodinger/rdkit_extensions/file_format.h"
@@ -81,25 +83,37 @@ static QString format_r_groups(const std::vector<int>& r_group_numbers)
     return format_duplicate_r_groups(r_groups);
 }
 
-CustomMonomerDialog::CustomMonomerDialog(QWidget* parent) : ModalDialog(parent)
+static QString chain_type_display_name(const ChainType chain_type)
+{
+    switch (chain_type) {
+        case ChainType::PEPTIDE:
+            return "Peptide";
+        case ChainType::RNA:
+            return "Nucleic Acid";
+        case ChainType::CHEM:
+            return "Chem";
+        default:
+            throw std::invalid_argument(
+                "Custom monomer dialog does not support this chain type");
+    }
+}
+
+CustomMonomerDialog::CustomMonomerDialog(const ChainType chain_type,
+                                         QWidget* parent) :
+    ModalDialog(parent),
+    m_chain_type(chain_type)
 {
     ui.reset(new Ui::CustomMonomerDialog());
     setupDialogUI(*ui);
     setStyleSheet(CUSTOM_MONOMER_DIALOG_STYLE);
-    setWindowTitle("Sketch Custom Monomer");
+    setWindowTitle("Sketch Custom " + chain_type_display_name(chain_type) +
+                   " Monomer");
     ui->sketcher_widget->setInterfaceType(InterfaceType::ATOMISTIC);
 
     // remove the standard margins set by ModalDialog so that there's no gap
     // between the SketcherWidget and the edge of the dialog
     m_dlg_layout->setContentsMargins(0, 0, 0, 0);
     qobject_cast<QVBoxLayout*>(layout())->setContentsMargins(0, 0, 0, 0);
-
-    ui->monomer_type_combo->addItem("Amino acid",
-                                    QVariant::fromValue(ChainType::PEPTIDE));
-    ui->monomer_type_combo->addItem("Nucleic acid",
-                                    QVariant::fromValue(ChainType::RNA));
-    ui->monomer_type_combo->addItem("CHEM",
-                                    QVariant::fromValue(ChainType::CHEM));
 
     connect(ui->sketcher_widget, &SketcherWidget::moleculeChanged, this,
             &CustomMonomerDialog::updateOkButton);
@@ -109,22 +123,6 @@ CustomMonomerDialog::CustomMonomerDialog(QWidget* parent) : ModalDialog(parent)
 }
 
 CustomMonomerDialog::~CustomMonomerDialog() = default;
-
-void CustomMonomerDialog::setMonomerType(
-    const rdkit_extensions::ChainType chain_type)
-{
-    auto index =
-        ui->monomer_type_combo->findData(QVariant::fromValue(chain_type));
-    if (index < 0) {
-        throw std::runtime_error("Chain type not found");
-    }
-    ui->monomer_type_combo->setCurrentIndex(index);
-}
-
-void CustomMonomerDialog::setMonomerTypeInputEnabled(const bool enabled)
-{
-    ui->monomer_type_combo->setEnabled(enabled);
-}
 
 void CustomMonomerDialog::setRequiredAttachmentPoints(
     std::vector<int> required_attachment_points)
@@ -223,7 +221,7 @@ void CustomMonomerDialog::accept()
         return;
     }
 
-    emit customMonomerAccepted(smiles, type);
+    emit customMonomerAccepted(smiles, m_chain_type);
     ModalDialog::accept();
 }
 
