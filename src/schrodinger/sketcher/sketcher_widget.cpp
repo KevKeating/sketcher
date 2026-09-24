@@ -906,7 +906,7 @@ void SketcherWidget::showEditMonomerStructureDialog(
              bound_attachment_point.is_secondary_connection});
     }
 
-    auto* dialog = new CustomMonomerDialog(this);
+    auto* dialog = new CustomMonomerDialog(chain_type, this);
     connect(dialog, &CustomMonomerDialog::customMonomerAccepted, this,
             [this, dialog, atom_index, monomer_type,
              required_connections](const std::string& accepted_smiles,
@@ -946,8 +946,6 @@ void SketcherWidget::showEditMonomerStructureDialog(
                 m_mol_model->mutateMonomers({live_atom}, accepted_smiles,
                                             monomer_type, /*is_smiles=*/true);
             });
-    dialog->setMonomerType(chain_type);
-    dialog->setMonomerTypeInputEnabled(false);
     dialog->setRequiredAttachmentPoints(required_attachment_points);
     if (smiles) {
         dialog->addSMILES(normalize_smiles_attachment_points(*smiles));
