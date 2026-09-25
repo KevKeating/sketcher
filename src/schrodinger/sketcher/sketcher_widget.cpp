@@ -911,6 +911,41 @@ get_required_attachment_points(const RDKit::Atom* monomer)
     return std::make_pair(required_attachment_points, required_connections);
 }
 
+static std::pair<std::unordered_set<const RDKit::Bond*>,
+                 std::unordered_set<const RDKit::Bond*>>
+get_connections_to_remove(
+    const std::string& accepted_smiles,
+    const std::vector<int>& required_attachment_points,
+    const std::vector<RequiredConnection>& required_connections,
+    const RDKit::ROMol* mol, unsigned int atom_index)
+{
+    // figure out if the user erased any bound attachment points,
+    // since we'll need to erase the associated connections if they
+    // did (the dialog already warned the user about this)
+    const auto missing_attachment_points =
+        get_missing_required_attachment_points(accepted_smiles,
+                                               required_attachment_points);
+    const std::unordered_set<int> missing_attachment_point_set(
+        missing_attachment_points.begin(), missing_attachment_points.end());
+
+    std::unordered_set<const RDKit::Bond*> bonds;
+    std::unordered_set<const RDKit::Bond*> secondary_connections;
+    for (const auto& connection : required_connections) {
+        if (!missing_attachment_point_set.contains(
+                connection.attachment_point)) {
+            continue;
+        }
+        const auto* bond = mol->getBondBetweenAtoms(
+            atom_index, connection.bound_monomer_index);
+        if (connection.is_secondary_connection) {
+            secondary_connections.insert(bond);
+        } else {
+            bonds.insert(bond);
+        }
+    }
+    return {bonds, secondary_connections};
+}
+
 void SketcherWidget::showEditMonomerStructureDialog(
     const RDKit::Atom* const atom)
 {
@@ -935,33 +970,11 @@ void SketcherWidget::showEditMonomerStructureDialog(
     connect(dialog, &CustomMonomerDialog::customMonomerAccepted, this,
             [this, dialog, atom_index, monomer_type, required_attachment_points,
              required_connections](const std::string& accepted_smiles,
-                                   const auto&) {
-                // figure out if the user erased any bound attachment points,
-                // since we'll need to erase the associated connections if they
-                // did (the dialog already warned the user about this)
-                const auto missing_attachment_points =
-                    get_missing_required_attachment_points(
-                        accepted_smiles, required_attachment_points);
-                const std::unordered_set<int> missing_attachment_point_set(
-                    missing_attachment_points.begin(),
-                    missing_attachment_points.end());
-
-                std::unordered_set<const RDKit::Bond*> bonds;
-                std::unordered_set<const RDKit::Bond*> secondary_connections;
-                const auto* mol = m_mol_model->getMol();
-                for (const auto& connection : required_connections) {
-                    if (!missing_attachment_point_set.contains(
-                            connection.attachment_point)) {
-                        continue;
-                    }
-                    const auto* bond = mol->getBondBetweenAtoms(
-                        atom_index, connection.bound_monomer_index);
-                    if (connection.is_secondary_connection) {
-                        secondary_connections.insert(bond);
-                    } else {
-                        bonds.insert(bond);
-                    }
-                }
+                                    const auto&) {
+                const auto [bonds, secondary_connections] =
+                    get_connections_to_remove(
+                        accepted_smiles, required_attachment_points,
+                        required_connections, m_mol_model->getMol(), atom_index);
 
                 // erase any required connections and mutate the monomer in a
                 // single undo step
