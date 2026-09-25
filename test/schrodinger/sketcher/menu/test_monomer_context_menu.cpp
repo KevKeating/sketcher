@@ -175,14 +175,14 @@ BOOST_AUTO_TEST_CASE(test_edit_structure_selection_requirements)
     TestMonomerContextMenu menu;
     const auto* first_atom = mol->getAtomWithIdx(0);
     const auto* second_atom = mol->getAtomWithIdx(1);
-    const auto* connecting_bond = mol->getBondBetweenAtoms(
-        first_atom->getIdx(), second_atom->getIdx());
+    const auto* connecting_bond =
+        mol->getBondBetweenAtoms(first_atom->getIdx(), second_atom->getIdx());
     BOOST_REQUIRE(connecting_bond != nullptr);
 
     const RDKit::Atom* requested_atom = nullptr;
     int request_count = 0;
-    QObject::connect(&menu, &MonomerContextMenu::editStructureRequested,
-                     &menu, [&](const auto* atom) {
+    QObject::connect(&menu, &MonomerContextMenu::editStructureRequested, &menu,
+                     [&](const auto* atom) {
                          requested_atom = atom;
                          ++request_count;
                      });

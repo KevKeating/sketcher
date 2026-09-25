@@ -7,10 +7,11 @@ namespace schrodinger
 namespace sketcher
 {
 
-MessageBoxDialog::MessageBoxDialog(const QString& title, const QString& text,
-                                   QStyle::StandardPixmap standard_icon,
-                                   QDialogButtonBox::StandardButtons standard_buttons,
-                                   QWidget* parent, Qt::WindowFlags f) :
+MessageBoxDialog::MessageBoxDialog(
+    const QString& title, const QString& text,
+    QStyle::StandardPixmap standard_icon,
+    QDialogButtonBox::StandardButtons standard_buttons, QWidget* parent,
+    Qt::WindowFlags f) :
     ModalDialog(parent, f)
 {
     m_ui.reset(new Ui::MessageBoxDialog());
@@ -33,8 +34,9 @@ MessageBoxDialog::~MessageBoxDialog() = default;
 void show_error_dialog(const QString& title, const QString& text,
                        QWidget* parent, Qt::WindowFlags f)
 {
-    auto error_dlg = new MessageBoxDialog(
-        title, text, QStyle::SP_MessageBoxWarning, QDialogButtonBox::Ok, parent, f);
+    auto error_dlg =
+        new MessageBoxDialog(title, text, QStyle::SP_MessageBoxWarning,
+                             QDialogButtonBox::Ok, parent, f);
     error_dlg->show();
 }
 
@@ -51,9 +53,9 @@ MessageBoxDialog* show_warning_dialog(const QString& title, const QString& text,
 void show_information_dialog(const QString& title, const QString& text,
                              QWidget* parent, Qt::WindowFlags f)
 {
-    auto information_dlg = new MessageBoxDialog(
-        title, text, QStyle::SP_MessageBoxInformation, QDialogButtonBox::Ok, parent,
-        f);
+    auto information_dlg =
+        new MessageBoxDialog(title, text, QStyle::SP_MessageBoxInformation,
+                             QDialogButtonBox::Ok, parent, f);
     information_dlg->show();
 }
 

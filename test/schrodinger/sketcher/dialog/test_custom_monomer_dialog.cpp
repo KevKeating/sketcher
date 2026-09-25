@@ -51,13 +51,13 @@ BOOST_AUTO_TEST_CASE(custom_monomer_dialog_validation_and_acceptance)
 
     bool monomer_accepted = false;
     auto accepted_chain_type = ChainType::CHEM;
-    QObject::connect(
-        &dialog, &CustomMonomerDialog::customMonomerAccepted, &dialog,
-        [&monomer_accepted, &accepted_chain_type](
-            const std::string&, const ChainType type) {
-            monomer_accepted = true;
-            accepted_chain_type = type;
-        });
+    QObject::connect(&dialog, &CustomMonomerDialog::customMonomerAccepted,
+                     &dialog,
+                     [&monomer_accepted, &accepted_chain_type](
+                         const std::string&, const ChainType type) {
+                         monomer_accepted = true;
+                         accepted_chain_type = type;
+                     });
     dialog.accept();
     BOOST_TEST(monomer_accepted);
     BOOST_TEST(static_cast<int>(accepted_chain_type) ==
@@ -84,7 +84,7 @@ BOOST_AUTO_TEST_CASE(custom_monomer_dialog_rejects_duplicate_attachment_points)
 {
     const std::vector<std::pair<std::string, QString>> test_cases = {
         {"*C* |$_R1;;_R1$|", "Multiple R1 attachment points found. All "
-                              "attachment points must be unique."},
+                             "attachment points must be unique."},
         {"*C(*)(*)C(*)(*)* |$_R3;;_R1;_R2;;_R3;_R1;_R2$|",
          "Multiple R1, R2, and R3 attachment points found. All attachment "
          "points must be unique."}};
@@ -149,8 +149,7 @@ BOOST_AUTO_TEST_CASE(
         BOOST_TEST(!accepted);
         auto* warning_dialog = dialog.findChild<MessageBoxDialog*>();
         BOOST_REQUIRE(warning_dialog != nullptr);
-        auto* warning_text =
-            warning_dialog->findChild<QTextEdit*>("text_edit");
+        auto* warning_text = warning_dialog->findChild<QTextEdit*>("text_edit");
         BOOST_REQUIRE(warning_text != nullptr);
         BOOST_TEST(warning_text->toPlainText() == expected_warning);
 

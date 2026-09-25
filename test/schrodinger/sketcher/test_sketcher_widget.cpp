@@ -1184,9 +1184,8 @@ BOOST_AUTO_TEST_CASE(test_edit_structure_dialog_mutates_selected_monomer)
  */
 BOOST_DATA_TEST_CASE(
     test_edit_structure_dialog_is_blank_for_unknown_monomer,
-    boost::unit_test::data::make(
-        {std::make_tuple("PEPTIDE1{X}$$$$V2.0", "X"),
-         std::make_tuple("RNA1{R(N)P}$$$$V2.0", "N")}),
+    boost::unit_test::data::make({std::make_tuple("PEPTIDE1{X}$$$$V2.0", "X"),
+                                  std::make_tuple("RNA1{R(N)P}$$$$V2.0", "N")}),
     helm, monomer_name)
 {
     TestSketcherWidget& sk = *TestWidgetFixture::get();
@@ -1244,9 +1243,8 @@ BOOST_AUTO_TEST_CASE(
     auto* dialog_sketcher = dialog->findChild<SketcherWidget*>();
     BOOST_REQUIRE(dialog_sketcher != nullptr);
     dialog_sketcher->clear();
-    dialog_sketcher->addFromString(
-        "*N[C@@H](C)C(=O)O* |$_R1;;;;;;;_R2$|",
-        Format::EXTENDED_SMILES);
+    dialog_sketcher->addFromString("*N[C@@H](C)C(=O)O* |$_R1;;;;;;;_R2$|",
+                                   Format::EXTENDED_SMILES);
     dialog->accept();
 
     auto* warning_dialog = dialog->findChild<MessageBoxDialog*>();

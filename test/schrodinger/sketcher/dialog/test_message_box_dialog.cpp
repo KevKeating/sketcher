@@ -25,7 +25,8 @@ BOOST_AUTO_TEST_CASE(test_show_warning_dialog)
     auto* button_box = dialog->findChild<QDialogButtonBox*>("button_box");
     BOOST_REQUIRE(button_box != nullptr);
     BOOST_TEST(button_box->standardButtons().testFlag(QDialogButtonBox::Ok));
-    BOOST_TEST(button_box->standardButtons().testFlag(QDialogButtonBox::Cancel));
+    BOOST_TEST(
+        button_box->standardButtons().testFlag(QDialogButtonBox::Cancel));
 }
 
 BOOST_AUTO_TEST_CASE(test_show_error_dialog)
@@ -39,7 +40,8 @@ BOOST_AUTO_TEST_CASE(test_show_error_dialog)
     auto* button_box = dialog->findChild<QDialogButtonBox*>("button_box");
     BOOST_REQUIRE(button_box != nullptr);
     BOOST_TEST(button_box->standardButtons().testFlag(QDialogButtonBox::Ok));
-    BOOST_TEST(!button_box->standardButtons().testFlag(QDialogButtonBox::Cancel));
+    BOOST_TEST(
+        !button_box->standardButtons().testFlag(QDialogButtonBox::Cancel));
 }
 
 BOOST_AUTO_TEST_CASE(test_show_information_dialog)
@@ -53,7 +55,8 @@ BOOST_AUTO_TEST_CASE(test_show_information_dialog)
     auto* button_box = dialog->findChild<QDialogButtonBox*>("button_box");
     BOOST_REQUIRE(button_box != nullptr);
     BOOST_TEST(button_box->standardButtons().testFlag(QDialogButtonBox::Ok));
-    BOOST_TEST(!button_box->standardButtons().testFlag(QDialogButtonBox::Cancel));
+    BOOST_TEST(
+        !button_box->standardButtons().testFlag(QDialogButtonBox::Cancel));
 }
 
 } // namespace sketcher

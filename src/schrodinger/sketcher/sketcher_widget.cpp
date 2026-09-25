@@ -939,8 +939,8 @@ get_connections_to_remove_after_monomer_edit(
     // figure out if the user erased any bound attachment points,
     // since we'll need to erase the associated connections if they
     // did (the dialog already warned the user about this)
-    const auto edited_monomer = rdkit_extensions::to_rdkit(
-        accepted_smiles, Format::EXTENDED_SMILES);
+    const auto edited_monomer =
+        rdkit_extensions::to_rdkit(accepted_smiles, Format::EXTENDED_SMILES);
     const auto missing_attachment_points =
         get_missing_required_attachment_points(*edited_monomer,
                                                required_attachment_points);
@@ -1709,7 +1709,7 @@ void SketcherWidget::handleNucleicAcidKeyboardShortcuts(
             {Qt::Key_U, {"U", StdNucleobase::U_OR_T, NucleicAcidTool::U}},
             {Qt::Key_T, {"T", StdNucleobase::U_OR_T, NucleicAcidTool::T}},
             {Qt::Key_N, {"N", StdNucleobase::N, NucleicAcidTool::N}},
-    };
+        };
 
     // behavior for the keyboard keys that represent sugars, depending on
     // the currently active tool
@@ -1723,7 +1723,7 @@ void SketcherWidget::handleNucleicAcidKeyboardShortcuts(
              {"R", NucleicAcidTool::RNA_NUCLEOTIDE, NucleicAcidTool::R}},
             {Qt::Key_D,
              {"dR", NucleicAcidTool::DNA_NUCLEOTIDE, NucleicAcidTool::dR}},
-    };
+        };
 
     // behavior for the P key (i.e. phosphate), depending on
     // the currently active tool

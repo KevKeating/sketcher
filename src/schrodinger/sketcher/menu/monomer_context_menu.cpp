@@ -200,8 +200,7 @@ void MonomerContextMenu::updateActions()
         all_monomers_have_type(m_atoms, MonomerType::NA_SUGAR);
 
     m_mutate_residue_menu->menuAction()->setVisible(all_peptide);
-    m_edit_structure_action->setEnabled(m_atoms.size() == 1 &&
-                                        m_bonds.empty());
+    m_edit_structure_action->setEnabled(m_atoms.size() == 1 && m_bonds.empty());
     m_set_d_form_action->setVisible(all_peptide);
     m_protonate_action->setVisible(all_peptide);
     m_mutate_base_menu->menuAction()->setVisible(all_na_base);

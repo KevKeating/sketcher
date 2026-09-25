@@ -85,7 +85,8 @@ SKETCHER_API std::string ap_model_name_for(int ap_num);
  * are not present in atomistic_mol
  */
 SKETCHER_API std::vector<int> get_missing_required_attachment_points(
-    const RDKit::ROMol& atomistic_mol, std::vector<int> required_attachment_points);
+    const RDKit::ROMol& atomistic_mol,
+    std::vector<int> required_attachment_points);
 
 /**
  * Return the numbered attachment points in the given atomistic molecule (which

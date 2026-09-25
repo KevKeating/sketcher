@@ -242,7 +242,8 @@ static void clear_attachment_point_properties(RDKit::Atom& atom)
 }
 
 std::vector<int> get_missing_required_attachment_points(
-    const RDKit::ROMol& atomistic_mol, std::vector<int> required_attachment_points)
+    const RDKit::ROMol& atomistic_mol,
+    std::vector<int> required_attachment_points)
 {
     std::unordered_set<int> present_attachment_points;
     for (const auto& attachment_point :

@@ -154,16 +154,16 @@ void CustomMonomerDialog::updateOkButton()
  * specified required attachment points (i.e. attachment points that have a
  * bound connection)
  */
-static QString get_warning_text(const std::vector<int>& missing_attachment_points)
+static QString
+get_warning_text(const std::vector<int>& missing_attachment_points)
 {
     const bool plural = missing_attachment_points.size() != 1;
     const auto attachment_points =
         format_r_group_list(missing_attachment_points);
-    return
-        attachment_points + (plural ? " have" : " has") +
-        " been removed from this monomer but " + (plural ? "are" : "is") +
-        " currently bound. Continuing will remove " +
-        (plural ? "these connections." : "this connection.");
+    return attachment_points + (plural ? " have" : " has") +
+           " been removed from this monomer but " + (plural ? "are" : "is") +
+           " currently bound. Continuing will remove " +
+           (plural ? "these connections." : "this connection.");
 }
 
 void CustomMonomerDialog::accept()
@@ -183,7 +183,8 @@ void CustomMonomerDialog::accept()
     // warn before accepting if the user has deleted any required attachment
     // points (i.e. attachment points that have a bound connection)
     const auto missing_attachment_points =
-        get_missing_required_attachment_points(*mol, m_required_attachment_points);
+        get_missing_required_attachment_points(*mol,
+                                               m_required_attachment_points);
     const auto smiles = ui->sketcher_widget->getString(Format::EXTENDED_SMILES);
     if (!missing_attachment_points.empty()) {
         auto warning_text = get_warning_text(missing_attachment_points);

@@ -51,15 +51,16 @@ class SKETCHER_API CustomMonomerDialog : public ModalDialog
      * they will be warned that continuing will remove connections from the
      * monomer.
      */
-    void setRequiredAttachmentPoints(
-        std::vector<int> required_attachment_points);
+    void
+    setRequiredAttachmentPoints(std::vector<int> required_attachment_points);
 
     /**
      * Return the required attachment point numbers missing from the given
      * molecule.
      */
-    std::vector<int>
-    getMissingRequiredAttachmentPoints(const RDKit::ROMol& mol, std::vector<int> required_attachment_points) const;
+    std::vector<int> getMissingRequiredAttachmentPoints(
+        const RDKit::ROMol& mol,
+        std::vector<int> required_attachment_points) const;
 
     /**
      * Load the specified molecule into the dialog's Sketcher workspace
