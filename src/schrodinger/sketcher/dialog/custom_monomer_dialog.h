@@ -55,14 +55,6 @@ class SKETCHER_API CustomMonomerDialog : public ModalDialog
     setRequiredAttachmentPoints(std::vector<int> required_attachment_points);
 
     /**
-     * Return the required attachment point numbers missing from the given
-     * molecule.
-     */
-    std::vector<int> getMissingRequiredAttachmentPoints(
-        const RDKit::ROMol& mol,
-        std::vector<int> required_attachment_points) const;
-
-    /**
      * Load the specified molecule into the dialog's Sketcher workspace
      */
     void addSMILES(const std::string& smiles);
