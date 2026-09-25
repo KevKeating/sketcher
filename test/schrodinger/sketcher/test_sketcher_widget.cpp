@@ -1178,7 +1178,11 @@ BOOST_AUTO_TEST_CASE(test_edit_structure_dialog_mutates_selected_monomer)
                ChainType::PEPTIDE);
 }
 
-/** An unchanged edit must preserve the chemistry of bound leaving groups. */
+/**
+ * Opening the Custom Monomer Dialog and not changing anything must not modify
+ * the atomistic SMILES of the entire molecule and must preserve the chemistry
+ * of bound leaving groups.
+ */
 BOOST_AUTO_TEST_CASE(test_edit_structure_dialog_preserves_peptide_connectivity)
 {
     TestSketcherWidget& sk = *TestWidgetFixture::get();

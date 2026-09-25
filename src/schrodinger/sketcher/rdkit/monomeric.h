@@ -126,9 +126,8 @@ get_attachment_points_for_smiles(const std::string& smiles);
  * represented by a dummy atom with a CXSMILES atom label such as "_R1".
  * Attachment points may initially be represented by atom-map numbers,
  * isotope-numbered dummy atoms, or CXSMILES atom labels. Atom-mapped leaving
- * atoms (including heavy atoms) and labeled hydrogens are replaced by labeled
- * dummy atoms. A heavy atom marked only with a CXSMILES label receives a new
- * bonded dummy atom.
+ * atoms are replaced by labeled dummy atoms. A heavy atom marked only with a
+ * CXSMILES label receives a new bonded dummy atom.
  *
  * @throws std::invalid_argument if smiles is not valid extended SMILES
  */
