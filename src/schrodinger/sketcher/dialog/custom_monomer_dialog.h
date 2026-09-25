@@ -47,6 +47,9 @@ class SKETCHER_API CustomMonomerDialog : public ModalDialog
 
     /**
      * Specify the numbered attachment points that must remain in the monomer.
+     * If the user removes any of these attachment points and then clicks OK,
+     * they will be warned that continuing will remove connections from the
+     * monomer.
      */
     void setRequiredAttachmentPoints(
         std::vector<int> required_attachment_points);

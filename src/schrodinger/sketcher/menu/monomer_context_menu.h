@@ -22,14 +22,14 @@ namespace schrodinger
 namespace sketcher
 {
 
-// TODO: fix this or get rid of it
 /**
  * Context menu for monomer beads. Dispatches by monomer type:
- *   - all monomers: Edit Structure, Delete
- *   - PEPTIDE: Mutate Residue, Set D/L-Form, Protonate (stub)
- *   - NA_BASE: Mutate Base (A/C/G/U/T + DB analogs), Delete
- *   - NA_SUGAR: Change R↔dR (direction from m_primary_atom), Delete
- *   - NA_PHOSPHATE / CHEM: Delete only
+ *   - PEPTIDE: Mutate Residue, Edit Structure, Set D/L-Form, Protonate (stub),
+ *     Delete
+ *   - NA_BASE: Mutate Base (A/C/G/U/T + DB analogs), Edit Structure, Delete
+ *   - NA_SUGAR: Change R↔dR (direction from m_primary_atom), Edit Structure,
+ *     Delete
+ *   - NA_PHOSPHATE / CHEM: Edit Structure, Delete
  */
 class SKETCHER_API MonomerContextMenu : public AbstractContextMenu
 {
