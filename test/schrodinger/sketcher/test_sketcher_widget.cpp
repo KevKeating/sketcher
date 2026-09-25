@@ -1178,6 +1178,26 @@ BOOST_AUTO_TEST_CASE(test_edit_structure_dialog_mutates_selected_monomer)
                ChainType::PEPTIDE);
 }
 
+/** An unchanged edit must preserve the chemistry of bound leaving groups. */
+BOOST_AUTO_TEST_CASE(test_edit_structure_dialog_preserves_peptide_connectivity)
+{
+    TestSketcherWidget& sk = *TestWidgetFixture::get();
+    sk.setInterfaceType(InterfaceType::ATOMISTIC_OR_MONOMERIC);
+    sk.addFromString("PEPTIDE1{A.A.A}$$$$V2.0");
+    const auto original_smiles = sk.getString(Format::SMILES);
+
+    // Both attachment points of the middle alanine are bound, so expansion
+    // should remove both leaving groups before and after the edit.
+    const auto* atom = sk.m_mol_model->getMol()->getAtomWithIdx(1);
+    emit sk.m_monomer_context_menu->editStructureRequested(atom);
+    auto* dialog = sk.findChild<CustomMonomerDialog*>();
+    BOOST_REQUIRE(dialog != nullptr);
+    dialog->accept();
+
+    BOOST_TEST(sk.getString(Format::SMILES) == original_smiles);
+    QCoreApplication::sendPostedEvents(nullptr, QEvent::DeferredDelete);
+}
+
 /**
  * Monomers without a database structure can still be edited. The editor opens
  * with the existing polymer type selected and an empty drawing area.

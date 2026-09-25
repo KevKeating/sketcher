@@ -102,24 +102,29 @@ BOOST_AUTO_TEST_CASE(test_get_attachment_points_for_smiles)
 
 BOOST_AUTO_TEST_CASE(test_normalize_smiles_attachment_points)
 {
-    const std::array<std::string, 5> alanine_smiles = {
-        "C[C@H](N[H:1])C(=O)[OH:2]", "[1*]N[C@@H](C)C(=O)O[2*]",
-        "*N[C@@H](C)C(=O)O* |$_R1;;;;;;;_R2$|", "C[C@H]([N:1])C(=O)[O:2]",
-        "C[C@H](N)C(=O)O |$;;_R1;;;_R2$|"};
-    const std::vector<std::pair<int, std::string>> expected_aps = {{1, "N"},
-                                                                   {2, "O"}};
+    const std::string alanine = "*N[C@@H](C)C(=O)* |$_R1;;;;;;_R2$|";
+    const std::vector<std::pair<std::string, std::string>> test_cases = {
+        {"C[C@H](N[H:1])C(=O)[OH:2]", alanine},
+        {"[1*]N[C@@H](C)C(=O)[2*]", alanine},
+        {alanine, alanine},
+        {"[*:1]N[C@@H](C)C(=O)[*:2]", alanine},
+        {"C[C@H](N)C(=O)O |$;;_R1;;;_R2$|",
+         "*N[C@@H](C)C(=O)O* |$_R1;;;;;;;_R2$|"},
+        {"O=P(O)([OH:1])[OH:2]", "O=P(O)(*)* |$;;;_R1;_R2$|"}};
 
-    for (const auto& input_smiles : alanine_smiles) {
+    for (const auto& [input_smiles, expected_smiles] : test_cases) {
         const auto normalized =
             normalize_smiles_attachment_points(input_smiles);
         BOOST_TEST(normalized.find("_R1") != std::string::npos);
         BOOST_TEST(normalized.find("_R2") != std::string::npos);
-        BOOST_TEST(get_attachment_points_for_smiles(normalized) ==
-                   expected_aps);
-
         const auto mol = rdkit_extensions::to_rdkit(
             normalized, rdkit_extensions::Format::EXTENDED_SMILES);
-        BOOST_TEST(mol->getNumAtoms() == 8);
+        const auto expected = rdkit_extensions::to_rdkit(
+            expected_smiles, rdkit_extensions::Format::EXTENDED_SMILES);
+        BOOST_TEST(rdkit_extensions::to_string(
+                       *mol, rdkit_extensions::Format::EXTENDED_SMILES) ==
+                   rdkit_extensions::to_string(
+                       *expected, rdkit_extensions::Format::EXTENDED_SMILES));
 
         std::vector<unsigned int> attachment_point_nums;
         for (const auto* atom : mol->atoms()) {

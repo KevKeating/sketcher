@@ -315,7 +315,10 @@ std::string normalize_smiles_attachment_points(const std::string& smiles)
         }
 
         auto dummy = rdkit_extensions::make_new_r_group(*attachment_point_num);
-        if (atom->getAtomicNum() <= 1) {
+        // Atom-map numbers mark leaving atoms in database monomer SMILES,
+        // including heavy atoms such as the C-terminal oxygen of a peptide.
+        // Replace the leaving atom so the dummy bonds directly to the core.
+        if (atom->getAtomMapNum() > 0 || atom->getAtomicNum() <= 1) {
             mol->replaceAtom(atom_idx, dummy.get());
             continue;
         }
