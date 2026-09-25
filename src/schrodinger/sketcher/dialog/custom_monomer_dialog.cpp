@@ -168,6 +168,11 @@ void CustomMonomerDialog::updateOkButton()
     ui->button_box->button(QDialogButtonBox::Ok)->setEnabled(valid);
 }
 
+/**
+ * @return the test of the warning to use when the user has deleted the
+ * specified required attachment points (i.e. attachment points that have a
+ * bound connection)
+ */
 static QString get_warning_text(const std::vector<int>& missing_attachment_points)
 {
     const bool plural = missing_attachment_points.size() != 1;
@@ -194,6 +199,8 @@ void CustomMonomerDialog::accept()
         return;
     }
 
+    // warn before accepting if the user has deleted any required attachment
+    // points (i.e. attachment points that have a bound connection)
     const auto missing_attachment_points =
         getMissingRequiredAttachmentPoints(*mol);
     const auto smiles = ui->sketcher_widget->getString(Format::EXTENDED_SMILES);

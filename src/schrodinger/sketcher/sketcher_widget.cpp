@@ -82,6 +82,16 @@ struct IndexedMonomerMutation {
 };
 
 /**
+ * A connection and its associated attachment point that should be preserved
+ * when a monomer is edited in the CustomMonomerDialog.
+ */
+struct RequiredConnection {
+    int attachment_point;
+    unsigned int bound_monomer_index;
+    bool is_secondary_connection;
+};
+
+/**
  * Capture atom identity by index before a sequence of
  * `MolModel::mutateMonomers` calls. Indices are stable since the
  * underlying `mutateMonomer` only edits properties (no atom
@@ -133,8 +143,11 @@ static MonomerType nucleic_acid_tool_to_monomer_type(NucleicAcidTool tool)
     }
 }
 
-// TODO: add docstring - this function should probably be in monomeric.  Would
-//       it be used elsewhere
+/**
+ * @return a SMILES string representing the content of the specified monomer.
+ * For non-SMILES monomers, this is taken from the monomer database. If the
+ * monomer is not found in the database, std:nullopt is returned.
+ */
 static std::optional<std::string>
 get_monomer_smiles(const RDKit::Atom* const atom)
 {
@@ -874,6 +887,29 @@ void SketcherWidget::showEditAtomPropertiesDialog(
     dialog->show();
 }
 
+/**
+ * Get information about the required attachment points (i.e. attachment points
+ * that are currently involved in a connection, meaning that we should warn the
+ * user if they try to delete it) and their associated connections
+ */
+static std::pair<std::vector<int>, std::vector<RequiredConnection>> get_required_attachment_points(const RDKit::Atom* monomer)
+{
+    std::vector<int> required_attachment_points;
+    std::vector<RequiredConnection> required_connections;
+    const auto attachment_points = get_attachment_points_for_monomer(monomer);
+    for (const auto& bound_attachment_point : attachment_points.first) {
+        if (bound_attachment_point.num <= 0) {
+            continue;
+        }
+        required_attachment_points.push_back(bound_attachment_point.num);
+        required_connections.push_back(
+            {bound_attachment_point.num,
+             bound_attachment_point.bound_monomer->getIdx(),
+             bound_attachment_point.is_secondary_connection});
+    }
+    return std::make_pair(required_attachment_points, required_connections);
+}
+
 void SketcherWidget::showEditMonomerStructureDialog(
     const RDKit::Atom* const atom)
 {
@@ -886,26 +922,7 @@ void SketcherWidget::showEditMonomerStructureDialog(
     const auto monomer_type = get_monomer_type(atom);
     const auto atom_index = atom->getIdx();
 
-	// TODO: move this to static function
-    struct RequiredConnection {
-        int attachment_point;
-        unsigned int bound_monomer_index;
-        bool is_secondary_connection;
-    };
-    std::vector<int> required_attachment_points;
-    std::vector<RequiredConnection> required_connections;
-    const auto attachment_points = get_attachment_points_for_monomer(atom);
-    for (const auto& bound_attachment_point : attachment_points.first) {
-        if (bound_attachment_point.num <= 0) {
-            continue;
-        }
-        required_attachment_points.push_back(bound_attachment_point.num);
-        required_connections.push_back(
-            {bound_attachment_point.num,
-             bound_attachment_point.bound_monomer->getIdx(),
-             bound_attachment_point.is_secondary_connection});
-    }
-
+    auto [required_attachment_points, required_connections] = get_required_attachment_points(atom);
     auto* dialog = new CustomMonomerDialog(chain_type, this);
     connect(dialog, &CustomMonomerDialog::customMonomerAccepted, this,
             [this, dialog, atom_index, monomer_type,
