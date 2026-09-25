@@ -917,7 +917,7 @@ get_required_attachment_points(const RDKit::Atom* monomer)
  * which connections, if any, we should remove from the edited monomer.
  * Connections will be removed if the user deleted their associated attachment
  * point.
- * @param edited_monomer The parsed atomistic structure of the edited monomer
+ * @param accepted_smiles A SMILES string representing the edited monomer
  * @param required_attachment_points Any attachment points that were involved in
  * connections prior to editing
  * @param required_connections Information about the monomer's connections prior
@@ -931,7 +931,7 @@ get_required_attachment_points(const RDKit::Atom* monomer)
 static std::pair<std::unordered_set<const RDKit::Bond*>,
                  std::unordered_set<const RDKit::Bond*>>
 get_connections_to_remove_after_monomer_edit(
-    const RDKit::ROMol& edited_monomer,
+    const std::string& accepted_smiles,
     const std::vector<int>& required_attachment_points,
     const std::vector<RequiredConnection>& required_connections,
     const RDKit::ROMol* mol, unsigned int atom_index)
@@ -939,8 +939,10 @@ get_connections_to_remove_after_monomer_edit(
     // figure out if the user erased any bound attachment points,
     // since we'll need to erase the associated connections if they
     // did (the dialog already warned the user about this)
+    const auto edited_monomer = rdkit_extensions::to_rdkit(
+        accepted_smiles, Format::EXTENDED_SMILES);
     const auto missing_attachment_points =
-        get_missing_required_attachment_points(edited_monomer,
+        get_missing_required_attachment_points(*edited_monomer,
                                                required_attachment_points);
     const std::unordered_set<int> missing_attachment_point_set(
         missing_attachment_points.begin(), missing_attachment_points.end());
@@ -988,11 +990,9 @@ void SketcherWidget::showEditMonomerStructureDialog(
             [this, dialog, atom_index, monomer_type, required_attachment_points,
              required_connections](const std::string& accepted_smiles,
                                    const auto&) {
-                const auto edited_monomer = rdkit_extensions::to_rdkit(
-                    accepted_smiles, Format::EXTENDED_SMILES);
                 const auto [bonds, secondary_connections] =
                     get_connections_to_remove_after_monomer_edit(
-                        *edited_monomer, required_attachment_points,
+                        accepted_smiles, required_attachment_points,
                         required_connections, m_mol_model->getMol(),
                         atom_index);
 
