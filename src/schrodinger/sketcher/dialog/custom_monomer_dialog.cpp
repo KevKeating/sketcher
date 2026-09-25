@@ -126,25 +126,6 @@ void CustomMonomerDialog::setRequiredAttachmentPoints(
                              std::back_inserter(m_required_attachment_points));
 }
 
-std::vector<int> CustomMonomerDialog::getMissingRequiredAttachmentPoints(
-    const RDKit::ROMol& mol) const
-{
-    std::unordered_set<int> present_attachment_points;
-    for (const auto& attachment_point :
-         get_attachment_points_for_mol(mol)) {
-        present_attachment_points.insert(attachment_point.first);
-    }
-
-    std::vector<int> missing_attachment_points;
-    std::ranges::copy_if(
-        m_required_attachment_points,
-        std::back_inserter(missing_attachment_points),
-        [&present_attachment_points](const int attachment_point) {
-            return !present_attachment_points.contains(attachment_point);
-        });
-    return missing_attachment_points;
-}
-
 void CustomMonomerDialog::addSMILES(const std::string& smiles)
 {
     ui->sketcher_widget->addFromString(smiles, Format::EXTENDED_SMILES);
@@ -202,7 +183,7 @@ void CustomMonomerDialog::accept()
     // warn before accepting if the user has deleted any required attachment
     // points (i.e. attachment points that have a bound connection)
     const auto missing_attachment_points =
-        getMissingRequiredAttachmentPoints(*mol);
+        get_missing_required_attachment_points(*mol, m_required_attachment_points);
     const auto smiles = ui->sketcher_widget->getString(Format::EXTENDED_SMILES);
     if (!missing_attachment_points.empty()) {
         auto warning_text = get_warning_text(missing_attachment_points);

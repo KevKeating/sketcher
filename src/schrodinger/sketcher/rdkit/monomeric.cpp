@@ -241,8 +241,27 @@ static void clear_attachment_point_properties(RDKit::Atom& atom)
     }
 }
 
+std::vector<int> get_missing_required_attachment_points(
+    const RDKit::ROMol& atomistic_mol, std::vector<int> required_attachment_points)
+{
+    std::unordered_set<int> present_attachment_points;
+    for (const auto& attachment_point :
+         get_attachment_points_for_atomistic_mol(atomistic_mol)) {
+        present_attachment_points.insert(attachment_point.first);
+    }
+
+    std::vector<int> missing_attachment_points;
+    std::ranges::copy_if(
+        required_attachment_points,
+        std::back_inserter(missing_attachment_points),
+        [&present_attachment_points](const int attachment_point) {
+            return !present_attachment_points.contains(attachment_point);
+        });
+    return missing_attachment_points;
+}
+
 std::vector<std::pair<int, std::string>>
-get_attachment_points_for_mol(const RDKit::ROMol& mol)
+get_attachment_points_for_atomistic_mol(const RDKit::ROMol& mol)
 {
     std::vector<std::pair<int, std::string>> attachment_points;
     for (const auto* atom : mol.atoms()) {
@@ -276,7 +295,7 @@ get_attachment_points_for_smiles(const std::string& smiles)
 {
     auto mol = rdkit_extensions::to_rdkit(
         smiles, rdkit_extensions::Format::EXTENDED_SMILES);
-    return get_attachment_points_for_mol(*mol);
+    return get_attachment_points_for_atomistic_mol(*mol);
 }
 
 std::string normalize_smiles_attachment_points(const std::string& smiles)

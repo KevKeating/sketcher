@@ -892,7 +892,8 @@ void SketcherWidget::showEditAtomPropertiesDialog(
  * that are currently involved in a connection, meaning that we should warn the
  * user if they try to delete it) and their associated connections
  */
-static std::pair<std::vector<int>, std::vector<RequiredConnection>> get_required_attachment_points(const RDKit::Atom* monomer)
+static std::pair<std::vector<int>, std::vector<RequiredConnection>>
+get_required_attachment_points(const RDKit::Atom* monomer)
 {
     std::vector<int> required_attachment_points;
     std::vector<RequiredConnection> required_connections;
@@ -922,17 +923,25 @@ void SketcherWidget::showEditMonomerStructureDialog(
     const auto monomer_type = get_monomer_type(atom);
     const auto atom_index = atom->getIdx();
 
-    auto [required_attachment_points, required_connections] = get_required_attachment_points(atom);
+    auto [required_attachment_points, required_connections] =
+        get_required_attachment_points(atom);
     auto* dialog = new CustomMonomerDialog(chain_type, this);
+    dialog->setRequiredAttachmentPoints(required_attachment_points);
+    if (smiles) {
+        dialog->addSMILES(normalize_smiles_attachment_points(*smiles));
+    }
+    // note that we ignore the chain type emitted with customMonomerAccepted
+    // since it's guaranteed to be the same as chain_type
     connect(dialog, &CustomMonomerDialog::customMonomerAccepted, this,
-            [this, dialog, atom_index, monomer_type,
+            [this, dialog, atom_index, monomer_type, required_attachment_points,
              required_connections](const std::string& accepted_smiles,
                                    const auto&) {
-                // TODO: move this logic to monomeric instead of accessing it
-                //       from the dialog
+                // figure out if the user erased any bound attachment points,
+                // since we'll need to erase the associated connections if they
+                // did (the dialog already warned the user about this)
                 const auto missing_attachment_points =
-                    dialog->getMissingRequiredAttachmentPoints(
-                        accepted_smiles);
+                    get_missing_required_attachment_points(
+                        accepted_smiles, required_attachment_points);
                 const std::unordered_set<int> missing_attachment_point_set(
                     missing_attachment_points.begin(),
                     missing_attachment_points.end());
@@ -954,19 +963,16 @@ void SketcherWidget::showEditMonomerStructureDialog(
                     }
                 }
 
-                auto undo_raii = m_mol_model->createUndoMacro(
-                    "Edit monomer structure");
+                // erase any required connections and mutate the monomer in a
+                // single undo step
+                auto undo_raii =
+                    m_mol_model->createUndoMacro("Edit monomer structure");
                 m_mol_model->remove({}, bonds, secondary_connections, {}, {});
-                // TODO: rename this variable
-                const auto* live_atom =
+                const auto* monomer =
                     m_mol_model->getMol()->getAtomWithIdx(atom_index);
-                m_mol_model->mutateMonomers({live_atom}, accepted_smiles,
+                m_mol_model->mutateMonomers({monomer}, accepted_smiles,
                                             monomer_type, /*is_smiles=*/true);
             });
-    dialog->setRequiredAttachmentPoints(required_attachment_points);
-    if (smiles) {
-        dialog->addSMILES(normalize_smiles_attachment_points(*smiles));
-    }
     dialog->show();
 }
 
@@ -1670,7 +1676,7 @@ void SketcherWidget::handleNucleicAcidKeyboardShortcuts(
             {Qt::Key_U, {"U", StdNucleobase::U_OR_T, NucleicAcidTool::U}},
             {Qt::Key_T, {"T", StdNucleobase::U_OR_T, NucleicAcidTool::T}},
             {Qt::Key_N, {"N", StdNucleobase::N, NucleicAcidTool::N}},
-        };
+    };
 
     // behavior for the keyboard keys that represent sugars, depending on
     // the currently active tool
@@ -1684,7 +1690,7 @@ void SketcherWidget::handleNucleicAcidKeyboardShortcuts(
              {"R", NucleicAcidTool::RNA_NUCLEOTIDE, NucleicAcidTool::R}},
             {Qt::Key_D,
              {"dR", NucleicAcidTool::DNA_NUCLEOTIDE, NucleicAcidTool::dR}},
-        };
+    };
 
     // behavior for the P key (i.e. phosphate), depending on
     // the currently active tool

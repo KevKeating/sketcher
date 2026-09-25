@@ -81,17 +81,24 @@ SKETCHER_API void validate_monomers(const RDKit::ROMol& mol);
 SKETCHER_API std::string ap_model_name_for(int ap_num);
 
 /**
- * Return the numbered attachment points in the given molecule. Each attachment
- * point is described using a pair of the attachment point number and the symbol
- * of the heavy atom at that site. Note that this function assumes that the
- * attachment points in the molecule are sane; it does not protect against,
- * e.g., duplicated attachment points or attachment points on unbound dummy
- * atoms.
+ * @return a list of all attachment points in required_attachment_points that
+ * are not present in atomistic_mol
+ */
+SKETCHER_API std::vector<int> get_missing_required_attachment_points(
+    const RDKit::ROMol& atomistic_mol, std::vector<int> required_attachment_points);
+
+/**
+ * Return the numbered attachment points in the given atomistic molecule (which
+ * contains the contents of a monomer). Each attachment point is described using
+ * a pair of the attachment point number and the symbol of the heavy atom at
+ * that site. Note that this function assumes that the attachment points in the
+ * molecule are sane; it does not protect against, e.g., duplicated attachment
+ * points or attachment points on unbound dummy atoms.
  *
  * @throws std::invalid_argument if smiles is not valid extended SMILES
  */
 SKETCHER_API std::vector<std::pair<int, std::string>>
-get_attachment_points_for_mol(const RDKit::ROMol& mol);
+get_attachment_points_for_atomistic_mol(const RDKit::ROMol& mol);
 
 /**
  * Return the numbered attachment points in a monomer SMILES string. Each

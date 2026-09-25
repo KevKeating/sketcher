@@ -59,7 +59,7 @@ class SKETCHER_API CustomMonomerDialog : public ModalDialog
      * molecule.
      */
     std::vector<int>
-    getMissingRequiredAttachmentPoints(const RDKit::ROMol& mol) const;
+    getMissingRequiredAttachmentPoints(const RDKit::ROMol& mol, std::vector<int> required_attachment_points) const;
 
     /**
      * Load the specified molecule into the dialog's Sketcher workspace
