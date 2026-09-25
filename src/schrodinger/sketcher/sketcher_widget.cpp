@@ -911,9 +911,26 @@ get_required_attachment_points(const RDKit::Atom* monomer)
     return std::make_pair(required_attachment_points, required_connections);
 }
 
+/**
+ * After the user accepts the edits in the CustomMonomerDialog, figure out
+ * which connections, if any, we should remove from the edited monomer.
+ * Connections will be removed if the user deleted their associated attachment
+ * point.
+ * @param accepted_smiles A SMILES string representing the edited state of the
+ * monomer
+ * @param required_attachment_points Any attachment points that were involved in
+ * connections prior to editing
+ * @param required_connections Information about the monomer's connections prior
+ * to editing
+ * @param mol The mol containing the edited monoemr
+ * @param atom_index The index of the edited monomer
+ * @return A pair of
+ *   - any primary connections to remove
+ *   - any secondary connections to remove
+ */
 static std::pair<std::unordered_set<const RDKit::Bond*>,
                  std::unordered_set<const RDKit::Bond*>>
-get_connections_to_remove(
+get_connections_to_remove_after_monomer_edit(
     const std::string& accepted_smiles,
     const std::vector<int>& required_attachment_points,
     const std::vector<RequiredConnection>& required_connections,
@@ -943,7 +960,7 @@ get_connections_to_remove(
             bonds.insert(bond);
         }
     }
-    return {bonds, secondary_connections};
+    return {std::move(bonds), std::move(secondary_connections)};
 }
 
 void SketcherWidget::showEditMonomerStructureDialog(
@@ -970,11 +987,12 @@ void SketcherWidget::showEditMonomerStructureDialog(
     connect(dialog, &CustomMonomerDialog::customMonomerAccepted, this,
             [this, dialog, atom_index, monomer_type, required_attachment_points,
              required_connections](const std::string& accepted_smiles,
-                                    const auto&) {
+                                   const auto&) {
                 const auto [bonds, secondary_connections] =
-                    get_connections_to_remove(
+                    get_connections_to_remove_after_monomer_edit(
                         accepted_smiles, required_attachment_points,
-                        required_connections, m_mol_model->getMol(), atom_index);
+                        required_connections, m_mol_model->getMol(),
+                        atom_index);
 
                 // erase any required connections and mutate the monomer in a
                 // single undo step
