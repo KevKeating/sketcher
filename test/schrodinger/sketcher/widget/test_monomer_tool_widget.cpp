@@ -210,7 +210,8 @@ BOOST_AUTO_TEST_CASE(unclassified_monomers)
     MonomerToolWidget widget;
     widget.setModel(&model);
     widget.show();
-    auto* aa_button = widget.findChild<ModularToolButton*>("unclassified_btn");
+    auto* aa_button =
+        widget.findChild<ModularToolButton*>("aa_unclassified_btn");
     auto* na_button =
         widget.findChild<ModularToolButton*>("na_unclassified_btn");
     BOOST_REQUIRE(aa_button != nullptr);

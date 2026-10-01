@@ -52,7 +52,7 @@ MonomerToolWidget::MonomerToolWidget(QWidget* parent) :
     ui->unk_btn->setStyleSheet(UNKNOWN_MONOMER_STYLE);
     ui->na_n_btn->setStyleSheet(UNKNOWN_MONOMER_STYLE);
     ui->custom_monomer_btn->setStyleSheet(CUSTOM_MONOMER_BUTTON_STYLE);
-    for (auto* button : {ui->unclassified_btn, ui->na_unclassified_btn}) {
+    for (auto* button : {ui->aa_unclassified_btn, ui->na_unclassified_btn}) {
         button->setUpdateAppearanceFromPopup(false);
         button->setStyleSheet(CUSTOM_MONOMER_BUTTON_STYLE);
     }
@@ -85,7 +85,7 @@ MonomerToolWidget::MonomerToolWidget(QWidget* parent) :
             (ui->tyr_btn, AminoAcidTool::TYR)
             (ui->val_btn, AminoAcidTool::VAL)
             (ui->unk_btn, AminoAcidTool::UNK)
-            (ui->unclassified_btn, AminoAcidTool::UNCLASSIFIED);
+            (ui->aa_unclassified_btn, AminoAcidTool::UNCLASSIFIED);
     m_button_nucleic_acid_bimap =
         boost::assign::list_of<ButtonNucleicAcidBimapType::relation>
             (ui->na_a_btn, NucleicAcidTool::A)
@@ -168,7 +168,7 @@ void MonomerToolWidget::updateMonomerButtons()
     };
     clear_popups(m_amino_acid_symbol_popups);
     clear_popups(m_nucleic_acid_symbol_popups);
-    for (auto* button : {ui->unclassified_btn, ui->na_unclassified_btn}) {
+    for (auto* button : {ui->aa_unclassified_btn, ui->na_unclassified_btn}) {
         button->setEnumItem(-1);
         button->hide();
     }
@@ -545,8 +545,8 @@ ping_or_set_model_value(SketcherModel* model, const ModelKey key, const T value)
 
 void MonomerToolWidget::onAminoAcidClicked(QAbstractButton* button)
 {
-    if (button == ui->unclassified_btn &&
-        ui->unclassified_btn->getEnumItem() == -1) {
+    if (button == ui->aa_unclassified_btn &&
+        ui->aa_unclassified_btn->getEnumItem() == -1) {
         updateCheckedButton();
         return;
     }

@@ -564,7 +564,7 @@
         <number>0</number>
        </property>
        <item row="7" column="0" colspan="3">
-        <widget class="schrodinger::sketcher::ModularToolButton" name="unclassified_btn">
+        <widget class="schrodinger::sketcher::ModularToolButton" name="aa_unclassified_btn">
          <property name="text">
           <string>Unclassified</string>
          </property>
