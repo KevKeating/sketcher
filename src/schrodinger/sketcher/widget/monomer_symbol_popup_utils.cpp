@@ -17,6 +17,8 @@ namespace sketcher
 {
 
 static constexpr int MAX_BUTTON_HEIGHT = 32;
+/// The maximum number of rows visible at once before the user has to scroll
+static constexpr int MAX_ROWS = 10;
 
 QButtonGroup* build_monomer_symbol_buttons(
     ModularPopup* popup, const std::string& object_name_prefix,
@@ -26,7 +28,6 @@ QButtonGroup* build_monomer_symbol_buttons(
 {
     const auto num_monomers = analogs.size() + !standard_symbol.empty();
     const auto num_columns = num_monomers <= 20 ? 4 : 8;
-    const auto num_rows = num_monomers / num_columns;
     const bool needs_scroll = num_monomers > 80;
     auto* button_widget = needs_scroll ? new QWidget(popup) : popup;
     auto* layout = new QGridLayout(button_widget);
@@ -73,7 +74,7 @@ QButtonGroup* build_monomer_symbol_buttons(
         scroll_area->setFixedSize(
             layout->sizeHint().width() +
                 scroll_area->style()->pixelMetric(QStyle::PM_ScrollBarExtent),
-            num_rows * MAX_BUTTON_HEIGHT + margins.top() + margins.bottom());
+            MAX_ROWS * MAX_BUTTON_HEIGHT + margins.top() + margins.bottom());
         auto* popup_layout = new QVBoxLayout(popup);
         popup_layout->setContentsMargins(0, 0, 0, 0);
         popup_layout->addWidget(scroll_area);
