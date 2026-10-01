@@ -2,12 +2,18 @@
 #include <boost/test/unit_test.hpp>
 
 #include <QAbstractButton>
+#include <QGridLayout>
 #include <QPointer>
+#include <QScrollArea>
+#include <QScrollBar>
+#include <QSignalSpy>
 
 #include "../test_common.h"
 #include "schrodinger/rdkit_extensions/monomer_database.h"
+#include "schrodinger/sketcher/widget/amino_acid_symbol_popup.h"
 #include "schrodinger/sketcher/widget/modular_tool_button.h"
 #include "schrodinger/sketcher/widget/monomer_tool_widget.h"
+#include "schrodinger/sketcher/widget/nucleic_acid_symbol_popup.h"
 
 BOOST_GLOBAL_FIXTURE(QApplicationRequiredFixture);
 
@@ -15,6 +21,70 @@ namespace schrodinger
 {
 namespace sketcher
 {
+
+/**
+ * Keep the existing column thresholds and make overflow buttons reachable by
+ * scrolling in both kinds of monomer popup.
+ */
+BOOST_AUTO_TEST_CASE(monomer_popup_scrolling)
+{
+    for (const bool amino_acid : {true, false}) {
+        for (const int count : {1, 20, 21, 80, 81, 200}) {
+            BOOST_TEST_CONTEXT("amino_acid=" << amino_acid
+                                             << ", count=" << count)
+            {
+                std::vector<rdkit_extensions::MonomerInfo> analogs(count - 1);
+                for (int i = 0; i < count - 1; ++i) {
+                    analogs[i].symbol = "M" + std::to_string(i);
+                    analogs[i].name = "Monomer " + std::to_string(i);
+                }
+                std::unique_ptr<ModularPopup> popup;
+                if (amino_acid) {
+                    popup = std::make_unique<AminoAcidSymbolPopup>(
+                        "A", "Alanine", analogs);
+                } else {
+                    popup = std::make_unique<NucleicAcidSymbolPopup>(
+                        "A", "Adenine", analogs);
+                }
+                popup->show();
+                QApplication::processEvents();
+                auto* scroll_area = popup->findChild<QScrollArea*>();
+                BOOST_REQUIRE((scroll_area != nullptr) == (count > 80));
+                auto* grid = qobject_cast<QGridLayout*>(
+                    scroll_area ? scroll_area->widget()->layout()
+                                : popup->layout());
+                BOOST_REQUIRE(grid != nullptr);
+                const int columns = count <= 20 ? 4 : 8;
+                BOOST_TEST(grid->columnCount() == std::min(count, columns));
+                BOOST_TEST(grid->rowCount() == (count + columns - 1) / columns);
+                const auto packets = popup->getButtonPackets();
+                BOOST_REQUIRE_EQUAL(packets.size(), count);
+                auto* last_button = packets.back().button;
+                if (scroll_area != nullptr) {
+                    auto* scrollbar = scroll_area->verticalScrollBar();
+                    BOOST_TEST(scrollbar->isVisible());
+                    BOOST_TEST(scrollbar->maximum() > 0);
+                    BOOST_TEST(scroll_area->horizontalScrollBar()->maximum() ==
+                               0);
+                    BOOST_TEST(scroll_area->widget()->width() <=
+                               scroll_area->viewport()->width());
+                    scrollbar->setValue(scrollbar->maximum());
+                    QApplication::processEvents();
+                    const auto position = last_button->mapTo(
+                        scroll_area->viewport(), QPoint(0, 0));
+                    BOOST_TEST(position.y() >= 0);
+                    BOOST_TEST(position.y() + last_button->height() <=
+                               scroll_area->viewport()->height());
+                }
+                QSignalSpy spy(popup.get(), &ModularPopup::selectionChanged);
+                last_button->click();
+                BOOST_REQUIRE_EQUAL(spy.size(), 1);
+                BOOST_TEST(spy.front().front().toInt() == count - 1);
+                BOOST_TEST(!popup->isVisible());
+            }
+        }
+    }
+}
 
 /**
  * Verify that unknown monomer buttons use the unknown monomer styling. If these
