@@ -427,6 +427,12 @@
        </item>
        <item row="9" column="0" colspan="3">
         <widget class="schrodinger::sketcher::ModularToolButton" name="na_unclassified_btn">
+         <property name="sizePolicy">
+          <sizepolicy hsizetype="MinimumExpanding" vsizetype="Fixed">
+           <horstretch>0</horstretch>
+           <verstretch>0</verstretch>
+          </sizepolicy>
+         </property>
          <property name="text">
           <string>Unclassified</string>
          </property>
@@ -565,6 +571,12 @@
        </property>
        <item row="7" column="0" colspan="3">
         <widget class="schrodinger::sketcher::ModularToolButton" name="aa_unclassified_btn">
+         <property name="sizePolicy">
+          <sizepolicy hsizetype="MinimumExpanding" vsizetype="Fixed">
+           <horstretch>0</horstretch>
+           <verstretch>0</verstretch>
+          </sizepolicy>
+         </property>
          <property name="text">
           <string>Unclassified</string>
          </property>
