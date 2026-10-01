@@ -49,7 +49,7 @@ QButtonGroup* build_monomer_symbol_buttons(
     const std::vector<rdkit_extensions::MonomerInfo>& analogs,
     std::unordered_map<int, std::string>& id_to_symbol)
 {
-    const auto num_monomers = analogs.size() + 1;
+    const auto num_monomers = analogs.size() + !standard_symbol.empty();
     const auto num_columns = get_num_columns(num_monomers);
     const bool needs_scroll =
         num_monomers > MAX_ROWS_TO_COLUMNS_RATIO * num_columns * num_columns;
@@ -79,7 +79,9 @@ QButtonGroup* build_monomer_symbol_buttons(
         ++id;
     };
 
-    make_button(standard_symbol, standard_name);
+    if (!standard_symbol.empty()) {
+        make_button(standard_symbol, standard_name);
+    }
     for (const auto& analog : analogs) {
         make_button(analog.symbol.value_or(""), analog.name.value_or(""));
     }
