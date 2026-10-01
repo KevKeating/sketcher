@@ -547,6 +547,9 @@ void MonomerToolWidget::onAminoAcidClicked(QAbstractButton* button)
 {
     if (button == ui->aa_unclassified_btn &&
         ui->aa_unclassified_btn->getEnumItem() == -1) {
+        // we're clicking on the unclassified button for the first time, so we
+        // don't want to actually switch the tool until the user has selected a
+        // monomer
         updateCheckedButton();
         return;
     }
@@ -620,6 +623,9 @@ void MonomerToolWidget::onNucleicAcidClicked(QAbstractButton* button)
 {
     if (button == ui->na_unclassified_btn &&
         ui->na_unclassified_btn->getEnumItem() == -1) {
+        // we're clicking on the unclassified button for the first time, so we
+        // don't want to actually switch the tool until the user has selected a
+        // monomer
         updateCheckedButton();
         return;
     }

@@ -16,32 +16,7 @@ namespace schrodinger
 namespace sketcher
 {
 
-static constexpr size_t MAX_NUMBER_OF_COLUMNS = 8;
-static constexpr float MAX_ROWS_TO_COLUMNS_RATIO = 1.25;
 static constexpr int MAX_BUTTON_HEIGHT = 32;
-
-/**
- * Determine the number of columns we should use for a monomer popup containing
- * the specified number of monomers. This function tries to keep the popup
- * roughly square-ish while using the same number of columns for popups with
- * similar numbers of monomers, up to a maximum of eight columns.
- */
-static size_t get_num_columns(const size_t num_monomers)
-{
-    const size_t MIN_NUMBER_OF_COLUMNS = 4;
-
-    size_t num_columns = MIN_NUMBER_OF_COLUMNS;
-    while (true) {
-        if (num_columns == MAX_NUMBER_OF_COLUMNS ||
-            MAX_ROWS_TO_COLUMNS_RATIO * num_columns * num_columns >=
-                num_monomers) {
-            // Use enough columns to satisfy the row ratio, or stop at the cap
-            // and let the remaining rows scroll.
-            return num_columns;
-        }
-        num_columns *= 2;
-    }
-}
 
 QButtonGroup* build_monomer_symbol_buttons(
     ModularPopup* popup, const std::string& object_name_prefix,
@@ -50,9 +25,9 @@ QButtonGroup* build_monomer_symbol_buttons(
     std::unordered_map<int, std::string>& id_to_symbol)
 {
     const auto num_monomers = analogs.size() + !standard_symbol.empty();
-    const auto num_columns = get_num_columns(num_monomers);
-    const bool needs_scroll =
-        num_monomers > MAX_ROWS_TO_COLUMNS_RATIO * num_columns * num_columns;
+    const auto num_columns = num_monomers <= 20 ? 4 : 8;
+    const auto num_rows = num_monomers / num_columns;
+    const bool needs_scroll = num_monomers > 80;
     auto* button_widget = needs_scroll ? new QWidget(popup) : popup;
     auto* layout = new QGridLayout(button_widget);
     layout->setContentsMargins(2, 2, 2, 2);
@@ -94,12 +69,11 @@ QButtonGroup* build_monomer_symbol_buttons(
         scroll_area->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOn);
         layout->setSizeConstraint(QLayout::SetFixedSize);
         scroll_area->setWidget(button_widget);
-        const int max_rows = MAX_ROWS_TO_COLUMNS_RATIO * MAX_NUMBER_OF_COLUMNS;
         const auto margins = layout->contentsMargins();
         scroll_area->setFixedSize(
             layout->sizeHint().width() +
                 scroll_area->style()->pixelMetric(QStyle::PM_ScrollBarExtent),
-            max_rows * MAX_BUTTON_HEIGHT + margins.top() + margins.bottom());
+            num_rows * MAX_BUTTON_HEIGHT + margins.top() + margins.bottom());
         auto* popup_layout = new QVBoxLayout(popup);
         popup_layout->setContentsMargins(0, 0, 0, 0);
         popup_layout->addWidget(scroll_area);
