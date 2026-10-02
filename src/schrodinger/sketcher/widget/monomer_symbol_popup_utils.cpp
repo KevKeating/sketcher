@@ -64,7 +64,6 @@ QButtonGroup* build_monomer_symbol_buttons(
     if (needs_scroll) {
         // Keep the grid at its natural size and show at most ten full rows.
         // Reserve space for the scrollbar so no columns are clipped.
-        // Use its size hint to match Qt's viewport sizing, including DPI scaling.
         auto* scroll_area = new QScrollArea(popup);
         scroll_area->setFrameShape(QFrame::NoFrame);
         scroll_area->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
