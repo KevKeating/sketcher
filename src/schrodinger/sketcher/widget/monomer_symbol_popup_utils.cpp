@@ -3,7 +3,7 @@
 #include <QButtonGroup>
 #include <QGridLayout>
 #include <QScrollArea>
-#include <QStyle>
+#include <QScrollBar>
 #include <QToolButton>
 #include <QVBoxLayout>
 
@@ -64,6 +64,7 @@ QButtonGroup* build_monomer_symbol_buttons(
     if (needs_scroll) {
         // Keep the grid at its natural size and show at most ten full rows.
         // Reserve space for the scrollbar so no columns are clipped.
+        // Use its size hint to match Qt's viewport sizing, including DPI scaling.
         auto* scroll_area = new QScrollArea(popup);
         scroll_area->setFrameShape(QFrame::NoFrame);
         scroll_area->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
@@ -73,7 +74,7 @@ QButtonGroup* build_monomer_symbol_buttons(
         const auto margins = layout->contentsMargins();
         scroll_area->setFixedSize(
             layout->sizeHint().width() +
-                scroll_area->style()->pixelMetric(QStyle::PM_ScrollBarExtent),
+                scroll_area->verticalScrollBar()->sizeHint().width(),
             MAX_ROWS * MAX_BUTTON_HEIGHT + margins.top() + margins.bottom());
         auto* popup_layout = new QVBoxLayout(popup);
         popup_layout->setContentsMargins(0, 0, 0, 0);
