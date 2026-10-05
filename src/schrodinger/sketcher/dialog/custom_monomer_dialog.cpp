@@ -108,7 +108,10 @@ CustomMonomerDialog::CustomMonomerDialog(const ChainType chain_type,
                    " Monomer");
     ui->sketcher_widget->setInterfaceType(InterfaceType::ATOMISTIC);
 
-    configureTitleBar();
+#ifdef __EMSCRIPTEN__
+    configureWasmTitleBar();
+    qobject_cast<QVBoxLayout*>(layout())->setSpacing(0);
+#endif
     ui->sketcher_widget->setInterfaceToggleVisible(false);
 
     // remove the standard margins set by ModalDialog so that there's no gap
@@ -142,7 +145,7 @@ CustomMonomerDialog::CustomMonomerDialog(const ChainType chain_type,
 
 CustomMonomerDialog::~CustomMonomerDialog() = default;
 
-void CustomMonomerDialog::configureTitleBar()
+void CustomMonomerDialog::configureWasmTitleBar()
 {
     if (m_title_bar == nullptr) {
         return;
@@ -154,13 +157,9 @@ void CustomMonomerDialog::configureTitleBar()
     auto policy = m_title_bar->sizePolicy();
     policy.setVerticalPolicy(QSizePolicy::Preferred);
     m_title_bar->setSizePolicy(policy);
-    qobject_cast<QVBoxLayout*>(layout())->setSpacing(0);
 }
 
-namespace
-{
-
-QSize layout_item_size(const QLayoutItem* item, const bool minimum)
+static QSize layout_item_size(const QLayoutItem* item, const bool minimum)
 {
     return minimum ? item->minimumSize()
                    : item->sizeHint()
@@ -168,13 +167,11 @@ QSize layout_item_size(const QLayoutItem* item, const bool minimum)
                          .boundedTo(item->maximumSize());
 }
 
-QSize add_margins(QSize size, const QMargins& margins)
+static QSize add_margins(QSize size, const QMargins& margins)
 {
     return size + QSize(margins.left() + margins.right(),
                         margins.top() + margins.bottom());
 }
-
-} // namespace
 
 QSize CustomMonomerDialog::dialogSizeHint(const bool minimum,
                                           const bool footer_below_view) const
