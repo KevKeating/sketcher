@@ -26,6 +26,8 @@ class SKETCHER_API SketcherSideBar : public SketcherView
 {
     Q_OBJECT
 
+    friend class SketcherWidget;
+
   public:
     SketcherSideBar(QWidget* parent = nullptr);
     ~SketcherSideBar();

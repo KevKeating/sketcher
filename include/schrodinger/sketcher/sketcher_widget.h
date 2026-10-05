@@ -79,6 +79,8 @@ class SKETCHER_API SketcherWidget : public QWidget
 {
     Q_OBJECT
 
+    friend class CustomMonomerDialog;
+
   public:
     SketcherWidget(QWidget* parent = nullptr,
                    const InterfaceTypeType interface_type =
@@ -477,6 +479,16 @@ class SKETCHER_API SketcherWidget : public QWidget
      * Show or hide the toolbars
      */
     void setToolbarsVisible(const bool visible);
+
+    /**
+     * Show or hide the atomistic/monomeric interface toggle.
+     */
+    void setInterfaceToggleVisible(const bool visible);
+
+    /**
+     * @return the interface toggle widget, for dialog layout customization
+     */
+    QWidget* getInterfaceToggleWidget() const;
 
     /**
      * Override QWidget methods to handle keystrokes

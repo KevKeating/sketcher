@@ -103,6 +103,15 @@ CustomMonomerDialog::CustomMonomerDialog(const ChainType chain_type,
                    " Monomer");
     ui->sketcher_widget->setInterfaceType(InterfaceType::ATOMISTIC);
 
+#ifdef __EMSCRIPTEN__
+    // Use the space freed by hiding the interface toggle for the title bar.
+    auto* interface_toggle = ui->sketcher_widget->getInterfaceToggleWidget();
+    interface_toggle->ensurePolished();
+    m_title_bar->setFixedHeight(interface_toggle->sizeHint().height());
+    qobject_cast<QVBoxLayout*>(layout())->setSpacing(0);
+#endif
+    ui->sketcher_widget->setInterfaceToggleVisible(false);
+
     // remove the standard margins set by ModalDialog so that there's no gap
     // between the SketcherWidget and the edge of the dialog
     m_dlg_layout->setContentsMargins(0, 0, 0, 0);
