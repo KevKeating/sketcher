@@ -486,6 +486,12 @@ class SKETCHER_API SketcherWidget : public QWidget
     void setInterfaceToggleVisible(const bool visible);
 
     /**
+     * Add a widget below the View, alongside the side bar.
+     * The widget is reparented to this SketcherWidget.
+     */
+    void addWidgetBelowView(QWidget* widget);
+
+    /**
      * @return the interface toggle widget, for dialog layout customization
      */
     QWidget* getInterfaceToggleWidget() const;

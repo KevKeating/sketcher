@@ -1461,6 +1461,11 @@ void SketcherWidget::setInterfaceToggleVisible(const bool visible)
     getInterfaceToggleWidget()->setVisible(visible);
 }
 
+void SketcherWidget::addWidgetBelowView(QWidget* widget)
+{
+    m_ui->verticalLayout->addWidget(widget);
+}
+
 QWidget* SketcherWidget::getInterfaceToggleWidget() const
 {
     return m_ui->side_bar_wdg->ui->atomistic_or_monomeric_widget;

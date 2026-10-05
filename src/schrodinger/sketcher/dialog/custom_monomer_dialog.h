@@ -45,6 +45,9 @@ class SKETCHER_API CustomMonomerDialog : public ModalDialog
                         QWidget* parent = nullptr);
     ~CustomMonomerDialog();
 
+    QSize minimumSizeHint() const override;
+    QSize sizeHint() const override;
+
     /**
      * Specify the numbered attachment points that must remain in the monomer.
      * If the user removes any of these attachment points and then clicks OK,
@@ -81,9 +84,23 @@ class SKETCHER_API CustomMonomerDialog : public ModalDialog
      */
     void updateOkButton();
 
+    void resizeEvent(QResizeEvent* event) override;
+    bool event(QEvent* event) override;
+
     std::unique_ptr<Ui::CustomMonomerDialog> ui;
     rdkit_extensions::ChainType m_chain_type;
     std::vector<int> m_required_attachment_points;
+
+  private:
+    /**
+     * Calculate either arrangement without changing the footer's placement.
+     */
+    QSize dialogSizeHint(bool minimum, bool footer_below_view) const;
+    void updateButtonBarPlacement();
+
+    bool m_layout_ready = false;
+    bool m_updating_layout = false;
+    bool m_footer_below_view = false;
 };
 
 } // namespace sketcher

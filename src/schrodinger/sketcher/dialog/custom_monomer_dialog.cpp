@@ -6,6 +6,8 @@
 
 #include <QDialogButtonBox>
 #include <QPushButton>
+#include <QResizeEvent>
+#include <QScopedValueRollback>
 #include <QStringList>
 
 #include <stdexcept>
@@ -21,6 +23,7 @@
 #include "schrodinger/sketcher/sketcher_css_style.h"
 #include "schrodinger/sketcher/sketcher_widget.h"
 #include "schrodinger/sketcher/ui/ui_custom_monomer_dialog.h"
+#include "schrodinger/sketcher/ui/ui_sketcher_widget.h"
 
 using schrodinger::rdkit_extensions::ChainType;
 using schrodinger::rdkit_extensions::Format;
@@ -117,6 +120,14 @@ CustomMonomerDialog::CustomMonomerDialog(const ChainType chain_type,
     m_dlg_layout->setContentsMargins(0, 0, 0, 0);
     qobject_cast<QVBoxLayout*>(layout())->setContentsMargins(0, 0, 0, 0);
 
+    // The full-width footer must not prevent shrinking into the compact layout.
+    layout()->setSizeConstraint(QLayout::SetNoConstraint);
+    ui->verticalLayout->setSizeConstraint(QLayout::SetNoConstraint);
+    ui->verticalLayout->parentWidget()->setMinimumSize(0, 0);
+    ensurePolished();
+    m_layout_ready = true;
+    updateButtonBarPlacement();
+
     connect(ui->sketcher_widget, &SketcherWidget::moleculeChanged, this,
             &CustomMonomerDialog::updateOkButton);
     connect(ui->sketcher_widget, &SketcherWidget::representationChanged, this,
@@ -125,6 +136,135 @@ CustomMonomerDialog::CustomMonomerDialog(const ChainType chain_type,
 }
 
 CustomMonomerDialog::~CustomMonomerDialog() = default;
+
+namespace
+{
+
+QSize layout_item_size(const QLayoutItem* item, const bool minimum)
+{
+    return minimum ? item->minimumSize()
+                   : item->sizeHint()
+                         .expandedTo(item->minimumSize())
+                         .boundedTo(item->maximumSize());
+}
+
+QSize add_margins(QSize size, const QMargins& margins)
+{
+    return size + QSize(margins.left() + margins.right(),
+                        margins.top() + margins.bottom());
+}
+
+} // namespace
+
+QSize CustomMonomerDialog::dialogSizeHint(const bool minimum,
+                                          const bool footer_below_view) const
+{
+    const auto& sketcher_ui = ui->sketcher_widget->m_ui;
+    auto* view_layout = sketcher_ui->verticalLayout;
+    QSize column_size(0, 0);
+    int row_count = 0;
+    for (int i = 0; i < view_layout->count(); ++i) {
+        const auto* item = view_layout->itemAt(i);
+        if (item->widget() == ui->button_bar || item->isEmpty()) {
+            continue;
+        }
+        const auto item_size = layout_item_size(item, minimum);
+        column_size.setWidth(std::max(column_size.width(), item_size.width()));
+        column_size.rheight() += item_size.height();
+        ++row_count;
+    }
+    QWidgetItem footer_item(ui->button_bar);
+    const auto footer_size = layout_item_size(&footer_item, minimum);
+    if (footer_below_view) {
+        column_size.setWidth(
+            std::max(column_size.width(), footer_size.width()));
+        column_size.rheight() += footer_size.height();
+        ++row_count;
+    }
+    column_size.rheight() +=
+        std::max(0, row_count - 1) * view_layout->spacing();
+    column_size = add_margins(column_size, view_layout->contentsMargins());
+
+    const auto sidebar_size =
+        layout_item_size(sketcher_ui->horizontalLayout->itemAt(0), minimum);
+    QSize size(sidebar_size.width() + column_size.width() +
+                   sketcher_ui->horizontalLayout->spacing(),
+               std::max(sidebar_size.height(), column_size.height()));
+    size = add_margins(size, sketcher_ui->horizontalLayout->contentsMargins() +
+                                 ui->sketcher_widget->contentsMargins() +
+                                 ui->verticalLayout_2->contentsMargins() +
+                                 ui->sketcher_widget_holder->contentsMargins());
+    if (!footer_below_view) {
+        size.setWidth(std::max(size.width(), footer_size.width()));
+        size.rheight() += footer_size.height() + ui->verticalLayout->spacing();
+    }
+    size = add_margins(
+        size, ui->verticalLayout->contentsMargins() +
+                  ui->verticalLayout->parentWidget()->contentsMargins() +
+                  m_dlg_layout->contentsMargins());
+    if (m_title_bar != nullptr) {
+        QWidgetItem title_item(m_title_bar);
+        const auto title_size = layout_item_size(&title_item, minimum);
+        size.setWidth(std::max(size.width(), title_size.width()));
+        size.rheight() += title_size.height() + layout()->spacing();
+    }
+    return add_margins(size, layout()->contentsMargins() + contentsMargins());
+}
+
+QSize CustomMonomerDialog::minimumSizeHint() const
+{
+    return m_layout_ready ? dialogSizeHint(true, true)
+                          : ModalDialog::minimumSizeHint();
+}
+
+QSize CustomMonomerDialog::sizeHint() const
+{
+    return m_layout_ready
+               ? dialogSizeHint(false, false).expandedTo(minimumSizeHint())
+               : ModalDialog::sizeHint();
+}
+
+void CustomMonomerDialog::updateButtonBarPlacement()
+{
+    if (!m_layout_ready || m_updating_layout) {
+        return;
+    }
+    QScopedValueRollback<bool> updating(m_updating_layout, true);
+    const auto compact_minimum = minimumSizeHint();
+    if (minimumSize() != compact_minimum) {
+        setMinimumSize(compact_minimum);
+    }
+    const bool footer_below_view =
+        height() < dialogSizeHint(true, false).height();
+    if (footer_below_view == m_footer_below_view) {
+        return;
+    }
+    if (footer_below_view) {
+        ui->verticalLayout->removeWidget(ui->button_bar);
+        ui->sketcher_widget->addWidgetBelowView(ui->button_bar);
+    } else {
+        ui->sketcher_widget->m_ui->verticalLayout->removeWidget(ui->button_bar);
+        ui->verticalLayout->addWidget(ui->button_bar);
+    }
+    m_footer_below_view = footer_below_view;
+    ui->button_bar->show();
+    updateGeometry();
+}
+
+void CustomMonomerDialog::resizeEvent(QResizeEvent* event)
+{
+    updateButtonBarPlacement();
+    ModalDialog::resizeEvent(event);
+}
+
+bool CustomMonomerDialog::event(QEvent* event)
+{
+    const bool handled = ModalDialog::event(event);
+    if (event->type() == QEvent::LayoutRequest) {
+        updateButtonBarPlacement();
+    }
+    return handled;
+}
 
 void CustomMonomerDialog::setRequiredAttachmentPoints(
     std::vector<int> required_attachment_points)
