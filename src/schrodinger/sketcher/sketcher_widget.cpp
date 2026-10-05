@@ -61,7 +61,6 @@
 #include "schrodinger/sketcher/rdkit/periodic_table.h"
 #include "schrodinger/sketcher/rdkit/rgroup.h"
 #include "schrodinger/sketcher/sketcher_css_style.h"
-#include "schrodinger/sketcher/ui/ui_sketcher_side_bar.h"
 #include "schrodinger/sketcher/ui/ui_sketcher_widget.h"
 #include "schrodinger/sketcher/molviewer/coord_utils.h"
 
@@ -1458,7 +1457,7 @@ void SketcherWidget::setToolbarsVisible(const bool visible)
 
 void SketcherWidget::setInterfaceToggleVisible(const bool visible)
 {
-    getInterfaceToggleWidget()->setVisible(visible);
+    m_ui->side_bar_wdg->setInterfaceToggleVisible(visible);
 }
 
 void SketcherWidget::addWidgetBelowView(QWidget* widget)
@@ -1466,9 +1465,9 @@ void SketcherWidget::addWidgetBelowView(QWidget* widget)
     m_ui->verticalLayout->addWidget(widget);
 }
 
-QWidget* SketcherWidget::getInterfaceToggleWidget() const
+const SketcherSideBar* SketcherWidget::getSideBar() const
 {
-    return m_ui->side_bar_wdg->ui->atomistic_or_monomeric_widget;
+    return m_ui->side_bar_wdg;
 }
 
 /**

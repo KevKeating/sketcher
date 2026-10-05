@@ -26,8 +26,6 @@ class SKETCHER_API SketcherSideBar : public SketcherView
 {
     Q_OBJECT
 
-    friend class SketcherWidget;
-
   public:
     SketcherSideBar(QWidget* parent = nullptr);
     ~SketcherSideBar();
@@ -35,6 +33,16 @@ class SKETCHER_API SketcherSideBar : public SketcherView
     void setModel(SketcherModel* model) override;
     void updateWidgetsEnabled() override;
     void updateCheckState() override;
+
+    /**
+     * Show or hide the atomistic/monomeric interface toggle.
+     */
+    void setInterfaceToggleVisible(const bool visible);
+
+    /**
+     * @return the interface toggle's height hint after applying its style
+     */
+    int getInterfaceToggleHeight() const;
 
     /**
      * Disconnect signals from each widget's updateWidgetsEnabled()

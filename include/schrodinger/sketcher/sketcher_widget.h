@@ -63,6 +63,7 @@ class NonMolecularObject;
 class Scene;
 class SelectionContextMenu;
 class SketcherModel;
+class SketcherSideBar;
 enum class ImageFormat;
 enum class ModelKey;
 enum class SceneSubset;
@@ -492,9 +493,9 @@ class SKETCHER_API SketcherWidget : public QWidget
     void addWidgetBelowView(QWidget* widget);
 
     /**
-     * @return the interface toggle widget, for dialog layout customization
+     * @return the side bar, for dialog layout customization
      */
-    QWidget* getInterfaceToggleWidget() const;
+    const SketcherSideBar* getSideBar() const;
 
     /**
      * Override QWidget methods to handle keystrokes

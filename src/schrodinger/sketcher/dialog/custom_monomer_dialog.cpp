@@ -25,6 +25,7 @@
 #include "schrodinger/sketcher/sketcher_widget.h"
 #include "schrodinger/sketcher/ui/ui_custom_monomer_dialog.h"
 #include "schrodinger/sketcher/ui/ui_sketcher_widget.h"
+#include "schrodinger/sketcher/widget/sketcher_side_bar.h"
 
 using schrodinger::rdkit_extensions::ChainType;
 using schrodinger::rdkit_extensions::Format;
@@ -109,9 +110,8 @@ CustomMonomerDialog::CustomMonomerDialog(const ChainType chain_type,
 
 #ifdef __EMSCRIPTEN__
     // Use the space freed by hiding the interface toggle for the title bar.
-    auto* interface_toggle = ui->sketcher_widget->getInterfaceToggleWidget();
-    interface_toggle->ensurePolished();
-    m_title_bar->setFixedHeight(interface_toggle->sizeHint().height());
+    m_title_bar->setFixedHeight(
+        ui->sketcher_widget->getSideBar()->getInterfaceToggleHeight());
     qobject_cast<QVBoxLayout*>(layout())->setSpacing(0);
 #endif
     ui->sketcher_widget->setInterfaceToggleVisible(false);
