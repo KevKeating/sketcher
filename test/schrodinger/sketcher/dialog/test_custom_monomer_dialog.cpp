@@ -128,7 +128,7 @@ BOOST_AUTO_TEST_CASE(
                 qobject_cast<QVBoxLayout*>(layout())->insertWidget(0,
                                                                    m_title_bar);
             }
-            configureTitleBar();
+            configureWasmTitleBar();
             setStyleSheet(
                 styleSheet() +
                 "QDialog { border: 1px solid #b5b5b5; }"
@@ -163,7 +163,7 @@ BOOST_AUTO_TEST_CASE(custom_monomer_dialog_title_bar_can_shrink)
                 ->setIconSize(QSize(16, 16));
             findChild<QToolButton*>("monomeric_btn")
                 ->setIconSize(QSize(16, 16));
-            configureTitleBar();
+            configureWasmTitleBar();
         }
 
         CustomTitleBar* titleBar() const
