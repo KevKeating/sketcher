@@ -84,6 +84,11 @@ class SKETCHER_API CustomMonomerDialog : public ModalDialog
      */
     void updateOkButton();
 
+    /**
+     * Allow this dialog's title bar to shrink to the interface toggle height.
+     */
+    void configureTitleBar();
+
     void resizeEvent(QResizeEvent* event) override;
     bool event(QEvent* event) override;
 

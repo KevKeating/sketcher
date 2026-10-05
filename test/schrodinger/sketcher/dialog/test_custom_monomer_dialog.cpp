@@ -10,12 +10,14 @@
 #include <QLayout>
 #include <QPushButton>
 #include <QTextEdit>
+#include <QToolButton>
 #include <boost/test/unit_test.hpp>
 
 #include "../test_common.h"
 #include "schrodinger/sketcher/dialog/custom_monomer_dialog.h"
 #include "schrodinger/sketcher/dialog/message_box_dialog.h"
 #include "schrodinger/sketcher/sketcher_widget.h"
+#include "schrodinger/sketcher/widget/sketcher_side_bar.h"
 #include "schrodinger/rdkit_extensions/monomer_mol.h"
 
 BOOST_GLOBAL_FIXTURE(QApplicationRequiredFixture);
@@ -126,7 +128,7 @@ BOOST_AUTO_TEST_CASE(
                 qobject_cast<QVBoxLayout*>(layout())->insertWidget(0,
                                                                    m_title_bar);
             }
-            layout()->setSpacing(0);
+            configureTitleBar();
             setStyleSheet(
                 styleSheet() +
                 "QDialog { border: 1px solid #b5b5b5; }"
@@ -137,6 +139,64 @@ BOOST_AUTO_TEST_CASE(
         }
     } dialog;
     check_footer_placement(dialog);
+}
+
+/**
+ * A title bar keeps its normal height when space permits, shrinks to the
+ * polished toggle height at the compact minimum, and grows again on resize.
+ */
+BOOST_AUTO_TEST_CASE(custom_monomer_dialog_title_bar_can_shrink)
+{
+    class DialogWithTitleBar : public CustomMonomerDialog
+    {
+      public:
+        DialogWithTitleBar() : CustomMonomerDialog(ChainType::PEPTIDE)
+        {
+            if (m_title_bar == nullptr) {
+                m_title_bar = new CustomTitleBar(windowTitle(), this);
+                qobject_cast<QVBoxLayout*>(layout())->insertWidget(0,
+                                                                   m_title_bar);
+            }
+            // Use a smaller toggle icon size so this checks an actual range
+            // regardless of the platform's default widget style.
+            findChild<QToolButton*>("atomistic_btn")
+                ->setIconSize(QSize(16, 16));
+            findChild<QToolButton*>("monomeric_btn")
+                ->setIconSize(QSize(16, 16));
+            configureTitleBar();
+        }
+
+        CustomTitleBar* titleBar() const
+        {
+            return m_title_bar;
+        }
+    } dialog;
+    dialog.setAttribute(Qt::WA_DeleteOnClose, false);
+    auto* title_bar = dialog.titleBar();
+    const int normal_height = title_bar->maximumHeight();
+    const int minimum_height =
+        dialog.findChild<SketcherSideBar*>()->getInterfaceToggleHeight();
+    BOOST_REQUIRE(minimum_height < normal_height);
+    BOOST_TEST(title_bar->minimumHeight() == minimum_height);
+
+    dialog.resize(dialog.sizeHint() + QSize(100, 100));
+    dialog.show();
+    QCoreApplication::processEvents();
+    BOOST_TEST(title_bar->height() == normal_height);
+    const auto compact_minimum = dialog.minimumSizeHint();
+
+    dialog.resize(compact_minimum);
+    QCoreApplication::processEvents();
+    BOOST_TEST(dialog.height() == compact_minimum.height());
+    BOOST_TEST(title_bar->height() == minimum_height);
+    BOOST_TEST(dialog.layout()->totalMinimumSize().height() ==
+               compact_minimum.height());
+
+    dialog.resize(dialog.sizeHint() + QSize(100, 100));
+    QCoreApplication::processEvents();
+    BOOST_TEST(title_bar->height() == normal_height);
+    BOOST_TEST(dialog.minimumSizeHint().height() == compact_minimum.height());
+    dialog.close();
 }
 
 /**

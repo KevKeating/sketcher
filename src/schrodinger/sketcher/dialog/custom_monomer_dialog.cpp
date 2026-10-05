@@ -108,12 +108,7 @@ CustomMonomerDialog::CustomMonomerDialog(const ChainType chain_type,
                    " Monomer");
     ui->sketcher_widget->setInterfaceType(InterfaceType::ATOMISTIC);
 
-#ifdef __EMSCRIPTEN__
-    // Use the space freed by hiding the interface toggle for the title bar.
-    m_title_bar->setFixedHeight(
-        ui->sketcher_widget->getSideBar()->getInterfaceToggleHeight());
-    qobject_cast<QVBoxLayout*>(layout())->setSpacing(0);
-#endif
+    configureTitleBar();
     ui->sketcher_widget->setInterfaceToggleVisible(false);
 
     // remove the standard margins set by ModalDialog so that there's no gap
@@ -146,6 +141,21 @@ CustomMonomerDialog::CustomMonomerDialog(const ChainType chain_type,
 }
 
 CustomMonomerDialog::~CustomMonomerDialog() = default;
+
+void CustomMonomerDialog::configureTitleBar()
+{
+    if (m_title_bar == nullptr) {
+        return;
+    }
+    // Retain the normal maximum height while allowing the title bar to shrink
+    // into the space freed by hiding the interface toggle.
+    m_title_bar->setMinimumHeight(
+        ui->sketcher_widget->getSideBar()->getInterfaceToggleHeight());
+    auto policy = m_title_bar->sizePolicy();
+    policy.setVerticalPolicy(QSizePolicy::Preferred);
+    m_title_bar->setSizePolicy(policy);
+    qobject_cast<QVBoxLayout*>(layout())->setSpacing(0);
+}
 
 namespace
 {
