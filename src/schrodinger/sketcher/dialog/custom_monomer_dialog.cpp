@@ -5,6 +5,7 @@
 #include <unordered_set>
 
 #include <QDialogButtonBox>
+#include <QPalette>
 #include <QPushButton>
 #include <QResizeEvent>
 #include <QScopedValueRollback>
@@ -125,6 +126,15 @@ CustomMonomerDialog::CustomMonomerDialog(const ChainType chain_type,
     ui->verticalLayout->setSizeConstraint(QLayout::SetNoConstraint);
     ui->verticalLayout->parentWidget()->setMinimumSize(0, 0);
     ensurePolished();
+
+    // Preserve the footer's original background when it moves into the white
+    // SketcherWidget, rather than inheriting its new parent's background.
+    auto footer_palette = ui->button_bar->palette();
+    footer_palette.setColor(QPalette::Window,
+                            footer_palette.color(QPalette::Window));
+    ui->button_bar->setPalette(footer_palette);
+    ui->button_bar->setAutoFillBackground(true);
+
     m_layout_ready = true;
     updateButtonBarPlacement();
 
