@@ -119,7 +119,7 @@ CustomMonomerDialog::CustomMonomerDialog(const ChainType chain_type,
     // Remove the standard padding, but leave the dialog border exposed.
     m_dlg_layout->setContentsMargins(0, 0, 0, 0);
     layout()->setContentsMargins(DIALOG_BORDER_WIDTH, DIALOG_BORDER_WIDTH,
-                                DIALOG_BORDER_WIDTH, DIALOG_BORDER_WIDTH);
+                                 DIALOG_BORDER_WIDTH, DIALOG_BORDER_WIDTH);
 
     // The full-width footer must not prevent shrinking into the compact layout.
     layout()->setSizeConstraint(QLayout::SetNoConstraint);
