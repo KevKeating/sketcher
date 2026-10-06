@@ -13,7 +13,9 @@ namespace sketcher
 
 static constexpr int RESIZE_HANDLE_WIDTH = 5;
 
-/** Invisible border widget that retains mouse input during a resize drag. */
+/**
+ * Invisible border widget that retains mouse input during a resize drag.
+ */
 class DialogResizeHandle : public QWidget
 {
   public:

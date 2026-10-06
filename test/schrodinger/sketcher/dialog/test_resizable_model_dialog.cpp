@@ -67,7 +67,8 @@ static void drag_handle(QWidget* handle, QPoint delta)
                      Qt::LeftButton, Qt::NoButton);
 }
 
-/** Every edge and corner exposes its cursor and keeps the opposite edge fixed.
+/**
+ * Every edge and corner exposes its cursor and keeps the opposite edge fixed.
  */
 BOOST_AUTO_TEST_CASE(resize_edges_and_corners)
 {
@@ -110,7 +111,8 @@ BOOST_AUTO_TEST_CASE(resize_edges_and_corners)
     BOOST_TEST(dialog.childAt(160, 120)->cursor().shape() == Qt::CrossCursor);
 }
 
-/** Clamp large drags without moving the opposite corner, then allow reversal.
+/**
+ * Clamp large drags without moving the opposite corner, then allow reversal.
  */
 BOOST_AUTO_TEST_CASE(resize_respects_size_limits)
 {
@@ -162,6 +164,10 @@ BOOST_AUTO_TEST_CASE(right_button_does_not_resize)
 }
 
 #ifndef __EMSCRIPTEN__
+/**
+ * Ensure that ResizableModelDialog doesn't add any resize handles in non-WASM
+ * builds
+ */
 BOOST_AUTO_TEST_CASE(native_dialog_uses_native_frame)
 {
     ResizableModelDialog dialog;
