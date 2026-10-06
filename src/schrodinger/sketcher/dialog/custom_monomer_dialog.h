@@ -35,7 +35,7 @@ namespace sketcher
 
 /**
  * Dialog for drawing a custom monomer.
- * 
+ *
  * To ensure that this dialog can fit into Live Design's Sketcher frame, its
  * minimum height must be no larger than a standard SketcherWidget's minimum
  * height.  To accomplish this, we hide the atomistic/monomeric toggle and
