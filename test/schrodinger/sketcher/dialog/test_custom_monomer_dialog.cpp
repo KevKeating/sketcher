@@ -143,7 +143,8 @@ BOOST_AUTO_TEST_CASE(
 
 /**
  * A title bar keeps its normal height when space permits, shrinks to the
- * polished toggle height at the compact minimum, and grows again on resize.
+ * polished toggle height minus the border margins at the compact minimum,
+ * and grows again on resize.
  */
 BOOST_AUTO_TEST_CASE(custom_monomer_dialog_title_bar_can_shrink)
 {
@@ -175,7 +176,7 @@ BOOST_AUTO_TEST_CASE(custom_monomer_dialog_title_bar_can_shrink)
     auto* title_bar = dialog.titleBar();
     const int normal_height = title_bar->maximumHeight();
     const int minimum_height =
-        dialog.findChild<SketcherSideBar*>()->getInterfaceToggleHeight();
+        dialog.findChild<SketcherSideBar*>()->getInterfaceToggleHeight() - 2;
     BOOST_REQUIRE(minimum_height < normal_height);
     BOOST_TEST(title_bar->minimumHeight() == minimum_height);
 

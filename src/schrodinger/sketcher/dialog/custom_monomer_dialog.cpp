@@ -36,6 +36,8 @@ namespace schrodinger
 namespace sketcher
 {
 
+static constexpr int DIALOG_BORDER_WIDTH = 1;
+
 /**
  * @return a list of all R-groups that appear more than once in the specified
  * molecule
@@ -114,10 +116,10 @@ CustomMonomerDialog::CustomMonomerDialog(const ChainType chain_type,
 #endif
     ui->sketcher_widget->setInterfaceToggleVisible(false);
 
-    // remove the standard margins set by ModalDialog so that there's no gap
-    // between the SketcherWidget and the edge of the dialog
+    // Remove the standard padding, but leave the dialog border exposed.
     m_dlg_layout->setContentsMargins(0, 0, 0, 0);
-    qobject_cast<QVBoxLayout*>(layout())->setContentsMargins(0, 0, 0, 0);
+    layout()->setContentsMargins(DIALOG_BORDER_WIDTH, DIALOG_BORDER_WIDTH,
+                                DIALOG_BORDER_WIDTH, DIALOG_BORDER_WIDTH);
 
     // The full-width footer must not prevent shrinking into the compact layout.
     layout()->setSizeConstraint(QLayout::SetNoConstraint);
@@ -151,9 +153,11 @@ void CustomMonomerDialog::configureWasmTitleBar()
         return;
     }
     // Retain the normal maximum height while allowing the title bar to shrink
-    // into the space freed by hiding the interface toggle.
+    // into the space freed by hiding the interface toggle, accounting for the
+    // top and bottom border margins.
     m_title_bar->setMinimumHeight(
-        ui->sketcher_widget->getSideBar()->getInterfaceToggleHeight());
+        ui->sketcher_widget->getSideBar()->getInterfaceToggleHeight() -
+        2 * DIALOG_BORDER_WIDTH);
     auto policy = m_title_bar->sizePolicy();
     policy.setVerticalPolicy(QSizePolicy::Preferred);
     m_title_bar->setSizePolicy(policy);
