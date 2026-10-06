@@ -35,6 +35,14 @@ namespace sketcher
 
 /**
  * Dialog for drawing a custom monomer.
+ * 
+ * To ensure that this dialog can fit into Live Design's Sketcher frame, its
+ * minimum height must be no larger than a standard SketcherWidget's minimum
+ * height.  To accomplish this, we hide the atomistic/monomeric toggle and
+ * shrink the typical ModalDialog border. Additionally, if the dialog is small
+ * enough, we allow the title bar to be shrunk and allow the bottom bar to be
+ * moved into the embedded SketcherWidget underneath the View (i.e. next to the
+ * bottom of the side bar instead of below the side bar).
  */
 class SKETCHER_API CustomMonomerDialog : public ResizableModelDialog
 {
@@ -45,6 +53,12 @@ class SKETCHER_API CustomMonomerDialog : public ResizableModelDialog
                         QWidget* parent = nullptr);
     ~CustomMonomerDialog();
 
+    /**
+     * Overridden Qt methods to let Qt know that the dialog can be made smaller
+     * by moving the bottom bar into the embedded SketcherWidget, but that the
+     * dialog's preferred size leaves enough room to keep the bottom bar below
+     * the embedded SketcherWidget.
+     */
     QSize minimumSizeHint() const override;
     QSize sizeHint() const override;
 
@@ -85,10 +99,16 @@ class SKETCHER_API CustomMonomerDialog : public ResizableModelDialog
     void updateOkButton();
 
     /**
-     * Allow this dialog's title bar to shrink to the interface toggle height.
+     * Allow this dialog's title bar to shrink so it's slightly shorter than the
+     * atomistic/monomeric toggle buttons. That way, we can make the entire
+     * dialog the same height as a standard SketcherWidget.
      */
     void configureWasmTitleBar();
 
+    /**
+     * Overridden Qt methods to update the bottom bar location when the dialog
+     * is resized or laid out.
+     */
     void resizeEvent(QResizeEvent* event) override;
     bool event(QEvent* event) override;
 
@@ -98,9 +118,16 @@ class SKETCHER_API CustomMonomerDialog : public ResizableModelDialog
 
   private:
     /**
-     * Calculate either arrangement without changing the footer's placement.
+     * Calculate the dialog's size hint with the bottom bar either below the
+     * SketcherWidget or in the SketcherWidget, but don't actually change the
+     * footer's placement.
      */
     QSize dialogSizeHint(bool minimum, bool footer_below_view) const;
+
+    /**
+     * Place the bottom bar below the embedded SketcherWidget if there's enough
+     * room, and move the bottom bar into the SketcherWidget if there's not.
+     */
     void updateButtonBarPlacement();
 
     bool m_layout_ready = false;

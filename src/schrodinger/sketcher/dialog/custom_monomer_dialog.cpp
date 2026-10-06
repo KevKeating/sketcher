@@ -36,6 +36,9 @@ namespace schrodinger
 namespace sketcher
 {
 
+/**
+ * The width of the QDialog border added in schrodinger_livedesign.qss
+ */
 static constexpr int DIALOG_BORDER_WIDTH = 1;
 
 /**
@@ -112,8 +115,8 @@ CustomMonomerDialog::CustomMonomerDialog(const ChainType chain_type,
 
 #ifdef __EMSCRIPTEN__
     configureWasmTitleBar();
-    qobject_cast<QVBoxLayout*>(layout())->setSpacing(0);
 #endif
+    qobject_cast<QVBoxLayout*>(layout())->setSpacing(0);
     ui->sketcher_widget->setInterfaceToggleVisible(false);
 
     // Remove the standard padding, but leave the dialog border exposed.
