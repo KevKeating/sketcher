@@ -5,7 +5,7 @@
 #include <vector>
 
 #include "schrodinger/sketcher/definitions.h"
-#include "schrodinger/sketcher/dialog/modal_dialog.h"
+#include "schrodinger/sketcher/dialog/resizable_model_dialog.h"
 
 namespace RDKit
 {
@@ -36,7 +36,7 @@ namespace sketcher
 /**
  * Dialog for drawing a custom monomer.
  */
-class SKETCHER_API CustomMonomerDialog : public ModalDialog
+class SKETCHER_API CustomMonomerDialog : public ResizableModelDialog
 {
     Q_OBJECT
 

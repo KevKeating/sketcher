@@ -100,7 +100,7 @@ static QString chain_type_display_name(const ChainType chain_type)
 
 CustomMonomerDialog::CustomMonomerDialog(const ChainType chain_type,
                                          QWidget* parent) :
-    ModalDialog(parent),
+    ResizableModelDialog(parent),
     m_chain_type(chain_type)
 {
     ui.reset(new Ui::CustomMonomerDialog());
@@ -275,12 +275,12 @@ void CustomMonomerDialog::updateButtonBarPlacement()
 void CustomMonomerDialog::resizeEvent(QResizeEvent* event)
 {
     updateButtonBarPlacement();
-    ModalDialog::resizeEvent(event);
+    ResizableModelDialog::resizeEvent(event);
 }
 
 bool CustomMonomerDialog::event(QEvent* event)
 {
-    const bool handled = ModalDialog::event(event);
+    const bool handled = ResizableModelDialog::event(event);
     if (event->type() == QEvent::LayoutRequest) {
         updateButtonBarPlacement();
     }
@@ -363,13 +363,13 @@ void CustomMonomerDialog::accept()
         connect(warning_dialog, &MessageBoxDialog::accepted, this,
                 [this, smiles]() {
                     emit customMonomerAccepted(smiles, m_chain_type);
-                    ModalDialog::accept();
+                    ResizableModelDialog::accept();
                 });
         return;
     }
 
     emit customMonomerAccepted(smiles, m_chain_type);
-    ModalDialog::accept();
+    ResizableModelDialog::accept();
 }
 
 } // namespace sketcher
