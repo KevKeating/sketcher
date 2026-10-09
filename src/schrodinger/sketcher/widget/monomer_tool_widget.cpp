@@ -679,32 +679,40 @@ void MonomerToolWidget::onCustomMonomerDialogAccepted(
     const std::string& smiles, const rdkit_extensions::ChainType monomer_type)
 {
     auto model = getModel();
-    auto custom_monomer_value = QVariant::fromValue(
-        std::make_pair(QString::fromStdString(smiles), monomer_type));
-    if (!model->hasActiveSelection()) {
-        // there's no selection, so we switch to the custom monomer tool with
-        // the new monomer
-        std::unordered_map<ModelKey, QVariant> values = {
-            {ModelKey::TOOL_SET, QVariant::fromValue(ToolSet::MONOMERIC)},
-            {ModelKey::DRAW_TOOL,
-             QVariant::fromValue(DrawTool::CUSTOM_MONOMER)},
-            {ModelKey::CUSTOM_MONOMER, custom_monomer_value}};
-        if (monomer_type != rdkit_extensions::ChainType::CHEM) {
-            // switch to the AMINO or NUCLEIC tab to match the custom monomer's
-            // type
-            auto monomer_tool_type =
-                monomer_type == rdkit_extensions::ChainType::PEPTIDE
-                    ? MonomerToolType::AMINO_ACID
-                    : MonomerToolType::NUCLEIC_ACID;
-            values.insert({ModelKey::MONOMER_TOOL_TYPE,
-                           QVariant::fromValue(monomer_tool_type)});
-        }
-        model->setValues(values);
-    } else {
-        // setValue also pings the model to mutate the selection, while
-        // remembering the custom monomer for the next time the dialog opens.
-        model->setValue(ModelKey::CUSTOM_MONOMER, custom_monomer_value);
+    const auto database_monomer =
+        rdkit_extensions::MonomerDatabase::instance().findMonomerBySmiles(
+            smiles, monomer_type);
+    const auto monomer_key = database_monomer
+                                 ? ModelKey::MONOMER_DB_MONOMER
+                                 : ModelKey::CUSTOM_MONOMER;
+    const auto monomer_value = database_monomer
+                                   ? QVariant::fromValue(*database_monomer)
+                                   : QVariant::fromValue(std::make_pair(
+                                         QString::fromStdString(smiles),
+                                         monomer_type));
+    const auto draw_tool = database_monomer
+                               ? DrawTool::MONOMER_DB_MONOMER
+                               : DrawTool::CUSTOM_MONOMER;
+    if (model->hasActiveSelection()) {
+        // setValue also pings the model to mutate the selected monomer.
+        model->setValue(monomer_key, monomer_value);
+        return;
     }
+
+    std::unordered_map<ModelKey, QVariant> values = {
+        {ModelKey::TOOL_SET, QVariant::fromValue(ToolSet::MONOMERIC)},
+        {ModelKey::DRAW_TOOL, QVariant::fromValue(draw_tool)},
+        {monomer_key, monomer_value}};
+    if (monomer_type != rdkit_extensions::ChainType::CHEM) {
+        // Switch to the matching polymer-type tab.
+        const auto monomer_tool_type =
+            monomer_type == rdkit_extensions::ChainType::PEPTIDE
+                ? MonomerToolType::AMINO_ACID
+                : MonomerToolType::NUCLEIC_ACID;
+        values.insert({ModelKey::MONOMER_TOOL_TYPE,
+                       QVariant::fromValue(monomer_tool_type)});
+    }
+    model->setValues(values);
 }
 
 void MonomerToolWidget::onNucleicAcidClicked(QAbstractButton* button)

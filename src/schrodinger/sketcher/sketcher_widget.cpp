@@ -956,8 +956,11 @@ void SketcherWidget::showEditMonomerStructureDialog(
     // since it's guaranteed to be the same as chain_type
     connect(dialog, &CustomMonomerDialog::customMonomerAccepted, this,
             [this, atom_index, monomer_type, required_attachment_points,
-             required_connections](const std::string& accepted_smiles,
-                                   const auto&) {
+             required_connections, chain_type](const std::string& accepted_smiles,
+                                                const auto&) {
+                const auto db_monomer =
+                    rdkit_extensions::MonomerDatabase::instance()
+                        .findMonomerBySmiles(accepted_smiles, chain_type);
                 const auto [bonds, secondary_connections] =
                     get_connections_to_remove_after_monomer_edit(
                         accepted_smiles, required_attachment_points,
@@ -971,8 +974,9 @@ void SketcherWidget::showEditMonomerStructureDialog(
                 m_mol_model->remove({}, bonds, secondary_connections, {}, {});
                 const auto* monomer =
                     m_mol_model->getMol()->getAtomWithIdx(atom_index);
-                m_mol_model->mutateMonomers({monomer}, accepted_smiles,
-                                            monomer_type, /*is_smiles=*/true);
+                m_mol_model->mutateMonomers(
+                    {monomer}, db_monomer ? db_monomer->symbol : accepted_smiles,
+                    monomer_type, /*is_smiles=*/!db_monomer.has_value());
             });
     dialog->show();
 }

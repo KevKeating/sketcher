@@ -1488,6 +1488,40 @@ BOOST_AUTO_TEST_CASE(test_edit_structure_dialog_preserves_peptide_connectivity)
     dialog->accept();
 
     BOOST_TEST(sk.getString(Format::SMILES) == original_smiles);
+    const auto* edited_middle = sk.m_mol_model->getMol()->getAtomWithIdx(1);
+    BOOST_TEST(edited_middle->getProp<std::string>(ATOM_LABEL) == "A");
+    BOOST_TEST(!edited_middle->getProp<bool>(SMILES_MONOMER));
+    QCoreApplication::sendPostedEvents(nullptr, QEvent::DeferredDelete);
+}
+
+BOOST_AUTO_TEST_CASE(test_custom_monomer_acceptance_mutates_selection_to_db_name)
+{
+    TestSketcherWidget& sk = *TestWidgetFixture::get();
+    sk.setInterfaceType(InterfaceType::ATOMISTIC_OR_MONOMERIC);
+    sk.addFromString("PEPTIDE1{G.G}$$$$V2.0");
+    sk.m_mol_model->selectAll();
+    BOOST_REQUIRE(sk.m_sketcher_model->hasActiveSelection());
+    const auto undo_index = sk.m_undo_stack->index();
+    const auto draw_tool = sk.m_sketcher_model->getDrawTool();
+    auto* tools = sk.findChild<QWidget*>("monomeric_wdg");
+    BOOST_REQUIRE(tools != nullptr);
+    auto* button = tools->findChild<QAbstractButton*>("custom_monomer_btn");
+    BOOST_REQUIRE(button != nullptr);
+    button->click();
+    auto* dialog = tools->findChild<CustomMonomerDialog*>();
+    BOOST_REQUIRE(dialog != nullptr);
+    emit dialog->customMonomerAccepted(
+        "[1*]N[C@@H](C)C(=O)[2*]", ChainType::PEPTIDE);
+    for (const auto* atom : sk.m_mol_model->getMol()->atoms()) {
+        BOOST_TEST(atom->getProp<std::string>(ATOM_LABEL) == "A");
+        BOOST_TEST(!atom->getProp<bool>(SMILES_MONOMER));
+    }
+    BOOST_TEST(sk.m_mol_model->getMol()->getNumBonds() == 1u);
+    BOOST_CHECK(sk.m_sketcher_model->getDrawTool() == draw_tool);
+    BOOST_TEST(sk.m_undo_stack->index() == undo_index + 1);
+    sk.m_undo_stack->undo();
+    BOOST_TEST(sk.getString(Format::HELM) == "PEPTIDE1{G.G}$$$$V2.0");
+    dialog->reject();
     QCoreApplication::sendPostedEvents(nullptr, QEvent::DeferredDelete);
 }
 

@@ -143,6 +143,33 @@ BOOST_AUTO_TEST_CASE(custom_monomer_menu_long_press)
     }
 }
 
+BOOST_AUTO_TEST_CASE(custom_monomer_matching_database_entry_activates_db_tool)
+{
+    auto scene = TestScene::getScene();
+    MonomerToolWidget widget;
+    widget.setModel(scene->m_sketcher_model);
+    BOOST_REQUIRE(!scene->m_sketcher_model->hasActiveSelection());
+    auto* button =
+        widget.findChild<ToolButtonWithPopup*>("custom_monomer_btn");
+    BOOST_REQUIRE(button != nullptr);
+    button->click();
+    auto* dialog = widget.findChild<CustomMonomerDialog*>();
+    BOOST_REQUIRE(dialog != nullptr);
+
+    dialog->customMonomerAccepted(
+        "C[C@H](N[H:1])C(=O)[OH:2]",
+        rdkit_extensions::ChainType::PEPTIDE);
+
+    const auto model = scene->m_sketcher_model;
+    BOOST_CHECK(model->getDrawTool() == DrawTool::MONOMER_DB_MONOMER);
+    const auto monomer =
+        model->getValue(ModelKey::MONOMER_DB_MONOMER)
+            .value<rdkit_extensions::MonomerID>();
+    BOOST_CHECK_EQUAL(monomer.symbol, "A");
+    BOOST_CHECK(monomer.chain_type == rdkit_extensions::ChainType::PEPTIDE);
+    dialog->reject();
+}
+
 /**
  * Verify that unknown monomer buttons use the unknown monomer styling. If these
  * buttons are converted to ModularToolButtons, then the ModularToolButton

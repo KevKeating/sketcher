@@ -22,6 +22,7 @@
 #include "schrodinger/rdkit_extensions/helm/to_rdkit.h"
 #include "schrodinger/rdkit_extensions/helm/to_string.h"
 #include "schrodinger/rdkit_extensions/helm.h"
+#include "schrodinger/rdkit_extensions/helm_examples.h"
 #include "schrodinger/test/fixtures.h" // silence_stdlog
 
 using namespace helm;
@@ -229,6 +230,22 @@ BOOST_DATA_TEST_CASE(TestConversionOfLinearMonomers,
                      helm_info)
 {
     check_helm_conversion(helm_info);
+}
+
+BOOST_AUTO_TEST_CASE(inline_smiles_equal_to_database_monomer_uses_symbol)
+{
+    auto& db = MonomerDatabase::instance();
+    db.resetMonomerDefinitions();
+    const auto mol = helm_to_rdkit(
+        "PEPTIDE1{[*N[C@@H](C)C(=O)* |$_R1;;;;;;_R2$|]}$$$$");
+    BOOST_REQUIRE(mol != nullptr);
+    BOOST_REQUIRE_EQUAL(mol->getNumAtoms(), 1);
+    const auto* atom = mol->getAtomWithIdx(0);
+    BOOST_CHECK_EQUAL(get_atom_label(atom), "A");
+    auto is_smiles = true;
+    atom->getPropIfPresent(SMILES_MONOMER, is_smiles);
+    BOOST_CHECK(!is_smiles);
+    db.resetMonomerDefinitions();
 }
 
 BOOST_DATA_TEST_CASE(TestConversionOfMulticharacterMonomers,
@@ -684,18 +701,19 @@ BOOST_DATA_TEST_CASE(
     }),
     test_helm)
 {
+    const auto expected_helm = expected_named_monomer_helm(test_helm);
     // turn on exceptions
     {
         constexpr auto do_throw = true;
         auto mol = helm_to_rdkit(test_helm, do_throw);
-        BOOST_TEST(rdkit_to_helm(*mol) == test_helm);
+        BOOST_TEST(rdkit_to_helm(*mol) == expected_helm);
     }
 
     // turn on logging
     {
         constexpr auto do_throw = false;
         auto mol = helm_to_rdkit(test_helm, do_throw);
-        BOOST_TEST(rdkit_to_helm(*mol) == test_helm);
+        BOOST_TEST(rdkit_to_helm(*mol) == expected_helm);
     }
 }
 
@@ -798,6 +816,6 @@ BOOST_AUTO_TEST_CASE(TestInlineSmilesParsing)
         auto test_atom = mol->getAtomWithIdx(0);
         auto is_smiles = false;
         BOOST_TEST(test_atom->getPropIfPresent(SMILES_MONOMER, is_smiles));
-        BOOST_TEST(is_smiles == true);
+        BOOST_TEST(is_smiles == false);
     }
 }

@@ -54,6 +54,19 @@ RDKIT_EXTENSIONS_API ChainType toChainType(std::string_view chain_type);
 
 RDKIT_EXTENSIONS_API std::string toString(ChainType chain_type);
 
+/**
+ * Return a monomer attachment number encoded as an atom map, isotope on a
+ * wildcard, or CXSMILES `_R<number>` atom label.
+ */
+[[nodiscard]] RDKIT_EXTENSIONS_API std::optional<unsigned int>
+getMonomerAttachmentPointNumber(const RDKit::Atom& atom);
+
+/**
+ * Normalize numbered attachment points to dummy atoms. Mapped leaving atoms
+ * are replaced; CXSMILES labels on core heavy atoms add a dummy at that site.
+ */
+RDKIT_EXTENSIONS_API void normalizeMonomerAttachmentPoints(RDKit::RWMol& mol);
+
 /*
  * Add a monomer to the molecule
  *

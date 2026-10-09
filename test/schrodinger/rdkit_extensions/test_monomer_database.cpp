@@ -123,6 +123,93 @@ BOOST_AUTO_TEST_CASE(TestExistingResidue)
     BOOST_CHECK_EQUAL(*pdb_code, "ALA");
 }
 
+BOOST_AUTO_TEST_CASE(find_monomer_by_smiles_matches_structure_and_attachments)
+{
+    auto& db = MonomerDatabase::instance();
+    db.resetMonomerDefinitions();
+
+    const auto check_alanine = [&db](const std::string& smiles) {
+        const auto match = db.findMonomerBySmiles(smiles, ChainType::PEPTIDE);
+        BOOST_REQUIRE(match.has_value());
+        BOOST_CHECK_EQUAL(match->symbol, "A");
+    };
+    check_alanine("C[C@H](N[H:1])C(=O)[OH:2]");
+    check_alanine("C[C@H](N[H:1])C(=O)[OH:2] |a:1|");
+    BOOST_CHECK(!db.findMonomerBySmiles(
+                     "C[C@H](N[H:1])C(=O)[OH:2] |o1:1|", ChainType::PEPTIDE)
+                     .has_value());
+    check_alanine(
+        "C[C@H](N[H:1])C(=O)[OH:2] |atomProp:0.pdbName. CB  :1.pdbName. "
+        "CA :2.pdbName. N  :3.pdbName. H  :4.pdbName. C  :5.pdbName. O  "
+        ":6.pdbName. OXT|");
+    check_alanine(
+        "[H]C([H])([H])[C@H](N[H:1])C(=O)[O:2][H]");
+    check_alanine("[1*]N[C@@H](C)C(=O)[2*]");
+    check_alanine("*N[C@@H](C)C(=O)* |$_R1;;;;;;_R2$|");
+    check_alanine("C[C@H](N)C(=O)[2*] |$;;_R1;;;$|");
+
+    // Unspecified caps do not constrain a match; explicit leaving groups do.
+    BOOST_CHECK(!db.findMonomerBySmiles(
+                     "[Cl:1]N[C@@H](C)C(=O)[OH:2]", ChainType::PEPTIDE)
+                     .has_value());
+    BOOST_CHECK(!db.findMonomerBySmiles(
+                     "C[C@H](N[H:1])C(=O)[18OH:2]", ChainType::PEPTIDE)
+                     .has_value());
+    check_alanine("C[C@H](N[H:1])C(=O)[O-:2]");
+    const auto opposite_enantiomer = db.findMonomerBySmiles(
+        "C[C@@H](N[H:1])C(=O)[OH:2]", ChainType::PEPTIDE);
+    BOOST_REQUIRE(opposite_enantiomer.has_value());
+    BOOST_CHECK_NE(opposite_enantiomer->symbol, "A");
+    BOOST_CHECK(!db.findMonomerBySmiles(
+                     "[1*]N[C@@H](C)C(=O)O[2*]", ChainType::PEPTIDE)
+                     .has_value());
+    BOOST_CHECK(!db.findMonomerBySmiles(
+                     "C[C@H](N)C(=O)O |$;;_R1;;;_R2$|", ChainType::PEPTIDE)
+                     .has_value());
+    BOOST_CHECK(!db.findMonomerBySmiles(
+                     "[1*]N[C@@H](C)C(=O)[3*]", ChainType::PEPTIDE)
+                     .has_value());
+    BOOST_CHECK(!db.findMonomerBySmiles(
+                     "[2*]N[C@@H](C)C(=O)[1*]", ChainType::PEPTIDE)
+                     .has_value());
+    BOOST_CHECK(!db.findMonomerBySmiles(
+                     "[1*]N[C@@H](C)C(=O)[1*]", ChainType::PEPTIDE)
+                     .has_value());
+    BOOST_CHECK(!db.findMonomerBySmiles(
+                     "[1*]N[C@@H](C)C(=O)[2*]", ChainType::CHEM)
+                     .has_value());
+
+    const auto rna_sugar = db.getMonomerSmiles("R", ChainType::RNA);
+    BOOST_REQUIRE(rna_sugar.has_value());
+    const auto rna_match = db.findMonomerBySmiles(*rna_sugar, ChainType::RNA);
+    BOOST_REQUIRE(rna_match.has_value());
+    BOOST_CHECK_EQUAL(rna_match->symbol, "R");
+
+    // CHEM definitions without numbered attachment points are still eligible.
+    db.loadMonomersFromJson(R"json([
+        {
+          "symbol":"A", "polymer_type":"PEPTIDE", "natural_analog":"A",
+          "smiles":"CC", "core_smiles":"CC", "name":"A override",
+          "monomer_type":"Backbone", "author":"test", "pdbcode":"UNL"
+        },
+        {
+          "symbol":"Cyclohexane", "polymer_type":"CHEM",
+          "natural_analog":"", "smiles":"C1CCCCC1",
+          "core_smiles":"C1CCCCC1", "name":"Cyclohexane",
+          "monomer_type":"Undefined", "author":"test", "pdbcode":"UNL"
+        }
+    ])json");
+    BOOST_CHECK(!db.findMonomerBySmiles(
+                     "C[C@H](N[H:1])C(=O)[OH:2]", ChainType::PEPTIDE)
+                     .has_value());
+    const auto chem_match =
+        db.findMonomerBySmiles("C1CCCCC1", ChainType::CHEM);
+    BOOST_REQUIRE(chem_match.has_value());
+    BOOST_CHECK_EQUAL(chem_match->symbol, "Cyclohexane");
+    db.resetMonomerDefinitions();
+    check_alanine("C[C@H](N[H:1])C(=O)[OH:2]");
+}
+
 BOOST_AUTO_TEST_CASE(TestNonExistingResidue)
 {
     const auto& mdb = MonomerDatabase::instance();

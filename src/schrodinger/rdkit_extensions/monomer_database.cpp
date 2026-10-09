@@ -2,6 +2,7 @@
 
 #include <iostream>
 #include <memory>
+#include <map>
 #include <optional>
 #include <ranges>
 #include <regex>
@@ -45,6 +46,7 @@ using managed_stmt_t =
 
 namespace
 {
+using schrodinger::rdkit_extensions::monomer_smiles_signature_t;
 using schrodinger::rdkit_extensions::MonomerInfo;
 
 constexpr std::string_view monomer_defs_table{"monomer_definitions"};
@@ -596,6 +598,97 @@ std::vector<std::string> enumerate_smiles(const std::string& smiles)
 
     return enumerated_smiles;
 }
+
+std::optional<monomer_smiles_signature_t>
+normalize_monomer_smiles(const std::string& smiles)
+{
+    RDKit::SmilesParserParams params;
+    params.removeHs = false;
+    std::unique_ptr<RDKit::RWMol> mol;
+    try {
+        mol.reset(RDKit::SmilesToMol(smiles, params));
+    } catch (const std::exception&) {
+        return std::nullopt;
+    }
+    if (!mol) {
+        return std::nullopt;
+    }
+
+    // Keep hydrogen attachment atoms even when their number uses a CX label.
+    for (auto* atom : mol->atoms()) {
+        if (atom->getAtomicNum() == 1) {
+            if (const auto number =
+                    schrodinger::rdkit_extensions::getMonomerAttachmentPointNumber(
+                        *atom)) {
+                atom->setAtomMapNum(*number);
+            }
+        }
+    }
+    RDKit::MolOps::RemoveHsParameters remove_h_params;
+    remove_h_params.removeMapped = false;
+    RDKit::MolOps::removeHs(*mol, remove_h_params);
+
+    std::vector<std::pair<unsigned int, unsigned int>> attachment_atoms;
+    monomer_smiles_signature_t result;
+    for (const auto* atom : mol->atoms()) {
+        const auto number =
+            schrodinger::rdkit_extensions::getMonomerAttachmentPointNumber(
+                *atom);
+        if (!number) {
+            continue;
+        }
+        // A mapped leaving atom may carry an explicit hydrogen (e.g. [O:2][H]).
+        // Apart from hydrogens, an attachment atom must have exactly one
+        // neighbor in the monomer core.
+        size_t non_hydrogen_neighbors = 0;
+        for (const auto* neighbor : mol->atomNeighbors(atom)) {
+            non_hydrogen_neighbors += neighbor->getAtomicNum() != 1;
+        }
+        const bool core_atom_label =
+            atom->getAtomicNum() > 1 && atom->getAtomMapNum() == 0;
+        if (!core_atom_label && non_hydrogen_neighbors != 1) {
+            return std::nullopt;
+        }
+        attachment_atoms.emplace_back(*number, atom->getIdx());
+
+        // Mapped explicit leaving groups are ignored when the other structure
+        // leaves its corresponding attachment uncapped. When both structures
+        // specify a leaving group, its element must agree; attached hydrogen
+        // atoms are deliberately omitted so protonation differences compare.
+        if (!core_atom_label && atom->getAtomicNum() != 0) {
+            result.leaving_groups[*number] =
+                fmt::format("{}/{}/{}", atom->getAtomicNum(),
+                            atom->getIsotope(), atom->getNumRadicalElectrons());
+        }
+    }
+    std::ranges::sort(attachment_atoms);
+    for (size_t i = 1; i < attachment_atoms.size(); ++i) {
+        if (attachment_atoms[i - 1].first == attachment_atoms[i].first) {
+            return std::nullopt;
+        }
+    }
+
+    try {
+        schrodinger::rdkit_extensions::normalizeMonomerAttachmentPoints(*mol);
+        RDKit::MolOps::sanitizeMol(*mol);
+        // Unmarked stereocenters are already absolute. The editor may add an
+        // explicit ABS group; it does not change their meaning. Retain AND/OR
+        // groups, which do change the meaning of the stereochemistry.
+        auto stereo_groups = mol->getStereoGroups();
+        std::erase_if(stereo_groups, [](const auto& group) {
+            return group.getGroupType() ==
+                   RDKit::StereoGroupType::STEREO_ABSOLUTE;
+        });
+        mol->setStereoGroups(std::move(stereo_groups));
+        const RDKit::SmilesWriteParams write_params;
+        result.structure = RDKit::MolToCXSmiles(
+            *mol, write_params,
+            RDKit::SmilesWrite::CXSmilesFields::CX_ENHANCEDSTEREO);
+    } catch (const std::exception&) {
+        return std::nullopt;
+    }
+    return result;
+}
 } // namespace
 
 namespace schrodinger
@@ -867,6 +960,67 @@ opt_string_t MonomerDatabase::getMonomerSmiles(const std::string& monomer_id,
 
     return get_info_from_database(m_custom_monomers_db, m_core_monomers_db, sql,
                                   smiles_getter);
+}
+
+std::optional<MonomerID> MonomerDatabase::findMonomerBySmiles(
+    const std::string& smiles, ChainType polymer_type) const
+{
+    const auto query = normalize_monomer_smiles(smiles);
+    if (!query) {
+        return std::nullopt;
+    }
+
+    auto cache_it = m_normalized_monomer_smiles_cache.find(polymer_type);
+    if (cache_it == m_normalized_monomer_smiles_cache.end()) {
+        std::vector<monomer_smiles_candidate_t> candidates;
+        std::unordered_set<std::string> visited_symbols;
+        for (const auto& info : getMonomersByPolymerType(polymer_type)) {
+            if (!info.symbol || !visited_symbols.insert(*info.symbol).second) {
+                continue;
+            }
+            // getMonomerSmiles resolves custom definitions before core entries.
+            // Use it so a custom definition shadowing a core symbol is
+            // considered only in its active form.
+            const auto monomer_smiles =
+                getMonomerSmiles(*info.symbol, polymer_type);
+            if (!monomer_smiles) {
+                continue;
+            }
+            if (const auto candidate =
+                    normalize_monomer_smiles(*monomer_smiles)) {
+                candidates.push_back(
+                    {MonomerID{*info.symbol, polymer_type}, *candidate});
+            }
+        }
+        // When multiple library entries have an identical structure, choose
+        // the lexically first HELM symbol to make lookup deterministic.
+        std::ranges::sort(candidates, {}, [](const auto& candidate) {
+            return candidate.id.symbol;
+        });
+        cache_it = m_normalized_monomer_smiles_cache
+                       .emplace(polymer_type, std::move(candidates))
+                       .first;
+    }
+
+    for (const auto& candidate : cache_it->second) {
+        if (candidate.smiles.structure != query->structure) {
+            continue;
+        }
+        bool leaving_groups_match = true;
+        for (const auto& [number, query_group] : query->leaving_groups) {
+            const auto candidate_group =
+                candidate.smiles.leaving_groups.find(number);
+            if (candidate_group != candidate.smiles.leaving_groups.end() &&
+                candidate_group->second != query_group) {
+                leaving_groups_match = false;
+                break;
+            }
+        }
+        if (leaving_groups_match) {
+            return candidate.id;
+        }
+    }
+    return std::nullopt;
 }
 
 opt_string_t MonomerDatabase::getNaturalAnalog(const std::string& monomer_id,
@@ -1236,6 +1390,7 @@ MonomerDatabase::getComplexMonomerQueries() const
 void MonomerDatabase::onDatabaseChanged()
 {
     m_enumerated_core_smiles_cache.reset();
+    m_normalized_monomer_smiles_cache.clear();
     m_complex_monomer_queries.reset();
     m_database_changed();
 }

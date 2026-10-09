@@ -197,63 +197,6 @@ std::string ap_model_name_for(int ap_num)
     return fmt::format("R{}", ap_num);
 }
 
-/**
- * Get the attachment point number, if any, from the atom label of the given
- * atom.
- */
-static std::optional<unsigned int>
-get_attachment_point_num_from_atom_label(const RDKit::Atom& atom)
-{
-    std::string atom_label;
-    atom.getPropIfPresent(RDKit::common_properties::atomLabel, atom_label);
-    if (atom_label.starts_with("_R")) {
-        const auto parsed_num = ap_name_to_num(atom_label.substr(1));
-        if (parsed_num > 0) {
-            return static_cast<unsigned int>(parsed_num);
-        }
-    }
-    return std::nullopt;
-}
-
-/**
- * Get the attachment point number, if any, from the given atom. This function
- * recognized attachment point numbers that are specified using atom-map
- * numbers, isotope-numbers, or CXSMILES atom labels in the format of "_R<#>".
- */
-static std::optional<unsigned int>
-get_attachment_point_num(const RDKit::Atom& atom)
-{
-    unsigned int attachment_point_num = 0;
-    if (atom.getPropIfPresent(RDKit::common_properties::molAtomMapNumber,
-                              attachment_point_num) &&
-        attachment_point_num > 0) {
-        return attachment_point_num;
-    }
-
-    if (const auto atom_label_num =
-            get_attachment_point_num_from_atom_label(atom)) {
-        return atom_label_num;
-    }
-
-    if (atom.getAtomicNum() == 0 && atom.getIsotope() > 0) {
-        return atom.getIsotope();
-    }
-    return std::nullopt;
-}
-
-/**
- * Clear any properties on the specified atom that are used to mark it as an
- * attachment point
- */
-static void clear_attachment_point_properties(RDKit::Atom& atom)
-{
-    atom.clearProp(RDKit::common_properties::molAtomMapNumber);
-
-    if (get_attachment_point_num_from_atom_label(atom)) {
-        atom.clearProp(RDKit::common_properties::atomLabel);
-    }
-}
-
 std::vector<int> get_missing_required_attachment_points(
     const RDKit::ROMol& atomistic_mol,
     std::vector<int> required_attachment_points)
@@ -279,7 +222,8 @@ get_attachment_points_for_atomistic_mol(const RDKit::ROMol& mol)
 {
     std::vector<std::pair<int, std::string>> attachment_points;
     for (const auto* atom : mol.atoms()) {
-        const auto attachment_point_num = get_attachment_point_num(*atom);
+        const auto attachment_point_num =
+            rdkit_extensions::getMonomerAttachmentPointNumber(*atom);
         if (!attachment_point_num) {
             continue;
         }
@@ -317,34 +261,7 @@ std::string normalize_smiles_attachment_points(const std::string& smiles)
     auto mol = rdkit_extensions::to_rdkit(
         smiles, rdkit_extensions::Format::EXTENDED_SMILES);
 
-    // Adding atoms invalidates atom iterators, so only visit atoms from the
-    // input molecule by index.
-    const auto input_atom_count = mol->getNumAtoms();
-    for (auto atom_idx = 0u; atom_idx < input_atom_count; ++atom_idx) {
-        auto* atom = mol->getAtomWithIdx(atom_idx);
-        const auto attachment_point_num = get_attachment_point_num(*atom);
-        if (!attachment_point_num) {
-            continue;
-        }
-
-        auto dummy = rdkit_extensions::make_new_r_group(*attachment_point_num);
-        // Atom-map numbers mark leaving atoms in database monomer SMILES,
-        // including heavy atoms such as the C-terminal oxygen of a peptide.
-        // Replace the leaving atom so the dummy bonds directly to the core.
-        if (atom->getAtomMapNum() > 0 || atom->getAtomicNum() <= 1) {
-            mol->replaceAtom(atom_idx, dummy.get());
-            continue;
-        }
-
-        clear_attachment_point_properties(*atom);
-        if (atom->getNumExplicitHs() > 0) {
-            atom->setNumExplicitHs(atom->getNumExplicitHs() - 1);
-        }
-        const auto dummy_idx = mol->addAtom(dummy.get());
-        mol->addBond(atom_idx, dummy_idx, RDKit::Bond::SINGLE);
-    }
-
-    mol->updatePropertyCache(false);
+    rdkit_extensions::normalizeMonomerAttachmentPoints(*mol);
     return rdkit_extensions::to_string(
         *mol, rdkit_extensions::Format::EXTENDED_SMILES);
 }

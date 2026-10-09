@@ -1,7 +1,28 @@
 #pragma once
 
 #include <string>
+#include <utility>
 #include <vector>
+
+// Fixed expected replacements for the inline structures in these fixtures.
+// Keep the original inputs to exercise recognition in both HELM directions.
+inline std::string expected_named_monomer_helm(std::string helm)
+{
+    static const std::vector<std::pair<std::string, std::string>> replacements{
+        {"[[*:2]C(=O)[C@H](C)N([*:1])C]", "[meA]"},
+        {"[OP([*:1])([*:2])=O]", "P"},
+        {"[C[C@@H](N*)C(*)=O |$;;;_R1;;_R2;;$|]", "[dA]"},
+        {"[O=C(*)[C@@H](C(C)C)N* |$;;_R2;;;;;;_R1;$|]", "[dV]"},
+        {"[O=C(*)[C@@H](CC(C)C)N* |$;;_R2;;;;;;;_R1;$|]", "[dL]"}};
+    for (const auto& [smiles, name] : replacements) {
+        size_t position = 0;
+        while ((position = helm.find(smiles, position)) != std::string::npos) {
+            helm.replace(position, smiles.size(), name);
+            position += name.size();
+        }
+    }
+    return helm;
+}
 
 static const std::vector<std::string> INVALID_EXAMPLES{
     /* un numbered connection points 2 */

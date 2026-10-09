@@ -9,6 +9,7 @@
 #include <rdkit/GraphMol/MonomerInfo.h>
 
 #include <algorithm>
+#include <cctype>
 #include <iostream>
 #include <ranges>
 #include <unordered_map>
@@ -20,9 +21,67 @@
 #include "schrodinger/rdkit_extensions/helm.h"
 #include "schrodinger/rdkit_extensions/helm/helm_parser.h" // for is_smiles_monomer
 #include "schrodinger/rdkit_extensions/monomer_database.h"
+#include "schrodinger/rdkit_extensions/rgroup.h"
 
 namespace schrodinger::rdkit_extensions
 {
+
+std::optional<unsigned int>
+getMonomerAttachmentPointNumber(const RDKit::Atom& atom)
+{
+    unsigned int map_num = 0;
+    if (atom.getPropIfPresent(RDKit::common_properties::molAtomMapNumber,
+                              map_num) &&
+        map_num > 0) {
+        return map_num;
+    }
+    std::string label;
+    if (atom.getPropIfPresent(RDKit::common_properties::atomLabel, label) &&
+        label.starts_with("_R")) {
+        const auto digits = std::string_view{label}.substr(2);
+        if (digits.empty() ||
+            !std::ranges::all_of(digits, [](const unsigned char c) {
+                return std::isdigit(c) != 0;
+            })) {
+            return std::nullopt;
+        }
+        try {
+            const auto number =
+                static_cast<unsigned int>(std::stoul(label.substr(2)));
+            return number > 0 ? std::make_optional(number) : std::nullopt;
+        } catch (const std::exception&) {
+            return std::nullopt;
+        }
+    }
+    if (atom.getAtomicNum() == 0 && atom.getIsotope() > 0) {
+        return atom.getIsotope();
+    }
+    return std::nullopt;
+}
+
+void normalizeMonomerAttachmentPoints(RDKit::RWMol& mol)
+{
+    const auto input_atom_count = mol.getNumAtoms();
+    for (auto atom_idx = 0u; atom_idx < input_atom_count; ++atom_idx) {
+        auto* atom = mol.getAtomWithIdx(atom_idx);
+        const auto number = getMonomerAttachmentPointNumber(*atom);
+        if (!number) {
+            continue;
+        }
+        auto dummy = make_new_r_group(*number);
+        if (atom->getAtomMapNum() > 0 || atom->getAtomicNum() <= 1) {
+            mol.replaceAtom(atom_idx, dummy.get());
+        } else {
+            atom->clearProp(RDKit::common_properties::atomLabel);
+            if (atom->getNumExplicitHs() > 0) {
+                atom->setNumExplicitHs(atom->getNumExplicitHs() - 1);
+            }
+            const auto dummy_idx = mol.addAtom(dummy.get());
+            mol.addBond(atom_idx, dummy_idx, RDKit::Bond::SINGLE);
+        }
+    }
+    mol.updatePropertyCache(false);
+}
 
 namespace
 {

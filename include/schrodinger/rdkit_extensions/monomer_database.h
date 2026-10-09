@@ -1,6 +1,7 @@
 #pragma once
 
 #include <limits>
+#include <map>
 #include <optional>
 #include <string>
 #include <string_view>
@@ -86,6 +87,11 @@ struct RDKIT_EXTENSIONS_API MonomerID {
     bool operator==(const MonomerID&) const = default;
 };
 
+struct monomer_smiles_signature_t {
+    std::string structure;
+    std::map<unsigned int, std::string> leaving_groups;
+};
+
 class RDKIT_EXTENSIONS_API MonomerDatabase : public boost::noncopyable
 {
   public:
@@ -160,6 +166,16 @@ class RDKIT_EXTENSIONS_API MonomerDatabase : public boost::noncopyable
     [[nodiscard]] opt_string_t getMonomerSmiles(const std::string& monomer_id,
                                                 ChainType polymer_type) const;
 
+    // Find a registered monomer with the same structure and attachment-point
+    // layout as an inline SMILES monomer of the specified polymer type.
+    // Ignore formatting and cosmetic CXSMILES metadata, retaining stereo.
+    // Compare explicit leaving groups only when both structures specify them,
+    // ignoring their protonation state. Custom definitions override core ones;
+    // multiple matches resolve to the lexically first HELM symbol.
+    // Returns nullopt for invalid, unmatched, or ambiguous attachment labels.
+    [[nodiscard]] std::optional<MonomerID>
+    findMonomerBySmiles(const std::string& smiles, ChainType polymer_type) const;
+
     [[nodiscard]] opt_string_t getNaturalAnalog(const std::string& monomer_id,
                                                 ChainType polymer_type) const;
 
@@ -208,6 +224,11 @@ class RDKIT_EXTENSIONS_API MonomerDatabase : public boost::noncopyable
     getComplexMonomerQueries() const;
 
   private:
+    struct monomer_smiles_candidate_t {
+        MonomerID id;
+        monomer_smiles_signature_t smiles;
+    };
+
     std::vector<MonomerInfo> getMonomers(ChainType polymer_type,
                                          bool non_natural_only) const;
 
@@ -238,6 +259,12 @@ class RDKIT_EXTENSIONS_API MonomerDatabase : public boost::noncopyable
     // Cache for enumerated core SMILES to monomer symbol and chain type.
     mutable std::optional<enumerated_core_smiles_map_t>
         m_enumerated_core_smiles_cache;
+
+    // Parsed active monomer structures, cached per polymer type and cleared
+    // with the other derived data after a database update.
+    mutable std::unordered_map<ChainType,
+                               std::vector<monomer_smiles_candidate_t>>
+        m_normalized_monomer_smiles_cache;
 
     // Cache for complex monomer queries
     mutable std::optional<std::vector<ResidueQuery>> m_complex_monomer_queries;

@@ -44,7 +44,8 @@ BOOST_DATA_TEST_CASE(TestRoundtrippingValidExamples,
     const auto roundtripped_helm = get_roundtripped_helm(input_helm);
     // NOTE: Doing the check this way since some of the inputs do not have the
     // V2.0 suffix
-    BOOST_TEST(boost::starts_with(roundtripped_helm, input_helm));
+    BOOST_TEST(boost::starts_with(
+        roundtripped_helm, expected_named_monomer_helm(input_helm)));
 }
 
 // Check that repetitions can be roundtripped

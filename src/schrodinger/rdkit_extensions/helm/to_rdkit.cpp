@@ -273,8 +273,26 @@ void condense_monomer_list(const std::string_view& polymer_id,
     for (const auto& monomer : polymer.monomers) {
         auto monomer_type =
             monomer.is_smiles ? MonomerType::SMILES : MonomerType::REGULAR;
-        auto idx = addMonomer(mol, get_monomer_id(polymer.id, monomer),
-                              residue_number, polymer.id, monomer_type);
+        auto monomer_id = get_monomer_id(polymer.id, monomer);
+        if (monomer.is_smiles) {
+            std::optional<ChainType> chain_type;
+            try {
+                chain_type = getChainType(polymer.id);
+            } catch (const std::out_of_range&) {
+                // Unknown polymer types such as BLOB do not have a monomer DB
+                // namespace, so keep their inline structures unchanged.
+            }
+            if (chain_type) {
+                if (const auto database_monomer =
+                        MonomerDatabase::instance().findMonomerBySmiles(
+                            std::string{monomer.id}, *chain_type)) {
+                    monomer_id = database_monomer->symbol;
+                    monomer_type = MonomerType::REGULAR;
+                }
+            }
+        }
+        auto idx = addMonomer(mol, monomer_id, residue_number, polymer.id,
+                              monomer_type);
         ++residue_number;
         auto atom = mol.getAtomWithIdx(idx);
         if (!monomer.annotation.empty()) {
