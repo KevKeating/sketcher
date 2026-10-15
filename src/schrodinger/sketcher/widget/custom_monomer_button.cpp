@@ -16,10 +16,11 @@ namespace schrodinger
 namespace sketcher
 {
 
-static const QString DRAW_STRUCTURE_TEXT = QStringLiteral("Draw Structure...");
-static const QString SKETCH_RESIDUE_TEXT = QStringLiteral("Sketch Residue...");
+static const QString SKETCH_CHEM_TEXT = QStringLiteral("Draw Structure...");
+static const QString SKETCH_PEPTIDE_TEXT = QStringLiteral("Sketch Residue...");
 // TODO: change this as part of SKETCH-2796
-static const QString SKETCH_BASE_TEXT = QStringLiteral("Sketch Base...");
+static const QString SKETCH_NUCLEIC_ACID_TEXT =
+    QStringLiteral("Sketch Base...");
 
 CustomMonomerButton::CustomMonomerButton(QWidget* parent) : QToolButton(parent)
 {
@@ -30,7 +31,7 @@ CustomMonomerButton::CustomMonomerButton(QWidget* parent) : QToolButton(parent)
     m_menu = new QMenu(this);
     m_monomer_action = m_menu->addAction(QString());
     m_menu->addSeparator();
-    auto* chem_action = m_menu->addAction(DRAW_STRUCTURE_TEXT);
+    auto* chem_action = m_menu->addAction(SKETCH_CHEM_TEXT);
     setChainType(rdkit_extensions::ChainType::PEPTIDE);
 
     // Do not install a QToolButton menu: its launch logic in Qt 6.7 enters a
@@ -50,8 +51,8 @@ void CustomMonomerButton::setChainType(rdkit_extensions::ChainType chain_type)
              chain_type == rdkit_extensions::ChainType::RNA);
     m_chain_type = chain_type;
     m_monomer_action->setText(chain_type == rdkit_extensions::ChainType::PEPTIDE
-                                  ? SKETCH_RESIDUE_TEXT
-                                  : SKETCH_BASE_TEXT);
+                                  ? SKETCH_PEPTIDE_TEXT
+                                  : SKETCH_NUCLEIC_ACID_TEXT);
 }
 
 void CustomMonomerButton::sketchCustomMonomer(
