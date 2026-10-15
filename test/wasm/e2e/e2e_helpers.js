@@ -88,7 +88,7 @@ async function callBridge(page, name, arg) {
  *   combo box's current item, or a line edit's or spin box's contents — and a
  *   button also reports "checked" and "toolTip".
  */
-async function getRect(page, selector) {
+export async function getRect(page, selector) {
   const encoded = await callBridge(page, '_sketcher_get_rect', selector);
   // Qt/WASM can yield an empty result for one browser turn while it closes a
   // modal or lays out its replacement. Treat that as temporarily unavailable

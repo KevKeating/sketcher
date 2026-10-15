@@ -438,6 +438,7 @@ const COPY_ALL_AS_NAMES = {
   inchi: 'InChI',
   pdb: 'PDB',
   sdf: 'MDL SD V3000',
+  helm: 'HELM',
   smi: 'SMILES',
 };
 
@@ -1386,7 +1387,7 @@ export class Sketcher {
         await clickWidget(this.page, 'import_btn');
         await new Promise((resolve) => setTimeout(resolve, 100));
         try {
-          await clickPopupRow(this.page, 0, importRows[button]);
+          await clickPopupRow(this.page, 'latest', importRows[button]);
           // A Qt popup can accept the browser click while it is still
           // transitioning, dismissing the menu without activating its row.
           // Do not treat that as success: for Paste in Text, wait until the
@@ -1495,6 +1496,7 @@ export class Sketcher {
         inchi: 155,
         inchikey: 179,
         pdb: 202,
+        helm: 275,
         // Image follows the 13 standard export formats and a separator.
         image: 322,
       };
