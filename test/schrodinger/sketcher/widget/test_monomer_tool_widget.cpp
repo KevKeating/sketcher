@@ -3,6 +3,7 @@
 
 #include <QAbstractButton>
 #include <QAction>
+#include <QEnterEvent>
 #include <QGridLayout>
 #include <QGraphicsSceneMouseEvent>
 #include <QMenu>
@@ -137,13 +138,21 @@ BOOST_AUTO_TEST_CASE(custom_monomer_menu_click)
         BOOST_TEST(widget.findChild<CustomMonomerDialog*>() == nullptr);
         menu->hide();
 
+        QEnterEvent enter(button->rect().center(), button->rect().center(),
+                          button->mapToGlobal(button->rect().center()));
+        QApplication::sendEvent(button, &enter);
         QTest::mouseClick(button, Qt::LeftButton);
         BOOST_TEST(menu->isVisible());
         BOOST_TEST(clicked.count() == 2);
         BOOST_TEST(button->isChecked() == checked);
         BOOST_TEST(widget.findChild<CustomMonomerDialog*>() == nullptr);
         BOOST_TEST(scene->m_sketcher_model->getDrawTool() == draw_tool);
+        // Dismissal through the title bar or another window need not deliver
+        // a leave event to the button that opened the menu.
         menu->hide();
+        BOOST_TEST(!button->underMouse());
+        BOOST_TEST(!button->isDown());
+        BOOST_TEST(button->isChecked() == checked);
 
         menu->actions().front()->trigger();
         auto* dialog = button->findChild<CustomMonomerDialog*>();
@@ -434,6 +443,20 @@ BOOST_AUTO_TEST_CASE(unclassified_monomers)
         BOOST_CHECK(model.getValue(key) == previous_tool);
         BOOST_TEST(!button->isChecked());
         popup->close();
+
+        QEnterEvent enter(button->rect().center(), button->rect().center(),
+                          button->mapToGlobal(button->rect().center()));
+        QApplication::sendEvent(button, &enter);
+        QTest::mousePress(button, Qt::LeftButton);
+        QTest::qWait(300);
+        BOOST_TEST(popup->isVisible());
+        QTest::mouseRelease(button, Qt::LeftButton);
+        popup->close();
+        BOOST_TEST(!button->underMouse());
+        BOOST_TEST(!button->isDown());
+        BOOST_TEST(!button->isChecked());
+        BOOST_CHECK(model.getValue(key) == previous_tool);
+
         button->click();
         BOOST_TEST(popup->isVisible());
         first_analog->click();

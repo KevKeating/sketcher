@@ -27,6 +27,13 @@ void SKETCHER_API check_button_or_uncheck_group(QAbstractButton* button,
                                                 QButtonGroup* group);
 
 /**
+ * Clear a button's hover and pressed state when its asynchronous popup hides.
+ * The button's checked state is preserved. The popup owns the event filter.
+ */
+void SKETCHER_API clear_button_state_on_popup_hide(QAbstractButton* button,
+                                                   QWidget* popup);
+
+/**
  * Switch the combo box to the entry with the specified Qt.UserRole data
  *
  * Note that this method is intentionally defined in the header so that the
