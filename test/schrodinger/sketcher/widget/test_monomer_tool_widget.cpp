@@ -1,5 +1,8 @@
 #define BOOST_TEST_MODULE test_monomer_tool_widget
+#include <boost/test/data/test_case.hpp>
 #include <boost/test/unit_test.hpp>
+
+#include <vector>
 
 #include <QAbstractButton>
 #include <QAction>
@@ -32,8 +35,16 @@ BOOST_GLOBAL_FIXTURE(QApplicationRequiredFixture);
 
 namespace schrodinger
 {
+namespace rdkit_extensions
+{
+MAKE_ENUM_LOGGABLE(ChainType);
+}
+
 namespace sketcher
 {
+
+using rdkit_extensions::ChainType;
+namespace bdata = boost::unit_test::data;
 
 /**
  * Keep the existing column thresholds and make overflow buttons reachable by
@@ -178,48 +189,46 @@ BOOST_AUTO_TEST_CASE(custom_monomer_menu_click)
  * Menu actions follow the selected tab and forward accepted custom monomers
  * through the button to the model.
  */
-BOOST_AUTO_TEST_CASE(custom_monomer_menu_actions)
+BOOST_DATA_TEST_CASE(custom_monomer_menu_actions,
+                     bdata::make(std::vector<ChainType>{
+                         ChainType::PEPTIDE, ChainType::RNA, ChainType::CHEM}),
+                     chain_type)
 {
-    using rdkit_extensions::ChainType;
-    for (const auto chain_type :
-         {ChainType::PEPTIDE, ChainType::RNA, ChainType::CHEM}) {
-        SketcherModel model;
-        MonomerToolWidget widget;
-        widget.setModel(&model);
-        widget.show();
-        auto* button =
-            widget.findChild<CustomMonomerButton*>("custom_monomer_btn");
-        BOOST_REQUIRE(button != nullptr);
-        auto* menu = button->findChild<QMenu*>();
-        BOOST_REQUIRE(menu != nullptr);
-        BOOST_REQUIRE_EQUAL(menu->actions().size(), 3);
+    SketcherModel model;
+    MonomerToolWidget widget;
+    widget.setModel(&model);
+    widget.show();
+    auto* button = widget.findChild<CustomMonomerButton*>("custom_monomer_btn");
+    BOOST_REQUIRE(button != nullptr);
+    auto* menu = button->findChild<QMenu*>();
+    BOOST_REQUIRE(menu != nullptr);
+    BOOST_REQUIRE_EQUAL(menu->actions().size(), 3);
+    BOOST_TEST(menu->actions()[0]->text() == "Sketch Residue...");
+    if (chain_type == ChainType::RNA) {
+        widget.findChild<QToolButton*>("nucleic_monomer_btn")->click();
+        BOOST_TEST(menu->actions()[0]->text() == "Sketch Base...");
+        widget.findChild<QToolButton*>("amino_monomer_btn")->click();
         BOOST_TEST(menu->actions()[0]->text() == "Sketch Residue...");
-        if (chain_type == ChainType::RNA) {
-            widget.findChild<QToolButton*>("nucleic_monomer_btn")->click();
-            BOOST_TEST(menu->actions()[0]->text() == "Sketch Base...");
-            widget.findChild<QToolButton*>("amino_monomer_btn")->click();
-            BOOST_TEST(menu->actions()[0]->text() == "Sketch Residue...");
-            widget.findChild<QToolButton*>("nucleic_monomer_btn")->click();
-        }
-        menu->actions()[chain_type == ChainType::CHEM ? 2 : 0]->trigger();
-        auto* dialog = button->findChild<CustomMonomerDialog*>();
-        BOOST_REQUIRE(dialog != nullptr);
-        BOOST_TEST(dialog->isVisible());
-        BOOST_TEST(!button->isChecked());
-        const QString expected_title =
-            chain_type == ChainType::PEPTIDE ? "Define Custom Peptide Residue"
-            : chain_type == ChainType::RNA   ? "Define Custom Nucleic Acid Base"
-                                             : "Define Custom Structure";
-        BOOST_TEST(dialog->windowTitle() == expected_title);
-        dialog->addSMILES("CC");
-        dialog->accept();
-        BOOST_TEST(model.getDrawTool() == DrawTool::CUSTOM_MONOMER);
-        const auto monomer = model.getValue(ModelKey::CUSTOM_MONOMER)
-                                 .value<std::pair<QString, ChainType>>();
-        BOOST_TEST(monomer.first == "CC");
-        BOOST_CHECK(monomer.second == chain_type);
-        BOOST_TEST(button->isChecked());
+        widget.findChild<QToolButton*>("nucleic_monomer_btn")->click();
     }
+    menu->actions()[chain_type == ChainType::CHEM ? 2 : 0]->trigger();
+    auto* dialog = button->findChild<CustomMonomerDialog*>();
+    BOOST_REQUIRE(dialog != nullptr);
+    BOOST_TEST(dialog->isVisible());
+    BOOST_TEST(!button->isChecked());
+    const QString expected_title =
+        chain_type == ChainType::PEPTIDE ? "Define Custom Peptide Residue"
+        : chain_type == ChainType::RNA   ? "Define Custom Nucleic Acid Base"
+                                         : "Define Custom Structure";
+    BOOST_TEST(dialog->windowTitle() == expected_title);
+    dialog->addSMILES("CC");
+    dialog->accept();
+    BOOST_TEST(model.getDrawTool() == DrawTool::CUSTOM_MONOMER);
+    const auto monomer = model.getValue(ModelKey::CUSTOM_MONOMER)
+                             .value<std::pair<QString, ChainType>>();
+    BOOST_TEST(monomer.first == "CC");
+    BOOST_CHECK(monomer.second == chain_type);
+    BOOST_TEST(button->isChecked());
 }
 
 /**
