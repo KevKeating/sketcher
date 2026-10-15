@@ -68,6 +68,9 @@ void CustomMonomerButton::sketchCustomMonomer(
 
 void CustomMonomerButton::nextCheckState()
 {
+    // this function intentionally left blank so that clicking on the button
+    // doesn't immediately toggle the check state. (We explicitly toggle the
+    // check state later when the tool change happens.)
 }
 
 void CustomMonomerButton::paintEvent(QPaintEvent* event)

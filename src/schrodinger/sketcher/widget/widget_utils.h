@@ -27,8 +27,13 @@ void SKETCHER_API check_button_or_uncheck_group(QAbstractButton* button,
                                                 QButtonGroup* group);
 
 /**
- * Clear a button's hover and pressed state when its asynchronous popup hides.
- * The button's checked state is preserved. The popup owns the event filter.
+ * Clear a button's hover and pressed state (but not checked state) when its
+ * asynchronous popup hides by adding an event filter to the popup. Without this
+ * event filter, if the, e.g., "+ Custom" menu closed due to the Sketcher window
+ * losing focus, the blue background would remain on the button until the next
+ * time the user moused over it.
+ *
+ * Note that the popup owns the event filter.
  */
 void SKETCHER_API clear_button_state_on_popup_hide(QAbstractButton* button,
                                                    QWidget* popup);

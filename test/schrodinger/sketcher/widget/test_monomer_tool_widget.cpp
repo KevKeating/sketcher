@@ -18,10 +18,10 @@
 
 #include "../test_common.h"
 #include "schrodinger/rdkit_extensions/monomer_database.h"
-#include "schrodinger/sketcher/dialog/custom_monomer_dialog.h"
 #include "schrodinger/sketcher/model/sketcher_model.h"
 #include "schrodinger/sketcher/rdkit/monomeric.h"
 #include "schrodinger/sketcher/sketcher_css_style.h"
+#include "schrodinger/sketcher/dialog/custom_monomer_dialog.h"
 #include "schrodinger/sketcher/widget/amino_acid_symbol_popup.h"
 #include "schrodinger/sketcher/widget/custom_monomer_button.h"
 #include "schrodinger/sketcher/widget/modular_tool_button.h"

@@ -46,12 +46,14 @@ class SKETCHER_API CustomMonomerButton : public QToolButton
 
   protected:
     /**
-     * Paint centered contents with a standard menu arrow on hover or check.
+     * Overriden QToolButton method: Paint centered contents with a standard
+     * menu arrow on hover or check.
      */
     void paintEvent(QPaintEvent* event) override;
 
     /**
-     * Preserve the model-controlled checked state when opening the menu.
+     * Overriden QToolButton method: Preserve the model-controlled checked state
+     * when opening the menu.
      */
     void nextCheckState() override;
 
