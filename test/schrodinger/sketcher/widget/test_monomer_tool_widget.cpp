@@ -130,8 +130,18 @@ BOOST_AUTO_TEST_CASE(custom_monomer_menu_click)
         BOOST_TEST(widget.findChild<CustomMonomerDialog*>() == nullptr);
 
         // Ensure a regression to a blocking menu cannot hang this test.
-        QTimer::singleShot(500, menu, &QMenu::hide);
+        bool watchdog_fired = false;
+        QTimer watchdog;
+        watchdog.setSingleShot(true);
+        QObject::connect(&watchdog, &QTimer::timeout, menu,
+                         [menu, &watchdog_fired]() {
+                             watchdog_fired = true;
+                             menu->hide();
+                         });
+        watchdog.start(500);
         QTest::mouseRelease(button, Qt::LeftButton);
+        watchdog.stop();
+        BOOST_TEST(!watchdog_fired);
         BOOST_TEST(menu->isVisible());
         BOOST_TEST(clicked.count() == 1);
         BOOST_TEST(button->isChecked() == checked);
