@@ -4915,7 +4915,7 @@ BOOST_AUTO_TEST_CASE(test_addBoundMonomer)
 /**
  * Removing a peptide backbone connection splits the HELM chain at that point.
  */
-BOOST_AUTO_TEST_CASE(test_removeMonomericConnection_splits_peptide_chain)
+BOOST_AUTO_TEST_CASE(test_removing_monomeric_connection_splits_peptide_chain)
 {
     QUndoStack undo_stack;
     TestMolModel model(&undo_stack);

@@ -683,7 +683,8 @@ create_monomer(const std::string_view res_name, const std::string_view chain_id,
  * MolModel uses per-atom flags to identify monomeric versus atomistic atoms, so
  * we intentionally avoid setting the structure-level flag until export.
  */
-static void assign_chains(RDKit::RWMol& mol) {
+static void assign_chains(RDKit::RWMol& mol)
+{
     rdkit_extensions::assignChains(mol);
     mol.clearProp(HELM_MODEL);
 }
