@@ -358,7 +358,7 @@ if(EMSCRIPTEN)
   add_executable(${MONOMER_LOADER_TARGET} src/wasm/monomer_loader.cpp)
   setup_target(${MONOMER_LOADER_TARGET})
   target_link_libraries(${MONOMER_LOADER_TARGET}
-                        PRIVATE ${RDKIT_EXTENSIONS_TARGET} -lembind)
+                        PRIVATE Boost::boost ${RDKIT_EXTENSIONS_TARGET} -lembind)
   target_link_options(
     ${MONOMER_LOADER_TARGET}
     PRIVATE

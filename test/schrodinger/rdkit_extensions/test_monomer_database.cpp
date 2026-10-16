@@ -78,8 +78,8 @@ BOOST_AUTO_TEST_CASE(serialized_custom_monomers)
     const auto image = db.serializeCustomMonomers();
     db.loadMonomersFromJson("[]");
     // Populate derived caches before installing the image.
-    db.getEnumeratedCoreSmiles();
-    db.getComplexMonomerQueries();
+    static_cast<void>(db.getEnumeratedCoreSmiles());
+    static_cast<void>(db.getComplexMonomerQueries());
     int notifications = 0;
     auto connection = db.subscribeToChanges([&]() {
         ++notifications;
