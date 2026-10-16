@@ -6,7 +6,9 @@ const PEPTIDE = 'PEPTIDE1{A.A.A.A.A.A}$$$$V2.0';
 const SPLIT_PEPTIDE = 'PEPTIDE1{A.A.A}|PEPTIDE2{A.A.A}$$$$V2.0';
 
 test.describe('SKETCH-2909 monomer backbone erasure', () => {
-  test('Copy All As HELM exports two chains after erasing the middle connection', async ({ page }) => {
+  test('Copy All As HELM exports two chains after erasing the middle connection', async ({
+    page,
+  }) => {
     const sk = new Sketcher(page);
     await sk.open();
 
