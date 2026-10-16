@@ -353,16 +353,17 @@ if(EMSCRIPTEN)
 
   # A separate module gives the worker its own database and RDKit state, without
   # requiring SharedArrayBuffer or a threaded Qt build.
-  add_executable(monomer_loader src/wasm/monomer_loader.cpp)
-  setup_target(monomer_loader)
-  target_link_libraries(monomer_loader PRIVATE ${RDKIT_EXTENSIONS_TARGET}
+  set(MONOMER_LOADER_TARGET monomer_loader)
+  add_executable(${MONOMER_LOADER_TARGET} src/wasm/monomer_loader.cpp)
+  setup_target(${MONOMER_LOADER_TARGET})
+  target_link_libraries(${MONOMER_LOADER_TARGET} PRIVATE ${RDKIT_EXTENSIONS_TARGET}
                                              -lembind)
   target_link_options(
-    monomer_loader
+    ${MONOMER_LOADER_TARGET}
     PRIVATE --no-entry -sMODULARIZE=1 -sEXPORT_NAME=createMonomerLoader
             -sENVIRONMENT=worker -sALLOW_MEMORY_GROWTH=1)
   set_target_properties(
-    monomer_loader
+    ${MONOMER_LOADER_TARGET}
     PROPERTIES OUTPUT_NAME MonomerLoader RUNTIME_OUTPUT_DIRECTORY
                                         ${CMAKE_BINARY_DIR}/sketcher_app)
 endif()
@@ -409,7 +410,7 @@ endif()
 if(EMSCRIPTEN)
   add_custom_target(
     update_wasm_files ALL
-    DEPENDS ${APP_TARGET} monomer_loader
+    DEPENDS ${APP_TARGET} ${MONOMER_LOADER_TARGET}
     COMMAND
       ${CMAKE_COMMAND} -E copy_if_different
       ${CMAKE_CURRENT_BINARY_DIR}/external/qt-${QT_VERSION}/plugins/platforms/qtloader.js
