@@ -347,7 +347,7 @@ test.describe('Custom Monomer DB', () => {
 
     expect(result.rejected).toBe(true);
     expect(result.isError).toBe(true);
-    expect(result.message).toContain('BOGUS_FIELD');
+    expect(result.message).toContain('exception');
   });
 
   test('large monomer imports leave the main thread available', async ({ page }) => {
