@@ -141,8 +141,8 @@ class RDKIT_EXTENSIONS_API MonomerDatabase : public boost::noncopyable
     [[nodiscard]] std::vector<unsigned char> serializeCustomMonomers() const;
 
     /**
-     * @brief Install a SQLite image prepared by serializeCustomMonomers().
-     * Checks the schema and notifies subscribers without repeating SMILES
+     * Install a SQLite image prepared by serializeCustomMonomers(). Checks the
+     * schema and notifies subscribers without repeating SMILES
      * canonicalization. The previous database is preserved on failure.
      */
     void loadSerializedCustomMonomers(const std::vector<unsigned char>& data);
