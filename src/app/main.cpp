@@ -14,8 +14,6 @@
 
 #include <stdexcept>
 #include <string>
-#include <utility>
-#include <vector>
 
 #include <QApplication>
 #include <QFile>
@@ -110,35 +108,17 @@ void sketcher_allow_monomeric(bool /* allow_monomeric */)
 }
 
 #ifdef __EMSCRIPTEN__
-using MonomerDefsInsertionResult =
-    std::pair<std::vector<std::string>, std::vector<std::string>>;
-
-emscripten::val
-string_vector_to_js_array(const std::vector<std::string>& values)
+std::string sketcher_install_custom_monomers(const emscripten::val& data)
 {
-    auto array = emscripten::val::array();
-    for (unsigned i = 0; i < values.size(); ++i) {
-        array.set(i, values[i]);
+    try {
+        auto& db = schrodinger::rdkit_extensions::MonomerDatabase::instance();
+        db.loadSerializedCustomMonomers(
+            emscripten::convertJSArrayToNumberVector<unsigned char>(data));
+        get_sketcher_instance().setLoadMonomerDatabaseVisible(false);
+        return {};
+    } catch (const std::exception& e) {
+        return e.what();
     }
-    return array;
-}
-
-emscripten::val
-monomer_defs_insertion_result_to_js(const MonomerDefsInsertionResult& result)
-{
-    auto object = emscripten::val::object();
-    object.set("succeeded", string_vector_to_js_array(result.first));
-    object.set("failed", string_vector_to_js_array(result.second));
-    return object;
-}
-
-emscripten::val sketcher_load_custom_monomers(const std::string& json)
-{
-    auto& db = schrodinger::rdkit_extensions::MonomerDatabase::instance();
-    auto result = db.loadMonomersFromJson(json);
-    get_sketcher_instance().setLoadMonomerDatabaseVisible(false);
-
-    return monomer_defs_insertion_result_to_js(result);
 }
 #endif
 
@@ -223,8 +203,8 @@ EMSCRIPTEN_BINDINGS(sketcher)
     emscripten::function("sketcher_is_empty", &sketcher_is_empty);
     emscripten::function("sketcher_has_monomers", &sketcher_has_monomers);
     emscripten::function("sketcher_allow_monomeric", &sketcher_allow_monomeric);
-    emscripten::function("sketcher_load_custom_monomers",
-                         &sketcher_load_custom_monomers);
+    emscripten::function("sketcher_install_custom_monomers",
+                         &sketcher_install_custom_monomers);
     // see sketcher_changed_callback above
     // the e2e test bindings are registered in playwright_test_bridge.cpp
 }
