@@ -16,9 +16,14 @@ WASM artifact built from the same checkout, including `playwright_test_bridge.cp
 
 Actions use mouse/keyboard input and the existing Import/clipboard wrapper.
 The bridge reads foreground editor geometry, painted atom chirality labels,
-visible attachment labels and hit areas, popup button geometry, and the actual
+visible attachment labels and hit areas, the actual text labels on hint
+connections and their existing monomer owners, popup button geometry, and the actual
 View cursor pixmap. Browser screenshots omit the cursor, so cursor assertions
 compare that displayed pixmap directly.
+
+The drawing-tool checks count the existing monomer's label on the hint
+connection, as clarified by certification. They assert the remaining unbound
+labels plus both peptide/CHEM endpoint labels, or the single shared H-bond label.
 
 The connector overlap check uses the connector's hit shape against small,
 central regions of **other** beads. Its wider selection halo makes it unsuitable
@@ -59,12 +64,13 @@ npx playwright test e2e/custom_monomer_regressions.test.js e2e/monomer_connectio
 Visual references were generated locally on 2026-10-16 against the downloaded
 artifact from run `38832083328` (commit `f9043b71`). The 23 PNGs are stored in five
 suite archives under `e2e/reference_archives/`. See
-[WASM_FAILURE_ANALYSIS.md](WASM_FAILURE_ANALYSIS.md) for the remaining behavior
-failures. Image checkpoints after those failing assertions remain ungenerated;
-the assertions have not been bypassed to produce references.
+[WASM_FAILURE_ANALYSIS.md](WASM_FAILURE_ANALYSIS.md) for the remaining HELM export
+failure and the corrected interpretation of hint labels. Four image checkpoints
+after the corrected hint assertions remain ungenerated.
 
-The downloaded artifact can be used directly, without another C++ build. Serve
-its directory on port 8000, then run the command above with
+The revised hint-label checks require a new WASM build containing the updated
+scene bridge. After downloading that artifact, serve its directory on port 8000,
+then run the command above with
 `SKETCHER_WASM_APP_DIR` set to that directory. On Windows this also avoids
 depending on a `python3` command in PATH: start the server separately with an
 available Python interpreter. Playwright reuses an existing server outside CI.

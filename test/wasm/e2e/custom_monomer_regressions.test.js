@@ -17,6 +17,7 @@ import {
   expectAttachments,
   expectCursor,
   expectDialog,
+  expectDrawingAttachments,
   getExportedHelm,
   mouseClick,
   mouseDrag,
@@ -143,7 +144,7 @@ test.describe('Custom structure creation', () => {
     await expectCursor(page, 'custom-peptide-cursor.png');
     await place(page);
     await waitAtoms(page, 1);
-    await expectAttachments(page, 0, ['N', 'C']);
+    await expectDrawingAttachments(page, 0, ['N', 'C'], 'C', ['C', 'N']);
     await screenshotView(page, 'custom-peptide-attachments.png');
     const target = await point(page, 0);
     await mouseClick(page, target.x, target.y);
@@ -160,12 +161,12 @@ test.describe('Custom structure creation', () => {
     await defineCustom(page, 'peptide', '*NC(C*)(C*)C(=O)* |$_R1;;;;_R3;;_R4;;;_R2$|');
     await place(page);
     await waitAtoms(page, 1);
-    await expectAttachments(page, 0, ['N', 'C', 'X', 'R4']);
+    await expectDrawingAttachments(page, 0, ['N', 'C', 'X', 'R4'], 'C', ['C', 'N']);
     await clear(page);
     await defineCustom(page, 'peptide', '*NC(CS*)C(=O)* |$_R1;;;;;_R3;;;_R2$|');
     await place(page);
     await waitAtoms(page, 1);
-    await expectAttachments(page, 0, ['N', 'C', 'S']);
+    await expectDrawingAttachments(page, 0, ['N', 'C', 'S'], 'C', ['C', 'N']);
   });
 
   test('SKETCH-2825: custom bases expose a glycosidic site and create a hydrogen pair', async ({
@@ -175,7 +176,7 @@ test.describe('Custom structure creation', () => {
     await expectCursor(page, 'custom-base-cursor.png');
     await place(page);
     await waitAtoms(page, 1);
-    await expectAttachments(page, 0, ['N1/9', 'H-bond']);
+    await expectDrawingAttachments(page, 0, ['N1/9', 'H-bond'], 'H-bond', ['H-bond']);
     await screenshotView(page, 'custom-base-attachments.png');
     const target = await point(page, 0);
     await mouseClick(page, target.x, target.y);
@@ -191,7 +192,7 @@ test.describe('Custom structure creation', () => {
       await place(page, -100);
       await place(page, 100);
       await waitAtoms(page, 2);
-      await expectAttachments(page, 0, ['R1', 'R2', 'R3']);
+      await expectDrawingAttachments(page, 0, ['R1', 'R2', 'R3'], 'R1', ['R1', 'R1']);
       await screenshotView(page, `custom-chem-${tab}.png`);
       await clickWidget(page, 'covalent_or_disulfide_btn');
       await connect(page, 0, 'R2', 1, 'R1');

@@ -52,6 +52,7 @@
 #include <QDialogButtonBox>
 #include <QGraphicsItem>
 #include <QGraphicsScene>
+#include <QGraphicsSimpleTextItem>
 #include <QGraphicsView>
 #include <QJsonDocument>
 #include <QJsonArray>
@@ -83,6 +84,7 @@
 #include "schrodinger/sketcher/molviewer/abstract_monomer_item.h"
 #include "schrodinger/sketcher/molviewer/atom_item.h"
 #include "schrodinger/sketcher/molviewer/constants.h"
+#include "schrodinger/sketcher/molviewer/monomer_hint_fragment_item.h"
 #include "schrodinger/sketcher/molviewer/unbound_monomeric_attachment_point_item.h"
 #include "schrodinger/sketcher/molviewer/scene.h"
 #include "schrodinger/sketcher/sketcher_widget.h"
@@ -633,6 +635,64 @@ std::string sketcher_get_rect(const std::string& selector)
 }
 
 /**
+ * Inspect the actual text items on hint connectors, including the shared
+ * H-bond label. A hint hides copies of its existing endpoints at their original
+ * scene positions; match those copies to the model's visible monomer items to
+ * identify the connection's owners. Return every match so overlapping monomers
+ * cannot silently attribute a hint to the wrong owner.
+ */
+static QJsonArray inspect_hint_connections(const QGraphicsView& view,
+                                           const SketcherWidget& sketcher,
+                                           const Scene& scene)
+{
+    using namespace schrodinger::sketcher;
+    QJsonArray connections;
+    const auto monomers =
+        scene.getInteractiveItems(InteractiveItemFlag::MONOMER);
+    for (const auto* item : scene.items()) {
+        const auto* hint = dynamic_cast<const MonomerHintFragmentItem*>(item);
+        if (hint == nullptr || !hint->isVisible()) {
+            continue;
+        }
+        QJsonArray owners;
+        QJsonArray labels;
+        for (const auto* child : hint->childItems()) {
+            if (const auto* label =
+                    dynamic_cast<const QGraphicsSimpleTextItem*>(child);
+                label != nullptr && label->isVisible()) {
+                auto result = item_geometry(view, sketcher, *label);
+                result["text"] = label->text();
+                labels.append(result);
+            }
+            const auto* endpoint =
+                dynamic_cast<const AbstractMonomerItem*>(child);
+            if (endpoint == nullptr || endpoint->isVisible()) {
+                continue;
+            }
+            for (const auto* monomer : monomers) {
+                if (!monomer->isVisible() ||
+                    QLineF(endpoint->scenePos(), monomer->scenePos()).length() >
+                        1e-6) {
+                    continue;
+                }
+                const auto index = static_cast<int>(
+                    static_cast<const AbstractMonomerItem*>(monomer)
+                        ->getAtom()
+                        ->getIdx());
+                if (!owners.contains(index)) {
+                    owners.append(index);
+                }
+            }
+        }
+        if (!labels.isEmpty()) {
+            connections.append(
+                QJsonObject{{"owners", owners}, {"labels", labels}});
+        }
+    }
+    return connections;
+}
+
+/**
  * Inspect rendered scene geometry and visible hover attachments, without
  * changing the model or creating items. Positions in scene coordinates allow
  * layout comparisons independent of viewport fitting. Page coordinates are
@@ -780,10 +840,12 @@ std::string sketcher_inspect_scene()
             popup["actions"] = actions;
         }
     }
-    return to_json({{"atoms", atoms},
-                    {"attachments", attachments},
-                    {"connectors", connectors},
-                    {"popup", popup}});
+    return to_json(
+        {{"atoms", atoms},
+         {"attachments", attachments},
+         {"hintConnections", inspect_hint_connections(view, sketcher, scene)},
+         {"connectors", connectors},
+         {"popup", popup}});
 }
 
 /**

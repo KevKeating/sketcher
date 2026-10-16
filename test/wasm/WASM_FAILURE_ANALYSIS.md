@@ -2,8 +2,8 @@
 
 Investigated on 2026-10-16 using the [reported GitHub job](https://github.com/KevKeating/sketcher/actions/runs/38832083328/job/116753054785)
 and its downloaded WASM app at `F:/Documents/sketcher_wasm/sketcher-wasm`.
-The artifact corresponds to commit `f9043b71`. No application code was changed
-during this investigation.
+The artifact corresponds to commit `f9043b71`. The later hint-label correction
+extends only the Playwright scene bridge; it does not change Sketcher behavior.
 
 ## Test defects corrected
 
@@ -23,29 +23,33 @@ verification: scene inspection tried to parse a transient empty bridge result
 during the asynchronous SDF import. It now waits for a nonempty response, as the
 existing geometry helper does. The SDF test also reuses the file-import wrapper.
 
-## Behavior failures retained
+## Certification clarification: hint labels
 
-### Attachment labels in the custom drawing tool: five tests
+The owner clarified that a label on the hint fragment's connection qualifies as
+the existing monomer's attachment label. The five results below were therefore
+test-inspection failures, not certification mismatches in Sketcher behavior.
 
-| Test in `custom_monomer_regressions.test.js` | Certification/expected visible labels | Actual visible labels |
-| -------------------------------------------- | ------------------------------------- | --------------------- |
-| SKETCH-2741 custom backbone                  | N, C                                  | N                     |
-| SKETCH-2741 R3/R4 side-chain chemistry       | N, C, X, R4                           | N, X, R4              |
-| SKETCH-2825 custom base                      | N1/9, H-bond                          | N1/9                  |
-| SKETCH-2771 CHEM from amino tab              | R1, R2, R3                            | R2, R3                |
-| SKETCH-2771 CHEM from nucleic tab            | R1, R2, R3                            | R2, R3                |
+| Test in `custom_monomer_regressions.test.js` | Expected labels including hint | Initial bridge's unbound labels |
+| -------------------------------------------- | ------------------------------ | ------------------------------- |
+| SKETCH-2741 custom backbone                  | N, C                           | N                               |
+| SKETCH-2741 R3/R4 side-chain chemistry       | N, C, X, R4                    | N, X, R4                        |
+| SKETCH-2825 custom base                      | N1/9, H-bond                   | N1/9                            |
+| SKETCH-2771 CHEM from amino tab              | R1, R2, R3                     | R2, R3                          |
+| SKETCH-2771 CHEM from nucleic tab            | R1, R2, R3                     | R2, R3                          |
 
-This is a discrepancy with the explicit hover instructions on
-[SKETCH-2741](https://schrodinger.atlassian.net/browse/SKETCH-2741),
-[SKETCH-2825](https://schrodinger.atlassian.net/browse/SKETCH-2825), and
-[SKETCH-2771](https://schrodinger.atlassian.net/browse/SKETCH-2771).
-It does not demonstrate that the chemical attachment is absent.
-`DrawMonomerSceneTool::updateHoveredUnboundAP` explicitly hides the attachment
-label selected for the default connection preview and draws a hint fragment
-instead. Thus this could be intentional UI behavior with outdated certification
-wording. The tests still require the certified visible labels; no application
-change or expectation relaxation was made. Their later image/connection
-checkpoints are not reached.
+The initial bridge returned only visible unbound labels. It now also returns
+`hintConnections`, reading the actual `QGraphicsSimpleTextItem` text on each
+visible hint. Hidden copies of existing endpoints are matched to visible model
+monomers at the same scene positions to report connection owners. All matches
+are returned; the tests require exactly the intended owner.
+
+The five tests now check the unbound labels plus the hint text: C/N for peptide
+connections, R1/R1 for CHEM connections, and the single shared H-bond label for
+base pairs. They do not infer the painted text from molecular properties or use
+image comparisons to certify it. A rebuilt WASM artifact is required to run the
+updated checks. The downloaded `f9043b71` artifact lacks this bridge field.
+
+## Behavior failure retained
 
 ### SKETCH-2865: removing a backbone connection leaves incorrect HELM chain identity
 
@@ -86,23 +90,26 @@ The artifact is sufficient for local execution. Playwright 1.64.1 / Chromium
 | `monomer_import_export_regressions.test.js.tar.gz` |      1 |
 | `monomer_layout_regressions.test.js.tar.gz`        |      4 |
 
-The archives follow the repository's existing reference format. Images beyond
-the retained failing assertions were not fabricated or accepted as baselines.
-They still need generation after the relevant behavior or certification is
-resolved. Windows-generated references require confirmation on the Linux runner.
+The archives follow the repository's existing reference format. Four existing
+image checkpoints after the corrected hint assertions have not yet been
+generated: custom peptide attachments, custom base attachments, and CHEM
+attachments from both tabs. Once the text checks pass on the new build, these
+may report expected missing-reference failures. No additional image checks were
+added for hint-label text. Windows-generated references require confirmation on
+the Linux runner.
 
 ## Validation
 
-Final validation across the 52 resolved-case tests:
+Validation before the hint-label clarification, across the 52 resolved-case tests:
 
-| Suite           | Passing | Retained behavior failures |
-| --------------- | ------: | -------------------------: |
-| Custom monomers |      11 |                          5 |
-| Connections     |      16 |                          1 |
-| Database        |       6 |                          0 |
-| Layout          |       5 |                          0 |
-| Import/export   |       8 |                          0 |
-| Total           |      46 |                          6 |
+| Suite           | Passing | Failures before clarification |
+| --------------- | ------: | ----------------------------: |
+| Custom monomers |      11 |                             5 |
+| Connections     |      16 |                             1 |
+| Database        |       6 |                             0 |
+| Layout          |       5 |                             0 |
+| Import/export   |       8 |                             0 |
+| Total           |      46 |                             6 |
 
 The full 52-test run initially confirmed this split. A subsequent archive-based
 run exposed the intermittent import-readiness error described above. After its
@@ -116,4 +123,11 @@ counts and normalized timestamps/ownership. JavaScript syntax, Prettier checks,
 and both staged and unstaged `git diff --check` passed.
 
 The entire pre-existing browser suite and native C++ tests were not run; no C++
-sources or build configuration changed in this investigation.
+sources or build configuration changed during that initial validation. The new
+bridge and text assertions require another WASM build; their browser execution
+is pending that artifact.
+
+For the bridge/text-assertion change, the native build and focused
+`test/schrodinger/sketcher/tool/test_draw_monomer_scene_tool.exe` test passed.
+JavaScript syntax and Playwright discovery also passed. The native build verifies
+compilation, not the new browser assertions' runtime results.

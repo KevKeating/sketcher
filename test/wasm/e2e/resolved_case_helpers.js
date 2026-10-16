@@ -167,6 +167,39 @@ export async function expectAttachments(page, index, labels) {
     .toEqual([...labels].sort());
 }
 
+export async function expectDrawingAttachments(page, index, labels, previewLabel, hintLabels) {
+  // Certification counts the default site's label on the hint connector.
+  // Check the actual painted hint text as well as every remaining nubbin;
+  // hydrogen bonds use one shared label instead of two endpoint labels.
+  expect(labels).toContain(previewLabel);
+  expect(hintLabels).toContain(previewLabel);
+  await hoverAtom(page, index);
+  await expect
+    .poll(async () => {
+      const state = await scene(page);
+      expect(
+        state,
+        'WASM artifact must include hintConnections in the scene bridge',
+      ).toHaveProperty('hintConnections');
+      return {
+        unbound: state.attachments
+          .filter((item) => item.owner === index)
+          .map((item) => item.text)
+          .sort(),
+        hints: state.hintConnections
+          .filter((hint) => hint.owners.includes(index))
+          .map((hint) => ({
+            owners: [...hint.owners].sort((a, b) => a - b),
+            labels: hint.labels.map((item) => item.text).sort(),
+          })),
+      };
+    })
+    .toEqual({
+      unbound: labels.filter((label) => label !== previewLabel).sort(),
+      hints: [{ owners: [index], labels: [...hintLabels].sort() }],
+    });
+}
+
 export async function attachment(page, index, name) {
   let result;
   await expect
