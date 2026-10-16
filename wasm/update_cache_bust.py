@@ -1,4 +1,5 @@
-"""Update cache-busting hashes for the WebAssembly application assets.
+"""
+Update cache-busting hashes for the WebAssembly application assets.
 
 Browsers may keep JavaScript and WebAssembly files in cache after a deployment.
 This script appends each referenced asset's MD5 digest as a ``cache_bust`` query

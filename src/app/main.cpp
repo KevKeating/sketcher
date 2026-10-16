@@ -109,37 +109,14 @@ void sketcher_allow_monomeric(bool /* allow_monomeric */)
 
 #ifdef __EMSCRIPTEN__
 /**
- * @brief Install a custom monomer database prepared from JSON input.
+ * Install a custom monomer database prepared from JSON input.
  *
- * JavaScript callers should pass the JSON text to
- * `Module.sketcher_load_custom_monomers()`. Its worker validates the monomer
- * records and serializes the resulting database before calling this binding
- * with the serialized bytes. The JSON input is an array of monomer objects;
- * each record must contain the fields required by the monomer database, such
- * as `SYMBOL`, `POLYMER_TYPE`, `NATURAL_ANALOG`, `SMILES`, `NAME`,
- * `MONOMER_TYPE`, and `AUTHOR`. `CORE_SMILES` may also be supplied.
+ * Note that JavaScript callers should not call this function directly. Instead,
+ * pass the JSON text to `Module.sketcher_load_custom_monomers()`. Its worker
+ * validates the monomer records and serializes the resulting database before
+ * calling this binding with the serialized bytes. This avoids blocking the main
+ * thread during processing.
  *
- * For example:
- * @code
- * const monomers = [{
- *   SYMBOL: 'TestMon',
- *   POLYMER_TYPE: 'PEPTIDE',
- *   NATURAL_ANALOG: 'A',
- *   SMILES: 'CC(C)(N[H:1])C(=O)[OH:2]',
- *   CORE_SMILES: 'CC(C)(N)C=O',
- *   NAME: 'Test Monomer',
- *   MONOMER_TYPE: 'Backbone',
- *   AUTHOR: 'Example',
- * }];
- * const result = await Module.sketcher_load_custom_monomers(
- *   JSON.stringify(monomers));
- * console.log(result.succeeded, result.failed);
- * @endcode
- *
- * The JavaScript API resolves with lists of successfully installed and failed
- * records. This binding returns an empty string on success or the exception
- * message on failure; the JavaScript wrapper turns a non-empty message into a
- * rejected Promise.
  * @param[in] data Serialized custom monomer database bytes from the worker.
  * @return Empty on success, or an error message on failure.
  */
