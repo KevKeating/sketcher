@@ -10,8 +10,9 @@ def md5(f):
 
 def update_reference(path, name, digest):
     content = path.read_text()
-    content = re.sub(re.escape(name) + r"(?:\?cache_bust=[0-9a-f]+)?",
-                     f"{name}?cache_bust={digest}", content)
+    content = re.sub(
+        re.escape(name) + r"(?:\?cache_bust=[0-9a-f]+)?",
+        f"{name}?cache_bust={digest}", content)
     path.write_text(content)
 
 

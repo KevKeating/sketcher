@@ -65,7 +65,9 @@ export type SketcherWASM = {
   /**
    * Loads and canonicalizes monomers in a worker, then refreshes the UI.
    */
-  sketcher_load_custom_monomers: (json: string) => Promise<{ succeeded: string[]; failed: string[] }>;
+  sketcher_load_custom_monomers: (
+    json: string,
+  ) => Promise<{ succeeded: string[]; failed: string[] }>;
   sketcher_has_monomers: () => boolean;
   sketcher_allow_monomeric: (allowMonomeric: boolean) => void;
   sketcher_changed_callback?: () => void;

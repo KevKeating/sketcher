@@ -355,15 +355,17 @@ test.describe('Custom Monomer DB', () => {
     const result = await page.evaluate(async () => {
       // Warm the worker so ticks measure the import rather than module startup.
       await Module.sketcher_load_custom_monomers('[]');
-      const json = JSON.stringify(Array.from({ length: 10000 }, (_, i) => ({
-        SYMBOL: `Responsive${i}`,
-        POLYMER_TYPE: 'PEPTIDE',
-        NATURAL_ANALOG: 'A',
-        SMILES: 'CC(N)C(=O)O',
-        NAME: `Responsive monomer ${i}`,
-        MONOMER_TYPE: 'Backbone',
-        AUTHOR: 'test',
-      })));
+      const json = JSON.stringify(
+        Array.from({ length: 10000 }, (_, i) => ({
+          SYMBOL: `Responsive${i}`,
+          POLYMER_TYPE: 'PEPTIDE',
+          NATURAL_ANALOG: 'A',
+          SMILES: 'CC(N)C(=O)O',
+          NAME: `Responsive monomer ${i}`,
+          MONOMER_TYPE: 'Backbone',
+          AUTHOR: 'test',
+        })),
+      );
       let ticks = 0;
       const timer = setInterval(() => ++ticks, 10);
       try {
@@ -384,8 +386,9 @@ test.describe('Custom Monomer DB', () => {
     const result = await page.evaluate(async () => {
       const order = [];
       const first = Module.sketcher_load_custom_monomers('[]').then(() => order.push('first'));
-      const invalid = Module.sketcher_load_custom_monomers('invalid JSON')
-        .catch(() => order.push('invalid'));
+      const invalid = Module.sketcher_load_custom_monomers('invalid JSON').catch(() =>
+        order.push('invalid'),
+      );
       const last = Module.sketcher_load_custom_monomers('[]').then(() => order.push('last'));
       await Promise.all([first, invalid, last]);
       return order;

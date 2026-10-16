@@ -344,28 +344,33 @@ if(EMSCRIPTEN)
       -sDISABLE_EXCEPTION_CATCHING=0
       -sEXPORT_EXCEPTION_HANDLING_HELPERS)
   target_link_options(
-    ${APP_TARGET}
-    PRIVATE --post-js=${CMAKE_CURRENT_SOURCE_DIR}/wasm/load_custom_monomers.js)
+    ${APP_TARGET} PRIVATE
+    --post-js=${CMAKE_CURRENT_SOURCE_DIR}/wasm/load_custom_monomers.js)
   set_property(
     TARGET ${APP_TARGET}
-    APPEND PROPERTY LINK_DEPENDS
-                    ${CMAKE_CURRENT_SOURCE_DIR}/wasm/load_custom_monomers.js)
+    APPEND
+    PROPERTY LINK_DEPENDS
+             ${CMAKE_CURRENT_SOURCE_DIR}/wasm/load_custom_monomers.js)
 
   # A separate module gives the worker its own database and RDKit state, without
   # requiring SharedArrayBuffer or a threaded Qt build.
   set(MONOMER_LOADER_TARGET monomer_loader)
   add_executable(${MONOMER_LOADER_TARGET} src/wasm/monomer_loader.cpp)
   setup_target(${MONOMER_LOADER_TARGET})
-  target_link_libraries(${MONOMER_LOADER_TARGET} PRIVATE ${RDKIT_EXTENSIONS_TARGET}
-                                             -lembind)
+  target_link_libraries(${MONOMER_LOADER_TARGET}
+                        PRIVATE ${RDKIT_EXTENSIONS_TARGET} -lembind)
   target_link_options(
     ${MONOMER_LOADER_TARGET}
-    PRIVATE --no-entry -sMODULARIZE=1 -sEXPORT_NAME=createMonomerLoader
-            -sENVIRONMENT=worker -sALLOW_MEMORY_GROWTH=1)
+    PRIVATE
+    --no-entry
+    -sMODULARIZE=1
+    -sEXPORT_NAME=createMonomerLoader
+    -sENVIRONMENT=worker
+    -sALLOW_MEMORY_GROWTH=1)
   set_target_properties(
     ${MONOMER_LOADER_TARGET}
     PROPERTIES OUTPUT_NAME MonomerLoader RUNTIME_OUTPUT_DIRECTORY
-                                        ${CMAKE_BINARY_DIR}/sketcher_app)
+                                         ${CMAKE_BINARY_DIR}/sketcher_app)
 endif()
 target_link_libraries(
   ${APP_TARGET}
