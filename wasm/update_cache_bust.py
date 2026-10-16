@@ -1,3 +1,14 @@
+"""Update cache-busting hashes for the WebAssembly application assets.
+
+Browsers may keep JavaScript and WebAssembly files in cache after a deployment.
+This script appends each referenced asset's MD5 digest as a ``cache_bust`` query
+parameter, so a changed file is fetched again. It updates the dependency chain
+from the monomer loader WASM through its worker and the main Sketcher module,
+then updates the shell's references to the main module and Qt loader. The
+resulting hashes are deterministic, so running the script repeatedly without
+changing assets does not keep modifying the files.
+"""
+
 import argparse
 import hashlib
 import re
