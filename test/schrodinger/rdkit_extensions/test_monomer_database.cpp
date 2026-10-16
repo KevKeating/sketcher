@@ -67,7 +67,8 @@ BOOST_AUTO_TEST_CASE(serialized_custom_monomers)
 {
     auto& db = MonomerDatabase::instance();
     db.resetMonomerDefinitions();
-    BOOST_CHECK_THROW(db.serializeCustomMonomers(), std::runtime_error);
+    BOOST_CHECK_THROW(static_cast<void>(db.serializeCustomMonomers()),
+                      std::runtime_error);
     db.loadMonomersFromJson(R"JSON([{
         "symbol": "Transferred", "polymer_type": "PEPTIDE",
         "natural_analog": "A", "smiles": "CC(N)C(=O)O",
