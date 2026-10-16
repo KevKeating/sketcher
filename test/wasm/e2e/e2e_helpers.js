@@ -367,7 +367,7 @@ export async function mouseDrag(
  * @param {import('@playwright/test').Page} page
  * @param {string} selector - see getRect
  */
-async function waitForClickable(page, selector) {
+export async function waitForClickable(page, selector) {
   let rect;
   await expect
     .poll(

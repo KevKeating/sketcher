@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { contextMenuAction, selectAll } from './e2e_helpers.js';
+import { contextMenuAction } from './e2e_helpers.js';
 import {
   canvasPoint,
   clear,
@@ -17,6 +17,7 @@ import {
   place,
   redo,
   scene,
+  selectAll,
   screenshotView,
   undo,
   waitAtoms,
@@ -36,7 +37,7 @@ test.describe('Removing bound connections — SKETCH-2865', () => {
   test('editing a bound R2: Cancel returns to the edited drawing; OK removes the bond', async ({
     page,
   }) => {
-    await clickWidget(page, 'ala_btn');
+    expect((await widgetState(page, 'ala_btn')).checked).toBe(true);
     await mouseDrag(page, await canvasPoint(page, -100), await canvasPoint(page, 100));
     await waitAtoms(page, 2);
     const before = await getExportedHelm(page);
@@ -63,8 +64,8 @@ test.describe('Removing bound connections — SKETCH-2865', () => {
     await closeDialog(page);
     expect((await waitAtoms(page, 2)).map((atom) => atom.label)).toEqual(['***', 'A']);
     const after = await getExportedHelm(page);
-    expect(after).toContain('}|PEPTIDE2{');
     expect((await scene(page)).connectors).toHaveLength(0);
+    expect(after).toContain('}|PEPTIDE2{');
     await undo(page);
     expect(await getExportedHelm(page)).toBe(before);
     await redo(page);

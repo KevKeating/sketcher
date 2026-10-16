@@ -16,7 +16,7 @@ import {
   waitAtoms,
   widgetState,
 } from './resolved_case_helpers.js';
-import { clickPopupRow, setFilePickerResult } from './sketcher/wrappers/sketcher_wasm.js';
+import { clickPopupRow } from './sketcher/wrappers/sketcher_wasm.js';
 
 test.setTimeout(120_000);
 
@@ -24,9 +24,7 @@ test('SKETCH-1848: the original 3D SDF displays R and retains stereochemistry th
   page,
 }) => {
   const sk = await openCase(page, { monomeric: false });
-  await setFilePickerResult(page, path.join(FIXTURES, 'mol2-1.sdf'));
-  await clickWidget(page, 'import_btn');
-  await clickPopupRow(page, 'latest', 12);
+  await sk.import_menu('import_from_file', path.join(FIXTURES, 'mol2-1.sdf'));
   await waitAtoms(page, 26);
   const chiralLabels = async () =>
     (await scene(page)).atoms

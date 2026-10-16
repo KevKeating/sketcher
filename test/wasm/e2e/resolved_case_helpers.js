@@ -9,10 +9,11 @@ import {
   mouseClick,
   mouseDrag,
   requireRect,
+  waitForClickable,
   widgetState,
 } from './e2e_helpers.js';
 import { Sketcher } from './sketcher/wrappers/sketcher.js';
-import { clickPopupRow, setFilePickerResult } from './sketcher/wrappers/sketcher_wasm.js';
+import { setFilePickerResult } from './sketcher/wrappers/sketcher_wasm.js';
 
 export { clickWidget, getExportedHelm, getExportedSmiles, mouseClick, mouseDrag, widgetState };
 export const FIXTURES = path.join(
@@ -37,7 +38,16 @@ export async function openCase(page, { monomeric = true } = {}) {
 // This is a passive observation of the foreground scene, including a modal
 // editor. All mutation remains ordinary pointer/keyboard input in the helpers.
 export async function scene(page) {
-  const state = await page.evaluate(async () => JSON.parse(await Module._sketcher_inspect_scene()));
+  let encoded;
+  await expect
+    .poll(async () => {
+      encoded = await page.evaluate(async () => await Module._sketcher_inspect_scene());
+      // Like getRect, wait through the empty result Qt can return while an
+      // asynchronous import or dialog transition is still completing.
+      return typeof encoded === 'string' && encoded.trim() !== '';
+    })
+    .toBe(true);
+  const state = JSON.parse(encoded);
   state.atoms.sort((a, b) => a.index - b.index);
   return state;
 }
@@ -69,16 +79,7 @@ export async function place(page, dx = 0, dy = 0) {
 }
 
 export async function clickSelector(page, selector) {
-  let rect;
-  await expect
-    .poll(
-      async () => {
-        rect = await getRect(page, selector);
-        return Boolean(rect?.enabled);
-      },
-      { message: `clickable ${selector}` },
-    )
-    .toBe(true);
+  const rect = await waitForClickable(page, selector);
   const target = center(rect);
   await mouseClick(page, target.x, target.y);
 }
@@ -87,8 +88,8 @@ export async function dialogTitle(page) {
   return (await getRect(page, 'dialog:title'))?.text ?? null;
 }
 
-export async function expectDialog(page, title) {
-  await expect.poll(() => dialogTitle(page)).toBe(title);
+export async function expectDialog(page, title, timeout = 5000) {
+  await expect.poll(() => dialogTitle(page), { timeout }).toBe(title);
 }
 
 export async function closeDialog(page, button = 'OK') {
@@ -104,13 +105,13 @@ export async function pasteText(page, text) {
 }
 
 export async function replaceEditor(page, smiles) {
-  await clickWidget(page, 'clear_btn');
+  if ((await scene(page)).atoms.length > 0) await clear(page);
   await pasteText(page, smiles);
   await clickWidget(page, 'fit_btn');
 }
 
 export async function holdPopup(page, button) {
-  const target = center(await requireRect(page, `widget:${button}`));
+  const target = center(await waitForClickable(page, `widget:${button}`));
   await page.mouse.move(target.x, target.y);
   await page.mouse.down();
   // ToolButtonWithPopup uses a 250 ms timer; this wait is the actual gesture.
@@ -147,6 +148,9 @@ export async function defineCustom(page, type, smiles) {
 
 export async function hoverAtom(page, index) {
   const target = await point(page, index);
+  // A placement can leave the pointer at this exact coordinate. Leave and
+  // re-enter so Qt receives a hover event for the newly created item.
+  await page.mouse.move(1100, 40);
   await page.mouse.move(target.x, target.y, { steps: 4 });
 }
 
@@ -196,11 +200,28 @@ export async function clear(page) {
   await waitAtoms(page, 0);
 }
 
+export async function selectAll(page) {
+  await clickWidget(page, 'select_all_btn');
+  await expect.poll(async () => (await widgetState(page, 'select_all_btn')).enabled).toBe(false);
+  expect((await widgetState(page, 'clear_selection_btn')).enabled).toBe(true);
+}
+
+export async function moveAtom(page, index, dx, dy) {
+  if (!(await widgetState(page, 'select_tool_btn')).checked) {
+    await clickWidget(page, 'select_tool_btn');
+  }
+  const target = await point(page, index);
+  await mouseClick(page, target.x, target.y);
+  await clickWidget(page, 'move_rotate_btn');
+  await mouseDrag(page, target, { x: target.x + dx, y: target.y + dy });
+  await clickWidget(page, 'clear_selection_btn');
+  await clickWidget(page, 'select_tool_btn');
+}
+
 export async function loadDatabase(page, filename) {
   await setFilePickerResult(page, path.join(FIXTURES, filename));
-  await clickWidget(page, 'import_btn');
-  await clickPopupRow(page, 'latest', 85);
-  await expectDialog(page, 'Monomer Database');
+  await new Sketcher(page).import_menu('load_monomer_database');
+  await expectDialog(page, 'Monomer Database', 30000);
   await expect
     .poll(async () => (await widgetState(page, 'text_edit')).text)
     .toBe(`${filename} read successfully.`);

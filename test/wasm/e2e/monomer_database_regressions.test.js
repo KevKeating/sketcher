@@ -1,7 +1,7 @@
 import { expect, test } from '@playwright/test';
 import path from 'node:path';
-import { selectAll } from './e2e_helpers.js';
-import { clickPopupRow, setFilePickerResult } from './sketcher/wrappers/sketcher_wasm.js';
+import { setFilePickerResult } from './sketcher/wrappers/sketcher_wasm.js';
+import { Sketcher } from './sketcher/wrappers/sketcher.js';
 import {
   FIXTURES,
   choosePopup,
@@ -20,6 +20,7 @@ import {
   popupButtons,
   popupInfo,
   scene,
+  selectAll,
   screenshotView,
   waitAtoms,
   widgetState,
@@ -169,8 +170,7 @@ test('SKETCH-2788: malformed JSON explains the failure; picker cancellation leav
   await pasteText(page, 'PEPTIDE1{A}$$$$V2.0');
   const before = await getExportedHelm(page);
   await setFilePickerResult(page, path.join(FIXTURES, 'invalid_monomers.json'));
-  await clickWidget(page, 'import_btn');
-  await clickPopupRow(page, 'latest', 85);
+  await new Sketcher(page).import_menu('load_monomer_database');
   await expectDialog(page, 'Monomer Database Error');
   expect((await widgetState(page, 'text_edit')).text).toMatch(/parse|JSON|invalid/i);
   await closeDialog(page);
@@ -181,8 +181,7 @@ test('SKETCH-2788: malformed JSON explains the failure; picker cancellation leav
       throw new DOMException('Picker cancelled', 'AbortError');
     };
   });
-  await clickWidget(page, 'import_btn');
-  await clickPopupRow(page, 'latest', 85);
+  await new Sketcher(page).import_menu('load_monomer_database');
   // Reopening a normal menu proves the asynchronous cancellation returned
   // control to the UI. No fixed delay or assertion of silence alone is used.
   await expectPalette(page, 'aa_unclassified_btn', ['ac', 'am']);

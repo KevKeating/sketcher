@@ -1380,6 +1380,7 @@ export class Sketcher {
       import_from_file: 12,
       paste_in_text: 35,
       replace_current_content: 58,
+      load_monomer_database: 85,
     };
     if (importRows[button] !== undefined) {
       let lastError;

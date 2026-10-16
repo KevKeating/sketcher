@@ -56,12 +56,25 @@ From `test/wasm`, run just these suites against the freshly built artifact:
 npx playwright test e2e/custom_monomer_regressions.test.js e2e/monomer_connection_regressions.test.js e2e/monomer_database_regressions.test.js e2e/monomer_layout_regressions.test.js e2e/monomer_import_export_regressions.test.js
 ```
 
-There are no locally generated visual references for these suites. On the first
-remote run, missing-reference failures are expected. Reuse that run's WASM
-artifact with the existing **Update Wasm Snapshots** workflow, or rerun the
-command above with `--update-snapshots` against the same artifact. Review the new
-PNG references against the Jira recipes before accepting them; snapshot generation
-alone does not establish correctness.
+Visual references were generated locally on 2026-10-16 against the downloaded
+artifact from run `38832083328` (commit `f9043b71`). The 23 PNGs are stored in five
+suite archives under `e2e/reference_archives/`. See
+[WASM_FAILURE_ANALYSIS.md](WASM_FAILURE_ANALYSIS.md) for the remaining behavior
+failures. Image checkpoints after those failing assertions remain ungenerated;
+the assertions have not been bypassed to produce references.
+
+The downloaded artifact can be used directly, without another C++ build. Serve
+its directory on port 8000, then run the command above with
+`SKETCHER_WASM_APP_DIR` set to that directory. On Windows this also avoids
+depending on a `python3` command in PATH: start the server separately with an
+available Python interpreter. Playwright reuses an existing server outside CI.
+
+To regenerate references later, reuse a build's WASM artifact with the existing
+**Update Wasm Snapshots** workflow, or add `--update-snapshots` to the command
+above. Review the resulting PNGs against the Jira recipes; generation alone does
+not establish correctness. These references use the same Playwright/Chromium
+version as the reported Linux run, but were generated on Windows; Linux visual
+parity still needs the next CI run.
 
 In a checkout with GNU tar available, extract the existing references before
 copying in the newly generated `e2e/__snapshots__/` directories:

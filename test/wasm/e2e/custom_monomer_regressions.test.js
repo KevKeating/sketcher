@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { clickPopupTool, contextMenuAction, requireRect, selectAll } from './e2e_helpers.js';
+import { clickPopupTool, contextMenuAction, requireRect } from './e2e_helpers.js';
 import {
   BASE,
   BRANCHED_PEPTIDE,
@@ -28,6 +28,7 @@ import {
   redo,
   replaceEditor,
   scene,
+  selectAll,
   screenshotRegion,
   screenshotView,
   undo,

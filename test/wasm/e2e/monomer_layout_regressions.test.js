@@ -8,10 +8,10 @@ import {
   expectLayout,
   getExportedHelm,
   mouseDrag,
+  moveAtom,
   openCase,
   pasteText,
   place,
-  point,
   redo,
   relativeLayout,
   scene,
@@ -35,15 +35,10 @@ test('SKETCH-2849: cleanup replaces modestly distorted coordinates and remains s
   await clickWidget(page, 'cleanup_btn');
   const helm = await getExportedHelm(page);
   const expected = await relativeLayout(page);
-  await clickWidget(page, 'select_tool_btn');
-  const terminal = await point(page, 9);
   // A large distortion made the old implementation discard its coordinates
   // and could mask this bug. Move only a fraction of a bead's dimensions.
   const rect = await requireRect(page, 'atom:9');
-  await mouseDrag(page, terminal, {
-    x: terminal.x + rect.width * 0.6,
-    y: terminal.y + rect.height * 0.4,
-  });
+  await moveAtom(page, 9, rect.width * 0.6, rect.height * 0.4);
   const distorted = await relativeLayout(page);
   expect(
     Math.hypot(distorted[9].x - expected[9].x, distorted[9].y - expected[9].y),
@@ -78,7 +73,9 @@ for (const offset of [0, 1]) {
       offset ? 'PEPTIDE1{G}|PEPTIDE2{C.G.A}$$$$V2.0' : 'PEPTIDE1{C.G.A}$$$$V2.0',
     );
     await clickWidget(page, 'cys_btn');
-    await place(page, -100, 120);
+    // Keep the new chain clear of the lower imported polymer when an offset
+    // singleton is present. Overlapping beads would target the wrong chain.
+    await place(page, -150, 200);
     await waitAtoms(page, offset + 4);
     // Draw C -> N: the insertion order C,T,A differs from sequence A,T,C.
     for (const [button, existing, count] of [
@@ -124,9 +121,10 @@ test('SKETCH-2822: intrachain connectors avoid bead interiors before and after d
     ).toEqual([]);
   }
   await screenshotView(page, 'intrachain-link.png');
-  await clickWidget(page, 'select_tool_btn');
-  const glutamate = await point(page, 3);
-  await mouseDrag(page, glutamate, { x: glutamate.x + 35, y: glutamate.y + 65 });
+  const before = await relativeLayout(page);
+  await moveAtom(page, 3, 35, 65);
+  const after = await relativeLayout(page);
+  expect(Math.hypot(after[3].x - before[3].x, after[3].y - before[3].y)).toBeGreaterThan(1);
   await page.mouse.move(1100, 40);
   for (const connector of (await scene(page)).connectors) {
     expect(connector.crossedOtherInteriors).toEqual([]);
