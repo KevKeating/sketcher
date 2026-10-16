@@ -61,16 +61,17 @@ From `test/wasm`, run just these suites against the freshly built artifact:
 npx playwright test e2e/custom_monomer_regressions.test.js e2e/monomer_connection_regressions.test.js e2e/monomer_database_regressions.test.js e2e/monomer_layout_regressions.test.js e2e/monomer_import_export_regressions.test.js
 ```
 
-Visual references were generated locally on 2026-10-16 against the downloaded
-artifact from run `38832083328` (commit `f9043b71`). The 23 PNGs are stored in five
-suite archives under `e2e/reference_archives/`. See
-[WASM_FAILURE_ANALYSIS.md](WASM_FAILURE_ANALYSIS.md) for the remaining HELM export
-failure and the corrected interpretation of hint labels. Four image checkpoints
-after the corrected hint assertions remain ungenerated.
+The first 23 visual references were generated locally on 2026-10-16 against the
+artifact from run `38832083328` (commit `f9043b71`). Four additional custom-monomer
+attachment references were generated against the refreshed artifact containing
+the hint-label bridge changes. All five affected tests passed, including their
+text assertions. The 27 PNGs are stored in five suite archives under
+`e2e/reference_archives/`. See [WASM_FAILURE_ANALYSIS.md](WASM_FAILURE_ANALYSIS.md)
+for the original failure analysis and subsequent validation.
 
-The revised hint-label checks require a new WASM build containing the updated
-scene bridge. After downloading that artifact, serve its directory on port 8000,
-then run the command above with
+The revised hint-label checks require an artifact containing the updated scene
+bridge. The refreshed local artifact meets that requirement. Serve its directory
+on port 8000, then run the command above with
 `SKETCHER_WASM_APP_DIR` set to that directory. On Windows this also avoids
 depending on a `python3` command in PATH: start the server separately with an
 available Python interpreter. Playwright reuses an existing server outside CI.

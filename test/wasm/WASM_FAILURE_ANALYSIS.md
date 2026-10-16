@@ -46,10 +46,11 @@ are returned; the tests require exactly the intended owner.
 The five tests now check the unbound labels plus the hint text: C/N for peptide
 connections, R1/R1 for CHEM connections, and the single shared H-bond label for
 base pairs. They do not infer the painted text from molecular properties or use
-image comparisons to certify it. A rebuilt WASM artifact is required to run the
-updated checks. The downloaded `f9043b71` artifact lacks this bridge field.
+image comparisons to certify it. All five affected tests passed against the
+refreshed artifact, including these text assertions. The initial `f9043b71`
+artifact lacked this bridge field.
 
-## Behavior failure retained
+## Behavior failure observed in the original run
 
 ### SKETCH-2865: removing a backbone connection leaves incorrect HELM chain identity
 
@@ -80,23 +81,31 @@ and adjacent backbone-plus-side-chain routing. The custom appearance and databas
 replacement tests also reported missing images alongside their test defects.
 
 The artifact is sufficient for local execution. Playwright 1.64.1 / Chromium
-1248 matches the reported run. Generated and visually reviewed 23 reachable PNGs:
+1248 matches the reported run. Generated and visually reviewed 27 PNGs (23 from
+the initial artifact and four from the refreshed hint-label build):
 
 | Archive                                            | Images |
 | -------------------------------------------------- | -----: |
-| `custom_monomer_regressions.test.js.tar.gz`        |      9 |
+| `custom_monomer_regressions.test.js.tar.gz`        |     13 |
 | `monomer_connection_regressions.test.js.tar.gz`    |      2 |
 | `monomer_database_regressions.test.js.tar.gz`      |      7 |
 | `monomer_import_export_regressions.test.js.tar.gz` |      1 |
 | `monomer_layout_regressions.test.js.tar.gz`        |      4 |
 
-The archives follow the repository's existing reference format. Four existing
-image checkpoints after the corrected hint assertions have not yet been
-generated: custom peptide attachments, custom base attachments, and CHEM
-attachments from both tabs. Once the text checks pass on the new build, these
-may report expected missing-reference failures. No additional image checks were
-added for hint-label text. Windows-generated references require confirmation on
-the Linux runner.
+The archives follow the repository's existing reference format. The four
+previously blocked image checkpoints are now generated: custom peptide
+attachments, custom base attachments, and CHEM attachments from both tabs. They
+were captured with `--update-snapshots=missing`, then reviewed. The updated custom
+archive contains all 13 images and preserves the original nine PNGs byte for
+byte. No image checks were added for hint-label text. Windows-generated
+references require confirmation on the Linux runner.
+
+The refreshed `Sketcher.wasm` used for these four images has SHA-256:
+`1bd870845abe5c4af32eaad2523171a1b529655866f2ac35c3c0dc84b4e346e1`.
+
+After packaging the references, all 16 tests in
+`custom_monomer_regressions.test.js` passed in a normal run without snapshot
+updates (1.1 minutes). No application or test code changed during generation.
 
 ## Validation
 
@@ -123,9 +132,9 @@ counts and normalized timestamps/ownership. JavaScript syntax, Prettier checks,
 and both staged and unstaged `git diff --check` passed.
 
 The entire pre-existing browser suite and native C++ tests were not run; no C++
-sources or build configuration changed during that initial validation. The new
-bridge and text assertions require another WASM build; their browser execution
-is pending that artifact.
+sources or build configuration changed during that initial validation. The
+updated bridge and text assertions have since passed in the five affected tests
+against the refreshed WASM artifact.
 
 For the bridge/text-assertion change, the native build and focused
 `test/schrodinger/sketcher/tool/test_draw_monomer_scene_tool.exe` test passed.
