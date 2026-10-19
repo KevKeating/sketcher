@@ -19,7 +19,9 @@ function setup({ failFirstPostMessage = false } = {}) {
       }
       this.requests.push(json);
     }
-    terminate() { this.terminated = true; }
+    terminate() {
+      this.terminated = true;
+    }
   }
   const Module = {
     sketcher_install_custom_monomers(database) {
