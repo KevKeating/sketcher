@@ -8,14 +8,17 @@ import {
   expectDialog,
   getExportedHelm,
   getExportedSmiles,
-  loadDatabase,
-  openCase,
+  openSketcher,
   pasteText,
   scene,
   screenshotView,
   waitAtoms,
   widgetState,
-} from './resolved_case_helpers.js';
+} from './e2e_helpers.js';
+import {
+  loadDatabase,
+  openMonomerSketcher,
+} from './monomer_helpers.js';
 import { clickPopupRow } from './sketcher/wrappers/sketcher_wasm.js';
 
 test.setTimeout(120_000);
@@ -23,7 +26,7 @@ test.setTimeout(120_000);
 test('SKETCH-1848: the original 3D SDF displays R and retains stereochemistry through cleanup and SMILES', async ({
   page,
 }) => {
-  const sk = await openCase(page, { monomeric: false });
+  const sk = await openSketcher(page);
   await sk.import_menu('import_from_file', path.join(FIXTURES, 'mol2-1.sdf'));
   await waitAtoms(page, 26);
   const chiralLabels = async () =>
@@ -72,7 +75,7 @@ test.describe('Monomer import validation — SKETCH-2862', () => {
     test(`${name} shows an error and leaves existing content intact in Add mode`, async ({
       page,
     }) => {
-      await openCase(page);
+      await openMonomerSketcher(page);
       await pasteText(page, 'PEPTIDE1{A.G}$$$$V2.0');
       const before = await getExportedHelm(page);
       // Replacement intentionally clears the document before import. Select
@@ -94,7 +97,7 @@ test.describe('Monomer import validation — SKETCH-2862', () => {
   test('X peptides and N bases remain valid imports and survive hover and export', async ({
     page,
   }) => {
-    await openCase(page);
+    await openMonomerSketcher(page);
     const input = 'PEPTIDE1{A.X.W}|RNA1{R(N)P}$$$$V2.0';
     await pasteText(page, input);
     const atoms = await waitAtoms(page, 6);
@@ -116,13 +119,13 @@ test('SKETCH-2861: inline-SMILES HELM round trips and SMILES export preserve che
   const reference = await context.newPage();
   let expectedSmiles;
   try {
-    await openCase(reference, { monomeric: false });
+    await openSketcher(reference);
     await pasteText(reference, 'O=C([C@H](CSCCN)N)O');
     expectedSmiles = await getExportedSmiles(reference);
   } finally {
     await reference.close();
   }
-  const sk = await openCase(page);
+  const sk = await openMonomerSketcher(page);
   const input = 'PEPTIDE1{[O=C([C@H](CSCCN[H:3])N[H:1])[OH:2]]}$$$$V2.0';
   await pasteText(page, input);
   expect(await sk.copy_all_as_text('helm')).toBe(input);
@@ -140,7 +143,7 @@ test('SKETCH-2861: inline-SMILES HELM round trips and SMILES export preserve che
 test('SKETCH-2861: registered monomer symbols longer than four characters survive layout and export', async ({
   page,
 }) => {
-  const sk = await openCase(page);
+  const sk = await openMonomerSketcher(page);
   await loadDatabase(page, 'long_symbol.json');
   const input = 'PEPTIDE1{[LongAla]}$$$$V2.0';
   await pasteText(page, input);

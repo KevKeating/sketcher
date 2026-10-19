@@ -1,31 +1,34 @@
 import { expect, test } from '@playwright/test';
-import { contextMenuAction } from './e2e_helpers.js';
 import {
   canvasPoint,
   clear,
   clickWidget,
   closeDialog,
-  connect,
+  contextMenuAction,
   dialogTitle,
-  expectAttachments,
   expectDialog,
   getExportedHelm,
+  holdPopup,
   mouseClick,
   mouseDrag,
-  openCase,
   pasteText,
   place,
   redo,
   scene,
-  selectAll,
   screenshotView,
+  selectAll,
   undo,
   waitAtoms,
   widgetState,
-} from './resolved_case_helpers.js';
+} from './e2e_helpers.js';
+import {
+  connect,
+  expectAttachments,
+  openMonomerSketcher,
+} from './monomer_helpers.js';
 
 test.beforeEach(async ({ page }) => {
-  await openCase(page);
+  await openMonomerSketcher(page);
 });
 test.setTimeout(90_000);
 
@@ -196,7 +199,6 @@ test.describe('Attachment sites — SKETCH-2857 / SKETCH-2834', () => {
     await clear(page);
     // The existing popup supports arbitrary symbols; validation belongs to a
     // future UI change. This regression guards the explicit fallback path.
-    const { holdPopup } = await import('./resolved_case_helpers.js');
     await holdPopup(page, 'na_custom_nt_btn');
     await clickWidget(page, 'base_le');
     await page.keyboard.press('ControlOrMeta+a');

@@ -1,27 +1,29 @@
 import { expect, test } from '@playwright/test';
-import { requireRect } from './e2e_helpers.js';
 import {
-  attachment,
   clear,
   clickWidget,
-  connect,
   expectLayout,
   getExportedHelm,
   mouseDrag,
   moveAtom,
-  openCase,
   pasteText,
   place,
   redo,
   relativeLayout,
+  requireRect,
   scene,
   screenshotView,
   undo,
   waitAtoms,
-} from './resolved_case_helpers.js';
+} from './e2e_helpers.js';
+import {
+  attachment,
+  connect,
+  openMonomerSketcher,
+} from './monomer_helpers.js';
 
 test.beforeEach(async ({ page }) => {
-  await openCase(page);
+  await openMonomerSketcher(page);
 });
 test.setTimeout(120_000);
 

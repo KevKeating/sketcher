@@ -1,45 +1,49 @@
 import { expect, test } from '@playwright/test';
-import { clickPopupTool, contextMenuAction, requireRect } from './e2e_helpers.js';
 import {
-  BASE,
-  BRANCHED_PEPTIDE,
-  CHEM,
-  PEPTIDE,
   canvasPoint,
   center,
   clear,
+  clickPopupTool,
   clickSelector,
   clickWidget,
   closeDialog,
-  customMenu,
-  defineCustom,
+  contextMenuAction,
   dialogTitle,
-  expectAttachments,
   expectCursor,
   expectDialog,
-  expectDrawingAttachments,
   getExportedHelm,
   mouseClick,
   mouseDrag,
-  openCase,
-  openCustom,
   pasteText,
   place,
   point,
   redo,
   replaceEditor,
+  requireRect,
   scene,
-  selectAll,
   screenshotRegion,
   screenshotView,
+  selectAll,
   undo,
   waitAtoms,
   widgetState,
+} from './e2e_helpers.js';
+import {
+  BASE,
+  BRANCHED_PEPTIDE,
+  CHEM,
+  PEPTIDE,
   connect,
-} from './resolved_case_helpers.js';
+  customMenu,
+  defineCustom,
+  expectAttachments,
+  expectDrawingAttachments,
+  openCustom,
+  openMonomerSketcher,
+} from './monomer_helpers.js';
 
 test.beforeEach(async ({ page }) => {
-  await openCase(page);
+  await openMonomerSketcher(page);
 });
 test.setTimeout(90_000);
 

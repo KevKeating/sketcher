@@ -9,25 +9,27 @@ import {
   clickWidget,
   closeDialog,
   dismissPopup,
-  expectAttachments,
   expectCursor,
   expectDialog,
   getExportedHelm,
-  loadDatabase,
-  openCase,
   pasteText,
   place,
   popupButtons,
   popupInfo,
   scene,
-  selectAll,
   screenshotView,
+  selectAll,
   waitAtoms,
   widgetState,
-} from './resolved_case_helpers.js';
+} from './e2e_helpers.js';
+import {
+  expectAttachments,
+  loadDatabase,
+  openMonomerSketcher,
+} from './monomer_helpers.js';
 
 test.beforeEach(async ({ page }) => {
-  await openCase(page);
+  await openMonomerSketcher(page);
 });
 test.setTimeout(120_000);
 
