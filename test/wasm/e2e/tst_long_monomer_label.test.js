@@ -22,9 +22,7 @@ const ORIGINAL_MONOMERS = 6;
 
 async function peptideSequences(page) {
   const helm = await exportText(page, 'HELM');
-  return [...helm.split('$')[0].matchAll(/PEPTIDE\d+\{([^}]+)\}/g)]
-    .map((match) => match[1])
-    .sort();
+  return [...helm.split('$')[0].matchAll(/PEPTIDE\d+\{([^}]+)\}/g)].map((match) => match[1]).sort();
 }
 
 async function monomerCenters(sk) {
@@ -73,8 +71,9 @@ test.describe('SKETCH-2911 long monomer labels', () => {
       // Confirm the setup has two vertical chains before measuring their
       // response to a long label. Derive placement from the rendered chains.
       for (const chain of [before.slice(0, 3), before.slice(3)]) {
-        expect(Math.max(...chain.map(({ x }) => x)) - Math.min(...chain.map(({ x }) => x)))
-          .toBeLessThan(1);
+        expect(
+          Math.max(...chain.map(({ x }) => x)) - Math.min(...chain.map(({ x }) => x)),
+        ).toBeLessThan(1);
         expect(Math.abs(chain[2].y - chain[0].y)).toBeGreaterThan(50);
       }
       const middle = { x: (before[1].x + before[4].x) / 2, y: before[1].y };
@@ -82,8 +81,7 @@ test.describe('SKETCH-2911 long monomer labels', () => {
       await test.step('Long-press a monomer button and choose a long symbol', async () => {
         await clickWidget(page, 'ser_btn');
         await clickPopupTool(page, `analog_${LONG_SYMBOL}_btn`);
-        await expect.poll(async () => (await widgetState(page, 'ser_btn')).text)
-          .toBe(LONG_SYMBOL);
+        await expect.poll(async () => (await widgetState(page, 'ser_btn')).text).toBe(LONG_SYMBOL);
       });
 
       await test.step(`${gesture} in the gap adds ${gesture === 'click' ? 'one monomer' : 'two connected monomers'}`, async () => {
@@ -92,18 +90,23 @@ test.describe('SKETCH-2911 long monomer labels', () => {
         } else {
           await mouseDrag(page, middle, { x: middle.x, y: middle.y + 60 });
         }
-        const addedSequence = Array(gesture === 'click' ? 1 : 2).fill(`[${LONG_SYMBOL}]`).join('.');
-        await expect.poll(() => peptideSequences(page))
+        const addedSequence = Array(gesture === 'click' ? 1 : 2)
+          .fill(`[${LONG_SYMBOL}]`)
+          .join('.');
+        await expect
+          .poll(() => peptideSequences(page))
           .toEqual(['A.A.A', 'A.A.A', addedSequence].sort());
       });
 
       await test.step('Every original monomer remains in its original position', async () => {
         const after = await monomerCenters(sk);
         for (let index = 0; index < ORIGINAL_MONOMERS; index += 1) {
-          expect(Math.abs(after[index].x - before[index].x), `monomer ${index + 1} x`)
-            .toBeLessThan(1);
-          expect(Math.abs(after[index].y - before[index].y), `monomer ${index + 1} y`)
-            .toBeLessThan(1);
+          expect(Math.abs(after[index].x - before[index].x), `monomer ${index + 1} x`).toBeLessThan(
+            1,
+          );
+          expect(Math.abs(after[index].y - before[index].y), `monomer ${index + 1} y`).toBeLessThan(
+            1,
+          );
         }
       });
     });
