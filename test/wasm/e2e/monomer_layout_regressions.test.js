@@ -100,4 +100,3 @@ for (const offset of [0, 1]) {
     await expectLayout(page, expected, order);
   });
 }
-
