@@ -197,7 +197,6 @@ export async function getExportedHelm(page) {
  * reflect the completed selection.
  */
 export async function selectAll(page) {
-  // Focusing the DOM canvas does not restore Qt shortcut focus after a dialog.
   await clickWidget(page, 'select_all_btn');
   await expect.poll(async () => (await widgetState(page, 'select_all_btn')).enabled).toBe(false);
   await expect
