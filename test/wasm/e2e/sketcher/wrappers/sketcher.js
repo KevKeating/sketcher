@@ -1497,7 +1497,7 @@ export class Sketcher {
         inchi: 155,
         inchikey: 179,
         pdb: 202,
-        helm: 275,
+        helm: 274,
         // Image follows the 13 standard export formats and a separator.
         image: 322,
       };
