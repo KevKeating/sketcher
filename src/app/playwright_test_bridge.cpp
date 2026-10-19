@@ -562,8 +562,8 @@ std::string dialog_rect(SketcherWidget& sketcher, const std::string& value)
  *   "atom:<index>"         an atom of the current molecule, by model index
  *   "bond:<index>"         a bond of the current molecule, by model index
  *   "menu:<name or text>"  a row of an open context menu, by objectName or text
- *   "dialog:title"        foreground modal geometry and displayed title
- *   "dialog:OK/Cancel"    a visible standard button in the foreground modal
+ *   "dialog:title"         foreground modal geometry and displayed title
+ *   "dialog:OK/Cancel"     a visible standard button in the foreground modal
  *
  * Use "widget:" to find something to click, since only a visible widget can be
  * clicked. Use "state:" to ask whether a control is checked or enabled when it
