@@ -22,11 +22,7 @@ import {
   waitAtoms,
   widgetState,
 } from './e2e_helpers.js';
-import {
-  expectAttachments,
-  loadDatabase,
-  openMonomerSketcher,
-} from './monomer_helpers.js';
+import { expectAttachments, loadDatabase, openMonomerSketcher } from './monomer_helpers.js';
 
 test.beforeEach(async ({ page }) => {
   await openMonomerSketcher(page);

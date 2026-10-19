@@ -15,10 +15,7 @@ import {
   waitAtoms,
   widgetState,
 } from './e2e_helpers.js';
-import {
-  loadDatabase,
-  openMonomerSketcher,
-} from './monomer_helpers.js';
+import { loadDatabase, openMonomerSketcher } from './monomer_helpers.js';
 import { clickPopupRow } from './sketcher/wrappers/sketcher_wasm.js';
 
 test.setTimeout(120_000);

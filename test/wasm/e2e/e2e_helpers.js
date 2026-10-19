@@ -2,10 +2,7 @@ import { expect } from '@playwright/test';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-export const FIXTURES = path.join(
-  path.dirname(fileURLToPath(import.meta.url)),
-  'fixtures',
-);
+export const FIXTURES = path.join(path.dirname(fileURLToPath(import.meta.url)), 'fixtures');
 
 /**
  * Navigate to the sketcher page and wait for the WASM module to be fully
@@ -203,7 +200,9 @@ export async function selectAll(page) {
   await focusCanvas(page);
   await page.keyboard.press('ControlOrMeta+a');
   await expect.poll(async () => (await widgetState(page, 'select_all_btn')).enabled).toBe(false);
-  await expect.poll(async () => (await widgetState(page, 'clear_selection_btn')).enabled).toBe(true);
+  await expect
+    .poll(async () => (await widgetState(page, 'clear_selection_btn')).enabled)
+    .toBe(true);
 }
 
 /**
