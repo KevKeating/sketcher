@@ -43,7 +43,7 @@ The test instead uses the fix's sulfur-containing atomistic reference
 
 ## Fixtures
 
-`e2e/fixtures/resolved_cases/` contains versioned copies of the certification
+`e2e/fixtures/` contains versioned copies of the certification
 inputs so tests do not depend on Jira access or untracked local files:
 
 - `mol2-1.sdf`: original SKETCH-1848 attachment, supplied by Kevin.

@@ -18,7 +18,7 @@ import { setFilePickerResult } from './sketcher/wrappers/sketcher_wasm.js';
 export { clickWidget, getExportedHelm, getExportedSmiles, mouseClick, mouseDrag, widgetState };
 export const FIXTURES = path.join(
   path.dirname(fileURLToPath(import.meta.url)),
-  'fixtures/resolved_cases',
+  'fixtures',
 );
 export const PEPTIDE = '*NCC(=O)* |$_R1;;;;;_R2$|';
 export const BRANCHED_PEPTIDE = '*NC(C*)C(=O)* |$_R1;;;;_R3;;;_R2$|';
