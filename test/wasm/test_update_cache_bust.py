@@ -23,7 +23,8 @@ class CacheBustTest(unittest.TestCase):
                 "MonomerLoader.wasm": "worker wasm",
                 "MonomerLoader.js": "'MonomerLoader.wasm'",
                 "custom_monomers.worker.js": (
-                    "importScripts('MonomerLoader.js'); fetch('MonomerLoader.wasm')"),
+                    "importScripts('MonomerLoader.js'); fetch('MonomerLoader.wasm')"
+                ),
                 "qtloader.js": "qt loader",
                 "wasm_shell.html": "'Sketcher.js'; 'qtloader.js'",
         }.items():
