@@ -364,19 +364,35 @@ test.describe('Custom Monomer DB', () => {
           AUTHOR: 'test',
         })),
       );
-      let ticks = 0;
-      const timer = setInterval(() => ++ticks, 10);
+      const started = performance.now();
+      let lastTick = started;
+      let maxTickInterval = 0;
+      const recordTick = () => {
+        const now = performance.now();
+        maxTickInterval = Math.max(maxTickInterval, now - lastTick);
+        lastTick = now;
+      };
+      const timer = setInterval(recordTick, 10);
       try {
         const pending = Module.sketcher_load_custom_monomers(json);
         const isPromise = pending instanceof Promise;
         const imported = await pending;
-        return { isPromise, ticks, succeeded: imported.succeeded.length };
+        // Include any blocking work between the last tick and import completion.
+        recordTick();
+        return {
+          isPromise,
+          duration: lastTick - started,
+          maxTickInterval,
+          succeeded: imported.succeeded.length,
+        };
       } finally {
         clearInterval(timer);
       }
     });
     expect(result.isPromise).toBe(true);
-    expect(result.ticks).toBeGreaterThan(1);
+    // Require a meaningful observation window and allow some timer scheduling jitter.
+    expect(result.duration).toBeGreaterThanOrEqual(100);
+    expect(result.maxTickInterval).toBeLessThanOrEqual(50);
     expect(result.succeeded).toBe(10000);
   });
 
