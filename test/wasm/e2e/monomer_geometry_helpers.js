@@ -30,21 +30,21 @@ function clippedInterval([start, end], rect) {
   return [low, high];
 }
 
-export function visibleConnector(state, connector) {
-  expect(connector, 'WASM bridge must expose the painted connector line').toHaveProperty('line');
+// Measure bead-edge clearance along the model bond, independent of the
+// rendering offsets used to attach arrowheads to monomer borders.
+export function connectorClearance(state, connector) {
+  expect(connector, 'WASM bridge must expose the conformer bond coordinates').toHaveProperty(
+    'modelLine',
+  );
   const start = state.atoms.find((atom) => atom.index === connector.start);
   const end = state.atoms.find((atom) => atom.index === connector.end);
-  const startInterval = clippedInterval(connector.line, start.sceneBounds);
-  const endInterval = clippedInterval(connector.line, end.sceneBounds);
+  const startInterval = clippedInterval(connector.modelLine, start.sceneBounds);
+  const endInterval = clippedInterval(connector.modelLine, end.sceneBounds);
   const low = startInterval ? startInterval[1] : 0;
   const high = endInterval ? endInterval[0] : 1;
-  const [a, b] = connector.line;
+  const [a, b] = connector.modelLine;
   const length = Math.hypot(b.x - a.x, b.y - a.y);
-  const point = (fraction) =>
-    Object.fromEntries(
-      ['x', 'y', 'pageX', 'pageY'].map((key) => [key, a[key] + fraction * (b[key] - a[key])]),
-    );
-  return { low, high, length: (high - low) * length, midpoint: point((low + high) / 2) };
+  return { low, high, length: (high - low) * length };
 }
 
 export function checkMonomerGeometry(state, atomCount, connectorCount) {
@@ -61,17 +61,18 @@ export function checkMonomerGeometry(state, atomCount, connectorCount) {
   }
   const beadHeight = Math.min(...state.atoms.map((atom) => atom.sceneBounds.height));
   for (const connector of state.connectors) {
-    const visible = visibleConnector(state, connector);
-    expect(visible.length, `connector ${connector.index} must have a visible gap`).toBeGreaterThan(
-      beadHeight * 0.25,
-    );
+    const clearance = connectorClearance(state, connector);
+    expect(
+      clearance.length,
+      `connector ${connector.index} must have bead-edge clearance`,
+    ).toBeGreaterThan(beadHeight * 0.25);
     for (const atom of state.atoms) {
       if ([connector.start, connector.end].includes(atom.index)) continue;
-      const interval = clippedInterval(connector.line, atom.sceneBounds);
+      const interval = clippedInterval(connector.modelLine, atom.sceneBounds);
       if (interval) {
         expect(
-          Math.min(interval[1], visible.high) - Math.max(interval[0], visible.low),
-          `bead ${atom.index} hides connector ${connector.index}`,
+          Math.min(interval[1], clearance.high) - Math.max(interval[0], clearance.low),
+          `bead ${atom.index} intersects model bond ${connector.index}`,
         ).toBeLessThanOrEqual(0.001);
       }
     }
@@ -87,9 +88,11 @@ export async function expectMonomerGeometry(page, atomCount, connectorCount) {
 export async function expectConnectorLabels(page, connectorIndex, expectedLabels) {
   let state = await scene(page);
   const connector = state.connectors.find((item) => item.index === connectorIndex);
-  const { midpoint } = visibleConnector(state, connector);
+  expect(connector, 'WASM bridge must expose the painted connector midpoint').toHaveProperty(
+    'hitX',
+  );
   await page.mouse.move(1100, 40);
-  await page.mouse.move(midpoint.pageX, midpoint.pageY, { steps: 4 });
+  await page.mouse.move(connector.hitX, connector.hitY, { steps: 4 });
   await expect(async () => {
     state = await scene(page);
     expect(state, 'WASM bridge must expose visible bound AP labels').toHaveProperty(

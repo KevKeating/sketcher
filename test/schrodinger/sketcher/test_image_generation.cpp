@@ -11,6 +11,7 @@
 #include <QGraphicsItem>
 #include <QGraphicsSimpleTextItem>
 #include <QList>
+#include <QLineF>
 #include <boost/filesystem.hpp>
 #include <boost/test/framework.hpp>
 #include <boost/test/tools/floating_point_comparison.hpp>
@@ -22,8 +23,10 @@
 #include "schrodinger/sketcher/image_generation.h"
 #include "schrodinger/sketcher/molviewer/scene.h"
 #include "schrodinger/sketcher/molviewer/abstract_atom_or_monomer_item.h"
+#include "schrodinger/sketcher/molviewer/abstract_bond_or_connector_item.h"
+#include "schrodinger/sketcher/molviewer/coord_utils.h"
 #include "schrodinger/sketcher/molviewer/monomer_attachment_point_labels.h"
-#include "schrodinger/sketcher/molviewer/monomer_connector_item.h"
+#include "../../graphics_item_geometry.h"
 #include "test_common.h"
 
 using boost::unit_test::framework::current_test_case;
@@ -89,16 +92,22 @@ BOOST_AUTO_TEST_CASE(test_image_gen_unknown_monomer)
 }
 
 /**
- * Check actual bead bounds and painted backbone clearance for a horizontal
+ * Check actual bead bounds and model backbone clearance for a horizontal
  * peptide. Return its edge-to-edge gaps for comparison across label sizes.
  */
 static std::vector<qreal> check_peptide_geometry(const TestScene& scene)
 {
     const auto mol = scene.m_mol_model->getMol();
+    const auto& conformer = mol->getConformer();
     std::vector<QRectF> bounds;
     for (const auto* atom : mol->atoms()) {
-        bounds.push_back(
-            scene.getGraphicsItemForAtom(atom)->sceneBoundingRect());
+        const auto* item = scene.getGraphicsItemForAtom(atom);
+        BOOST_CHECK_SMALL(
+            QLineF(item->scenePos(),
+                   to_scene_xy(conformer.getAtomPos(atom->getIdx())))
+                .length(),
+            1e-6);
+        bounds.push_back(item->sceneBoundingRect());
     }
     for (size_t i = 0; i < bounds.size(); ++i) {
         for (size_t j = i + 1; j < bounds.size(); ++j) {
@@ -114,11 +123,14 @@ static std::vector<qreal> check_peptide_geometry(const TestScene& scene)
         scene.getInteractiveItems(InteractiveItemFlag::MONOMER_CONNECTOR);
     BOOST_REQUIRE_EQUAL(connectors.size(), mol->getNumBonds());
     for (const auto* item : connectors) {
-        const auto* connector = static_cast<const MonomerConnectorItem*>(item);
+        const auto* connector =
+            static_cast<const AbstractBondOrConnectorItem*>(item);
         const auto* bond = connector->getBond();
         const auto& start = bounds[bond->getBeginAtomIdx()];
         const auto& end = bounds[bond->getEndAtomIdx()];
-        const auto line = connector->getConnectorLine();
+        const QLineF line(
+            to_scene_xy(conformer.getAtomPos(bond->getBeginAtomIdx())),
+            to_scene_xy(conformer.getAtomPos(bond->getEndAtomIdx())));
         BOOST_CHECK_SMALL(line.dy(), 1e-6);
         const auto gap = std::max(start.left(), end.left()) -
                          std::min(start.right(), end.right());

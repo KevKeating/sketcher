@@ -90,12 +90,6 @@ class SKETCHER_API MonomerConnectorItem : public AbstractBondOrConnectorItem
      */
     QColor getConnectorColor() const;
 
-    /**
-     * @return the painted connector line in item coordinates, including the
-     * portions covered by its endpoint monomers.
-     */
-    QLineF getConnectorLine() const;
-
   protected:
     QPen m_connector_pen;
     QPen m_arrowhead_pen;

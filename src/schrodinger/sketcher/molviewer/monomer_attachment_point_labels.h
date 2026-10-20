@@ -10,7 +10,6 @@
 #include "schrodinger/sketcher/tool/standard_scene_tool_base.h"
 
 class QGraphicsItem;
-class QGraphicsSimpleTextItem;
 class QPointF;
 class QRectF;
 
@@ -33,12 +32,6 @@ class AbstractMonomerItem;
  * to Unicode primes.
  */
 SKETCHER_API QString prep_attachment_point_name(const std::string& name);
-
-/**
- * @return the label's painted text bounds in scene coordinates, excluding the
- * whitespace included in QGraphicsSimpleTextItem::boundingRect().
- */
-SKETCHER_API QRectF get_label_ink_rect(const QGraphicsSimpleTextItem& label);
 
 /**
  * Position the given rectangle to label a monomer's attachment point. Note that

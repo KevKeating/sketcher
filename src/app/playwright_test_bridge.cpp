@@ -75,16 +75,18 @@
 
 #include <rdkit/GraphMol/Atom.h>
 #include <rdkit/GraphMol/Bond.h>
+#include <rdkit/GraphMol/Conformer.h>
+#include <rdkit/GraphMol/ROMol.h>
 
+#include "../../test/graphics_item_geometry.h"
 #include "schrodinger/rdkit_extensions/rgroup.h"
 #include "schrodinger/sketcher/molviewer/abstract_atom_or_monomer_item.h"
 #include "schrodinger/sketcher/molviewer/abstract_bond_or_connector_item.h"
 #include "schrodinger/sketcher/molviewer/abstract_monomer_item.h"
 #include "schrodinger/sketcher/molviewer/atom_item.h"
 #include "schrodinger/sketcher/molviewer/constants.h"
+#include "schrodinger/sketcher/molviewer/coord_utils.h"
 #include "schrodinger/sketcher/molviewer/monomer_hint_fragment_item.h"
-#include "schrodinger/sketcher/molviewer/monomer_connector_item.h"
-#include "schrodinger/sketcher/molviewer/monomer_attachment_point_labels.h"
 #include "schrodinger/sketcher/molviewer/unbound_monomeric_attachment_point_item.h"
 #include "schrodinger/sketcher/molviewer/scene.h"
 #include "schrodinger/sketcher/sketcher_widget.h"
@@ -787,27 +789,28 @@ std::string sketcher_inspect_scene()
         if (!item->isVisible()) {
             continue;
         }
-        const auto* bond =
-            static_cast<const AbstractBondOrConnectorItem*>(item)->getBond();
+        const auto* bond_item =
+            static_cast<const AbstractBondOrConnectorItem*>(item);
+        const auto* bond = bond_item->getBond();
         auto result = item_geometry(view, sketcher, *item);
         result["index"] = static_cast<int>(bond->getIdx());
         result["start"] = static_cast<int>(bond->getBeginAtomIdx());
         result["end"] = static_cast<int>(bond->getEndAtomIdx());
-        if (const auto* connector =
-                dynamic_cast<const MonomerConnectorItem*>(item)) {
-            const auto line = connector->getConnectorLine();
-            QJsonArray endpoints;
-            for (const auto point : {line.p1(), line.p2()}) {
-                const auto scene_point = connector->mapToScene(point);
-                const auto page_point = map_to_sketcher(
-                    *view.viewport(), sketcher, view.mapFromScene(scene_point));
-                endpoints.append(QJsonObject{{"x", scene_point.x()},
-                                             {"y", scene_point.y()},
-                                             {"pageX", page_point.x()},
-                                             {"pageY", page_point.y()}});
-            }
-            result["line"] = endpoints;
+        const auto& conformer = bond->getOwningMol().getConformer();
+        QJsonArray endpoints;
+        for (const auto index :
+             {bond->getBeginAtomIdx(), bond->getEndAtomIdx()}) {
+            const auto point = to_scene_xy(conformer.getAtomPos(index));
+            endpoints.append(QJsonObject{{"x", point.x()}, {"y", point.y()}});
         }
+        // Model coordinates describe bead spacing. Arrowheads can offset the
+        // painted line, so use the item's existing midpoint for hover events.
+        result["modelLine"] = endpoints;
+        const auto midpoint = item->mapToScene(bond_item->getMidpoint());
+        const auto page_midpoint = map_to_sketcher(*view.viewport(), sketcher,
+                                                   view.mapFromScene(midpoint));
+        result["hitX"] = page_midpoint.x();
+        result["hitY"] = page_midpoint.y();
         connectors.append(result);
     }
     QJsonArray attachment_labels;

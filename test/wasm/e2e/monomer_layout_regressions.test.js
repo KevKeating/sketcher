@@ -22,7 +22,7 @@ import { attachment, connect, loadDatabase, openMonomerSketcher } from './monome
 import {
   expectConnectorLabels,
   expectMonomerGeometry,
-  visibleConnector,
+  connectorClearance,
 } from './monomer_geometry_helpers.js';
 import { bicyclicPeptide, largeLabelPeptides } from './fixtures/monomer_layout_cases.js';
 
@@ -129,7 +129,7 @@ test.describe('CRDGEN-434: rendered long-label spacing', () => {
       await expectMonomerGeometry(page, 5, 4);
       const shortState = await scene(page);
       const baseline = shortState.connectors.map(
-        (item) => visibleConnector(shortState, item).length,
+        (item) => connectorClearance(shortState, item).length,
       );
       await clear(page);
       const residues = ['A', 'A', 'A', 'A', 'A'];
@@ -143,7 +143,7 @@ test.describe('CRDGEN-434: rendered long-label spacing', () => {
           await expectConnectorLabels(page, 1, ['N', 'C']);
           const current = await scene(page);
           for (const connector of current.connectors) {
-            const gap = visibleConnector(current, connector).length;
+            const gap = connectorClearance(current, connector).length;
             // Compare bead edges, so a wider bead must not stretch its gap.
             expect(gap).toBeGreaterThan(Math.min(...baseline) * 0.8);
             expect(gap).toBeLessThan(Math.max(...baseline) * 1.2);
