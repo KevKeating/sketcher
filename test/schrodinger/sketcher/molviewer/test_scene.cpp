@@ -43,11 +43,11 @@ namespace sketcher
 
 /**
  * Wide branch labels must not overlap any other monomer after HELM import,
- * redraw, or repeated cleanup, including near the intrachain connection.
- * The branched peptide backbone is predominantly vertical, with horizontal
- * branches. Changes in coordinate generation may trigger the orientation
- * sanity check without indicating a bug: the HELM string may need updating
- * if it no longer produces a vertical branched chain.
+ * redraw, or repeated cleanup, including near the intrachain connection. The
+ * branched peptide backbone is predominantly vertical, with horizontal
+ * branches. Changes in coordinate generation may trigger the orientation sanity
+ * check to fail, which doesn't necessarily indicate a bug: the HELM string may
+ * need updating if it no longer produces a vertical branched chain.
  */
 BOOST_AUTO_TEST_CASE(test_long_label_branched_peptide_has_no_overlaps)
 {
