@@ -47,9 +47,9 @@ test.describe('SKETCH-2911 long monomer labels', () => {
       await clickWidget(page, 'base_le');
       await page.keyboard.press('ControlOrMeta+a');
       await page.keyboard.type('missingLongBase');
-      await expect.poll(async () => (await widgetState(page, 'base_le')).text).toBe(
-        'missingLongBase',
-      );
+      await expect
+        .poll(async () => (await widgetState(page, 'base_le')).text)
+        .toBe('missingLongBase');
       await page.keyboard.press('Enter');
       await page.mouse.up();
     });
@@ -75,10 +75,9 @@ test.describe('SKETCH-2911 long monomer labels', () => {
       );
       // Compare measured bead edges so default center spacing cannot hide an
       // overlap. A small pixel margin tolerates integer rounding in the bridge.
-      expect(
-        base.x - (sugar.x + sugar.width),
-        'gap between sugar and base labels',
-      ).toBeGreaterThan(1);
+      expect(base.x - (sugar.x + sugar.width), 'gap between sugar and base labels').toBeGreaterThan(
+        1,
+      );
     });
 
     await test.step('The sugar remains anchored at the mouse press', async () => {
