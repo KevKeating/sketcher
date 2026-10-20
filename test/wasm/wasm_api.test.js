@@ -394,7 +394,13 @@ test.describe('Custom Monomer DB', () => {
     expect(result).toEqual(['first', 'invalid', 'last']);
   });
 
-  test('each import terminates its worker before settling', async ({ page }) => {
+  test('imports share compiled code and terminate each worker before settling', async ({ page }) => {
+    let binaryRequests = 0;
+    page.context().on('request', (request) => {
+      if (request.url().includes('MonomerLoader.wasm')) {
+        ++binaryRequests;
+      }
+    });
     const result = await page.evaluate(async () => {
       const NativeWorker = window.Worker;
       const workers = [];
@@ -407,6 +413,10 @@ test.describe('Custom Monomer DB', () => {
         terminate() {
           this.terminated = true;
           super.terminate();
+        }
+        postMessage(message) {
+          this.receivedCompiledModule = message.compiledModule instanceof WebAssembly.Module;
+          super.postMessage(message);
         }
       };
       try {
@@ -424,6 +434,7 @@ test.describe('Custom Monomer DB', () => {
           terminatedAfterSuccess,
           terminatedAfterFailure,
           allTerminated: workers.every((worker) => worker.terminated),
+          receivedCompiledModule: workers.map((worker) => worker.receivedCompiledModule),
         };
       } finally {
         window.Worker = NativeWorker;
@@ -434,6 +445,8 @@ test.describe('Custom Monomer DB', () => {
       terminatedAfterSuccess: true,
       terminatedAfterFailure: true,
       allTerminated: true,
+      receivedCompiledModule: [false, true, true],
     });
+    expect(binaryRequests).toBe(1);
   });
 });
