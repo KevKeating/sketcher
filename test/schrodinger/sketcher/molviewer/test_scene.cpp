@@ -1,5 +1,6 @@
 #define BOOST_TEST_MODULE Test_Sketcher
 
+#include <cmath>
 #include <map>
 #include <string>
 #include <vector>
@@ -21,6 +22,7 @@
 
 #include "../test_common.h"
 #include "schrodinger/rdkit_extensions/convert.h"
+#include "schrodinger/rdkit_extensions/helm.h"
 #include "schrodinger/rdkit_extensions/monomer_database.h"
 #include "schrodinger/sketcher/dialog/message_box_dialog.h"
 #include "schrodinger/sketcher/molviewer/abstract_monomer_item.h"
@@ -42,6 +44,10 @@ namespace sketcher
 /**
  * Wide branch labels must not overlap any other monomer after HELM import,
  * redraw, or repeated cleanup, including near the intrachain connection.
+ * The branched peptide backbone is predominantly vertical, with horizontal
+ * branches. Changes in coordinate generation may trigger the orientation
+ * sanity check without indicating a bug: the HELM string may need updating
+ * if it no longer produces a vertical branched chain.
  */
 BOOST_AUTO_TEST_CASE(test_long_label_branched_peptide_has_no_overlaps)
 {
@@ -94,6 +100,30 @@ BOOST_AUTO_TEST_CASE(test_long_label_branched_peptide_has_no_overlaps)
             BOOST_CHECK_EQUAL(counts[it.key().toStdString()],
                               it.value().toInt());
         }
+        unsigned int backbone_bonds = 0;
+        unsigned int vertical_backbone_bonds = 0;
+        const auto& conf = mol->getConformer();
+        for (const auto* bond : mol->bonds()) {
+            if (bond->getBeginAtom()->getProp<bool>(BRANCH_MONOMER) ||
+                bond->getEndAtom()->getProp<bool>(BRANCH_MONOMER)) {
+                continue;
+            }
+            ++backbone_bonds;
+            const auto offset = conf.getAtomPos(bond->getEndAtomIdx()) -
+                                conf.getAtomPos(bond->getBeginAtomIdx());
+            if (std::abs(offset.x) < 1e-6 && std::abs(offset.y) > 1e-6) {
+                ++vertical_backbone_bonds;
+            }
+        }
+        // The terminal ring also contributes nonvertical backbone bonds.
+        BOOST_REQUIRE_MESSAGE(
+            vertical_backbone_bonds * 2 > backbone_bonds,
+            "Expected a vertical branched peptide backbone, but only "
+                << vertical_backbone_bonds << " of " << backbone_bonds
+                << " backbone bonds are vertical. This does not necessarily "
+                   "indicate a bug: coordinate generation may have changed. "
+                   "The HELM string in long_label_branched_peptide.json may "
+                   "need updating to produce a vertical branched chain.");
         for (unsigned int i = 0; i < mol->getNumAtoms(); ++i) {
             for (unsigned int j = i + 1; j < mol->getNumAtoms(); ++j) {
                 BOOST_CHECK_MESSAGE(
