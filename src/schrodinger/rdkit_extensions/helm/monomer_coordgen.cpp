@@ -3156,13 +3156,12 @@ compute_linear_displacements(const RDKit::ROMol& mol,
             if (!neighbor->getProp<bool>(BRANCH_MONOMER)) {
                 const auto offset = conformer.getAtomPos(atom->getIdx()) -
                                     conformer.getAtomPos(neighbor->getIdx());
+                const auto x_displacement = get_axis_resize_displacement(
+                    offset.x, width_deltas[atom->getIdx()] +
+                                  width_deltas[neighbor->getIdx()]);
                 displacements[atom->getIdx()] =
                     displacements[neighbor->getIdx()] +
-                    RDGeom::Point3D(
-                        get_axis_resize_displacement(
-                            offset.x, width_deltas[atom->getIdx()] +
-                                          width_deltas[neighbor->getIdx()]),
-                        0, 0);
+                    RDGeom::Point3D(x_displacement, 0, 0);
                 break;
             }
         }
