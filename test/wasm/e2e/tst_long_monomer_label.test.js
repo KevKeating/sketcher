@@ -72,8 +72,7 @@ test.describe('SKETCH-2911 long monomer labels', () => {
         const first = state.atoms[i];
         for (const second of state.atoms.slice(i + 1)) {
           const overlapX =
-            Math.min(first.x + first.width, second.x + second.width) -
-            Math.max(first.x, second.x);
+            Math.min(first.x + first.width, second.x + second.width) - Math.max(first.x, second.x);
           const overlapY =
             Math.min(first.y + first.height, second.y + second.height) -
             Math.max(first.y, second.y);
