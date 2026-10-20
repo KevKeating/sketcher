@@ -410,7 +410,9 @@ test.describe('Custom Monomer DB', () => {
     expect(result).toEqual(['first', 'invalid', 'last']);
   });
 
-  test('imports share compiled code and terminate each worker before settling', async ({ page }) => {
+  test('imports share compiled code and terminate each worker before settling', async ({
+    page,
+  }) => {
     let binaryRequests = 0;
     page.context().on('request', (request) => {
       if (request.url().includes('MonomerLoader.wasm')) {
