@@ -163,6 +163,14 @@ QString prep_attachment_point_name(const std::string& name)
     return qname;
 }
 
+QRectF get_label_ink_rect(const QGraphicsSimpleTextItem& label)
+{
+    const QFontMetricsF metrics(label.font());
+    auto rect = metrics.tightBoundingRect(label.text());
+    rect.translate(0.0, metrics.ascent());
+    return label.mapRectToScene(rect);
+}
+
 static QGraphicsItem* create_attachment_point_label(const QString& label,
                                                     const QRectF& label_rect,
                                                     const Fonts& fonts,

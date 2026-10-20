@@ -125,12 +125,12 @@ export async function connect(page, first, firstName, second, secondName) {
 }
 
 export async function loadDatabase(page, filename) {
-  await setFilePickerResult(page, path.join(FIXTURES, filename));
+  await setFilePickerResult(page, path.resolve(FIXTURES, filename));
   await new Sketcher(page).import_menu('load_monomer_database');
   await expectDialog(page, 'Monomer Database', 30000);
   await expect
     .poll(async () => (await widgetState(page, 'text_edit')).text)
-    .toBe(`${filename} read successfully.`);
+    .toBe(`${path.basename(filename)} read successfully.`);
   await closeDialog(page);
   await expect.poll(() => dialogTitle(page)).toBe(null);
 }

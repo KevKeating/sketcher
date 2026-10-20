@@ -201,6 +201,11 @@ QColor MonomerConnectorItem::getConnectorColor() const
     return m_is_dark_mode ? m_connector_color_dark_bg : m_connector_color;
 }
 
+QLineF MonomerConnectorItem::getConnectorLine() const
+{
+    return m_connector_line;
+}
+
 void MonomerConnectorItem::setConnectorStyle(const QColor& connector_color,
                                              const qreal connector_width)
 {

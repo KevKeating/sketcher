@@ -83,6 +83,8 @@
 #include "schrodinger/sketcher/molviewer/atom_item.h"
 #include "schrodinger/sketcher/molviewer/constants.h"
 #include "schrodinger/sketcher/molviewer/monomer_hint_fragment_item.h"
+#include "schrodinger/sketcher/molviewer/monomer_connector_item.h"
+#include "schrodinger/sketcher/molviewer/monomer_attachment_point_labels.h"
 #include "schrodinger/sketcher/molviewer/unbound_monomeric_attachment_point_item.h"
 #include "schrodinger/sketcher/molviewer/scene.h"
 #include "schrodinger/sketcher/sketcher_widget.h"
@@ -381,6 +383,15 @@ QJsonObject item_geometry(const QGraphicsView& view,
     result["centerY"] = center.y();
     result["sceneX"] = item.scenePos().x();
     result["sceneY"] = item.scenePos().y();
+    const auto* text_item = dynamic_cast<const QGraphicsSimpleTextItem*>(&item);
+    const auto bounds =
+        text_item == nullptr
+            ? item.sceneBoundingRect()
+            : schrodinger::sketcher::get_label_ink_rect(*text_item);
+    result["sceneBounds"] = QJsonObject{{"x", bounds.x()},
+                                        {"y", bounds.y()},
+                                        {"width", bounds.width()},
+                                        {"height", bounds.height()}};
     result["tooltip"] = item.toolTip();
     return result;
 }
@@ -782,7 +793,36 @@ std::string sketcher_inspect_scene()
         result["index"] = static_cast<int>(bond->getIdx());
         result["start"] = static_cast<int>(bond->getBeginAtomIdx());
         result["end"] = static_cast<int>(bond->getEndAtomIdx());
+        if (const auto* connector =
+                dynamic_cast<const MonomerConnectorItem*>(item)) {
+            const auto line = connector->getConnectorLine();
+            QJsonArray endpoints;
+            for (const auto point : {line.p1(), line.p2()}) {
+                const auto scene_point = connector->mapToScene(point);
+                const auto page_point = map_to_sketcher(
+                    *view.viewport(), sketcher, view.mapFromScene(scene_point));
+                endpoints.append(QJsonObject{{"x", scene_point.x()},
+                                             {"y", scene_point.y()},
+                                             {"pageX", page_point.x()},
+                                             {"pageY", page_point.y()}});
+            }
+            result["line"] = endpoints;
+        }
         connectors.append(result);
+    }
+    QJsonArray attachment_labels;
+    for (const auto* item : scene.items()) {
+        const auto* label = dynamic_cast<const QGraphicsSimpleTextItem*>(item);
+        const auto* parent = item->parentItem();
+        // StandardSceneToolBase owns bound AP labels in its hint-level group.
+        // Unbound APs and fragment hints have their own distinct item types.
+        if (label != nullptr && label->isVisible() && parent != nullptr &&
+            parent->type() == QGraphicsItemGroup::Type &&
+            parent->zValue() == static_cast<qreal>(ZOrder::HINT)) {
+            auto result = item_geometry(view, sketcher, *label);
+            result["text"] = label->text();
+            attachment_labels.append(result);
+        }
     }
     QJsonObject popup;
     if (auto* surface = QApplication::activePopupWidget()) {
@@ -818,6 +858,7 @@ std::string sketcher_inspect_scene()
          {"attachments", attachments},
          {"hintConnections", inspect_hint_connections(view, sketcher, scene)},
          {"connectors", connectors},
+         {"attachmentLabels", attachment_labels},
          {"popup", popup}});
 }
 
