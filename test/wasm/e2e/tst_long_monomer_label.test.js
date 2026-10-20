@@ -11,11 +11,7 @@ import {
   screenshotRegion,
   waitAtoms,
 } from './e2e_helpers.js';
-import {
-  expectDrawingAttachments,
-  loadDatabase,
-  openMonomerSketcher,
-} from './monomer_helpers.js';
+import { expectDrawingAttachments, loadDatabase, openMonomerSketcher } from './monomer_helpers.js';
 
 test.setTimeout(90_000);
 
