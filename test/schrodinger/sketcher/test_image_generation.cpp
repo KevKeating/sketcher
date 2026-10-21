@@ -26,7 +26,7 @@
 #include "schrodinger/sketcher/molviewer/abstract_bond_or_connector_item.h"
 #include "schrodinger/sketcher/molviewer/coord_utils.h"
 #include "schrodinger/sketcher/molviewer/monomer_attachment_point_labels.h"
-#include "../../graphics_item_geometry.h"
+#include "shared_test_helpers.h"
 #include "test_common.h"
 
 using boost::unit_test::framework::current_test_case;

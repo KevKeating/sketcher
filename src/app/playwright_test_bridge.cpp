@@ -78,7 +78,7 @@
 #include <rdkit/GraphMol/Conformer.h>
 #include <rdkit/GraphMol/ROMol.h>
 
-#include "../../test/graphics_item_geometry.h"
+#include "../../test/schrodinger/sketcher/shared_test_helpers.h"
 #include "schrodinger/rdkit_extensions/rgroup.h"
 #include "schrodinger/sketcher/molviewer/abstract_atom_or_monomer_item.h"
 #include "schrodinger/sketcher/molviewer/abstract_bond_or_connector_item.h"

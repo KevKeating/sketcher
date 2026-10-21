@@ -1,3 +1,9 @@
+/**
+ * @file
+ * @brief Helper functions used by both the C++ tests and
+ *        playwright_test_bridge.cpp.
+ */
+
 #pragma once
 
 #include <QFontMetricsF>
