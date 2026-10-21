@@ -15,10 +15,10 @@ import { expectDrawingAttachments, loadDatabase, openMonomerSketcher } from './m
 
 test.setTimeout(90_000);
 
-// Confirm that the predictive hint structure uses the correct connection length
-// when the existing monomer and predicted monomer both have a long name. Make
-// sure that there's enough space between the monomers for the connection labels
-// to be visible.
+// Confirm that the predictive hint structure uses the correct connection
+// length, even if the existing monomer and predicted monomer both have a long
+// name. Make sure that there's enough space between the monomers for the
+// connection labels to be visible.
 for (const symbol of ['LongAla', 'A']) {
   test(`SKETCH-2871: ${symbol} hover shows attachments and a separated connected preview`, async ({
     page,
