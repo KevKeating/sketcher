@@ -46,6 +46,11 @@ class SKETCHER_API CustomMonomerButton : public QToolButton
 
   protected:
     /**
+     * Suppress replay of menu-dismissing presses over this button.
+     */
+    bool eventFilter(QObject* watched, QEvent* event) override;
+
+    /**
      * Overriden QToolButton method: Paint centered contents with a standard
      * menu arrow on hover or check.
      */

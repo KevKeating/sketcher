@@ -2,6 +2,7 @@
 
 #include <QAction>
 #include <QMenu>
+#include <QMouseEvent>
 #include <QString>
 #include <QStyleOptionButton>
 #include <QStyleOptionToolButton>
@@ -30,6 +31,7 @@ CustomMonomerButton::CustomMonomerButton(QWidget* parent) : QToolButton(parent)
     setStyleSheet(CUSTOM_MONOMER_BUTTON_STYLE);
 
     m_menu = new QMenu(this);
+    m_menu->installEventFilter(this);
     clear_button_state_on_popup_hide(this, m_menu);
     m_monomer_action = m_menu->addAction(QString());
     m_menu->addSeparator();
@@ -71,6 +73,20 @@ void CustomMonomerButton::nextCheckState()
     // this function intentionally left blank so that clicking on the button
     // doesn't immediately toggle the check state. (We explicitly toggle the
     // check state later when the tool change happens.)
+}
+
+bool CustomMonomerButton::eventFilter(QObject* watched, QEvent* event)
+{
+    if (watched == m_menu && event->type() == QEvent::MouseButtonPress) {
+        auto* mouse_event = static_cast<QMouseEvent*>(event);
+        if (QRect(mapToGlobal(QPoint()), size())
+                .contains(mouse_event->globalPosition().toPoint())) {
+            // Match Qt's built-in button menus: do not replay a dismissing
+            // press onto this button and reopen the menu on release.
+            m_menu->setAttribute(Qt::WA_NoMouseReplay);
+        }
+    }
+    return QToolButton::eventFilter(watched, event);
 }
 
 void CustomMonomerButton::paintEvent(QPaintEvent* event)
