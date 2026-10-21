@@ -3,6 +3,8 @@
 
 #include <boost/test/unit_test.hpp>
 
+#include <set>
+
 #include <QStringList>
 
 #include "schrodinger/rdkit_extensions/convert.h"
@@ -57,6 +59,13 @@ BOOST_AUTO_TEST_CASE(test_get_import_name_filter)
     auto all_supported = filters.front();
     BOOST_TEST(all_supported.startsWith("All supported formats ("));
     BOOST_TEST(!all_supported.contains("*.*"));
+    auto extension_filter = all_supported.mid(
+        all_supported.indexOf('(') + 1,
+        all_supported.size() - all_supported.indexOf('(') - 2);
+    auto listed_extensions = extension_filter.split(' ', Qt::SkipEmptyParts);
+    std::set<QString> unique_extensions(listed_extensions.begin(),
+                                        listed_extensions.end());
+    BOOST_TEST(listed_extensions.size() == unique_extensions.size());
     for (const auto& [_, label, extensions] : get_import_formats()) {
         for (const auto& ext : extensions) {
             BOOST_TEST(all_supported.contains(QString::fromStdString(ext)));

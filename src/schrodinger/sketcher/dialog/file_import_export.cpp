@@ -3,6 +3,8 @@
 #include <fmt/format.h>
 #include <fmt/ranges.h>
 
+#include <unordered_set>
+
 #include <QStringList>
 
 #include "schrodinger/rdkit_extensions/convert.h"
@@ -175,10 +177,14 @@ QString get_import_name_filter()
     return "All files (*)";
 #else
     std::vector<std::string> all_extensions;
+    std::unordered_set<std::string> seen_extensions;
     QStringList filters;
     for (const auto& [_, label, extensions] : get_import_formats()) {
-        all_extensions.insert(all_extensions.end(), extensions.begin(),
-                              extensions.end());
+        for (const auto& extension : extensions) {
+            if (seen_extensions.insert(extension).second) {
+                all_extensions.push_back(extension);
+            }
+        }
         filters.append(get_filter_name(label, extensions));
     }
     filters.prepend(get_filter_name("All supported formats", all_extensions));
