@@ -39,7 +39,10 @@ class PopupButtonStateFilter : public QObject
             if (QRect(m_button->mapToGlobal(QPoint()), m_button->size())
                     .contains(mouse_event->globalPosition().toPoint())) {
                 // Match Qt's built-in button menus: do not replay a dismissing
-                // press onto the button and reopen the popup on release.
+                // press onto the button, since that will reopen the popup as
+                // soon as the button is released. Note that Qt will clear the
+                // WA_NoMouseReplay attribute when the popup closes, so we don't
+                // have to worry about clearing it ourselves.
                 static_cast<QWidget*>(watched)->setAttribute(
                     Qt::WA_NoMouseReplay);
             }
