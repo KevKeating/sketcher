@@ -1,8 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { readFile, writeFile } from 'node:fs/promises';
-import path from 'node:path';
 import {
-  FIXTURES,
   clear,
   clickWidget,
   expectLayout,
@@ -79,23 +76,8 @@ test('CRDGEN-428: bicyclic peptide beads and connectors remain separated', async
 });
 
 test.describe('CRDGEN-434: rendered long-label spacing', () => {
-  test.beforeEach(async ({ page }, testInfo) => {
-    // Reuse exact symbols already in ChEMBL. The supplementary fixture only
-    // contains certification symbols absent from that existing database.
-    const readJson = async (filename) =>
-      JSON.parse(await readFile(path.join(FIXTURES, filename), 'utf8'));
-    const symbols = new Set(
-      largeLabelPeptides.flatMap((helm) =>
-        [...helm.split('$')[0].matchAll(/\[([^\]]+)\]/g)].map((match) => match[1]),
-      ),
-    );
-    const chembl = (await readJson('chembl_monomers_no_id.json')).filter(
-      (monomer) => monomer.POLYMER_TYPE === 'PEPTIDE' && symbols.has(monomer.SYMBOL),
-    );
-    const additional = await readJson('large_label_monomers.json');
-    const filename = testInfo.outputPath('layout_monomers.json');
-    await writeFile(filename, JSON.stringify([...chembl, ...additional]));
-    await loadDatabase(page, filename);
+  test.beforeEach(async ({ page }) => {
+    await loadDatabase(page, 'chembl_monomers_no_id.json');
   });
 
   for (const [index, helm] of largeLabelPeptides.entries()) {
@@ -104,17 +86,26 @@ test.describe('CRDGEN-434: rendered long-label spacing', () => {
       [17, 16],
       [29, 28],
     ][index];
-    test(`certification example ${index + 1}: import, cleanup, and readable attachment labels`, async ({
+    test(`adapted certification example ${index + 1}: import, cleanup, and readable attachment labels`, async ({
       page,
     }) => {
       await checkImportAndCleanup(page, helm, ...counts, async () => {
         const state = await scene(page);
+        const standardWidth = Math.max(
+          ...state.atoms
+            .filter((atom) => ['A', 'C', 'G', 'T'].includes(atom.label))
+            .map((atom) => atom.sceneBounds.width),
+        );
         // A long-long backbone connection exercises label clearance in the
         // crowded part of each example, rather than on an isolated short bead.
         const connector = state.connectors.find((item) => {
           const start = state.atoms.find((atom) => atom.index === item.start);
           const end = state.atoms.find((atom) => atom.index === item.end);
-          return item.end === item.start + 1 && start.label.length > 3 && end.label.length > 3;
+          return (
+            item.end === item.start + 1 &&
+            start.sceneBounds.width > standardWidth * 1.5 &&
+            end.sceneBounds.width > standardWidth * 1.5
+          );
         });
         expect(connector, 'long-label backbone connection exists').toBeDefined();
         await expectConnectorLabels(page, connector.index, ['N', 'C']);
@@ -133,7 +124,7 @@ test.describe('CRDGEN-434: rendered long-label spacing', () => {
       );
       await clear(page);
       const residues = ['A', 'A', 'A', 'A', 'A'];
-      for (let index = 0; index < longCount; index++) residues[index + 1] = '[Tyr_Ph4OH]';
+      for (let index = 0; index < longCount; index++) residues[index + 1] = '[Tyr(tBu)]';
       await checkImportAndCleanup(
         page,
         `PEPTIDE1{${residues.join('.')}}$$$$V2.0`,
@@ -142,6 +133,13 @@ test.describe('CRDGEN-434: rendered long-label spacing', () => {
         async () => {
           await expectConnectorLabels(page, 1, ['N', 'C']);
           const current = await scene(page);
+          const longBeads = current.atoms.filter((atom) => atom.label === 'Tyr(tBu)');
+          expect(longBeads).toHaveLength(longCount);
+          for (const bead of longBeads) {
+            expect(bead.sceneBounds.width).toBeGreaterThan(
+              shortState.atoms[0].sceneBounds.width * 1.5,
+            );
+          }
           for (const connector of current.connectors) {
             const gap = connectorClearance(current, connector).length;
             // Compare bead edges, so a wider bead must not stretch its gap.
