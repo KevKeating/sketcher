@@ -59,13 +59,6 @@ find_package(
                                              serialization unit_test_framework)
 find_package(Qt6 ${QT_VERSION} REQUIRED COMPONENTS Widgets Svg SvgWidgets Test)
 
-if(EMSCRIPTEN AND (NOT QT_FEATURE_wasm_jspi OR NOT QT_FEATURE_wasm_exceptions))
-  message(
-    FATAL_ERROR
-      "WASM builds require Qt built with -feature-wasm-jspi -feature-wasm-exceptions"
-  )
-endif()
-
 # Workaround for Qt 6.5.8 AGL framework issue on modern macOS AGL (Apple
 # Graphics Layer) was deprecated and removed from modern macOS SDKs This
 # workaround can be removed after BLDMGR-10714
@@ -145,15 +138,12 @@ function(setup_target TARGET)
     endif()
   endif()
   if(EMSCRIPTEN)
-    # QtCore's WASM implementation also uses Embind, so utilities such as
-    # smiles_to_helm need it even without their own JavaScript bindings.
-    target_link_libraries(${TARGET} PRIVATE embind)
-    # JSPI requires native WASM exceptions and matching setjmp/longjmp support.
-    # Keep optimizing for size to limit the browser download.
+    # We optimize for space in wasm builds because otherwise binaryen (run
+    # because of ASYNCIFY) runs out of memory
     target_link_options(${TARGET} PRIVATE -sGL_ENABLE_GET_PROC_ADDRESS
-                        -fwasm-exceptions -sSUPPORT_LONGJMP=wasm -Os)
-    target_compile_options(${TARGET} PRIVATE -fwasm-exceptions
-                                             -sSUPPORT_LONGJMP=wasm -Os)
+                        -fexceptions -sDISABLE_EXCEPTION_CATCHING=0 -Os)
+    target_compile_options(${TARGET} PRIVATE -fexceptions
+                                             -sDISABLE_EXCEPTION_CATCHING=0 -Os)
   endif()
 endfunction()
 
@@ -347,8 +337,11 @@ if(EMSCRIPTEN)
   set(EXTRA_SKETCHER_APP_LINK_FLAGS
       -sEXPORT_NAME=schrodinger_sketcher_entry
       -sMODULARIZE=1
-      -sEXPORTED_RUNTIME_METHODS=[callMain,FS,JSEvents,specialHTMLTargets,stringToUTF8,stringToUTF16,UTF16ToString,lengthBytesUTF8,getCppExceptionTag,getExceptionMessage,decrementExceptionRefcount,stackSave,stackRestore]
-      -sJSPI
+      -sEXPORTED_RUNTIME_METHODS=[callMain,FS,JSEvents,specialHTMLTargets,stringToUTF8,stringToUTF16,UTF16ToString,lengthBytesUTF8,getExceptionMessage]
+      -sASYNCIFY
+      -lembind
+      -fexceptions
+      -sDISABLE_EXCEPTION_CATCHING=0
       -sEXPORT_EXCEPTION_HANDLING_HELPERS)
 endif()
 target_link_libraries(
