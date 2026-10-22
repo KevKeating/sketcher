@@ -138,6 +138,9 @@ function(setup_target TARGET)
     endif()
   endif()
   if(EMSCRIPTEN)
+    # QtCore's WASM implementation uses Embind even in utilities without their
+    # own JavaScript bindings, such as smiles_to_helm.
+    target_link_libraries(${TARGET} PRIVATE embind)
     # We optimize for space in wasm builds because otherwise binaryen (run
     # because of ASYNCIFY) runs out of memory
     target_link_options(${TARGET} PRIVATE -sGL_ENABLE_GET_PROC_ADDRESS
@@ -339,7 +342,6 @@ if(EMSCRIPTEN)
       -sMODULARIZE=1
       -sEXPORTED_RUNTIME_METHODS=[callMain,FS,JSEvents,specialHTMLTargets,stringToUTF8,stringToUTF16,UTF16ToString,lengthBytesUTF8,getExceptionMessage]
       -sASYNCIFY
-      -lembind
       -fexceptions
       -sDISABLE_EXCEPTION_CATCHING=0
       -sEXPORT_EXCEPTION_HANDLING_HELPERS)
