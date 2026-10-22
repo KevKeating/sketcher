@@ -338,6 +338,7 @@ if(EMSCRIPTEN)
       -sEXPORT_NAME=schrodinger_sketcher_entry
       -sMODULARIZE=1
       -sEXPORTED_RUNTIME_METHODS=[callMain,FS,JSEvents,specialHTMLTargets,stringToUTF8,stringToUTF16,UTF16ToString,lengthBytesUTF8,getExceptionMessage]
+      -sASYNCIFY
       -lembind
       -fexceptions
       -sDISABLE_EXCEPTION_CATCHING=0
@@ -347,6 +348,7 @@ target_link_libraries(
   ${APP_TARGET}
   PRIVATE Boost::boost
           Boost::filesystem
+          fmt::fmt
           Qt6::Widgets
           RDKit::Depictor
           ${RDKIT_EXTENSIONS_TARGET}
@@ -367,7 +369,6 @@ target_link_libraries(
 
 # Crash handler: configure Boost.Stacktrace backend per platform
 if(NOT EMSCRIPTEN)
-  target_link_libraries(${APP_TARGET} PRIVATE fmt::fmt)
   if(MSVC)
     target_compile_definitions(${APP_TARGET}
                                PRIVATE BOOST_STACKTRACE_USE_WINDBG)
