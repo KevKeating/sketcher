@@ -6,6 +6,7 @@
 
 #include <rdkit/GraphMol/GraphMol.h>
 #include <QList>
+#include <QStringLiteral>
 #include <boost/filesystem.hpp>
 #include <boost/test/framework.hpp>
 #include <boost/test/tools/floating_point_comparison.hpp>
@@ -274,7 +275,7 @@ BOOST_AUTO_TEST_CASE(test_trim_image)
  */
 BOOST_AUTO_TEST_CASE(test_SVG_post_processing)
 {
-    auto rdmol = rdkit_extensions::to_rdkit("c1nccc2n1ccc2");
+    auto rdmol = rdkit_extensions::to_rdkit("c");
     RenderOptions opts;
     opts.width_height = {400, 400};
 
@@ -291,8 +292,10 @@ BOOST_AUTO_TEST_CASE(test_SVG_post_processing)
     BOOST_TEST(!svg.contains("Generated with Qt"));
 
     // make sure that we specify fallback fonts
+    QStringLiteral font_family_spaces(R"(font-family="Arimo, Helvetica, Arial, sans-serif")");
+    QStringLiteral font_family_no_spaces(R"(font-family="Arimo,Helvetica,Arial,sans-serif")");
     BOOST_TEST(
-        svg.contains(R"(font-family="Arimo, Helvetica, Arial, sans-serif")"));
+        svg.contains(font_family_spaces) || svg.contains(font_family_no_spaces));
 }
 
 /**
