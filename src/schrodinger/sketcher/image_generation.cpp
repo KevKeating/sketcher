@@ -419,7 +419,7 @@ void post_process_svg(QByteArray& svg_data, const RenderOptions& opts)
     // Qt 6.11.1 or newer, as those contain the fix for QTBUG-145797.
     const QString svg_font_spec = R"(font-family="%1")";
     auto font_spec_before = svg_font_spec.arg(FONT_LIST.first());
-    auto font_spec_after = svg_font_spec.arg(FONT_LIST.join(", "));
+    auto font_spec_after = svg_font_spec.arg(FONT_LIST.join(","));
     svg_string.replace(font_spec_before, font_spec_after, Qt::CaseInsensitive);
 #endif
 
