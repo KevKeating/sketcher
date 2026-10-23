@@ -356,10 +356,10 @@ endif()
 
 generate_git_patch_command(
   QT_PATCH_COMMAND
-  # Reset the qtbase submodule, not the Qt superproject
   SUBMODULE
   qtbase
-  # Fixed in Qt 6.13; appears likely to be backported to Qt 6.12.1.
+  # QTBUG-151280 is fixed in Qt 6.13; appears likely to be backported to Qt
+  # 6.12.1 as well.
   qt_QTBUG-151280.patch
   # Give PNG clipboard blobs their required MIME type.
   qt_QTBUG-151788.patch
