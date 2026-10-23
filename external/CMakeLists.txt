@@ -357,12 +357,14 @@ endif()
 generate_git_patch_command(
   QT_PATCH_COMMAND
   # Reset the qtbase submodule, not the Qt superproject
-  SUBMODULE_TO_RESET
+  SUBMODULE
   qtbase
   # Fixed in Qt 6.13; appears likely to be backported to Qt 6.12.1.
   qt_QTBUG-151280.patch
   # Give PNG clipboard blobs their required MIME type.
-  qt_QTBUG-151788.patch)
+  qt_QTBUG-151788.patch
+  # Support the $CFGDIR paths written by Emscripten 6.0.4 and later.
+  qt_emsdk_cfgdir.patch)
 
 set_cmake_arg(QT_BUILD_SUBMODULES ${QT_GIT_SUBMODULES})
 ExternalProject_Add(
