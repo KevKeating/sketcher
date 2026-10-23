@@ -28,15 +28,20 @@ function(set_cmake_arg VAR_NAME)
 endfunction()
 
 # Generate a reset command followed by commands to apply patches relative to
-# CMAKE_CURRENT_SOURCE_DIR.
+# CMAKE_CURRENT_SOURCE_DIR. WORKING_DIRECTORY selects a nested Git repository.
 function(generate_patch_command VAR_NAME)
-  set(PATCH_COMMAND git reset --hard HEAD)
-  foreach(PATCH_FILE IN LISTS ARGN)
+  cmake_parse_arguments(PATCH "" "WORKING_DIRECTORY" "" ${ARGN})
+  set(GIT_COMMAND git)
+  if(PATCH_WORKING_DIRECTORY)
+    list(APPEND GIT_COMMAND -C "${PATCH_WORKING_DIRECTORY}")
+  endif()
+  set(PATCH_COMMAND ${GIT_COMMAND} reset --hard HEAD)
+  foreach(PATCH_FILE IN LISTS PATCH_UNPARSED_ARGUMENTS)
     list(
       APPEND
       PATCH_COMMAND
       &&
-      git
+      ${GIT_COMMAND}
       apply
       --ignore-whitespace
       "${CMAKE_CURRENT_SOURCE_DIR}/${PATCH_FILE}")
@@ -344,6 +349,15 @@ else()
   set(QT_GIT_SUBMODULES qtbase qtsvg)
 endif()
 
+generate_patch_command(
+  QT_PATCH_COMMAND
+  WORKING_DIRECTORY
+  qtbase
+  # Fixed in Qt 6.13; appears likely to be backported to Qt 6.12.1.
+  qt_QTBUG-151280.patch
+  # Give PNG clipboard blobs their required MIME type.
+  qt_QTBUG-151788.patch)
+
 set_cmake_arg(QT_BUILD_SUBMODULES ${QT_GIT_SUBMODULES})
 ExternalProject_Add(
   qt
@@ -351,10 +365,10 @@ ExternalProject_Add(
   GIT_TAG v${QT_VERSION}
   GIT_SUBMODULES ${QT_GIT_SUBMODULES}
   GIT_SHALLOW TRUE
-  PATCH_COMMAND ${CMAKE_COMMAND} -P
-                ${CMAKE_CURRENT_SOURCE_DIR}/qt_yield_acle_patch.cmake
+  # Reset qtbase itself: resetting the Qt superproject leaves submodule edits.
+  PATCH_COMMAND ${QT_PATCH_COMMAND}
   COMMAND ${CMAKE_COMMAND} -P
-          ${CMAKE_CURRENT_SOURCE_DIR}/qt_wasm_clipboard_patch.cmake
+          ${CMAKE_CURRENT_SOURCE_DIR}/qt_yield_acle_patch.cmake
   CMAKE_ARGS
     ${COMMON_EXTERNAL_PROJECT_CMAKE_ARGS}
     -DCMAKE_INSTALL_PREFIX=${CMAKE_CURRENT_BINARY_DIR}/qt-${QT_VERSION}
