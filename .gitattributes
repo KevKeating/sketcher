@@ -1,5 +1,5 @@
 # Always keep main's version of version.json during merges
 version.json merge=ours
 
-# Preserve standard unified-diff context prefixes and LF patch syntax on Windows.
-external/qt_QTBUG-*.patch text eol=lf whitespace=-blank-at-eol
+# Keep patches LF on Windows and allow unified-diff blank context lines.
+external/*.patch text eol=lf whitespace=-blank-at-eol
