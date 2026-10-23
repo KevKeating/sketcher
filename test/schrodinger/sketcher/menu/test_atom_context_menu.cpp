@@ -22,7 +22,7 @@ class TestModifyAtomsMenu : public ModifyAtomsMenu
 {
   public:
     TestModifyAtomsMenu(SketcherModel* model, MolModel* mol_model) :
-        ModifyAtomsMenu(model, mol_model) {};
+        ModifyAtomsMenu(model, mol_model){};
     using ModifyAtomsMenu::updateActions;
 };
 
