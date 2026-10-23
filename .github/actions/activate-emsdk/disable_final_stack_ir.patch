@@ -1,0 +1,12 @@
+diff --git a/tools/building.py b/tools/building.py
+--- a/tools/building.py
++++ b/tools/building.py
+@@ -821,7 +821,7 @@
+ def get_last_binaryen_opts():
+   return [f'--optimize-level={settings.OPT_LEVEL}',
+           f'--shrink-level={settings.SHRINK_LEVEL}',
+-          '--optimize-stack-ir']
++          '--no-stack-ir']
+
+
+ # run binaryen's wasm-metadce to dce both js and wasm

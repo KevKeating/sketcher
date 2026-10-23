@@ -22,3 +22,13 @@ runs:
         cd build/external/emsdk-${{ inputs.version }}/emsdk/ && \
         ./emsdk install ${{ inputs.version }} && \
         ./emsdk activate ${{ inputs.version }}
+
+    # Re-evaluate this workaround when upgrading Emscripten. The final Stack IR
+    # optimization exhausts the runner's RAM and swap after Asyncify completes.
+    - name: Disable final Stack IR optimization
+      if: inputs.version == '5.0.5'
+      shell: bash
+      run: |
+        patch --batch --forward --fuzz=0 -p1 \
+          --directory="build/external/emsdk-${{ inputs.version }}/emsdk/upstream/emscripten" \
+          --input="$GITHUB_ACTION_PATH/disable_final_stack_ir.patch"
