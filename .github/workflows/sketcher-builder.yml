@@ -249,7 +249,77 @@ jobs:
 
       - name: Build
         id: sketcher-build
-        run: cmake --build build --verbose --config ${{ env.BUILD_TYPE }}
+        run: |
+          build_command=(cmake --build build --verbose --config "${{ env.BUILD_TYPE }}")
+          if [[ "${{ matrix.build-name }}" != 'wasm' ]]; then
+            "${build_command[@]}"
+            exit
+          fi
+
+          diagnostics_dir="$PWD/build/wasm-diagnostics"
+          mkdir -p "$diagnostics_dir"
+          date --iso-8601=seconds > "$diagnostics_dir/start-time.txt"
+          export EMCC_DEBUG=1 BINARYEN_CORES=1
+
+          report_resources() {
+            date --utc --iso-8601=seconds
+            free -m
+            echo 'Processes sorted by RSS (KiB):'
+            ps -eo pid,ppid,etimes,pcpu,rss,args --sort=-rss | sed -n '1,16p'
+            for metric in memory.current memory.peak memory.max memory.events memory.swap.current memory.swap.max; do
+              if [[ -r "/sys/fs/cgroup/$metric" ]]; then
+                echo "cgroup $metric:"
+                cat "/sys/fs/cgroup/$metric"
+              fi
+            done
+          }
+
+          monitor_resources() {
+            sample_timer=''
+            trap 'kill "$sample_timer" 2>/dev/null || true; exit 0' TERM INT
+            while true; do
+              report_resources | tee -a "$diagnostics_dir/memory.log"
+              sleep 15 &
+              sample_timer=$!
+              wait "$sample_timer"
+            done
+          }
+          monitor_resources &
+          monitor_pid=$!
+          cleanup() {
+            build_status=$?
+            trap - EXIT
+            set +e
+            kill "$monitor_pid" 2>/dev/null
+            wait "$monitor_pid" 2>/dev/null
+            report_resources | tee -a "$diagnostics_dir/memory.log"
+            exit "$build_status"
+          }
+          trap cleanup EXIT
+          trap 'exit 143' TERM
+          trap 'exit 130' INT
+
+          /usr/bin/time -v -o "$diagnostics_dir/time.txt" \
+            "${build_command[@]}" --parallel 1 2>&1 | tee "$diagnostics_dir/build.log"
+
+      - name: Collect WASM kernel diagnostics
+        if: always() && matrix.build-name == 'wasm'
+        run: |
+          diagnostics_dir="$PWD/build/wasm-diagnostics"
+          mkdir -p "$diagnostics_dir"
+          # A runner shutdown may prevent this step from running; periodic
+          # resource snapshots above also go directly to the job log.
+          sudo -n dmesg --ctime 2>&1 | tee "$diagnostics_dir/kernel.log" || true
+          if [[ -f "$diagnostics_dir/time.txt" ]]; then
+            cat "$diagnostics_dir/time.txt"
+          fi
+
+      - name: Upload WASM build diagnostics
+        if: always() && matrix.build-name == 'wasm'
+        uses: actions/upload-artifact@v6
+        with:
+          name: wasm-build-diagnostics-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/wasm-diagnostics/
 
       - name: Run tests
         working-directory: build
