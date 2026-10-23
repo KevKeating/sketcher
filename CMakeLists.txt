@@ -326,7 +326,9 @@ elseif(APPLE)
   set_source_files_properties(${SKETCHER_ICNS}
                               PROPERTIES MACOSX_PACKAGE_LOCATION "Resources")
 endif()
-add_executable(${APP_TARGET} ${APP_SOURCES})
+# Qt finalization orders static plugins before their module dependencies. This
+# matters with Qt 6.12, where QtSvg uses SVG parsing functions from QtGui.
+qt_add_executable(${APP_TARGET} ${APP_SOURCES})
 if(APPLE)
   set_target_properties(
     ${APP_TARGET}
@@ -365,7 +367,7 @@ target_link_libraries(
 # Utility: smiles_to_helm
 if(NOT EMSCRIPTEN)
   set(SMILES_TO_HELM_TARGET smiles_to_helm)
-  add_executable(${SMILES_TO_HELM_TARGET} src/utils/smiles_to_helm.cpp)
+  qt_add_executable(${SMILES_TO_HELM_TARGET} src/utils/smiles_to_helm.cpp)
   setup_target(${SMILES_TO_HELM_TARGET})
   set_target_properties(
     ${SMILES_TO_HELM_TARGET} PROPERTIES RUNTIME_OUTPUT_DIRECTORY
@@ -481,7 +483,7 @@ if(ENABLE_TESTING)
     # Create unique target name by replacing path separators
     string(REPLACE "/" "-" TEST_PREFIX "${PREFIX_PATH}")
     set(TEST_TARGET "${TEST_PREFIX}-${TEST_STEM}")
-    add_executable(${TEST_TARGET} ${TEST_SOURCE})
+    qt_add_executable(${TEST_TARGET} ${TEST_SOURCE})
     setup_target(${TEST_TARGET})
     target_include_directories(${TEST_TARGET}
                                PRIVATE ${PROJECT_SOURCE_DIR}/test)
