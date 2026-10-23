@@ -1,0 +1,36 @@
+diff --git a/qtbase/src/plugins/platforms/wasm/qwasmclipboard.cpp b/qtbase/src/plugins/platforms/wasm/qwasmclipboard.cpp
+--- a/qtbase/src/plugins/platforms/wasm/qwasmclipboard.cpp
++++ b/qtbase/src/plugins/platforms/wasm/qwasmclipboard.cpp
+@@ -70,5 +70,6 @@ void QWasmClipboard::paste(val event)
+ {
+     event.call<void>("preventDefault"); // prevent browser from handling drop event
++    event.call<void>("stopPropagation");
+
+     QWasmIntegration::get()->getWasmClipboard()->sendClipboardData(event);
+ }
+@@ -206,7 +207,8 @@ void QWasmClipboard::writeToClipboardApi()
+             buffer.open(QIODevice::WriteOnly);
+             img.save(&buffer, "PNG");
+
+-            qstdweb::Blob blob = qstdweb::Blob::fromArrayBuffer(qstdweb::Uint8Array::copyFrom(ba).buffer());
++            qstdweb::Blob blob = qstdweb::Blob::copyFrom(ba.constData(), ba.size(),
++                                                       "image/png");
+             clipboardData.set(std::string("image/png"), blob.val());
+         }
+     }
+diff --git a/qtbase/src/plugins/platforms/wasm/qwasmwindow.cpp b/qtbase/src/plugins/platforms/wasm/qwasmwindow.cpp
+--- a/qtbase/src/plugins/platforms/wasm/qwasmwindow.cpp
++++ b/qtbase/src/plugins/platforms/wasm/qwasmwindow.cpp
+@@ -86,8 +86,11 @@ QWasmWindow::QWasmWindow(QWindow *window, QWasmCompositor *compositor)
+     if (QWasmClipboard::shouldInstallWindowEventHandlers()) {
+         m_cutCallback = QWasmEventHandler(m_canvas, "cut", QWasmClipboard::cut);
+         m_copyCallback = QWasmEventHandler(m_canvas, "copy", QWasmClipboard::copy);
+-        m_pasteCallback = QWasmEventHandler(m_canvas, "paste", QWasmClipboard::paste);
+     }
++    // Handle paste before the browser inserts into the single-line input proxy,
++    // which would replace line breaks with spaces. Include the input and focus
++    // helper on all browsers, and let QWasmClipboard stop propagation.
++    m_pasteCallback = QWasmEventHandler(m_window, "paste", QWasmClipboard::paste);
+ #endif
+
+     // Set up m_focusHelper, which is an invisible child element of the window which takes

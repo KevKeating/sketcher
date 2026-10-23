@@ -31,6 +31,7 @@ import {
   setClipboardText,
   setFilePickerResult,
   setWidgetText,
+  selectWidgetCombo,
   widgetRect,
   widgetState,
 } from './sketcher_wasm.js';
@@ -1137,9 +1138,11 @@ export class Sketcher {
         unpaired_electrons,
       );
     if (enhanced_stereo !== undefined) {
-      await clickWidget(this.page, set_as === 'query' ? 'query_stereo_combo' : 'atom_stereo_combo');
-      await this.page.keyboard.type(String(enhanced_stereo));
-      await this.page.keyboard.press('Enter');
+      await selectWidgetCombo(
+        this.page,
+        set_as === 'query' ? 'query_stereo_combo' : 'atom_stereo_combo',
+        enhanced_stereo,
+      );
     }
     if (enhanced_stereo_label !== undefined)
       await setWidgetText(
@@ -1152,17 +1155,13 @@ export class Sketcher {
     // specific-element field above.
     if (element_list !== undefined) await setWidgetText(this.page, 'element_list_le', element_list);
     if (wildcard_type !== undefined) {
-      await clickWidget(this.page, 'wildcard_combo');
-      await this.page.keyboard.type(String(wildcard_type));
-      await this.page.keyboard.press('Enter');
+      await selectWidgetCombo(this.page, 'wildcard_combo', wildcard_type);
     }
     if (rgroup !== undefined) await setWidgetText(this.page, 'rgroup_sb', rgroup);
     if (num_connections !== undefined)
       await setWidgetText(this.page, 'num_connections_sb', num_connections);
     const selectAdvancedCombo = async (objectName, value) => {
-      await clickWidget(this.page, objectName);
-      await this.page.keyboard.type(String(value));
-      await this.page.keyboard.press('Enter');
+      await selectWidgetCombo(this.page, objectName, value);
     };
     if (total_h !== undefined) await selectAdvancedCombo('total_h_combo', total_h);
     if (aromaticity !== undefined) await selectAdvancedCombo('aromaticity_combo', aromaticity);
