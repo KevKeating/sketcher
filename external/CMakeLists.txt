@@ -27,8 +27,9 @@ function(set_cmake_arg VAR_NAME)
       PARENT_SCOPE)
 endfunction()
 
-# generate_git_patch_command(<var_name> [SUBMODULE <submodule>] <patch_file_names>...)
-# 
+# generate_git_patch_command(<var_name> [SUBMODULE <submodule>]
+# <patch_file_names>...)
+#
 # Create a command to apply a list of patches to the local clone of a git
 # repository. Before applying the patches, the repo is reset to ensure that
 # repeated calls to this command don't result in an error. The optional
