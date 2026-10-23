@@ -28,12 +28,13 @@ function(set_cmake_arg VAR_NAME)
 endfunction()
 
 # Generate a reset command followed by commands to apply patches relative to
-# CMAKE_CURRENT_SOURCE_DIR. WORKING_DIRECTORY selects a nested Git repository.
-function(generate_patch_command VAR_NAME)
-  cmake_parse_arguments(PATCH "" "WORKING_DIRECTORY" "" ${ARGN})
+# CMAKE_CURRENT_SOURCE_DIR. SUBMODULE_TO_RESET selects the submodule to reset
+# and patch. Resetting a superproject does not reset its submodules.
+function(generate_git_patch_command VAR_NAME)
+  cmake_parse_arguments(PATCH "" "SUBMODULE_TO_RESET" "" ${ARGN})
   set(GIT_COMMAND git)
-  if(PATCH_WORKING_DIRECTORY)
-    list(APPEND GIT_COMMAND -C "${PATCH_WORKING_DIRECTORY}")
+  if(PATCH_SUBMODULE_TO_RESET)
+    list(APPEND GIT_COMMAND -C "${PATCH_SUBMODULE_TO_RESET}")
   endif()
   set(PATCH_COMMAND ${GIT_COMMAND} reset --hard HEAD)
   foreach(PATCH_FILE IN LISTS PATCH_UNPARSED_ARGUMENTS)
@@ -291,7 +292,7 @@ set_cmake_arg(
   ${CMAKE_CURRENT_BINARY_DIR}/expat-${EXPAT_VERSION}
   ${CMAKE_CURRENT_BINARY_DIR}/zlib-${ZLIB_VERSION}
   ${CMAKE_CURRENT_BINARY_DIR}/zstd-${ZSTD_VERSION})
-generate_patch_command(
+generate_git_patch_command(
   RDKIT_PATCH_COMMAND
   # Prevent RDKit from trying to build shared libs
   rdkit_static_build.patch
@@ -349,10 +350,10 @@ else()
   set(QT_GIT_SUBMODULES qtbase qtsvg)
 endif()
 
-generate_patch_command(
+generate_git_patch_command(
   QT_PATCH_COMMAND
   # Reset the qtbase submodule, not the Qt superproject
-  WORKING_DIRECTORY
+  SUBMODULE_TO_RESET
   qtbase
   # Fixed in Qt 6.13; appears likely to be backported to Qt 6.12.1.
   qt_QTBUG-151280.patch
