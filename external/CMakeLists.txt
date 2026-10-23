@@ -367,8 +367,6 @@ ExternalProject_Add(
   GIT_SHALLOW TRUE
   # Reset qtbase itself: resetting the Qt superproject leaves submodule edits.
   PATCH_COMMAND ${QT_PATCH_COMMAND}
-  COMMAND ${CMAKE_COMMAND} -P
-          ${CMAKE_CURRENT_SOURCE_DIR}/qt_yield_acle_patch.cmake
   CMAKE_ARGS
     ${COMMON_EXTERNAL_PROJECT_CMAKE_ARGS}
     -DCMAKE_INSTALL_PREFIX=${CMAKE_CURRENT_BINARY_DIR}/qt-${QT_VERSION}
