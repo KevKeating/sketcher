@@ -351,6 +351,7 @@ endif()
 
 generate_patch_command(
   QT_PATCH_COMMAND
+  # Reset the qtbase submodule, not the Qt superproject
   WORKING_DIRECTORY
   qtbase
   # Fixed in Qt 6.13; appears likely to be backported to Qt 6.12.1.
@@ -365,7 +366,6 @@ ExternalProject_Add(
   GIT_TAG v${QT_VERSION}
   GIT_SUBMODULES ${QT_GIT_SUBMODULES}
   GIT_SHALLOW TRUE
-  # Reset qtbase itself: resetting the Qt superproject leaves submodule edits.
   PATCH_COMMAND ${QT_PATCH_COMMAND}
   CMAKE_ARGS
     ${COMMON_EXTERNAL_PROJECT_CMAKE_ARGS}
