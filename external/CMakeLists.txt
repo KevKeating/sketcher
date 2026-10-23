@@ -27,14 +27,17 @@ function(set_cmake_arg VAR_NAME)
       PARENT_SCOPE)
 endfunction()
 
-# Generate a reset command followed by commands to apply patches relative to
-# CMAKE_CURRENT_SOURCE_DIR. SUBMODULE_TO_RESET selects the submodule to reset
-# and patch. Resetting a superproject does not reset its submodules.
+# generate_git_patch_command(<var_name> [SUBMODULE <submodule>] <patch_file_names>...)
+# 
+# Create a command to apply a list of patches to the local clone of a git
+# repository. Before applying the patches, the repo is reset to ensure that
+# repeated calls to this command don't result in an error. The optional
+# SUBMODULE argument selects the git submodule to reset and patch.
 function(generate_git_patch_command VAR_NAME)
-  cmake_parse_arguments(PATCH "" "SUBMODULE_TO_RESET" "" ${ARGN})
+  cmake_parse_arguments(PATCH "" "SUBMODULE" "" ${ARGN})
   set(GIT_COMMAND git)
-  if(PATCH_SUBMODULE_TO_RESET)
-    list(APPEND GIT_COMMAND -C "${PATCH_SUBMODULE_TO_RESET}")
+  if(PATCH_SUBMODULE)
+    list(APPEND GIT_COMMAND -C "${PATCH_SUBMODULE}")
   endif()
   set(PATCH_COMMAND ${GIT_COMMAND} reset --hard HEAD)
   foreach(PATCH_FILE IN LISTS PATCH_UNPARSED_ARGUMENTS)
