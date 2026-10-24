@@ -787,8 +787,24 @@ export class Sketcher {
 
   /** Equivalent to Squish `click_tool(tool, click_and_hold=False)`. */
   async click_tool(tool, click_and_hold = false) {
+    if (['rect_btn', 'lasso_btn', 'ellipse_btn'].includes(tool)) {
+      // Clear and keyboard shortcuts can change the active tool without
+      // updating current_tool. Re-clicking an active Select button opens its
+      // popup and consumes the next canvas click, so inspect the live shape.
+      if (!(await widgetState(this.page, tool)).checked) {
+        if (!(await widgetState(this.page, 'select_tool_btn')).checked) {
+          await clickWidget(this.page, 'select_tool_btn');
+        }
+        if (!(await widgetState(this.page, tool)).checked) {
+          await clickWidget(this.page, 'select_tool_btn');
+          await this.page.waitForTimeout(100);
+          await clickWidget(this.page, tool);
+        }
+      }
+      this.record_current_tool(tool);
+      return;
+    }
     // Squish tracks sticky tools and avoids re-clicking the current tool.
-    // In particular, repeated rect_btn clicks interrupt Shift-add selection.
     if (this.current_tool === tool) return;
     if (WILDCARD_TOOL_NAMES[tool]) {
       const [parent, child] = WILDCARD_TOOL_NAMES[tool];
@@ -884,22 +900,6 @@ export class Sketcher {
       } finally {
         await this.page.mouse.up();
       }
-      this.record_current_tool(tool);
-      return;
-    }
-    if (tool === 'lasso_btn' || tool === 'ellipse_btn') {
-      // A checked ToolButtonWithPopup opens its visible selector popup on a
-      // second ordinary click.  Choose the real popup child with the mouse.
-      if (
-        this.current_tool !== 'rect_btn' &&
-        this.current_tool !== 'lasso_btn' &&
-        this.current_tool !== 'ellipse_btn'
-      ) {
-        await clickWidget(this.page, 'select_tool_btn');
-      }
-      await clickWidget(this.page, 'select_tool_btn');
-      await this.page.waitForTimeout(100);
-      await clickWidget(this.page, tool);
       this.record_current_tool(tool);
       return;
     }
