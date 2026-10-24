@@ -66,10 +66,15 @@ test.describe('Sketcher wrapper contracts', () => {
     const sentinel = '__playwright_waiting_for_bond_copy__';
     await setClipboardText(page, sentinel);
     await sk.type_text('sketcher_area', '<Ctrl+C>');
-    expect(v3000Counts(await sk.wait_for_clipboard_change(sentinel))).toEqual({
-      atoms: 2,
-      bonds: 1,
-    });
+    // Qt's copy event can publish the cached import text before Sketcher's
+    // asynchronous clipboard write finishes. Wait for the expected payload,
+    // since merely replacing the sentinel can still return that stale text.
+    await expect
+      .poll(async () => v3000Counts(await sk.clipboard_text()))
+      .toEqual({
+        atoms: 2,
+        bonds: 1,
+      });
   });
 
   test('reset_state restores the Squish sticky-tool defaults', async ({ page }) => {
