@@ -145,11 +145,8 @@ function(setup_target TARGET)
     endif()
   endif()
   if(EMSCRIPTEN)
-    # QtCore's WASM implementation also uses Embind, so utilities such as
-    # smiles_to_helm need it even without their own JavaScript bindings.
-    target_link_libraries(${TARGET} PRIVATE embind)
     # JSPI requires native WASM exceptions and matching setjmp/longjmp support.
-    # Keep optimizing for size to limit the browser download.
+    # We also optimize for size to limit the browser download.
     target_link_options(${TARGET} PRIVATE -sGL_ENABLE_GET_PROC_ADDRESS
                         -fwasm-exceptions -sSUPPORT_LONGJMP=wasm -Os)
     target_compile_options(${TARGET} PRIVATE -fwasm-exceptions
@@ -326,8 +323,9 @@ elseif(APPLE)
   set_source_files_properties(${SKETCHER_ICNS}
                               PROPERTIES MACOSX_PACKAGE_LOCATION "Resources")
 endif()
-# Qt finalization orders static plugins before their module dependencies. This
-# matters with Qt 6.12, where QtSvg uses SVG parsing functions from QtGui.
+# Using qt_add_executable adds Qt finalization, which ensure that static plugins
+# are built before their module dependencies. This matters with Qt 6.12, where
+# QtSvg uses SVG parsing functions from QtGui.
 qt_add_executable(${APP_TARGET} ${APP_SOURCES})
 if(APPLE)
   set_target_properties(
@@ -351,6 +349,7 @@ if(EMSCRIPTEN)
       -sMODULARIZE=1
       -sEXPORTED_RUNTIME_METHODS=[callMain,FS,JSEvents,specialHTMLTargets,stringToUTF8,stringToUTF16,UTF16ToString,lengthBytesUTF8,getCppExceptionTag,getExceptionMessage,decrementExceptionRefcount,stackSave,stackRestore]
       -sJSPI
+      -lembind
       -sEXPORT_EXCEPTION_HANDLING_HELPERS)
 endif()
 target_link_libraries(
