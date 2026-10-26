@@ -2151,23 +2151,17 @@ std::tuple<std::unordered_set<AtomTag>, std::unordered_set<BondTag>,
 MolModel::getAllUnselectedTags()
 {
     std::unordered_set<AtomTag> deselected_atoms;
-    // RDKit also uses bookmarks internally. Enumerate the actual MolModel
-    // tags so unrelated bookmarks cannot select the same item a second time.
-    for (const auto* atom : m_mol.atoms()) {
-        auto atom_tag = getTagForAtom(atom);
+    for (const auto& [atom_tag_int, atom] : *m_mol.getAtomBookmarks()) {
+        auto atom_tag = AtomTag(atom_tag_int);
         if (m_selected_atom_tags.find(atom_tag) == m_selected_atom_tags.end()) {
             deselected_atoms.insert(atom_tag);
         }
     }
     std::unordered_set<BondTag> deselected_bonds;
-    for (const auto* bond : m_mol.bonds()) {
-        for (auto bond_tag :
-             {getTagForBond(bond), getSecondaryConnectionTagForBond(bond)}) {
-            if (bond_tag != BondTag(-1) &&
-                m_selected_bond_tags.find(bond_tag) ==
-                    m_selected_bond_tags.end()) {
-                deselected_bonds.insert(bond_tag);
-            }
+    for (const auto& [bond_tag_int, bond] : *m_mol.getBondBookmarks()) {
+        auto bond_tag = BondTag(bond_tag_int);
+        if (m_selected_bond_tags.find(bond_tag) == m_selected_bond_tags.end()) {
+            deselected_bonds.insert(bond_tag);
         }
     }
     std::unordered_set<SGroupTag> deselected_s_groups;

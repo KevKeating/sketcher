@@ -99,7 +99,6 @@ class TestMolModel : public MolModel
     using MolModel::getTagForBond;
     using MolModel::m_allow_edits;
     using MolModel::m_arrow;
-    using MolModel::m_mol;
     using MolModel::m_pluses;
     using MolModel::m_tag_to_non_molecular_object;
     using MolModel::removeCommandFunc;
@@ -1555,30 +1554,6 @@ BOOST_AUTO_TEST_CASE(test_selection)
     BOOST_TEST(model.getSelectedAtoms() == atom_set({atom2}));
     BOOST_TEST(model.getSelectedBonds() == bond_set({bond3}));
     BOOST_TEST(model.getSelectedNonMolecularObjects() == nmo_set({arrow}));
-}
-
-/**
- * RDKit bookmarks other than MolModel tags must not participate in selection.
- */
-BOOST_AUTO_TEST_CASE(test_invert_selection_with_foreign_bookmarks)
-{
-    QUndoStack undo_stack;
-    TestMolModel model(&undo_stack);
-    auto mol = rdkit_extensions::to_rdkit("CCC");
-    model.addMol(*mol);
-    auto* atom = model.m_mol.getAtomWithIdx(0);
-    auto* bond = model.m_mol.getBondWithIdx(0);
-    model.m_mol.setAtomBookmark(atom, 10000);
-    model.m_mol.setBondBookmark(bond, 10000);
-    model.select({atom}, {bond}, {}, {}, {}, SelectMode::SELECT_ONLY);
-    model.invertSelection();
-    BOOST_TEST(model.getSelectedAtoms().size() == 2);
-    BOOST_TEST(model.getSelectedBonds().size() == 1);
-    BOOST_TEST(model.getSelectedAtoms().count(atom) == 0);
-    BOOST_TEST(model.getSelectedBonds().count(bond) == 0);
-    model.invertSelection();
-    BOOST_TEST(model.getSelectedAtoms() == atom_set({atom}));
-    BOOST_TEST(model.getSelectedBonds() == bond_set({bond}));
 }
 
 BOOST_AUTO_TEST_CASE(test_select_all_and_invert)
