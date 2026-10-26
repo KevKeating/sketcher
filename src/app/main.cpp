@@ -272,12 +272,7 @@ int main(int argc, char** argv)
     QObject::connect(&sk, &SketcherWidget::moleculeChanged, &sketcher_changed);
     QObject::connect(&sk, &SketcherWidget::representationChanged,
                      &sketcher_changed);
-#else
-    SketcherWidget sk;
-#endif
 
-    sk.show();
-#ifdef __EMSCRIPTEN__
     // Report the linked Emscripten mode without calling a binding from JS
     // while Qt's Asyncify stack is suspended. JSPI reports mode 2.
     const bool uses_asyncify = emscripten_has_asyncify() == 1;
@@ -296,6 +291,10 @@ int main(int argc, char** argv)
         });
         javascript_requests->start(16);
     }
+#else
+    SketcherWidget sk;
 #endif
+
+    sk.show();
     return application.exec();
 }
