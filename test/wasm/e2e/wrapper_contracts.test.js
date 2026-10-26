@@ -77,6 +77,38 @@ test.describe('Sketcher wrapper contracts', () => {
       });
   });
 
+  test('combo choices leave atom properties open and can be cancelled', async ({ page }) => {
+    const sk = new Sketcher(page);
+    await sk.open();
+    await sk.import_menu('paste_in_text', 'C[C@H](F)Cl');
+    const original = await sk.copy_all_as_text('smi');
+    await sk.map_imported_atom_indexes();
+    await sk.click_atom(2, true);
+
+    for (const enhanced_stereo of ['AND', 'OR']) {
+      await sk.selection_context_menu({ type: 'atom', index: 2 }, 'edit_atom_properties');
+      await sk.edit_atom_properties({ enhanced_stereo, click_ok: false });
+      expect((await sk.widget_state('atom_stereo_combo')).text).toBe(enhanced_stereo);
+      await sk.edit_atom_properties({ click_ok: false, click_cancel: true });
+    }
+
+    await sk.selection_context_menu({ type: 'atom', index: 2 }, 'edit_atom_properties');
+    await sk.edit_atom_properties({
+      set_as: 'query',
+      query_type: 'advanced',
+      total_h: '>0',
+      aromaticity: 'Aromatic (a)',
+      ring_count_dropdown: 'exactly',
+      ring_count: 3,
+      click_ok: false,
+    });
+    expect((await sk.widget_state('total_h_combo')).text).toBe('>0');
+    expect((await sk.widget_state('aromaticity_combo')).text).toBe('Aromatic (a)');
+    await sk.edit_atom_properties({ click_ok: false, click_cancel: true });
+    await sk.click_button('clear_selection');
+    expect(await sk.copy_all_as_text('smi')).toBe(original);
+  });
+
   test('reset_state restores the Squish sticky-tool defaults', async ({ page }) => {
     const sk = new Sketcher(page);
     await sk.open();
