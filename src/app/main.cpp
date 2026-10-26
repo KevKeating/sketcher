@@ -8,6 +8,8 @@
 #include <emscripten.h>
 #include <emscripten/bind.h>
 #include <emscripten/val.h>
+#include <QCoreApplication>
+#include <QMetaObject>
 #else
 #include "crash_handler.h"
 #endif
@@ -160,6 +162,24 @@ void sketcher_changed()
 }
 
 #ifdef __EMSCRIPTEN__
+bool sketcher_schedule_requests()
+{
+    // This JSPI entry point only posts an event; it never drains requests on
+    // the suspended Qt stack. Posting also wakes Qt without relying on a
+    // periodic timer or user input. Run the bindings after Qt has resumed.
+    return QMetaObject::invokeMethod(
+        QCoreApplication::instance(),
+        [] {
+            EM_ASM({
+                const drain = Module["drainSketcherRequests"];
+                if (drain) {
+                    drain();
+                }
+            });
+        },
+        Qt::QueuedConnection);
+}
+
 EMSCRIPTEN_BINDINGS(sketcher)
 {
     emscripten::enum_<Format>("Format")
@@ -207,6 +227,8 @@ EMSCRIPTEN_BINDINGS(sketcher)
         .value("BLACK_WHITE", ColorScheme::BLACK_WHITE)
         .value("WHITE_BLACK", ColorScheme::WHITE_BLACK);
 
+    emscripten::function("_sketcher_schedule_requests",
+                         &sketcher_schedule_requests);
     emscripten::function("sketcher_import_text", &sketcher_import_text);
     emscripten::function("sketcher_export_text", &sketcher_export_text);
     emscripten::function("sketcher_export_image", &sketcher_export_image);

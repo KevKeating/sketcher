@@ -149,6 +149,49 @@
               }
             },
           });
+          // Retain the QTBUG-145012 request queue with JSPI. Each new batch
+          // posts a Qt event that wakes Qt and drains the requests.
+          // Callbacks must not await or call C++ code that suspends the stack.
+          const requests = [];
+          sketcherInstance.runInQt = (callback) =>
+            new Promise((resolve, reject) => {
+              requests.push({ callback, resolve, reject });
+              if (requests.length === 1) {
+                try {
+                  if (!sketcherInstance._sketcher_schedule_requests()) {
+                    throw new Error('Unable to schedule Sketcher requests');
+                  }
+                } catch (error) {
+                  requests.pop();
+                  reject(error);
+                }
+              }
+            });
+          sketcherInstance.drainSketcherRequests = () => {
+            const batch = requests.splice(0);
+            for (const { callback, resolve, reject } of batch) {
+              const stack = sketcherInstance.stackSave();
+              try {
+                resolve(callback());
+              } catch (error) {
+                if (
+                  error instanceof WebAssembly.Exception &&
+                  error.is(sketcherInstance.getCppExceptionTag())
+                ) {
+                  // Decode and release native C++ exceptions while Qt is awake.
+                  // A C++ exception caught in JS also needs its stack restored.
+                  sketcherInstance.stackRestore(stack);
+                  try {
+                    reject(new Error(sketcherInstance.getExceptionMessage(error).join(': ')));
+                  } finally {
+                    sketcherInstance.decrementExceptionRefcount(error);
+                  }
+                } else {
+                  reject(error);
+                }
+              }
+            }
+          };
           Object.defineProperty(window, 'Module', {
             value: sketcherInstance,
             enumerable: false,
