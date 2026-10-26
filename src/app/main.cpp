@@ -8,8 +8,7 @@
 #include <emscripten.h>
 #include <emscripten/bind.h>
 #include <emscripten/val.h>
-#include <QCoreApplication>
-#include <QMetaObject>
+#include <QTimer>
 #else
 #include "crash_handler.h"
 #endif
@@ -162,24 +161,6 @@ void sketcher_changed()
 }
 
 #ifdef __EMSCRIPTEN__
-bool sketcher_schedule_requests()
-{
-    // This JSPI entry point only posts an event; it never drains requests on
-    // the suspended Qt stack. Posting also wakes Qt without relying on a
-    // periodic timer or user input. Run the bindings after Qt has resumed.
-    return QMetaObject::invokeMethod(
-        QCoreApplication::instance(),
-        [] {
-            EM_ASM({
-                const drain = Module["drainSketcherRequests"];
-                if (drain) {
-                    drain();
-                }
-            });
-        },
-        Qt::QueuedConnection);
-}
-
 EMSCRIPTEN_BINDINGS(sketcher)
 {
     emscripten::enum_<Format>("Format")
@@ -227,8 +208,6 @@ EMSCRIPTEN_BINDINGS(sketcher)
         .value("BLACK_WHITE", ColorScheme::BLACK_WHITE)
         .value("WHITE_BLACK", ColorScheme::WHITE_BLACK);
 
-    emscripten::function("_sketcher_schedule_requests",
-                         &sketcher_schedule_requests);
     emscripten::function("sketcher_import_text", &sketcher_import_text);
     emscripten::function("sketcher_export_text", &sketcher_export_text);
     emscripten::function("sketcher_export_image", &sketcher_export_image);
@@ -298,5 +277,25 @@ int main(int argc, char** argv)
 #endif
 
     sk.show();
+#ifdef __EMSCRIPTEN__
+    // Report the linked Emscripten mode without calling a binding from JS
+    // while Qt's Asyncify stack is suspended. JSPI reports mode 2.
+    const bool uses_asyncify = emscripten_has_asyncify() == 1;
+    EM_ASM({ Module["sketcherUsesAsyncify"] = !!$0; }, uses_asyncify);
+    if (uses_asyncify) {
+        // QTBUG-145012: drain requests only after Qt has resumed, so Embind
+        // calls return their values instead of waiting on application.exec().
+        auto* javascript_requests = new QTimer(&application);
+        QObject::connect(javascript_requests, &QTimer::timeout, [] {
+            EM_ASM({
+                const drain = Module["drainSketcherRequests"];
+                if (drain) {
+                    drain();
+                }
+            });
+        });
+        javascript_requests->start(16);
+    }
+#endif
     return application.exec();
 }

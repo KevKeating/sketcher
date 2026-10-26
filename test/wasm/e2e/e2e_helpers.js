@@ -43,32 +43,7 @@ export async function getCanvasCenter(page) {
  * @param {string} arg
  */
 async function callBridge(page, name, arg) {
-  return page.evaluate(
-    async ({ fn, value }) => {
-      try {
-        // Qt/WASM is built with Asyncify, so a bridge call that unwinds the
-        // stack hands back a promise rather than its value; await covers both.
-        return await Module[fn](value);
-      } catch (e) {
-        // A C++ exception reaches JS as an opaque emscripten value, so decode
-        // it to keep the reason in the test failure. A WASM trap arrives as an
-        // ordinary JS Error instead, and handing one of those to
-        // getExceptionMessage() makes it read unrelated memory and take the
-        // whole renderer down, so only decode what is actually opaque.
-        if (e instanceof Error) {
-          throw e;
-        }
-        let detail;
-        try {
-          detail = Module.getExceptionMessage(e).join(': ');
-        } catch {
-          detail = String(e);
-        }
-        throw new Error(detail);
-      }
-    },
-    { fn: name, value: arg },
-  );
+  return page.evaluate(({ fn, value }) => Module[fn](value), { fn: name, value: arg });
 }
 
 /**

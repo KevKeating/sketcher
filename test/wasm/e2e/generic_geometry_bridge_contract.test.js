@@ -12,7 +12,10 @@ async function waitForSketcherReady(page) {
 }
 
 async function bridgeRect(page, selector) {
-  return page.evaluate((value) => JSON.parse(Module._sketcher_get_rect(value)), selector);
+  return page.evaluate(
+    async (value) => JSON.parse(await Module._sketcher_get_rect(value)),
+    selector,
+  );
 }
 
 async function clickBridgeRect(page, selector) {

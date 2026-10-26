@@ -54,38 +54,24 @@ export type RepresentationFormat = (typeof RepresentationFormat)[keyof typeof Re
 type SketcherWasmFormat = Tagged<{ value: number }, 'SketcherWasmFormat'>;
 type SketcherWasmImageFormat = Tagged<{ value: number }, 'SketcherWasmImageFormat'>;
 
-// Structural types for native WASM exceptions, which are not declared by the
-// TypeScript DOM library used to build this package.
-type SketcherWasmExceptionTag = object;
-type SketcherWasmException = {
-  is: (tag: SketcherWasmExceptionTag) => boolean;
-  getArg: (tag: SketcherWasmExceptionTag, index: number) => unknown;
-};
-
+/**
+ * Bindings return Promises in both Asyncify and JSPI builds. C++ exceptions
+ * reject with a JavaScript Error; callers do not need Emscripten helpers.
+ */
 export type SketcherWASM = {
-  /**
-   * Wake Qt and run synchronous bindings in submission order (QTBUG-145012).
-   * The callback must not await or call C++ code that suspends the stack.
-   * Call the sketcher_* bindings below only inside this callback.
-   * Uncaught C++ exceptions are released and reject with a JavaScript Error.
-   */
-  runInQt: <T>(callback: () => T) => Promise<T>;
   Format: { [K in keyof typeof RepresentationFormat]: SketcherWasmFormat };
   ImageFormat: { [K in keyof typeof SketcherImageFormat]: SketcherWasmImageFormat };
-  sketcher_import_text: (text: string) => void;
-  sketcher_export_text: (format: SketcherWasmFormat) => string;
-  sketcher_export_image: (format: SketcherWasmImageFormat) => string;
-  sketcher_clear: () => void;
-  sketcher_is_empty: () => boolean;
-  sketcher_load_custom_monomers: (json: string) => { succeeded: string[]; failed: string[] };
-  sketcher_has_monomers: () => boolean;
-  sketcher_allow_monomeric: (allowMonomeric: boolean) => void;
+  sketcher_import_text: (text: string) => Promise<void>;
+  sketcher_export_text: (format: SketcherWasmFormat) => Promise<string>;
+  sketcher_export_image: (format: SketcherWasmImageFormat) => Promise<string>;
+  sketcher_clear: () => Promise<void>;
+  sketcher_is_empty: () => Promise<boolean>;
+  sketcher_load_custom_monomers: (
+    json: string,
+  ) => Promise<{ succeeded: string[]; failed: string[] }>;
+  sketcher_has_monomers: () => Promise<boolean>;
+  sketcher_allow_monomeric: (allowMonomeric: boolean) => Promise<void>;
   sketcher_changed_callback?: () => void;
-  getCppExceptionTag: () => SketcherWasmExceptionTag;
-  getExceptionMessage: (exception: SketcherWasmException) => string[];
-  decrementExceptionRefcount: (exception: SketcherWasmException) => void;
-  stackSave: () => number;
-  stackRestore: (stack: number) => void;
 };
 
 export type SketcherRef = {
@@ -145,20 +131,18 @@ const Sketcher = forwardRef<SketcherRef, SketcherProps>(function Sketcher(props,
           return;
         }
 
-        const { runInQt, sketcher_export_text, Format } = sketcherInstanceRef.current;
-        return runInQt(() => sketcher_export_text(Format[format]));
+        const { sketcher_export_text, Format } = sketcherInstanceRef.current;
+        return sketcher_export_text(Format[format]);
       },
       async sketcherImportText(representation, clearStructure = true) {
         if (!sketcherInstanceRef.current) {
           return;
         }
-        const { runInQt, sketcher_clear, sketcher_import_text } = sketcherInstanceRef.current;
-        return runInQt(() => {
-          if (clearStructure) {
-            sketcher_clear();
-          }
-          sketcher_import_text(representation);
-        });
+        const { sketcher_clear, sketcher_import_text } = sketcherInstanceRef.current;
+        if (clearStructure) {
+          await sketcher_clear();
+        }
+        await sketcher_import_text(representation);
       },
     }),
     [],
@@ -186,17 +170,15 @@ const Sketcher = forwardRef<SketcherRef, SketcherProps>(function Sketcher(props,
       if (!sketcherInstance) {
         return;
       }
-      const { runInQt, sketcher_clear, sketcher_import_text } = sketcherInstance;
+      const { sketcher_clear, sketcher_import_text } = sketcherInstance;
       let cancelled = false;
-      void runInQt(() => {
-        if (cancelled) {
-          return;
+      const updateRepresentation = async () => {
+        await sketcher_clear();
+        if (!cancelled && representation?.trim()) {
+          await sketcher_import_text(representation);
         }
-        sketcher_clear();
-        if (representation?.trim()) {
-          sketcher_import_text(representation);
-        }
-      }).catch((e) => {
+      };
+      void updateRepresentation().catch((e) => {
         if (!cancelled) {
           onError?.(`Error importing to sketcher [${e?.message ?? String(e)}]`);
         }

@@ -14,7 +14,7 @@ test.describe('Import', () => {
   test('import molecule via API then extend by drawing', async ({ page }) => {
     // Import a molecule programmatically (the LiveDesign workflow)
     await page.evaluate(() => {
-      Module.sketcher_import_text('C');
+      return Module.sketcher_import_text('C');
     });
     await expect.poll(() => getExportedSmiles(page), { timeout: 5000 }).toBe('C');
 

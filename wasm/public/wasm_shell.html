@@ -149,49 +149,64 @@
               }
             },
           });
-          // Retain the QTBUG-145012 request queue with JSPI. Each new batch
-          // posts a Qt event that wakes Qt and drains the requests.
-          // Callbacks must not await or call C++ code that suspends the stack.
-          const requests = [];
-          sketcherInstance.runInQt = (callback) =>
-            new Promise((resolve, reject) => {
-              requests.push({ callback, resolve, reject });
-              if (requests.length === 1) {
+          // Decode C++ exceptions before leaving the active Qt stack. Keep
+          // runtime helpers and enum objects outside the asynchronous API.
+          const invoke = (callback) => {
+            const stack = sketcherInstance.stackSave();
+            try {
+              return callback();
+            } catch (error) {
+              const isNativeException =
+                typeof WebAssembly.Exception === 'function' &&
+                error instanceof WebAssembly.Exception &&
+                error.is(sketcherInstance.getCppExceptionTag());
+              if (typeof error === 'number' || isNativeException) {
+                sketcherInstance.stackRestore(stack);
                 try {
-                  if (!sketcherInstance._sketcher_schedule_requests()) {
-                    throw new Error('Unable to schedule Sketcher requests');
-                  }
-                } catch (error) {
-                  requests.pop();
-                  reject(error);
+                  throw new Error(sketcherInstance.getExceptionMessage(error).join(': '));
+                } finally {
+                  sketcherInstance.decrementExceptionRefcount(error);
                 }
               }
-            });
-          sketcherInstance.drainSketcherRequests = () => {
-            const batch = requests.splice(0);
-            for (const { callback, resolve, reject } of batch) {
-              const stack = sketcherInstance.stackSave();
-              try {
-                resolve(callback());
-              } catch (error) {
-                if (
-                  error instanceof WebAssembly.Exception &&
-                  error.is(sketcherInstance.getCppExceptionTag())
-                ) {
-                  // Decode and release native C++ exceptions while Qt is awake.
-                  // A C++ exception caught in JS also needs its stack restored.
-                  sketcherInstance.stackRestore(stack);
-                  try {
-                    reject(new Error(sketcherInstance.getExceptionMessage(error).join(': ')));
-                  } finally {
-                    sketcherInstance.decrementExceptionRefcount(error);
-                  }
-                } else {
-                  reject(error);
-                }
-              }
+              throw error;
             }
           };
+
+          // JSPI calls bindings directly. Only Asyncify needs QTBUG-145012's
+          // queue, drained by the QTimer in main.cpp while Qt is awake.
+          let call = async (callback) => invoke(callback);
+          if (sketcherInstance.sketcherUsesAsyncify) {
+            const requests = [];
+            call = (callback) =>
+              new Promise((resolve, reject) => {
+                requests.push({ callback, resolve, reject });
+              });
+            sketcherInstance.drainSketcherRequests = () => {
+              const batch = requests.splice(0);
+              for (const { callback, resolve, reject } of batch) {
+                try {
+                  resolve(invoke(callback));
+                } catch (error) {
+                  reject(error);
+                }
+              }
+            };
+          }
+
+          // Preserve the public names and arguments, including test bindings.
+          // Every call returns a Promise in both modes. These bindings must
+          // finish synchronously when invoked on the active Qt stack.
+          for (const [name, binding] of Object.entries(sketcherInstance)) {
+            if (
+              typeof binding === 'function' &&
+              (/^_?sketcher_/.test(name) || name === 'get_image_bytes')
+            ) {
+              const wrapped = (...args) => call(() => binding.apply(sketcherInstance, args));
+              // Embind's overload dispatcher reads Module[name].overloadTable.
+              Object.assign(wrapped, binding);
+              sketcherInstance[name] = wrapped;
+            }
+          }
           Object.defineProperty(window, 'Module', {
             value: sketcherInstance,
             enumerable: false,

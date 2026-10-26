@@ -51,20 +51,20 @@ test.describe('WASM Sketcher API', () => {
       } else {
         test.skip(!!exportUnsupported, `${format} is import only`);
       }
-      const exportedText = await page.evaluate((format) => {
-        Module.sketcher_clear();
-        Module.sketcher_import_text('C[C@H](N)C=O');
-        const exported = Module.sketcher_export_text(Module.Format[format]);
+      const exportedText = await page.evaluate(async (format) => {
+        await Module.sketcher_clear();
+        await Module.sketcher_import_text('C[C@H](N)C=O');
+        const exported = await Module.sketcher_export_text(Module.Format[format]);
         return exported;
       }, format);
       expect(exportedText).toMatchSnapshot(`export_text_${format}.txt`);
 
       // Test importing the exported value (round-trip test)
       if (!importUnsupported) {
-        const importSuccessful = await page.evaluate((exportedText) => {
-          Module.sketcher_clear();
-          Module.sketcher_import_text(exportedText);
-          return !Module.sketcher_is_empty();
+        const importSuccessful = await page.evaluate(async (exportedText) => {
+          await Module.sketcher_clear();
+          await Module.sketcher_import_text(exportedText);
+          return !(await Module.sketcher_is_empty());
         }, exportedText);
         expect(importSuccessful).toBe(true);
       }
@@ -75,14 +75,14 @@ test.describe('WASM Sketcher API', () => {
     const isEmptyOnLoad = await page.evaluate(() => Module.sketcher_is_empty());
     expect(isEmptyOnLoad).toBe(true);
 
-    const isEmptyAfterImport = await page.evaluate(() => {
-      Module.sketcher_import_text('C');
+    const isEmptyAfterImport = await page.evaluate(async () => {
+      await Module.sketcher_import_text('C');
       return Module.sketcher_is_empty();
     });
     expect(isEmptyAfterImport).toBe(false);
 
-    const isEmptyAfterClear = await page.evaluate(() => {
-      Module.sketcher_clear();
+    const isEmptyAfterClear = await page.evaluate(async () => {
+      await Module.sketcher_clear();
       return Module.sketcher_is_empty();
     });
     expect(isEmptyAfterClear).toBe(true);
@@ -92,21 +92,21 @@ test.describe('WASM Sketcher API', () => {
     const hasMonomersOnLoad = await page.evaluate(() => Module.sketcher_has_monomers());
     expect(hasMonomersOnLoad).toBe(false);
 
-    const hasMonomersAfterSmilesImport = await page.evaluate(() => {
-      Module.sketcher_import_text('c1ccccc1');
+    const hasMonomersAfterSmilesImport = await page.evaluate(async () => {
+      await Module.sketcher_import_text('c1ccccc1');
       return Module.sketcher_has_monomers();
     });
     expect(hasMonomersAfterSmilesImport).toBe(false);
 
-    const hasMonomersAfterHelmImport = await page.evaluate(() => {
-      Module.sketcher_clear();
-      Module.sketcher_import_text('PEPTIDE1{A.S.D.F.G.H.W}$$$$V2.0');
+    const hasMonomersAfterHelmImport = await page.evaluate(async () => {
+      await Module.sketcher_clear();
+      await Module.sketcher_import_text('PEPTIDE1{A.S.D.F.G.H.W}$$$$V2.0');
       return Module.sketcher_has_monomers();
     });
     expect(hasMonomersAfterHelmImport).toBe(true);
 
-    const hasMonomersAfterClear = await page.evaluate(() => {
-      Module.sketcher_clear();
+    const hasMonomersAfterClear = await page.evaluate(async () => {
+      await Module.sketcher_clear();
       return Module.sketcher_has_monomers();
     });
     expect(hasMonomersAfterClear).toBe(false);
@@ -115,8 +115,8 @@ test.describe('WASM Sketcher API', () => {
   // Test image export for all formats
   ['SVG', 'PNG'].forEach((imageFormat) => {
     test(`exporting a ${imageFormat} image`, async ({ page }) => {
-      const base64Content = await page.evaluate((imageFormat) => {
-        Module.sketcher_import_text('C=O');
+      const base64Content = await page.evaluate(async (imageFormat) => {
+        await Module.sketcher_import_text('C=O');
         return Module.sketcher_export_image(Module.ImageFormat[imageFormat]);
       }, imageFormat);
       const buffer = Buffer.from(base64Content, 'base64');
@@ -224,8 +224,8 @@ test.describe('WASM Sketcher API', () => {
 </CDXML>`;
 
     // Import the CDXML and extract SMILES
-    const exportedSmiles = await page.evaluate((cdxml) => {
-      Module.sketcher_import_text(cdxml);
+    const exportedSmiles = await page.evaluate(async (cdxml) => {
+      await Module.sketcher_import_text(cdxml);
       return Module.sketcher_export_text(Module.Format.SMILES);
     }, cdxmlInput);
 
@@ -233,20 +233,17 @@ test.describe('WASM Sketcher API', () => {
   });
 
   test('Exception handling for invalid input', async ({ page }) => {
-    const result = await page.evaluate(() => {
+    const result = await page.evaluate(async () => {
       try {
-        Module.sketcher_import_text('foobar');
+        await Module.sketcher_import_text('foobar');
         throw new Error('Expected exception to be thrown');
       } catch (e) {
-        // Use emscripten's getExceptionMessage to extract C++ exception info
-        const [type, message] = Module.getExceptionMessage(e);
-        return { type, message };
+        return { message: e.message };
       }
     });
 
-    // Verify that we can extract the C++ exception message and type
-    expect(result.message).toBe('Unable to determine format');
-    expect(result.type).toBeTruthy();
+    // C++ exceptions are decoded and released by the public wrapper.
+    expect(result.message).toContain('Unable to determine format');
   });
 });
 
@@ -294,10 +291,10 @@ test.describe('Custom Monomer DB', () => {
     expect(monomer_import_result.succeeded.length).toBe(1);
     expect(monomer_import_result.failed.length).toBe(0);
 
-    const result = await page.evaluate(() => {
-      Module.sketcher_clear();
-      Module.sketcher_import_text('PEPTIDE1{A.[Sar].G}$$$$V2.0');
-      return !Module.sketcher_is_empty();
+    const result = await page.evaluate(async () => {
+      await Module.sketcher_clear();
+      await Module.sketcher_import_text('PEPTIDE1{A.[Sar].G}$$$$V2.0');
+      return !(await Module.sketcher_is_empty());
     });
 
     expect(result).toBe(true);
@@ -337,13 +334,12 @@ test.describe('Custom Monomer DB', () => {
       },
     ]);
 
-    const result = await page.evaluate((json) => {
+    const result = await page.evaluate(async (json) => {
       try {
-        Module.sketcher_load_custom_monomers(json);
+        await Module.sketcher_load_custom_monomers(json);
         return { threw: false };
       } catch (e) {
-        const [type, message] = Module.getExceptionMessage(e);
-        return { threw: true, type, message };
+        return { threw: true, message: e.message };
       }
     }, extraFields);
 
