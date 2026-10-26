@@ -349,11 +349,8 @@ else()
   set(QT_GIT_SUBMODULES qtbase qtsvg)
 endif()
 
-generate_git_patch_command(
-  QT_PATCH_COMMAND
-  SUBMODULE
-  qtbase
-  qt_yield_acle_patch.cmake)
+generate_git_patch_command(QT_PATCH_COMMAND SUBMODULE qtbase
+                           qt_yield_acle_patch.cmake)
 
 set_cmake_arg(QT_BUILD_SUBMODULES ${QT_GIT_SUBMODULES})
 ExternalProject_Add(
