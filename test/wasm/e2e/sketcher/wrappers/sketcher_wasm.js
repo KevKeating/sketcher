@@ -1,3 +1,4 @@
+import { expect } from '@playwright/test';
 import { readFile } from 'node:fs/promises';
 import path from 'node:path';
 import {
@@ -290,6 +291,16 @@ export async function setWidgetText(page, objectName, text) {
   await clickWidget(page, objectName);
   await page.keyboard.press('ControlOrMeta+a');
   await page.keyboard.type(String(text), { delay: 10 });
+}
+
+/** Select through a combo's closed-state type-ahead without accepting its dialog. */
+export async function selectWidgetCombo(page, objectName, text) {
+  await clickWidget(page, objectName);
+  await page.keyboard.press('Escape');
+  await page.keyboard.press('Home');
+  // Space opens a closed QComboBox. Its first word is enough for type-ahead.
+  await page.keyboard.type(String(text).split(' ')[0]);
+  await expect.poll(async () => (await widgetState(page, objectName)).text).toBe(String(text));
 }
 
 /** Return a visible Qt menu action's canvas rectangle by objectName or text. */
