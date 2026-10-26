@@ -133,7 +133,8 @@ $$$$
 }
 
 /**
- * Populate an initially empty R-group submenu before Qt sizes its popup.
+ * Ensure that the R-group context menu is populated Qt sizes its popup.
+ * Otherwise, Qt won't allocate space for the menu item.
  */
 BOOST_AUTO_TEST_CASE(test_existing_r_groups_before_popup_layout)
 {
