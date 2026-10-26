@@ -2,12 +2,16 @@ import { expect } from '@playwright/test';
 import { readFile } from 'node:fs/promises';
 import path from 'node:path';
 import {
+  activateQtWindow,
   clickWidget,
+  focusCanvas,
+  focusQtWindow,
   requireRect as requireBridgeRect,
+  waitForSketcherReady,
   widgetState as bridgeWidgetState,
 } from '../../e2e_helpers.js';
 
-export { clickWidget };
+export { clickWidget, focusCanvas };
 
 /** Return a selector rectangle from the shared generic C++ geometry bridge. */
 export async function genericRect(page, selector) {
@@ -95,16 +99,7 @@ export async function openSketcher(page) {
       return nativeClick.apply(this, args);
     };
   });
-  await page.goto('/wasm_shell.html');
-  await page.waitForFunction(() => typeof window.Module !== 'undefined', undefined, {
-    timeout: 20000,
-  });
-  await page.locator('#screen canvas').waitFor({ state: 'visible', timeout: 10000 });
-}
-
-/** @param {import('@playwright/test').Page} page */
-export async function focusCanvas(page) {
-  await page.locator('#screen canvas').focus();
+  await waitForSketcherReady(page);
 }
 
 /** Show a test-only cursor marker when PLAYWRIGHT_SHOW_MOUSE=1. */
@@ -297,6 +292,13 @@ export async function setWidgetText(page, objectName, text) {
 export async function selectWidgetCombo(page, objectName, text) {
   await clickWidget(page, objectName);
   await page.keyboard.press('Escape');
+  const qtWindow = page.locator('[id^="qt-window-"]:visible').last();
+  await focusQtWindow(page, qtWindow);
+  // Qt 6.7 does not give the closed combo keyboard focus when its popup is
+  // dismissed. Cycle through the tab chain, then reactivate the dialog.
+  await page.keyboard.press('Tab');
+  await page.keyboard.press('Shift+Tab');
+  await activateQtWindow(page, qtWindow);
   await page.keyboard.press('Home');
   // Space opens a closed QComboBox. Its first word is enough for type-ahead.
   await page.keyboard.type(String(text).split(' ')[0]);
