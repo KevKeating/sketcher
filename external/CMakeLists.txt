@@ -349,9 +349,6 @@ else()
   set(QT_GIT_SUBMODULES qtbase qtsvg)
 endif()
 
-generate_git_patch_command(QT_PATCH_COMMAND SUBMODULE qtbase
-                           qt_yield_acle_patch.cmake)
-
 set_cmake_arg(QT_BUILD_SUBMODULES ${QT_GIT_SUBMODULES})
 ExternalProject_Add(
   qt
@@ -359,7 +356,8 @@ ExternalProject_Add(
   GIT_TAG v${QT_VERSION}
   GIT_SUBMODULES ${QT_GIT_SUBMODULES}
   GIT_SHALLOW TRUE
-  PATCH_COMMAND ${QT_PATCH_COMMAND}
+  PATCH_COMMAND ${CMAKE_COMMAND} -P
+                ${CMAKE_CURRENT_SOURCE_DIR}/qt_yield_acle_patch.cmake
   CMAKE_ARGS
     ${COMMON_EXTERNAL_PROJECT_CMAKE_ARGS}
     -DCMAKE_INSTALL_PREFIX=${CMAKE_CURRENT_BINARY_DIR}/qt-${QT_VERSION}
