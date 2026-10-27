@@ -17,6 +17,7 @@
 #include "schrodinger/sketcher/molviewer/atom_display_settings.h"
 #include "schrodinger/sketcher/molviewer/fonts.h"
 #include "schrodinger/sketcher/molviewer/scene.h"
+#include "schrodinger/sketcher/molviewer/scene_utils.h"
 
 BOOST_GLOBAL_FIXTURE(QApplicationRequiredFixture);
 BOOST_TEST_DONT_PRINT_LOG_VALUE(schrodinger::sketcher::HsDirection);
@@ -290,10 +291,10 @@ BOOST_AUTO_TEST_CASE(test_findHsDirection, *boost::unit_test::tolerance(0.01))
     BOOST_TEST(atom_items.at(3)->findHsDirection() == HsDirection::RIGHT);
 }
 
-BOOST_AUTO_TEST_CASE(test_halo_covers_complete_atom_labels)
+BOOST_AUTO_TEST_CASE(test_highlighting_covers_complete_atom_labels)
 {
-    for (const auto* smiles :
-         {"CO", "CN", "CS", "[O-]", "[Mg+2]", "[13NH3+:7]", "NNNN", "CC"}) {
+    for (const auto* smiles : {"CO", "CN", "CS", "[O-]", "[Mg+2]", "[13NH3+:7]",
+                               "NNNN", "CC", "C[C@H](N)S", "* |$_R5$|"}) {
         BOOST_TEST_CONTEXT(smiles)
         {
             auto scene = TestScene::getScene();
@@ -330,8 +331,21 @@ BOOST_AUTO_TEST_CASE(test_halo_covers_complete_atom_labels)
                     BOOST_CHECK((path - halo->path()).isEmpty());
                     for (const auto& rect : item->getSubrects()) {
                         BOOST_CHECK(
+                            item->selectionHighlightingPath().contains(rect));
+                        BOOST_CHECK(
+                            item->predictiveHighlightingPath().contains(rect));
+                        BOOST_CHECK(item->shape().contains(rect));
+                        BOOST_CHECK(
                             halo->path().contains(halo->mapRectFromScene(
                                 item->mapRectToScene(rect))));
+                    }
+                    if (item->getSubrects().empty()) {
+                        BOOST_CHECK(
+                            item->selectionHighlightingPath() ==
+                            get_selection_highlighting_path_for_atom(atom));
+                        BOOST_CHECK(
+                            item->predictiveHighlightingPath() ==
+                            get_predictive_highlighting_path_for_atom(atom));
                     }
                 }
             }

@@ -123,10 +123,6 @@ void AtomItem::updateCachedData()
     // bounding rect changes.
     prepareGeometryChange();
     clearLabels();
-    m_selection_highlighting_path =
-        get_selection_highlighting_path_for_atom(m_atom);
-    m_predictive_highlighting_path =
-        get_predictive_highlighting_path_for_atom(m_atom);
     m_squiggle_pen.setWidthF(m_settings.m_squiggle_pen_width);
 
     bool needs_additional_labels, show_Hs;
@@ -208,16 +204,30 @@ void AtomItem::updateCachedData()
         m_settings.m_simplified_stereo_annotation.empty()) {
         updateChiralityLabel();
     }
-    // merge all of the subrects with the predictive highlighting path to create
-    // the shape and bounding rect
-    m_shape = QPainterPath(m_predictive_highlighting_path);
-    m_shape.setFillRule(Qt::WindingFill);
-    for (QRectF rect : getSubrects()) {
-        m_shape.addRect(rect);
-    }
+    updateHighlightingPaths();
+    m_shape = m_predictive_highlighting_path;
     m_bounding_rect = m_shape.boundingRect();
 
     setToolTip(getTooltip());
+}
+
+void AtomItem::updateHighlightingPaths()
+{
+    m_selection_highlighting_path =
+        get_selection_highlighting_path_for_atom(m_atom);
+    m_predictive_highlighting_path =
+        get_predictive_highlighting_path_for_atom(m_atom);
+    // Union the paths before painting so overlapping label components retain
+    // the requested highlighting opacity.
+    for (const auto& rect : getSubrects()) {
+        QPainterPath label_path;
+        label_path.addRoundedRect(
+            rect.adjusted(-ATOM_LABEL_MARGIN, -ATOM_LABEL_MARGIN,
+                          ATOM_LABEL_MARGIN, ATOM_LABEL_MARGIN),
+            ATOM_LABEL_MARGIN, ATOM_LABEL_MARGIN);
+        m_selection_highlighting_path |= label_path;
+        m_predictive_highlighting_path |= label_path;
+    }
 }
 
 QString AtomItem::advancedPropertiesSmarts() const
