@@ -330,14 +330,22 @@ BOOST_AUTO_TEST_CASE(test_highlighting_covers_complete_atom_labels)
                         item->mapToScene(item->selectionHighlightingPath()));
                     BOOST_CHECK((path - halo->path()).isEmpty());
                     for (const auto& rect : item->getSubrects()) {
-                        BOOST_CHECK(
-                            item->selectionHighlightingPath().contains(rect));
-                        BOOST_CHECK(
-                            item->predictiveHighlightingPath().contains(rect));
                         BOOST_CHECK(item->shape().contains(rect));
-                        BOOST_CHECK(
-                            halo->path().contains(halo->mapRectFromScene(
-                                item->mapRectToScene(rect))));
+                        // Plain element labels retain the original circle,
+                        // even when a large font extends beyond its radius.
+                        if (item->getSubrects().size() > 1 ||
+                            atom->getAtomicNum() == 0 ||
+                            !item->labelIsVisible()) {
+                            BOOST_CHECK(
+                                item->selectionHighlightingPath().contains(
+                                    rect));
+                            BOOST_CHECK(
+                                item->predictiveHighlightingPath().contains(
+                                    rect));
+                            BOOST_CHECK(
+                                halo->path().contains(halo->mapRectFromScene(
+                                    item->mapRectToScene(rect))));
+                        }
                     }
                     if (item->getSubrects().empty()) {
                         BOOST_CHECK(
@@ -348,6 +356,59 @@ BOOST_AUTO_TEST_CASE(test_highlighting_covers_complete_atom_labels)
                             get_predictive_highlighting_path_for_atom(atom));
                     }
                 }
+            }
+        }
+    }
+}
+
+BOOST_AUTO_TEST_CASE(test_plain_element_highlighting_keeps_original_circle)
+{
+    for (const auto* smiles : {"O=C=O", "ClCCl", "BrCBr", "N#N", "CC"}) {
+        auto [items, scene] = createAtomItems(smiles);
+        for (int font_size : {8, 18, 36}) {
+            scene->m_fonts.setSize(font_size);
+            for (auto& item : items) {
+                item->updateCachedData();
+                BOOST_CHECK(
+                    item->selectionHighlightingPath() ==
+                    get_selection_highlighting_path_for_atom(item->getAtom()));
+                BOOST_CHECK(
+                    item->predictiveHighlightingPath() ==
+                    get_predictive_highlighting_path_for_atom(item->getAtom()));
+                for (const auto& rect : item->getSubrects()) {
+                    BOOST_CHECK(item->shape().contains(
+                        rect.adjusted(0.1, 0.1, -0.1, -0.1)));
+                }
+            }
+        }
+    }
+}
+
+BOOST_AUTO_TEST_CASE(test_compound_label_highlighting_has_straight_sides)
+{
+    for (const auto* smiles : {"[O-]", "[Mg+2]", "[13NH3+:7]", "N", "O"}) {
+        BOOST_TEST_CONTEXT(smiles)
+        {
+            auto [item, scene] = createAtomItem(smiles);
+            for (const auto& path : {item->selectionHighlightingPath(),
+                                     item->predictiveHighlightingPath()}) {
+                const auto bounds = path.boundingRect();
+                const auto corner_inset = ATOM_LABEL_MARGIN + 0.1;
+                // Away from the rounded corners, each side must span the
+                // full label, including the space beside raised charges.
+                for (auto x : {bounds.left() + corner_inset,
+                               bounds.right() - corner_inset}) {
+                    BOOST_CHECK(path.contains(QPointF(x, bounds.top() + 0.1)));
+                    BOOST_CHECK(
+                        path.contains(QPointF(x, bounds.bottom() - 0.1)));
+                }
+                for (auto y : {bounds.top() + corner_inset,
+                               bounds.bottom() - corner_inset}) {
+                    BOOST_CHECK(path.contains(QPointF(bounds.left() + 0.1, y)));
+                    BOOST_CHECK(
+                        path.contains(QPointF(bounds.right() - 0.1, y)));
+                }
+                BOOST_CHECK_EQUAL(path.toSubpathPolygons().size(), 1);
             }
         }
     }

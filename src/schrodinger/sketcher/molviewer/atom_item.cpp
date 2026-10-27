@@ -206,6 +206,12 @@ void AtomItem::updateCachedData()
     }
     updateHighlightingPaths();
     m_shape = m_predictive_highlighting_path;
+    // Plain element highlights keep their fixed radius, so large fonts may
+    // extend beyond the circle. Include the text in the hit shape and bounds.
+    m_shape.setFillRule(Qt::WindingFill);
+    for (const auto& rect : getSubrects()) {
+        m_shape.addRect(rect);
+    }
     m_bounding_rect = m_shape.boundingRect();
 
     setToolTip(getTooltip());
@@ -217,17 +223,24 @@ void AtomItem::updateHighlightingPaths()
         get_selection_highlighting_path_for_atom(m_atom);
     m_predictive_highlighting_path =
         get_predictive_highlighting_path_for_atom(m_atom);
-    // Union the paths before painting so overlapping label components retain
-    // the requested highlighting opacity.
-    for (const auto& rect : getSubrects()) {
-        QPainterPath label_path;
-        label_path.addRoundedRect(
-            rect.adjusted(-ATOM_LABEL_MARGIN, -ATOM_LABEL_MARGIN,
-                          ATOM_LABEL_MARGIN, ATOM_LABEL_MARGIN),
-            ATOM_LABEL_MARGIN, ATOM_LABEL_MARGIN);
-        m_selection_highlighting_path |= label_path;
-        m_predictive_highlighting_path |= label_path;
+    const auto rects = getSubrects();
+    if (rects.empty() ||
+        (rects.size() == 1 && rects.front() == m_main_label_rect &&
+         m_atom->getAtomicNum() > 0 &&
+         m_main_label_text == QString::fromStdString(m_atom->getSymbol()))) {
+        return;
     }
+    QRectF label_rect;
+    for (const auto& rect : rects) {
+        label_rect |= rect;
+    }
+    QPainterPath label_path;
+    label_path.addRoundedRect(
+        label_rect.adjusted(-ATOM_LABEL_MARGIN, -ATOM_LABEL_MARGIN,
+                            ATOM_LABEL_MARGIN, ATOM_LABEL_MARGIN),
+        ATOM_LABEL_MARGIN, ATOM_LABEL_MARGIN);
+    m_selection_highlighting_path = label_path;
+    m_predictive_highlighting_path = label_path;
 }
 
 QString AtomItem::advancedPropertiesSmarts() const
