@@ -67,6 +67,8 @@ deadline bounds the combined invocations and exponential delays.
                                                 command,
                                                 output=result.stdout)
         delay = min(retry_delay * 2**attempt, 60)
+        # Spread retries across runners and workflow runs to avoid synchronized
+        # bursts of requests against an overloaded server.
         delay += random.uniform(0, delay / 5)
         if delay >= deadline - time.monotonic():
             raise TimeoutError("Source download retry deadline exceeded")
