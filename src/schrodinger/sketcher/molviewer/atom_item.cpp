@@ -1,5 +1,7 @@
 #include "schrodinger/sketcher/molviewer/atom_item.h"
 
+#include <algorithm>
+
 #include <rdkit/GraphMol/Chirality.h>
 #include <rdkit/GraphMol/PeriodicTable.h>
 #include <rdkit/GraphMol/ROMol.h>
@@ -243,11 +245,13 @@ void AtomItem::updateHighlightingPaths()
     for (const auto& rect : rects) {
         label_rect |= rect;
     }
+    label_rect.adjust(-ATOM_LABEL_MARGIN, -ATOM_LABEL_MARGIN, ATOM_LABEL_MARGIN,
+                      ATOM_LABEL_MARGIN);
+    const auto corner_radius =
+        std::min({ATOM_LABEL_HIGHLIGHTING_CORNER_RADIUS,
+                  label_rect.width() * 0.5, label_rect.height() * 0.5});
     QPainterPath label_path;
-    label_path.addRoundedRect(
-        label_rect.adjusted(-ATOM_LABEL_MARGIN, -ATOM_LABEL_MARGIN,
-                            ATOM_LABEL_MARGIN, ATOM_LABEL_MARGIN),
-        ATOM_LABEL_MARGIN, ATOM_LABEL_MARGIN);
+    label_path.addRoundedRect(label_rect, corner_radius, corner_radius);
     m_selection_highlighting_path = label_path;
     m_predictive_highlighting_path = label_path;
 }

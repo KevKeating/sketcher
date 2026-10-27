@@ -399,25 +399,39 @@ BOOST_AUTO_TEST_CASE(test_compound_label_highlighting_has_straight_sides)
         BOOST_TEST_CONTEXT(smiles)
         {
             auto [item, scene] = createAtomItem(smiles);
-            for (const auto& path : {item->selectionHighlightingPath(),
-                                     item->predictiveHighlightingPath()}) {
-                const auto bounds = path.boundingRect();
-                const auto corner_inset = ATOM_LABEL_MARGIN + 0.1;
-                // Away from the rounded corners, each side must span the
-                // full label, including the space beside raised charges.
-                for (auto x : {bounds.left() + corner_inset,
-                               bounds.right() - corner_inset}) {
-                    BOOST_CHECK(path.contains(QPointF(x, bounds.top() + 0.1)));
-                    BOOST_CHECK(
-                        path.contains(QPointF(x, bounds.bottom() - 0.1)));
+            for (int font_size : {1, 8, 18, 36}) {
+                scene->m_fonts.setSize(font_size);
+                item->updateCachedData();
+                QRectF label_bounds;
+                for (const auto& rect : item->getSubrects()) {
+                    label_bounds |= rect;
                 }
-                for (auto y : {bounds.top() + corner_inset,
-                               bounds.bottom() - corner_inset}) {
-                    BOOST_CHECK(path.contains(QPointF(bounds.left() + 0.1, y)));
-                    BOOST_CHECK(
-                        path.contains(QPointF(bounds.right() - 0.1, y)));
+                for (const auto& path : {item->selectionHighlightingPath(),
+                                         item->predictiveHighlightingPath()}) {
+                    const auto bounds = path.boundingRect();
+                    BOOST_CHECK(bounds ==
+                                label_bounds.adjusted(
+                                    -ATOM_LABEL_MARGIN, -ATOM_LABEL_MARGIN,
+                                    ATOM_LABEL_MARGIN, ATOM_LABEL_MARGIN));
+                    BOOST_CHECK(path.contains(
+                        QPointF(bounds.center().x(), bounds.top() + 0.1)));
+                    BOOST_CHECK(path.contains(
+                        QPointF(bounds.center().x(), bounds.bottom() - 0.1)));
+                    BOOST_CHECK(path.contains(
+                        QPointF(bounds.left() + 0.1, bounds.center().y())));
+                    BOOST_CHECK(path.contains(
+                        QPointF(bounds.right() - 0.1, bounds.center().y())));
+                    if (font_size >= 18) {
+                        // This point was inside the previous four-pixel
+                        // rounding, but is outside the larger rounded corner.
+                        BOOST_CHECK(
+                            !path.contains(bounds.topLeft() + QPointF(2, 2)));
+                    }
+                    for (const auto& rect : item->getSubrects()) {
+                        BOOST_CHECK(path.contains(rect));
+                    }
+                    BOOST_CHECK_EQUAL(path.toSubpathPolygons().size(), 1);
                 }
-                BOOST_CHECK_EQUAL(path.toSubpathPolygons().size(), 1);
             }
         }
     }

@@ -122,6 +122,10 @@ const qreal BOND_PREDICTIVE_HIGHLIGHTING_HALF_WIDTH = 10;
 // The radius of the circle drawn around atoms for selection highlighting
 const qreal ATOM_SELECTION_HIGHLIGHTING_RADIUS = 11;
 
+// The preferred corner radius for atom label highlighting. Smaller rectangles
+// use a smaller radius so their corners remain circular without enlarging them.
+const qreal ATOM_LABEL_HIGHLIGHTING_CORNER_RADIUS = 8.0;
+
 // The half-width of the rectangle drawn around bonds for selection highlighting
 const qreal BOND_SELECTION_HIGHLIGHTING_HALF_WIDTH = 8;
 
