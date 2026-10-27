@@ -155,8 +155,8 @@ class SKETCHER_API AtomItem : public AbstractAtomOrMonomerItem
 
     /**
      * Update selection and predictive highlighting, enlarging the original
-     * circle as needed to contain plain element labels and using one ellipse
-     * around all components of other labels.
+     * circle as needed to contain plain element labels and using one rounded
+     * rectangle around all components of other labels.
      */
     void updateHighlightingPaths();
 
