@@ -5,6 +5,7 @@
 #include <rdkit/GraphMol/ROMol.h>
 #include <rdkit/RDGeneral/types.h>
 
+#include <QLineF>
 #include <QPainter>
 #include <QPointF>
 #include <QString>
@@ -206,12 +207,6 @@ void AtomItem::updateCachedData()
     }
     updateHighlightingPaths();
     m_shape = m_predictive_highlighting_path;
-    // Plain element highlights keep their fixed radius, so large fonts may
-    // extend beyond the circle. Include the text in the hit shape and bounds.
-    m_shape.setFillRule(Qt::WindingFill);
-    for (const auto& rect : getSubrects()) {
-        m_shape.addRect(rect);
-    }
     m_bounding_rect = m_shape.boundingRect();
 
     setToolTip(getTooltip());
@@ -224,10 +219,24 @@ void AtomItem::updateHighlightingPaths()
     m_predictive_highlighting_path =
         get_predictive_highlighting_path_for_atom(m_atom);
     const auto rects = getSubrects();
-    if (rects.empty() ||
-        (rects.size() == 1 && rects.front() == m_main_label_rect &&
-         m_atom->getAtomicNum() > 0 &&
-         m_main_label_text == QString::fromStdString(m_atom->getSymbol()))) {
+    if (rects.empty()) {
+        return;
+    }
+    if (rects.size() == 1 && rects.front() == m_main_label_rect &&
+        m_atom->getAtomicNum() > 0 &&
+        m_main_label_text == QString::fromStdString(m_atom->getSymbol())) {
+        const auto label_radius =
+            QLineF(m_main_label_rect.center(), m_main_label_rect.bottomRight())
+                .length() +
+            TEXT_RECT_MARGIN;
+        for (auto* path : {&m_selection_highlighting_path,
+                           &m_predictive_highlighting_path}) {
+            if (label_radius > path->boundingRect().width() * 0.5) {
+                *path = QPainterPath();
+                path->addEllipse(m_main_label_rect.center(), label_radius,
+                                 label_radius);
+            }
+        }
         return;
     }
     QRectF label_rect;

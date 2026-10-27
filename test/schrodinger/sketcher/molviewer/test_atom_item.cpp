@@ -331,21 +331,13 @@ BOOST_AUTO_TEST_CASE(test_highlighting_covers_complete_atom_labels)
                     BOOST_CHECK((path - halo->path()).isEmpty());
                     for (const auto& rect : item->getSubrects()) {
                         BOOST_CHECK(item->shape().contains(rect));
-                        // Plain element labels retain the original circle,
-                        // even when a large font extends beyond its radius.
-                        if (item->getSubrects().size() > 1 ||
-                            atom->getAtomicNum() == 0 ||
-                            !item->labelIsVisible()) {
-                            BOOST_CHECK(
-                                item->selectionHighlightingPath().contains(
-                                    rect));
-                            BOOST_CHECK(
-                                item->predictiveHighlightingPath().contains(
-                                    rect));
-                            BOOST_CHECK(
-                                halo->path().contains(halo->mapRectFromScene(
-                                    item->mapRectToScene(rect))));
-                        }
+                        BOOST_CHECK(
+                            item->selectionHighlightingPath().contains(rect));
+                        BOOST_CHECK(
+                            item->predictiveHighlightingPath().contains(rect));
+                        BOOST_CHECK(
+                            halo->path().contains(halo->mapRectFromScene(
+                                item->mapRectToScene(rect))));
                     }
                     if (item->getSubrects().empty()) {
                         BOOST_CHECK(
@@ -361,23 +353,40 @@ BOOST_AUTO_TEST_CASE(test_highlighting_covers_complete_atom_labels)
     }
 }
 
-BOOST_AUTO_TEST_CASE(test_plain_element_highlighting_keeps_original_circle)
+BOOST_AUTO_TEST_CASE(test_plain_element_highlighting_circle_fits_label)
 {
     for (const auto* smiles : {"O=C=O", "ClCCl", "BrCBr", "N#N", "CC"}) {
         auto [items, scene] = createAtomItems(smiles);
-        for (int font_size : {8, 18, 36}) {
+        for (int font_size : {8, 36, 18, 16, 14, 12, 8}) {
             scene->m_fonts.setSize(font_size);
             for (auto& item : items) {
                 item->updateCachedData();
-                BOOST_CHECK(
-                    item->selectionHighlightingPath() ==
-                    get_selection_highlighting_path_for_atom(item->getAtom()));
-                BOOST_CHECK(
-                    item->predictiveHighlightingPath() ==
-                    get_predictive_highlighting_path_for_atom(item->getAtom()));
-                for (const auto& rect : item->getSubrects()) {
-                    BOOST_CHECK(item->shape().contains(
-                        rect.adjusted(0.1, 0.1, -0.1, -0.1)));
+                BOOST_CHECK_GE(
+                    item->selectionHighlightingPath().boundingRect().width(),
+                    item->predictiveHighlightingPath().boundingRect().width());
+                for (const auto& [path, original] :
+                     {std::make_pair(item->selectionHighlightingPath(),
+                                     get_selection_highlighting_path_for_atom(
+                                         item->getAtom())),
+                      std::make_pair(item->predictiveHighlightingPath(),
+                                     get_predictive_highlighting_path_for_atom(
+                                         item->getAtom()))}) {
+                    const auto bounds = path.boundingRect();
+                    QPainterPath circle;
+                    circle.addEllipse(bounds);
+                    BOOST_CHECK(path == circle);
+                    BOOST_CHECK(bounds.width() >=
+                                original.boundingRect().width());
+                    if (font_size == 8 || item->getSubrects().empty()) {
+                        BOOST_CHECK(path == original);
+                    } else if (font_size == 36) {
+                        BOOST_CHECK_GT(bounds.width(),
+                                       original.boundingRect().width());
+                    }
+                    for (const auto& rect : item->getSubrects()) {
+                        BOOST_CHECK(path.contains(rect));
+                        BOOST_CHECK(item->shape().contains(rect));
+                    }
                 }
             }
         }

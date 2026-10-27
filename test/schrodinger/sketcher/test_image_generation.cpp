@@ -264,7 +264,7 @@ BOOST_AUTO_TEST_CASE(test_highlighting)
 
 BOOST_AUTO_TEST_CASE(test_atom_label_halo_color_and_opacity)
 {
-    for (const auto* smiles : {"O", "N", "S", "[O-]", "[Mg+2]"}) {
+    for (const auto* smiles : {"O", "N", "S", "[O-]", "[Mg+2]", "[Ne]"}) {
         for (int font_size : {18, 36}) {
             for (bool svg : {false, true}) {
                 BOOST_TEST_CONTEXT(smiles << ", font size " << font_size
