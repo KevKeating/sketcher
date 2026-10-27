@@ -42,7 +42,7 @@ export async function focusQtWindow(page, qtWindow) {
 }
 
 /**
- * Focus the drawing window so keyboard events reach Qt in both WASM builds.
+ * Focus the drawing window so keyboard events reach Qt in both Qt 6.7 and 6.12.
  */
 export async function focusCanvas(page) {
   const qtWindow = page.locator('[id^="qt-window-"]').first();
