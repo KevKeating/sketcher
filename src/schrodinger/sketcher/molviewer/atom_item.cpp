@@ -232,7 +232,7 @@ void AtomItem::updateHighlightingPaths()
         for (auto* path : {&m_selection_highlighting_path,
                            &m_predictive_highlighting_path}) {
             if (label_radius > path->boundingRect().width() * 0.5) {
-                *path = QPainterPath();
+                path->clear();
                 path->addEllipse(m_main_label_rect.center(), label_radius,
                                  label_radius);
             }
