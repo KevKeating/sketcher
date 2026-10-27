@@ -39,18 +39,23 @@ endfunction()
 
 # Forward the ordinary ExternalProject arguments. Only source acquisition is
 # replaced when caching is enabled; patches and build settings stay local.
+# SOURCE_CACHE_GIT_SUBMODULES overrides GIT_SUBMODULES for cached snapshots
+# only.
 function(sketcher_external_project_add NAME)
   set(SOURCE_SINGLE GIT_REPOSITORY GIT_TAG GIT_SHALLOW GIT_SUBMODULES_RECURSE
                     URL_HASH)
   set(SOURCE_MULTI GIT_SUBMODULES GIT_CONFIG URL)
-  cmake_parse_arguments(
-    PARSE_ARGV
-    1
-    EP
-    ""
-    "${SOURCE_SINGLE};SOURCE_SUBDIR"
-    "${SOURCE_MULTI};CMAKE_ARGS;PATCH_COMMAND;CONFIGURE_COMMAND;BUILD_COMMAND;INSTALL_COMMAND;DEPENDS"
-  )
+  set(PROJECT_SINGLE ${SOURCE_SINGLE} SOURCE_SUBDIR)
+  set(PROJECT_MULTI
+      ${SOURCE_MULTI}
+      CMAKE_ARGS
+      PATCH_COMMAND
+      CONFIGURE_COMMAND
+      BUILD_COMMAND
+      INSTALL_COMMAND
+      DEPENDS)
+  cmake_parse_arguments(PARSE_ARGV 1 EP "" "${PROJECT_SINGLE}"
+                        "${PROJECT_MULTI};SOURCE_CACHE_GIT_SUBMODULES")
   if(EP_UNPARSED_ARGUMENTS)
     message(
       FATAL_ERROR
@@ -59,9 +64,9 @@ function(sketcher_external_project_add NAME)
 
   # A snapshot may contain more modules than one particular build needs. Qt's
   # host and target builds use the same archive, but different build options.
-  string(TOUPPER "${NAME}" UPPER_NAME)
-  if(DEFINED SKETCHER_EXTERNAL_${UPPER_NAME}_SOURCE_SUBMODULES)
-    set(EP_GIT_SUBMODULES ${SKETCHER_EXTERNAL_${UPPER_NAME}_SOURCE_SUBMODULES})
+  if(DEFINED EP_SOURCE_CACHE_GIT_SUBMODULES
+     OR "SOURCE_CACHE_GIT_SUBMODULES" IN_LIST EP_KEYWORDS_MISSING_VALUES)
+    set(EP_GIT_SUBMODULES "${EP_SOURCE_CACHE_GIT_SUBMODULES}")
   endif()
 
   set(SOURCE_ARGS)
@@ -114,10 +119,20 @@ function(sketcher_external_project_add NAME)
   # Expanding ARGN directly loses empty arguments and splits quoted semicolons.
   # Serialize individual arguments so even CONFIGURE_COMMAND "" is forwarded.
   set(FORWARDED "")
+  set(FORWARD_ARGUMENT TRUE)
   math(EXPR LAST "${ARGC} - 1")
   foreach(INDEX RANGE 0 ${LAST})
-    source_cache_cmake_quote(QUOTED "${ARGV${INDEX}}")
-    string(APPEND FORWARDED "  ${QUOTED}\n")
+    set(ARG "${ARGV${INDEX}}")
+    # Consume the wrapper-only option up to the next ExternalProject keyword.
+    if(INDEX GREATER 0 AND ARG STREQUAL "SOURCE_CACHE_GIT_SUBMODULES")
+      set(FORWARD_ARGUMENT FALSE)
+    elseif(ARG IN_LIST PROJECT_SINGLE OR ARG IN_LIST PROJECT_MULTI)
+      set(FORWARD_ARGUMENT TRUE)
+    endif()
+    if(FORWARD_ARGUMENT)
+      source_cache_cmake_quote(QUOTED "${ARG}")
+      string(APPEND FORWARDED "  ${QUOTED}\n")
+    endif()
   endforeach()
   if(SKETCHER_EXTERNAL_SOURCE_CACHE)
     set(CACHE_ARGS

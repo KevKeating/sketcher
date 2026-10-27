@@ -69,6 +69,16 @@ def repository(directory):
     return directory
 
 
+def repository_with_submodule(directory):
+    child = repository(directory / "child")
+    parent = repository(directory / "parent")
+    git(parent, "-c", "protocol.file.allow=always", "submodule", "add",
+        child.as_uri(), "module")
+    commit(parent, "Add submodule")
+    git(parent, "tag", "with-module")
+    return parent
+
+
 def configure(cmake, directory, declarations, *, cache=None):
     project = directory / "project"
     project.mkdir(parents=True, exist_ok=True)
@@ -139,12 +149,7 @@ def test_cached_git_sources_patch_and_relocate_offline(tmp_path, cmake):
 
 def test_submodule_git_metadata_survives_relocation(tmp_path, cmake):
     origins = tmp_path / "origins"
-    child = repository(origins / "child")
-    parent = repository(origins / "parent")
-    git(parent, "-c", "protocol.file.allow=always", "submodule", "add",
-        child.as_uri(), "module")
-    commit(parent, "Add submodule")
-    git(parent, "tag", "with-module")
+    parent = repository_with_submodule(origins)
     cache = tmp_path / "cache"
     build, manifest = configure(cmake,
                                 tmp_path / "consumer",
@@ -220,6 +225,29 @@ def test_url_fallback_and_pristine_archive(tmp_path, cmake):
     build_target(cmake, build, "sqlite")
     source = build / "sqlite-prefix" / "src" / "sqlite"
     assert (source / "sqlite.c").read_bytes() == b"sqlite source\n"
+
+
+@pytest.mark.parametrize("cached", [False, True])
+def test_explicit_cache_submodules_preserve_native_selection(
+        tmp_path, cmake, cached):
+    parent = repository_with_submodule(tmp_path / "origins")
+    cache = tmp_path / "cache" if cached else None
+    build, manifest = configure(cmake,
+                                tmp_path / "consumer",
+                                declaration(
+                                    parent,
+                                    "with-module",
+                                    submodules='GIT_SUBMODULES "" '
+                                    'SOURCE_CACHE_GIT_SUBMODULES module'),
+                                cache=cache)
+    _, baseline = configure(
+        cmake, tmp_path / "baseline",
+        declaration(parent, "with-module", submodules="GIT_SUBMODULES module"))
+    # Making the override explicit must not invalidate existing source snapshots.
+    assert manifest["sample"]["key"] == baseline["sample"]["key"]
+    build_target(cmake, build, "sample")
+    source = build / "sample-prefix" / "src" / "sample"
+    assert (source / "module" / "payload.txt").is_file() == cached
 
 
 def test_project_manifest_is_stable_across_host_builds(tmp_path, cmake):

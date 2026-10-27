@@ -360,7 +360,6 @@ sketcher_external_project_add(
     ${EXTRA_RDKIT_CMAKE_ARGS})
 
 # Build Qt library
-set(SKETCHER_EXTERNAL_QT_SOURCE_SUBMODULES qtbase qtsvg)
 if(QT_HOST_BUILD)
   # For WASM builds, we also need a non-WASM build of Qt since some of the Qt
   # command line tools get run during the build process (e.g. uic, rcc, etc).
@@ -388,6 +387,7 @@ sketcher_external_project_add(
   GIT_REPOSITORY https://github.com/qt/qt5.git
   GIT_TAG v${QT_VERSION}
   GIT_SUBMODULES ${QT_GIT_SUBMODULES}
+  SOURCE_CACHE_GIT_SUBMODULES qtbase qtsvg
   GIT_SHALLOW TRUE
   PATCH_COMMAND ${QT_PATCH_COMMAND}
   CMAKE_ARGS
