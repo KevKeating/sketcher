@@ -5,6 +5,7 @@
 
 #include <rdkit/GraphMol/ROMol.h>
 #include <rdkit/GraphMol/RWMol.h>
+#include <QGraphicsPathItem>
 #include <QMarginsF>
 #include <QRectF>
 #include <QString>
@@ -287,6 +288,55 @@ BOOST_AUTO_TEST_CASE(test_findHsDirection, *boost::unit_test::tolerance(0.01))
     BOOST_TEST(atom_items.at(1)->findHsDirection() == HsDirection::UP);
     BOOST_TEST(atom_items.at(2)->findHsDirection() == HsDirection::DOWN);
     BOOST_TEST(atom_items.at(3)->findHsDirection() == HsDirection::RIGHT);
+}
+
+BOOST_AUTO_TEST_CASE(test_halo_covers_complete_atom_labels)
+{
+    for (const auto* smiles :
+         {"CO", "CN", "CS", "[O-]", "[Mg+2]", "[13NH3+:7]", "NNNN", "CC"}) {
+        BOOST_TEST_CONTEXT(smiles)
+        {
+            auto scene = TestScene::getScene();
+            auto* model = scene->m_mol_model;
+            import_mol_text(model, smiles);
+            std::unordered_set<const RDKit::Atom*> atoms;
+            for (const auto* atom : model->getMol()->atoms()) {
+                atoms.insert(atom);
+            }
+            const QColor color(80, 160, 240, 128);
+            model->addHaloHighlighting(atoms, {}, color);
+            for (int font_size : {8, 18, 36}) {
+                scene->m_sketcher_model->setFontSize(font_size);
+                // Rotation changes the placement of hydrogen labels and
+                // exercises the coordinate-only halo refresh.
+                model->rotateByAngle(90, {0, 0, 0});
+                const QGraphicsPathItem* halo = nullptr;
+                for (const auto* item : scene->items()) {
+                    if (item->zValue() ==
+                        static_cast<qreal>(ZOrder::ATOM_HIGHLIGHTING)) {
+                        halo = dynamic_cast<const QGraphicsPathItem*>(item);
+                        if (halo != nullptr) {
+                            break;
+                        }
+                    }
+                }
+                BOOST_REQUIRE(halo != nullptr);
+                BOOST_CHECK(halo->brush().color() == color);
+                for (const auto* atom : model->getMol()->atoms()) {
+                    const auto* item = static_cast<const AtomItem*>(
+                        scene->getGraphicsItemForAtom(atom));
+                    const auto path = halo->mapFromScene(
+                        item->mapToScene(item->selectionHighlightingPath()));
+                    BOOST_CHECK((path - halo->path()).isEmpty());
+                    for (const auto& rect : item->getSubrects()) {
+                        BOOST_CHECK(
+                            halo->path().contains(halo->mapRectFromScene(
+                                item->mapRectToScene(rect))));
+                    }
+                }
+            }
+        }
+    }
 }
 
 BOOST_AUTO_TEST_CASE(test_chirality_label)

@@ -79,6 +79,8 @@ struct RenderOptions {
     // on the line color of connected atoms, unless bond line coloring is
     // separately specified.
     QHash<int, std::string> rdatom_index_to_label;
+    // Atom halos cover the complete rendered label, including implicit
+    // hydrogens and charges, without changing the label's colors.
     QHash<int, QColor> rdatom_index_to_halo_color;
     QHash<int, QColor> rdbond_index_to_halo_color;
     QHash<int, QColor> rdatom_index_to_line_color;
