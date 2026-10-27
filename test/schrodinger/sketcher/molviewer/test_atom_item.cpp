@@ -393,7 +393,7 @@ BOOST_AUTO_TEST_CASE(test_plain_element_highlighting_circle_fits_label)
     }
 }
 
-BOOST_AUTO_TEST_CASE(test_compound_label_highlighting_has_straight_sides)
+BOOST_AUTO_TEST_CASE(test_compound_label_highlighting_is_one_ellipse)
 {
     for (const auto* smiles : {"[O-]", "[Mg+2]", "[13NH3+:7]", "N", "O"}) {
         BOOST_TEST_CONTEXT(smiles)
@@ -402,20 +402,11 @@ BOOST_AUTO_TEST_CASE(test_compound_label_highlighting_has_straight_sides)
             for (const auto& path : {item->selectionHighlightingPath(),
                                      item->predictiveHighlightingPath()}) {
                 const auto bounds = path.boundingRect();
-                const auto corner_inset = ATOM_LABEL_MARGIN + 0.1;
-                // Away from the rounded corners, each side must span the
-                // full label, including the space beside raised charges.
-                for (auto x : {bounds.left() + corner_inset,
-                               bounds.right() - corner_inset}) {
-                    BOOST_CHECK(path.contains(QPointF(x, bounds.top() + 0.1)));
-                    BOOST_CHECK(
-                        path.contains(QPointF(x, bounds.bottom() - 0.1)));
-                }
-                for (auto y : {bounds.top() + corner_inset,
-                               bounds.bottom() - corner_inset}) {
-                    BOOST_CHECK(path.contains(QPointF(bounds.left() + 0.1, y)));
-                    BOOST_CHECK(
-                        path.contains(QPointF(bounds.right() - 0.1, y)));
+                QPainterPath ellipse;
+                ellipse.addEllipse(bounds);
+                BOOST_CHECK(path == ellipse);
+                for (const auto& rect : item->getSubrects()) {
+                    BOOST_CHECK(path.contains(rect));
                 }
                 BOOST_CHECK_EQUAL(path.toSubpathPolygons().size(), 1);
             }
