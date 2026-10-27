@@ -1,7 +1,14 @@
 cmake_minimum_required(VERSION 3.25)
 include(ExternalProject)
 
-project(schrodinger_sketcher_external)
+option(SKETCHER_EXTERNAL_SOURCES_ONLY
+       "Generate source download metadata without requiring a compiler" OFF)
+if(SKETCHER_EXTERNAL_SOURCES_ONLY)
+  project(schrodinger_sketcher_external LANGUAGES NONE)
+else()
+  project(schrodinger_sketcher_external)
+endif()
+include(source_cache.cmake)
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -136,7 +143,7 @@ if(MSVC)
 endif()
 
 # Build fmt library
-ExternalProject_Add(
+sketcher_external_project_add(
   fmt
   GIT_REPOSITORY https://github.com/fmtlib/fmt.git
   GIT_TAG ${FMT_VERSION}
@@ -147,20 +154,27 @@ ExternalProject_Add(
     -DFMT_DOC=OFF -DFMT_TEST=OFF -DFMT_INSTALL=ON)
 
 # Build zlib library
-ExternalProject_Add(
+sketcher_external_project_add(
   zlib
   GIT_REPOSITORY https://github.com/madler/zlib.git
   GIT_TAG v${ZLIB_VERSION}
   GIT_SHALLOW TRUE
-  PATCH_COMMAND git reset --hard HEAD && git apply
-                ${CMAKE_CURRENT_SOURCE_DIR}/zlib_no_shared.patch
+  PATCH_COMMAND
+    git
+    reset
+    --hard
+    HEAD
+    &&
+    git
+    apply
+    ${CMAKE_CURRENT_SOURCE_DIR}/zlib_no_shared.patch
   CMAKE_ARGS
     ${COMMON_EXTERNAL_PROJECT_CMAKE_ARGS}
     -DCMAKE_INSTALL_PREFIX=${CMAKE_CURRENT_BINARY_DIR}/zlib-${ZLIB_VERSION}
     -DBUILD_SHARED_LIBS=OFF -DZLIB_BUILD_EXAMPLES=OFF)
 
 # Build zstd library
-ExternalProject_Add(
+sketcher_external_project_add(
   zstd
   GIT_REPOSITORY https://github.com/facebook/zstd.git
   GIT_TAG v${ZSTD_VERSION}
@@ -172,7 +186,7 @@ ExternalProject_Add(
     -DZSTD_BUILD_SHARED=OFF -DZSTD_BUILD_PROGRAMS=OFF)
 
 # Build Eigen library
-ExternalProject_Add(
+sketcher_external_project_add(
   eigen
   GIT_REPOSITORY https://gitlab.com/libeigen/eigen.git
   GIT_TAG ${EIGEN_VERSION}
@@ -183,7 +197,7 @@ ExternalProject_Add(
 
 # Build expat library
 string(REPLACE "." "_" EXPAT_GIT_TAG ${EXPAT_VERSION})
-ExternalProject_Add(
+sketcher_external_project_add(
   expat
   GIT_REPOSITORY https://github.com/libexpat/libexpat.git
   GIT_TAG R_${EXPAT_GIT_TAG}
@@ -198,12 +212,12 @@ ExternalProject_Add(
     -DEXPAT_BUILD_TESTS=OFF
     -DEXPAT_BUILD_TOOLS=OFF)
 
-# Build SQLite library
+# Build SQLite library SQLite doesn't work with CMake out of the box, so copy in
+# our CMake files.
 generate_sqlite_urls(SQLITE_URLS)
-ExternalProject_Add(
+sketcher_external_project_add(
   sqlite
   URL ${SQLITE_URLS}
-  # SQLite doesn't work with CMake out of the box, so copy in our CMake files
   PATCH_COMMAND ${CMAKE_COMMAND} -E copy_directory
                 ${CMAKE_CURRENT_SOURCE_DIR}/sqlite_cmake <SOURCE_DIR>
   CMAKE_ARGS
@@ -243,7 +257,7 @@ set_cmake_arg(BOOST_INCLUDE_LIBS ${BOOST_LIBS_TO_INCLUDE})
 set_cmake_arg(
   BOOST_CMAKE_PREFIX ${CMAKE_CURRENT_BINARY_DIR}/zlib-${ZLIB_VERSION}
   ${CMAKE_CURRENT_BINARY_DIR}/zstd-${ZSTD_VERSION})
-ExternalProject_Add(
+sketcher_external_project_add(
   boost
   GIT_REPOSITORY https://github.com/boostorg/boost.git
   GIT_TAG boost-${BOOST_VERSION}
@@ -318,7 +332,7 @@ else()
   set(RDKIT_INSTALL_STATIC_LIBS_VAL OFF)
 endif()
 
-ExternalProject_Add(
+sketcher_external_project_add(
   rdkit
   GIT_REPOSITORY https://github.com/rdkit/rdkit.git
   GIT_TAG Release_${RDKIT_GIT_TAG}
@@ -346,6 +360,7 @@ ExternalProject_Add(
     ${EXTRA_RDKIT_CMAKE_ARGS})
 
 # Build Qt library
+set(SKETCHER_EXTERNAL_QT_SOURCE_SUBMODULES qtbase qtsvg)
 if(QT_HOST_BUILD)
   # For WASM builds, we also need a non-WASM build of Qt since some of the Qt
   # command line tools get run during the build process (e.g. uic, rcc, etc).
@@ -368,7 +383,7 @@ generate_git_patch_command(
   qt_emsdk_cfgdir.patch)
 
 set_cmake_arg(QT_BUILD_SUBMODULES ${QT_GIT_SUBMODULES})
-ExternalProject_Add(
+sketcher_external_project_add(
   qt
   GIT_REPOSITORY https://github.com/qt/qt5.git
   GIT_TAG v${QT_VERSION}

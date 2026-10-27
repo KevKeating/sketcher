@@ -21,13 +21,17 @@ env:
 jobs:
   pre-commit:
     runs-on: ubuntu-latest
+    outputs:
+      source-matrix: ${{ steps.source-metadata.outputs.source-matrix }}
+      source-artifact-prefix: ${{ steps.source-metadata.outputs.source-artifact-prefix }}
+      source-ref: ${{ steps.source-metadata.outputs.source-ref }}
     steps:
       - uses: actions/checkout@v6
         with:
           ref: ${{ inputs.ref }}
 
       - name: Install pre-commit
-        run: python3 -m pip install pre-commit==1.7.0 clang-format==14.0.6 yapf==0.40.2 cmake-format==0.6.13 pytest==9.0.2
+        run: python3 -m pip install pre-commit==1.7.0 clang-format==14.0.6 yapf==0.40.2 cmake-format==0.6.13 pytest==9.0.2 cmake==3.31.10 ninja==1.13.0
 
       - name: Code formatting check
         run: pre-commit run --all-files
@@ -35,10 +39,82 @@ jobs:
       - name: Test GitHub Actions helpers
         run: pytest test/github_actions/
 
-  build-test:
+      - name: Generate dependency source metadata
+        id: source-metadata
+        run: |
+          cmake -S external -B build/source-metadata -G Ninja \
+              -DSKETCHER_EXTERNAL_SOURCES_ONLY=ON
+          python3 external/source_cache.py outputs \
+              --manifest build/source-metadata/source-manifest.json \
+              --cache-dir build/source-cache >> "$GITHUB_OUTPUT"
+
+  prepare-external-sources:
     needs: pre-commit
+    runs-on: ubuntu-latest
+    # Sources are an optimization. A preparation failure must not prevent a
+    # builder from using its existing installed-library cache.
+    continue-on-error: true
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJson(needs.pre-commit.outputs.source-matrix) }}
+    steps:
+      - name: Check source cache
+        id: source-cache
+        continue-on-error: true
+        uses: actions/cache/restore@v5
+        with:
+          path: ${{ matrix.cache-path }}
+          key: ${{ matrix.key }}
+          enableCrossOsArchive: true
+          lookup-only: true
+
+      - uses: actions/checkout@v6
+        if: steps.source-cache.outputs.cache-hit != 'true'
+        with:
+          ref: ${{ needs.pre-commit.outputs.source-ref }}
+
+      - name: Install source download tools
+        if: steps.source-cache.outputs.cache-hit != 'true'
+        run: python3 -m pip install cmake==3.31.10 ninja==1.13.0
+
+      - name: Fetch pristine dependency sources
+        if: steps.source-cache.outputs.cache-hit != 'true'
+        env:
+          LIBRARY: ${{ matrix.library }}
+        run: |
+          cmake -S external -B build/source-metadata -G Ninja \
+              -DSKETCHER_EXTERNAL_SOURCES_ONLY=ON
+          python3 external/source_cache.py fetch \
+              --manifest build/source-metadata/source-manifest.json \
+              --cache-dir build/source-cache --library "$LIBRARY"
+
+      - name: Save dependency sources
+        if: steps.source-cache.outputs.cache-hit != 'true'
+        continue-on-error: true
+        uses: actions/cache/save@v5
+        with:
+          path: ${{ matrix.cache-path }}
+          key: ${{ matrix.key }}
+          enableCrossOsArchive: true
+
+      # Artifacts also cover cache publication failures and branch-scope limits.
+      - name: Share newly fetched sources with all builders
+        if: steps.source-cache.outputs.cache-hit != 'true'
+        uses: actions/upload-artifact@v6
+        with:
+          name: ${{ needs.pre-commit.outputs.source-artifact-prefix }}-${{ matrix.key }}
+          path: ${{ matrix.cache-path }}
+          retention-days: 1
+          compression-level: 0
+          if-no-files-found: error
+
+  build-test:
+    needs: [pre-commit, prepare-external-sources]
+    if: ${{ !cancelled() && needs.pre-commit.result == 'success' }}
     name: build-test (${{ matrix.build-name }}, ${{ matrix.runner }})
     runs-on: ${{ matrix.runner }}
+    env:
+      EXTERNAL_SOURCE_ARTIFACT_PREFIX: ${{ needs.pre-commit.outputs.source-artifact-prefix }}
     defaults:
       run:
         shell: bash
@@ -70,7 +146,7 @@ jobs:
 
       - uses: actions/checkout@v6
         with:
-          ref: ${{ inputs.ref }}
+          ref: ${{ needs.pre-commit.outputs.source-ref }}
 
       - name: Create and activate virtualenv
         if: startsWith(matrix.build-name, 'macos')
@@ -119,13 +195,15 @@ jobs:
         run: |
           ${{ matrix.build-name == 'wasm' && 'emcmake ' || '' }}\
               cmake -B build/external/ -S external/ -G Ninja \
-              -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }}
+              -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }} \
+              -DSKETCHER_EXTERNAL_SOURCE_CACHE="$GITHUB_WORKSPACE/build/source-cache"
 
       - name: Configure host Qt CMake
         if: matrix.build-name == 'wasm'
         run: |
           cmake -B build/external/host/ -S external/ -G Ninja \
-              -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }} -DQT_HOST_BUILD=ON
+              -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }} -DQT_HOST_BUILD=ON \
+              -DSKETCHER_EXTERNAL_SOURCE_CACHE="$GITHUB_WORKSPACE/build/source-cache"
 
       - name: Fetch fmt
         id: fetch-fmt

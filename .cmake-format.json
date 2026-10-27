@@ -1,0 +1,24 @@
+{
+    "additional_commands": {
+        "sketcher_external_project_add": {
+            "pargs": 1,
+            "kwargs": {
+                "GIT_REPOSITORY": 1,
+                "GIT_TAG": 1,
+                "GIT_SHALLOW": 1,
+                "GIT_SUBMODULES_RECURSE": 1,
+                "GIT_SUBMODULES": "*",
+                "GIT_CONFIG": "*",
+                "URL": "+",
+                "URL_HASH": 1,
+                "SOURCE_SUBDIR": 1,
+                "CMAKE_ARGS": "+",
+                "PATCH_COMMAND": "*",
+                "CONFIGURE_COMMAND": "*",
+                "BUILD_COMMAND": "*",
+                "INSTALL_COMMAND": "*",
+                "DEPENDS": "*"
+            }
+        }
+    }
+}
