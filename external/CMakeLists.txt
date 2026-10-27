@@ -212,12 +212,12 @@ sketcher_external_project_add(
     -DEXPAT_BUILD_TESTS=OFF
     -DEXPAT_BUILD_TOOLS=OFF)
 
-# Build SQLite library SQLite doesn't work with CMake out of the box, so copy in
-# our CMake files.
+# Build SQLite library
 generate_sqlite_urls(SQLITE_URLS)
 sketcher_external_project_add(
   sqlite
   URL ${SQLITE_URLS}
+  # SQLite doesn't work with CMake out of the box, so copy in our CMake files
   PATCH_COMMAND ${CMAKE_COMMAND} -E copy_directory
                 ${CMAKE_CURRENT_SOURCE_DIR}/sqlite_cmake <SOURCE_DIR>
   CMAKE_ARGS
