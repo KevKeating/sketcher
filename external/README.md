@@ -44,10 +44,10 @@ Invalid or incomplete snapshots fail validation; remove them before retrying.
 `sketcher_external_project_add` in `source_cache.cmake` forwards the existing
 declarations and generates `source-manifest.json` and download-only CMake
 projects in the build directory. Extend its source-option list and tests when
-introducing a new download option. The optional `SOURCE_CACHE_GIT_SUBMODULES`
+introducing a new download option. The optional `SKETCHER_SOURCE_CACHE_GIT_SUBMODULES`
 argument overrides `GIT_SUBMODULES` for the source snapshot, allowing it to contain
 a superset of a build's submodules. Qt passes
-`SOURCE_CACHE_GIT_SUBMODULES qtbase qtsvg` so its host and target builds share a
+`SKETCHER_SOURCE_CACHE_GIT_SUBMODULES qtbase qtsvg` so its host and target builds share a
 snapshot, while the host build still builds only `qtbase`. Without caching,
 `GIT_SUBMODULES` controls the normal download and the override is ignored.
 

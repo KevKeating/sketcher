@@ -232,14 +232,14 @@ def test_explicit_cache_submodules_preserve_native_selection(
         tmp_path, cmake, cached):
     parent = repository_with_submodule(tmp_path / "origins")
     cache = tmp_path / "cache" if cached else None
-    build, manifest = configure(cmake,
-                                tmp_path / "consumer",
-                                declaration(
-                                    parent,
-                                    "with-module",
-                                    submodules='GIT_SUBMODULES "" '
-                                    'SOURCE_CACHE_GIT_SUBMODULES module'),
-                                cache=cache)
+    build, manifest = configure(
+        cmake,
+        tmp_path / "consumer",
+        declaration(parent,
+                    "with-module",
+                    submodules='GIT_SUBMODULES "" '
+                    'SKETCHER_SOURCE_CACHE_GIT_SUBMODULES module'),
+        cache=cache)
     _, baseline = configure(
         cmake, tmp_path / "baseline",
         declaration(parent, "with-module", submodules="GIT_SUBMODULES module"))

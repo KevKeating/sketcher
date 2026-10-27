@@ -39,8 +39,8 @@ endfunction()
 
 # Forward the ordinary ExternalProject arguments. Only source acquisition is
 # replaced when caching is enabled; patches and build settings stay local.
-# SOURCE_CACHE_GIT_SUBMODULES overrides GIT_SUBMODULES for cached snapshots
-# only.
+# SKETCHER_SOURCE_CACHE_GIT_SUBMODULES overrides GIT_SUBMODULES for cached
+# snapshots only.
 function(sketcher_external_project_add NAME)
   set(SOURCE_SINGLE GIT_REPOSITORY GIT_TAG GIT_SHALLOW GIT_SUBMODULES_RECURSE
                     URL_HASH)
@@ -55,7 +55,7 @@ function(sketcher_external_project_add NAME)
       INSTALL_COMMAND
       DEPENDS)
   cmake_parse_arguments(PARSE_ARGV 1 EP "" "${PROJECT_SINGLE}"
-                        "${PROJECT_MULTI};SOURCE_CACHE_GIT_SUBMODULES")
+                        "${PROJECT_MULTI};SKETCHER_SOURCE_CACHE_GIT_SUBMODULES")
   if(EP_UNPARSED_ARGUMENTS)
     message(
       FATAL_ERROR
@@ -64,9 +64,10 @@ function(sketcher_external_project_add NAME)
 
   # A snapshot may contain more modules than one particular build needs. Qt's
   # host and target builds use the same archive, but different build options.
-  if(DEFINED EP_SOURCE_CACHE_GIT_SUBMODULES
-     OR "SOURCE_CACHE_GIT_SUBMODULES" IN_LIST EP_KEYWORDS_MISSING_VALUES)
-    set(EP_GIT_SUBMODULES "${EP_SOURCE_CACHE_GIT_SUBMODULES}")
+  if(DEFINED EP_SKETCHER_SOURCE_CACHE_GIT_SUBMODULES
+     OR "SKETCHER_SOURCE_CACHE_GIT_SUBMODULES" IN_LIST
+        EP_KEYWORDS_MISSING_VALUES)
+    set(EP_GIT_SUBMODULES "${EP_SKETCHER_SOURCE_CACHE_GIT_SUBMODULES}")
   endif()
 
   set(SOURCE_ARGS)
@@ -124,7 +125,7 @@ function(sketcher_external_project_add NAME)
   foreach(INDEX RANGE 0 ${LAST})
     set(ARG "${ARGV${INDEX}}")
     # Consume the wrapper-only option up to the next ExternalProject keyword.
-    if(INDEX GREATER 0 AND ARG STREQUAL "SOURCE_CACHE_GIT_SUBMODULES")
+    if(INDEX GREATER 0 AND ARG STREQUAL "SKETCHER_SOURCE_CACHE_GIT_SUBMODULES")
       set(FORWARD_ARGUMENT FALSE)
     elseif(ARG IN_LIST PROJECT_SINGLE OR ARG IN_LIST PROJECT_MULTI)
       set(FORWARD_ARGUMENT TRUE)
