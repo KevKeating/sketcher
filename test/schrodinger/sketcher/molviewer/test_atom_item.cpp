@@ -117,7 +117,8 @@ createAtomItem(std::shared_ptr<AtomQueryProperties> props)
 }
 
 /**
- * Check that selection and predictive paths are circles or rounded rectangles.
+ * Check that selection and predictive paths for the given atom match the
+ * expected shape: either a circle or a rounded rectangle.
  */
 static void check_highlighting_path_type(const AtomItem& item, bool circular)
 {
