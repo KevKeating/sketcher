@@ -133,6 +133,15 @@ const qreal ATOM_SELECTION_HIGHLIGHTING_RADIUS = 11;
 // rectangles that are too small to fit this radius.
 const qreal ATOM_LABEL_HIGHLIGHTING_CORNER_RADIUS = 8.0;
 
+// The additional radius or padding for selection highlighting around oversized
+// atom labels, beyond the predictive highlighting. Note that this value does
+// not apply when the default circular highlighting (i.e.
+// ATOM_PREDICTIVE_HIGHLIGHTING_RADIUS and ATOM_SELECTION_HIGHLIGHTING_RADIUS)
+// is used. It only applies to rounded rectangle highlighting (for atoms with
+// additional label components) or enlarged circles (for elements with
+// multi-character names that don't fit within the standard highlighting radii)
+const qreal ATOM_HIGHLIGHTING_ADDITIONAL_SELECTION_RADIUS = 1;
+
 // The half-width of the rectangle drawn around bonds for selection highlighting
 const qreal BOND_SELECTION_HIGHLIGHTING_HALF_WIDTH = 8;
 

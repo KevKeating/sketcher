@@ -226,11 +226,10 @@ void AtomItem::updateHighlightingPaths()
         // if this is an unlabeled carbon
         return;
     }
-    const auto selection_padding = ATOM_SELECTION_HIGHLIGHTING_RADIUS -
-                                   ATOM_PREDICTIVE_HIGHLIGHTING_RADIUS;
     const auto highlighting_paths = {
         std::make_pair(&m_predictive_highlighting_path, 0.0),
-        std::make_pair(&m_selection_highlighting_path, selection_padding)};
+        std::make_pair(&m_selection_highlighting_path,
+                       ATOM_HIGHLIGHTING_ADDITIONAL_SELECTION_RADIUS)};
     if (rects.size() == 1 && rects.front() == m_main_label_rect &&
         ((m_atom->getAtomicNum() > 0 &&
           m_main_label_text == QString::fromStdString(m_atom->getSymbol())) ||
