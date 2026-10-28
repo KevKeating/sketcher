@@ -1,6 +1,8 @@
 #define BOOST_TEST_MODULE Test_Sketcher
 
+#include <algorithm>
 #include <string>
+#include <tuple>
 #include <utility>
 
 #include <rdkit/GraphMol/ROMol.h>
@@ -114,6 +116,34 @@ createAtomItem(std::shared_ptr<AtomQueryProperties> props)
     return std::make_pair(atom_item, test_scene);
 }
 
+/**
+ * Check that selection and predictive paths are circles or rounded rectangles.
+ */
+static void check_highlighting_path_type(const AtomItem& item, bool circular)
+{
+    for (const auto& [name, path] :
+         {std::make_pair("selection", item.selectionHighlightingPath()),
+          std::make_pair("predictive", item.predictiveHighlightingPath())}) {
+        BOOST_TEST_CONTEXT(name)
+        {
+            const auto bounds = path.boundingRect();
+            QPainterPath expected;
+            expected.addEllipse(bounds);
+            if (circular) {
+                BOOST_CHECK_EQUAL(bounds.width(), bounds.height());
+                BOOST_CHECK(path == expected);
+            } else {
+                expected.clear();
+                const auto radius =
+                    std::min({ATOM_LABEL_HIGHLIGHTING_CORNER_RADIUS,
+                              bounds.width() * 0.5, bounds.height() * 0.5});
+                expected.addRoundedRect(bounds, radius, radius);
+                BOOST_CHECK(path == expected);
+            }
+        }
+    }
+}
+
 BOOST_AUTO_TEST_CASE(test_updateCachedData_LabeledN)
 {
     auto [atom_item, test_scene] = createAtomItem("N");
@@ -173,6 +203,7 @@ BOOST_AUTO_TEST_CASE(test_updateCachedData_RGroup)
 {
     auto [atom_item, test_scene] = createAtomItem("* |$_R5$|");
     BOOST_TEST(atom_item->m_main_label_text == "R5");
+    BOOST_CHECK_EQUAL(atom_item->getAtom()->getAtomicNum(), 0);
     BOOST_TEST(!atom_item->m_main_label_rect.isNull());
     BOOST_TEST(atom_item->m_isotope_label_rect.isNull());
     BOOST_TEST(atom_item->m_charge_and_radical_label_rect.isNull());
@@ -183,6 +214,12 @@ BOOST_AUTO_TEST_CASE(test_updateCachedData_RGroup)
     BOOST_TEST(atom_item->m_label_is_visible);
     BOOST_TEST(!(atom_item->m_shape.isEmpty()));
     BOOST_TEST(!(atom_item->m_bounding_rect.isNull()));
+    check_highlighting_path_type(*atom_item, false);
+    atom_item->getAtom()->setProp(RDKit::common_properties::dummyLabel,
+                                  std::string("R5"));
+    atom_item->updateCachedData();
+    BOOST_CHECK_EQUAL(atom_item->getAtom()->getSymbol(), "R5");
+    check_highlighting_path_type(*atom_item, false);
 }
 
 BOOST_AUTO_TEST_CASE(test_updateCachedData_atomMapping)
@@ -221,7 +258,17 @@ BOOST_AUTO_TEST_CASE(test_updateCachedData_atomLabel)
         BOOST_TEST(atom_item->m_label_is_visible);
         BOOST_TEST(!(atom_item->m_shape.isEmpty()));
         BOOST_TEST(!(atom_item->m_bounding_rect.isNull()));
+        check_highlighting_path_type(*atom_item, false);
     }
+}
+
+BOOST_AUTO_TEST_CASE(test_custom_element_label_highlighting)
+{
+    auto [item, scene] = createAtomItem("C |$Phenyl$|");
+    BOOST_CHECK_EQUAL(item->getAtom()->getAtomicNum(), 6);
+    BOOST_CHECK(item->m_main_label_text == "Phenyl");
+    BOOST_REQUIRE_EQUAL(item->getSubrects().size(), 1);
+    check_highlighting_path_type(*item, false);
 }
 
 BOOST_AUTO_TEST_CASE(test_deuterium_and_tritium_display)
@@ -253,6 +300,8 @@ BOOST_AUTO_TEST_CASE(test_deuterium_and_tritium_display)
     BOOST_TEST(atom_items[1]->m_main_label_text == "T");
     BOOST_TEST(atom_items.at(1)->m_isotope_label_text.toStdString() == "");
     BOOST_TEST(atom_items.at(1)->m_isotope_label_rect.isNull());
+    check_highlighting_path_type(*atom_items[0], true);
+    check_highlighting_path_type(*atom_items[1], true);
 }
 
 BOOST_AUTO_TEST_CASE(test_findPositionInEmptySpace,
@@ -361,6 +410,7 @@ BOOST_AUTO_TEST_CASE(test_plain_element_highlighting_circle_fits_label)
             scene->m_fonts.setSize(font_size);
             for (auto& item : items) {
                 item->updateCachedData();
+                check_highlighting_path_type(*item, true);
                 BOOST_CHECK_GE(
                     item->selectionHighlightingPath().boundingRect().width(),
                     item->predictiveHighlightingPath().boundingRect().width());
@@ -372,9 +422,6 @@ BOOST_AUTO_TEST_CASE(test_plain_element_highlighting_circle_fits_label)
                                      get_predictive_highlighting_path_for_atom(
                                          item->getAtom()))}) {
                     const auto bounds = path.boundingRect();
-                    QPainterPath circle;
-                    circle.addEllipse(bounds);
-                    BOOST_CHECK(path == circle);
                     BOOST_CHECK(bounds.width() >=
                                 original.boundingRect().width());
                     if (font_size == 8 || item->getSubrects().empty()) {
@@ -402,6 +449,7 @@ BOOST_AUTO_TEST_CASE(test_compound_label_highlighting_has_straight_sides)
             for (int font_size : {1, 8, 18, 36}) {
                 scene->m_fonts.setSize(font_size);
                 item->updateCachedData();
+                check_highlighting_path_type(*item, false);
                 QRectF label_bounds;
                 for (const auto& rect : item->getSubrects()) {
                     label_bounds |= rect;
@@ -629,6 +677,27 @@ BOOST_AUTO_TEST_CASE(test_chirality_label_tooltip)
     BOOST_TEST(chiral_atom->toolTip() == "Stereo: (S)");
 }
 
+BOOST_AUTO_TEST_CASE(test_wildcard_highlighting_path_types)
+{
+    const std::vector<std::tuple<AtomQuery, QString, bool>> cases = {
+        {AtomQuery::A, "A", true},    {AtomQuery::M, "M", true},
+        {AtomQuery::Q, "Q", true},    {AtomQuery::X, "X", true},
+        {AtomQuery::AH, "AH", false}, {AtomQuery::MH, "MH", false},
+        {AtomQuery::QH, "QH", false}, {AtomQuery::XH, "XH", false}};
+    for (const auto& [wildcard, label, circular] : cases) {
+        BOOST_TEST_CONTEXT(label.toStdString())
+        {
+            auto props = std::make_shared<AtomQueryProperties>();
+            props->query_type = QueryType::WILDCARD;
+            props->wildcard = wildcard;
+            auto [item, scene] = createAtomItem(props);
+            BOOST_CHECK(item->m_main_label_text == label);
+            BOOST_REQUIRE_EQUAL(item->getSubrects().size(), 1);
+            check_highlighting_path_type(*item, circular);
+        }
+    }
+}
+
 BOOST_AUTO_TEST_CASE(test_wildcard_atom_tooltips)
 {
     // Test that wildcard atoms have descriptive tooltips
@@ -678,6 +747,7 @@ BOOST_AUTO_TEST_CASE(test_query_atom_with_constraints_tooltip)
 
     // Should show the query constraint text with Query prefix
     BOOST_TEST(atom_item->toolTip() == "Query: X2&R2");
+    check_highlighting_path_type(*atom_item, false);
 }
 
 BOOST_AUTO_TEST_CASE(test_atom_list_tooltip)
@@ -746,7 +816,7 @@ BOOST_AUTO_TEST_CASE(test_atom_with_both_chirality_and_query)
 
 BOOST_AUTO_TEST_CASE(test_atom_index_display)
 {
-    auto [atom_items, test_scene] = createAtomItems("CCN");
+    auto [atom_items, test_scene] = createAtomItems("CCN.O=C=O");
 
     // By default, atom indices should not be shown (carbons are unlabeled)
     BOOST_TEST(!atom_items[0]->m_label_is_visible); // C
@@ -774,6 +844,11 @@ BOOST_AUTO_TEST_CASE(test_atom_index_display)
 
     BOOST_TEST(atom_items[2]->m_label_is_visible);
     BOOST_TEST(atom_items[2]->m_main_label_text == "N:2");
+    BOOST_TEST(atom_items[4]->m_main_label_text == "C:4");
+    BOOST_REQUIRE_EQUAL(atom_items[4]->getSubrects().size(), 1);
+    for (const auto& item : atom_items) {
+        check_highlighting_path_type(*item, false);
+    }
 }
 
 } // namespace sketcher
