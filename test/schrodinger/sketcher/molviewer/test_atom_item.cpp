@@ -122,9 +122,22 @@ createAtomItem(std::shared_ptr<AtomQueryProperties> props)
  */
 static void check_highlighting_path_type(const AtomItem& item, bool circular)
 {
-    for (const auto& [name, path] :
-         {std::make_pair("selection", item.selectionHighlightingPath()),
-          std::make_pair("predictive", item.predictiveHighlightingPath())}) {
+    const auto predictive_bounds =
+        item.predictiveHighlightingPath().boundingRect();
+    const auto selection_bounds =
+        item.selectionHighlightingPath().boundingRect();
+    BOOST_CHECK_SMALL(predictive_bounds.left() - selection_bounds.left() - 1.0,
+                      1e-6);
+    BOOST_CHECK_SMALL(predictive_bounds.top() - selection_bounds.top() - 1.0,
+                      1e-6);
+    BOOST_CHECK_SMALL(
+        selection_bounds.right() - predictive_bounds.right() - 1.0, 1e-6);
+    BOOST_CHECK_SMALL(
+        selection_bounds.bottom() - predictive_bounds.bottom() - 1.0, 1e-6);
+    for (const auto& [name, path, padding] :
+         {std::make_tuple("selection", item.selectionHighlightingPath(), 1.0),
+          std::make_tuple("predictive", item.predictiveHighlightingPath(),
+                          0.0)}) {
         BOOST_TEST_CONTEXT(name)
         {
             const auto bounds = path.boundingRect();
@@ -136,7 +149,7 @@ static void check_highlighting_path_type(const AtomItem& item, bool circular)
             } else {
                 expected.clear();
                 const auto radius =
-                    std::min({ATOM_LABEL_HIGHLIGHTING_CORNER_RADIUS,
+                    std::min({ATOM_LABEL_HIGHLIGHTING_CORNER_RADIUS + padding,
                               bounds.width() * 0.5, bounds.height() * 0.5});
                 expected.addRoundedRect(bounds, radius, radius);
                 BOOST_CHECK(path == expected);
@@ -412,9 +425,6 @@ BOOST_AUTO_TEST_CASE(test_plain_element_highlighting_circle_fits_label)
             for (auto& item : items) {
                 item->updateCachedData();
                 check_highlighting_path_type(*item, true);
-                BOOST_CHECK_GE(
-                    item->selectionHighlightingPath().boundingRect().width(),
-                    item->predictiveHighlightingPath().boundingRect().width());
                 for (const auto& [path, original] :
                      {std::make_pair(item->selectionHighlightingPath(),
                                      get_selection_highlighting_path_for_atom(
@@ -455,13 +465,16 @@ BOOST_AUTO_TEST_CASE(test_compound_label_highlighting_has_straight_sides)
                 for (const auto& rect : item->getSubrects()) {
                     label_bounds |= rect;
                 }
-                for (const auto& path : {item->selectionHighlightingPath(),
-                                         item->predictiveHighlightingPath()}) {
+                for (const auto& [path, padding] :
+                     {std::make_pair(item->selectionHighlightingPath(), 1.0),
+                      std::make_pair(item->predictiveHighlightingPath(),
+                                     0.0)}) {
                     const auto bounds = path.boundingRect();
-                    BOOST_CHECK(bounds ==
-                                label_bounds.adjusted(
-                                    -ATOM_LABEL_MARGIN, -ATOM_LABEL_MARGIN,
-                                    ATOM_LABEL_MARGIN, ATOM_LABEL_MARGIN));
+                    BOOST_CHECK(bounds == label_bounds.adjusted(
+                                              -ATOM_LABEL_MARGIN - padding,
+                                              -ATOM_LABEL_MARGIN - padding,
+                                              ATOM_LABEL_MARGIN + padding,
+                                              ATOM_LABEL_MARGIN + padding));
                     BOOST_CHECK(path.contains(
                         QPointF(bounds.center().x(), bounds.top() + 0.1)));
                     BOOST_CHECK(path.contains(

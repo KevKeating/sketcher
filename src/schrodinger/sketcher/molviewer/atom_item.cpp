@@ -1,6 +1,7 @@
 #include "schrodinger/sketcher/molviewer/atom_item.h"
 
 #include <algorithm>
+#include <utility>
 
 #include <rdkit/GraphMol/Chirality.h>
 #include <rdkit/GraphMol/PeriodicTable.h>
@@ -225,6 +226,11 @@ void AtomItem::updateHighlightingPaths()
         // if this is an unlabeled carbon
         return;
     }
+    const auto selection_padding = ATOM_SELECTION_HIGHLIGHTING_RADIUS -
+                                   ATOM_PREDICTIVE_HIGHLIGHTING_RADIUS;
+    const auto highlighting_paths = {
+        std::make_pair(&m_predictive_highlighting_path, 0.0),
+        std::make_pair(&m_selection_highlighting_path, selection_padding)};
     if (rects.size() == 1 && rects.front() == m_main_label_rect &&
         ((m_atom->getAtomicNum() > 0 &&
           m_main_label_text == QString::fromStdString(m_atom->getSymbol())) ||
@@ -236,15 +242,15 @@ void AtomItem::updateHighlightingPaths()
             QLineF(m_main_label_rect.center(), m_main_label_rect.bottomRight())
                 .length() +
             TEXT_RECT_MARGIN;
-        for (auto* path : {&m_selection_highlighting_path,
-                           &m_predictive_highlighting_path}) {
-            if (label_radius > path->boundingRect().width() * 0.5) {
+        if (label_radius > ATOM_PREDICTIVE_HIGHLIGHTING_RADIUS) {
+            for (auto [path, padding] : highlighting_paths) {
                 // if the default circle size is too small to cover the entire
                 // text (e.g., a multi-letter element like "Cl"), enlarge the
                 // circle just enough to cover
                 path->clear();
-                path->addEllipse(m_main_label_rect.center(), label_radius,
-                                 label_radius);
+                path->addEllipse(m_main_label_rect.center(),
+                                 label_radius + padding,
+                                 label_radius + padding);
             }
         }
         return;
@@ -262,10 +268,12 @@ void AtomItem::updateHighlightingPaths()
     const auto corner_radius =
         std::min({ATOM_LABEL_HIGHLIGHTING_CORNER_RADIUS,
                   label_rect.width() * 0.5, label_rect.height() * 0.5});
-    QPainterPath label_path;
-    label_path.addRoundedRect(label_rect, corner_radius, corner_radius);
-    m_selection_highlighting_path = label_path;
-    m_predictive_highlighting_path = label_path;
+    for (auto [path, padding] : highlighting_paths) {
+        path->clear();
+        path->addRoundedRect(
+            label_rect.adjusted(-padding, -padding, padding, padding),
+            corner_radius + padding, corner_radius + padding);
+    }
 }
 
 QString AtomItem::advancedPropertiesSmarts() const
@@ -572,7 +580,7 @@ QString AtomItem::getTooltip() const
                     {AtomQuery::MH, "Any metal or hydrogen"},
                     {AtomQuery::X, "Any halogen"},
                     {AtomQuery::XH, "Any halogen or hydrogen"},
-            };
+                };
 
             auto it = wildcard_descriptions.find(query_props->wildcard);
             if (it != wildcard_descriptions.end()) {
