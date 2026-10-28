@@ -264,6 +264,38 @@ BOOST_AUTO_TEST_CASE(TestGetMonomerDbFromJson)
                       std::runtime_error);
 }
 
+BOOST_DATA_TEST_CASE(TestLoadMonomersWithCanonicalizedSmiles,
+                     boost::unit_test::data::make({false, true}),
+                     contains_canonicalized_smiles)
+{
+    // Deliberately use noncanonical SMILES to verify that the flag trusts the
+    // supplied SMILES and CORE_SMILES without rewriting either field.
+    constexpr std::string_view json = R"JSON([{
+        "symbol": "TestEthanol",
+        "polymer_type": "CHEM",
+        "natural_analog": "X",
+        "smiles": "OCC",
+        "core_smiles": "OCC",
+        "name": "Test Ethanol",
+        "monomer_type": "Undefined",
+        "author": "test"
+    }])JSON";
+
+    auto& db = MonomerDatabase::instance();
+    const auto [succeeded, failed] =
+        db.loadMonomersFromJson(json, contains_canonicalized_smiles);
+    BOOST_REQUIRE_EQUAL(succeeded.size(), 1);
+    BOOST_CHECK(failed.empty());
+
+    const auto info = db.getMonomerInfo("TestEthanol", ChainType::CHEM);
+    BOOST_REQUIRE(info.smiles.has_value());
+    BOOST_REQUIRE(info.core_smiles.has_value());
+    const auto expected_smiles = contains_canonicalized_smiles ? "OCC" : "CCO";
+    BOOST_CHECK_EQUAL(*info.smiles, expected_smiles);
+    BOOST_CHECK_EQUAL(*info.core_smiles, "OCC");
+    db.resetMonomerDefinitions();
+}
+
 BOOST_AUTO_TEST_CASE(TestUpdateCustomDB)
 {
     constexpr std::string_view dummy_json =
