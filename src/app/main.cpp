@@ -135,18 +135,18 @@ monomer_defs_insertion_result_to_js(const MonomerDefsInsertionResult& result)
 /**
  * Replace the custom monomer database contents with definitions from JSON.
  * @param json JSON string containing the new monomer definitions.
- * @param contains_canonicalized_smiles Skip SMILES canonicalization for the new
- * database contents. Defaults to false. Only set this to true when all SMILES
- * in the JSON string have been canonicalized using the same canonicalization
- * scheme as the Sketcher.
+ * @param run_smiles_canonicalization Run SMILES canonicalization for the new
+ * database contents. Defaults to true. Set this to false to skip
+ * canonicalization only when all SMILES in the JSON string have been
+ * canonicalized using the same canonicalization scheme as the Sketcher.
  * @return An object containing succeeded and failed insertion logs.
  */
 emscripten::val
 sketcher_load_custom_monomers(const std::string& json,
-                              bool contains_canonicalized_smiles = false)
+                              bool run_smiles_canonicalization = true)
 {
     auto& db = schrodinger::rdkit_extensions::MonomerDatabase::instance();
-    auto result = db.loadMonomersFromJson(json, contains_canonicalized_smiles);
+    auto result = db.loadMonomersFromJson(json, run_smiles_canonicalization);
     get_sketcher_instance().setLoadMonomerDatabaseVisible(false);
 
     return monomer_defs_insertion_result_to_js(result);

@@ -65,14 +65,14 @@ export type SketcherWASM = {
   /**
    * Replace the custom monomer database contents with definitions from JSON.
    * @param json JSON string containing the new monomer definitions.
-   * @param containsCanonicalizedSmiles Skip SMILES canonicalization for the new
-   * database contents. Defaults to false. Only set this to true when all SMILES
-   * in the JSON string have been canonicalized using the same canonicalization
-   * scheme as the Sketcher.
+   * @param runSmilesCanonicalization Run SMILES canonicalization for the new
+   * database contents. Defaults to true. Set this to false to skip
+   * canonicalization only when all SMILES in the JSON string have been
+   * canonicalized using the same canonicalization scheme as the Sketcher.
    */
   sketcher_load_custom_monomers: (
     json: string,
-    containsCanonicalizedSmiles?: boolean,
+    runSmilesCanonicalization?: boolean,
   ) => { succeeded: string[]; failed: string[] };
   sketcher_has_monomers: () => boolean;
   sketcher_allow_monomeric: (allowMonomeric: boolean) => void;

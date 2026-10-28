@@ -251,8 +251,8 @@ test.describe('WASM Sketcher API', () => {
 });
 
 test.describe('Custom Monomer DB', () => {
-  for (const containsCanonicalizedSmiles of [undefined, false, true]) {
-    test(`SMILES canonicalization flag: ${containsCanonicalizedSmiles}`, async ({ page }) => {
+  for (const runSmilesCanonicalization of [undefined, false, true]) {
+    test(`SMILES canonicalization flag: ${runSmilesCanonicalization}`, async ({ page }) => {
       const result = await page.evaluate((flag) => {
         // Noncanonical input makes it observable whether the flag skips rewriting.
         const json = JSON.stringify([
@@ -270,11 +270,11 @@ test.describe('Custom Monomer DB', () => {
         return flag === undefined
           ? Module.sketcher_load_custom_monomers(json)
           : Module.sketcher_load_custom_monomers(json, flag);
-      }, containsCanonicalizedSmiles);
+      }, runSmilesCanonicalization);
 
       expect(result.succeeded).toHaveLength(1);
       expect(result.failed).toHaveLength(0);
-      const expectedSmiles = containsCanonicalizedSmiles ? 'OCC' : 'CCO';
+      const expectedSmiles = runSmilesCanonicalization === false ? 'OCC' : 'CCO';
       expect(result.succeeded[0]).toContain(`SMILES='${expectedSmiles}'`);
       expect(result.succeeded[0]).toContain("CORE_SMILES='OCC'");
     });
