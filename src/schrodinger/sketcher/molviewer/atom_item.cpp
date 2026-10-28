@@ -250,8 +250,8 @@ void AtomItem::updateHighlightingPaths()
     // then add the usual margin around the label.
     label_path.addEllipse(
         label_rect.center(),
-        label_rect.width() / std::sqrt(2.0) + ATOM_LABEL_MARGIN,
-        label_rect.height() / std::sqrt(2.0) + ATOM_LABEL_MARGIN);
+        label_rect.width() / std::sqrt(2.0),
+        label_rect.height() / std::sqrt(2.0));
     m_selection_highlighting_path = label_path;
     m_predictive_highlighting_path = label_path;
 }
