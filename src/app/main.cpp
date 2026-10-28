@@ -135,10 +135,10 @@ monomer_defs_insertion_result_to_js(const MonomerDefsInsertionResult& result)
 /**
  * Replace the custom monomer database contents with definitions from JSON.
  * @param json JSON string containing the new monomer definitions.
- * @param run_smiles_canonicalization Run SMILES canonicalization for the new
- * database contents. Defaults to true. Set this to false to skip
- * canonicalization only when all SMILES in the JSON string have been
- * canonicalized using the same canonicalization scheme as the Sketcher.
+ * @param run_smiles_canonicalization Whether to run SMILES canonicalization for
+ * the new database contents. This may only be set to false if all SMILES in the
+ * provided JSON string have already been canonicalized using the same
+ * canonicalization scheme as used by the Sketcher.
  * @return An object containing succeeded and failed insertion logs.
  */
 emscripten::val
