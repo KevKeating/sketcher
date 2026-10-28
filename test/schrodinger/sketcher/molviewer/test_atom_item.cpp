@@ -691,6 +691,11 @@ BOOST_AUTO_TEST_CASE(test_chirality_label_tooltip)
     BOOST_TEST(chiral_atom->toolTip() == "Stereo: (S)");
 }
 
+/**
+ * For wildcard atoms, ensure that we use circular highlighting for single
+ * character wildcards (e.g. A) and rounded rectangular highlighting for
+ * multi-character wildcards (e.g. AH)
+ */
 BOOST_AUTO_TEST_CASE(test_wildcard_highlighting_path_types)
 {
     const std::vector<std::tuple<AtomQuery, QString, bool>> cases = {
