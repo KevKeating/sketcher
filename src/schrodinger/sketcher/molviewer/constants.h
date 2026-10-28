@@ -112,20 +112,25 @@ const qreal RADICAL_DISTANCE_FROM_HIDDEN_LABEL_RATIO = 3.;
 // Ratios between paired dots and their size for radicals
 const qreal PAIRED_ELECTRONS_DISTANCE_RATIO = 0.75;
 
-// The radius of the circle drawn around atoms for predictive highlighting
+// The default radius of the circle drawn around atoms for predictive
+// highlighting. Note that the circle will automatically be enlarged if it
+// doesn't cover the entire label.
 const qreal ATOM_PREDICTIVE_HIGHLIGHTING_RADIUS = 10;
 
 // The half-width of the rectangle drawn around bonds for predictive
 // highlighting
 const qreal BOND_PREDICTIVE_HIGHLIGHTING_HALF_WIDTH = 10;
 
-// The radius of the circle drawn around atoms for selection highlighting
+// The default radius of the circle drawn around atoms for selection
+// highlighting. Note that the circle will automatically be enlarged if it
+// doesn't cover the entire label.
 const qreal ATOM_SELECTION_HIGHLIGHTING_RADIUS = 11;
 
-// The preferred corner radius for rectangular atom label highlighting used for
-// atoms with additional label components (e.g. charges, implicit hydrogens,
-// atom mapping numbers). Note that smaller rectangles will use a smaller radius
-// so their corners remain circular without needing to enlarge the rectangles.
+// When highlighting atoms with additional label components (e.g. charges,
+// implicit hydrogens, atom mapping numbers, etc.), we use a rounded rectangle
+// in place of a circle. This value is the preferred radius for rounding the
+// rectangle's corners. Note that the radius wil automatically be reduced for
+// rectangles that are too small to fit this radius.
 const qreal ATOM_LABEL_HIGHLIGHTING_CORNER_RADIUS = 8.0;
 
 // The half-width of the rectangle drawn around bonds for selection highlighting

@@ -222,11 +222,14 @@ void AtomItem::updateHighlightingPaths()
         get_predictive_highlighting_path_for_atom(m_atom);
     const auto rects = getSubrects();
     if (rects.empty()) {
+        // if this is an unlabeled carbon
         return;
     }
     if (rects.size() == 1 && rects.front() == m_main_label_rect &&
         m_atom->getAtomicNum() > 0 &&
         m_main_label_text == QString::fromStdString(m_atom->getSymbol())) {
+        // If the label is just the element name and nothing else, then we
+        // always use a circular label
         const auto label_radius =
             QLineF(m_main_label_rect.center(), m_main_label_rect.bottomRight())
                 .length() +
@@ -234,6 +237,10 @@ void AtomItem::updateHighlightingPaths()
         for (auto* path : {&m_selection_highlighting_path,
                            &m_predictive_highlighting_path}) {
             if (label_radius > path->boundingRect().width() * 0.5) {
+                // The default circle size is too small and doesn't cover the
+                // entire text, so we enlarge the highlighting just enough to
+                // cover the text. (This can happen with multi-letter elements,
+                // e.g. "Cl".)
                 path->clear();
                 path->addEllipse(m_main_label_rect.center(), label_radius,
                                  label_radius);
@@ -241,12 +248,16 @@ void AtomItem::updateHighlightingPaths()
         }
         return;
     }
+    // there are additional components to the label, so we use a rounded
+    // rectangle large enough to cover everything
     QRectF label_rect;
     for (const auto& rect : rects) {
         label_rect |= rect;
     }
     label_rect.adjust(-ATOM_LABEL_MARGIN, -ATOM_LABEL_MARGIN, ATOM_LABEL_MARGIN,
                       ATOM_LABEL_MARGIN);
+    // use the default rectangle rounding unless that's too big for this
+    // rectangle, in which case use the largest rounding that can fit
     const auto corner_radius =
         std::min({ATOM_LABEL_HIGHLIGHTING_CORNER_RADIUS,
                   label_rect.width() * 0.5, label_rect.height() * 0.5});
@@ -560,7 +571,7 @@ QString AtomItem::getTooltip() const
                     {AtomQuery::MH, "Any metal or hydrogen"},
                     {AtomQuery::X, "Any halogen"},
                     {AtomQuery::XH, "Any halogen or hydrogen"},
-                };
+            };
 
             auto it = wildcard_descriptions.find(query_props->wildcard);
             if (it != wildcard_descriptions.end()) {
