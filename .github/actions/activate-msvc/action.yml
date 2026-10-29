@@ -12,11 +12,11 @@ permissions:
 runs:
   using: 'composite'
   steps:
-    # We install the Intel Fortran compiler ourselves rather than using
-    # fortran-lang/setup-fortran because that action includes the current
-    # date in its cache key, which means that it reinstalls the compiler
-    # every day. Our installer URL is pinned, so our cache never needs to
-    # expire. The components are the same ones that setup-fortran installs.
+    # We base the installation procedure on the fortran-lang/setup-fortran
+    # action. We don't use that action directly since it intentionally
+    # re-downloads, reinstalls, and re-caches Fortran on a daily basis in order
+    # to work around https://github.com/actions/cache/issues/144, which was
+    # fixed years ago.
     - name: Set Intel oneAPI variables
       id: oneapi
       shell: bash
