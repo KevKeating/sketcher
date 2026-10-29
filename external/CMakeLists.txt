@@ -51,6 +51,25 @@ function(get_dependency_source_cache_args VAR_NAME LIBRARY)
       PARENT_SCOPE)
 endfunction()
 
+# Warn before ExternalProject silently replaces a corrupt cached archive.
+function(add_dependency_source_cache_check LIBRARY VERSION)
+  if(NOT SKETCHER_DEPENDENCY_SOURCE_CODE_CACHE_DIR_ABSOLUTE)
+    return()
+  endif()
+  ExternalProject_Get_Property(${LIBRARY} DOWNLOAD_DIR DOWNLOAD_NAME URL_HASH)
+  set(CHECK_SCRIPT
+      "${CMAKE_CURRENT_FUNCTION_LIST_DIR}/check_source_archive.cmake")
+  ExternalProject_Add_Step(
+    ${LIBRARY} check_source_cache
+    COMMAND
+      "${CMAKE_COMMAND}" "-DARCHIVE_PATH=${DOWNLOAD_DIR}/${DOWNLOAD_NAME}"
+      "-DARCHIVE_HASH=${URL_HASH}"
+      "-DCACHE_KEY=dependency-source-${LIBRARY}-${VERSION}" -P "${CHECK_SCRIPT}"
+    DEPENDS "${CHECK_SCRIPT}"
+    DEPENDEES mkdir
+    DEPENDERS download INDEPENDENT TRUE)
+endfunction()
+
 # generate_git_patch_command(<var_name> [SUBMODULE <submodule>]
 # <patch_file_names>...)
 #
@@ -211,6 +230,7 @@ ExternalProject_Add(
   CMAKE_ARGS
     ${COMMON_EXTERNAL_PROJECT_CMAKE_ARGS}
     -DCMAKE_INSTALL_PREFIX=${CMAKE_CURRENT_BINARY_DIR}/eigen-${EIGEN_VERSION})
+add_dependency_source_cache_check(eigen ${EIGEN_VERSION})
 
 # Build expat library
 string(REPLACE "." "_" EXPAT_GIT_TAG ${EXPAT_VERSION})
@@ -247,6 +267,7 @@ ExternalProject_Add(
     ${COMMON_EXTERNAL_PROJECT_CMAKE_ARGS}
     -DCMAKE_INSTALL_PREFIX=${CMAKE_CURRENT_BINARY_DIR}/sqlite-${SQLITE_VERSION}
     -DCMAKE_PREFIX_PATH=${CMAKE_CURRENT_BINARY_DIR}/zlib-${ZLIB_VERSION})
+add_dependency_source_cache_check(sqlite ${SQLITE_VERSION})
 
 # Build Boost library
 set(BOOST_LIBS_TO_INCLUDE
