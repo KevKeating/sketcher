@@ -108,7 +108,8 @@ void NonMolecularItem::updateCachedData()
             {-pad, arm_length + pad},  {-pad, pad},  {-arm_length - pad, pad}};
     }
 
-    auto highlight_path = rounded_highlighting_path(highlight_polygon, pad / 2);
+    auto highlight_path = rounded_highlighting_path(
+        highlight_polygon, NON_MOLECULAR_HIGHLIGHT_ROUNDING);
     m_paint_path = paint_path;
     m_selection_highlighting_path = highlight_path;
     m_predictive_highlighting_path = highlight_path;
