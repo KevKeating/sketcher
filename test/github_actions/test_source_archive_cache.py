@@ -3,7 +3,6 @@
 import hashlib
 import http.server
 import json
-import os
 import re
 import shutil
 import subprocess
@@ -11,8 +10,6 @@ import tarfile
 import threading
 import zipfile
 from pathlib import Path
-
-import pytest
 
 REPOSITORY_ROOT = Path(__file__).resolve().parents[2]
 CACHE_VARIABLE = "SKETCHER_DEPENDENCY_SOURCE_CODE_CACHE_DIR"
@@ -33,6 +30,10 @@ def _configure_external(tmp_path,
     cmake_lists = source_directory / "CMakeLists.txt"
 
     if archive_hashes:
+        versions_file = source_directory / "versions.json"
+        versions = json.loads(versions_file.read_text())
+        versions["source_archive_sha256"].update(archive_hashes)
+        versions_file.write_text(json.dumps(versions))
         contents = cmake_lists.read_text()
         contents = contents.replace(
             "https://gitlab.com/libeigen/eigen/-/archive/",
@@ -42,12 +43,6 @@ def _configure_external(tmp_path,
             "https://www.sqlite.org/${YEAR}/",
             source_url_base + "${YEAR}/",
         )
-        contents, count = re.subn(
-            r"(URL_HASH\s+SHA256=)[0-9a-fA-F]+",
-            lambda match: match.group(1) + next(archive_hashes),
-            contents,
-        )
-        assert count == 2
         contents = contents.replace(
             "DOWNLOAD_NAME eigen-${EIGEN_VERSION}.tar.bz2",
             "DOWNLOAD_NAME eigen-${EIGEN_VERSION}.tar.bz2\n  TIMEOUT 1",
@@ -66,8 +61,6 @@ foreach(LIBRARY eigen sqlite)
   file(APPEND "{properties_file.as_posix()}"
        "${{LIBRARY}}|${{DOWNLOAD_DIR}}\\n")
 endforeach()
-ExternalProject_Add_StepTargets(eigen download)
-ExternalProject_Add_StepTargets(sqlite download)
 """)
 
     build_directory = tmp_path / "build"
@@ -116,9 +109,21 @@ def _create_test_archives(directory):
     return eigen_archive, sqlite_archive
 
 
+def _hash_archives(archives):
+    """
+    Return the SHA256 hashes of the given Eigen and SQLite archives, keyed by
+    library name.
+    """
+    return {
+        library: hashlib.sha256(archive.read_bytes()).hexdigest()
+        for library, archive in zip(("eigen", "sqlite"), archives)
+    }
+
+
 def test_source_archive_cache_is_optional_and_resolves_relative_paths(tmp_path):
     """
-    Unset paths keep CMake defaults; relative cache paths become absolute.
+    Unset paths keep CMake defaults; relative cache paths are resolved against
+    the working directory.
     """
     default_build, default_directories = _configure_external(tmp_path /
                                                              "default")
@@ -138,7 +143,6 @@ def test_source_archive_cache_is_optional_and_resolves_relative_paths(tmp_path):
     assert all(
         Path(cache_directories[library]) == expected_root / library
         for library in ("eigen", "sqlite"))
-    assert all(Path(path).is_dir() for path in cache_directories.values())
     assert not (cache_build / "dependency-archives.json").exists()
 
 
@@ -151,14 +155,11 @@ def test_eigen_and_sqlite_download_steps_reuse_cached_archives_offline(
     assert cmake is not None
     fixture_directory = tmp_path / "fixtures"
     eigen_archive, sqlite_archive = _create_test_archives(fixture_directory)
-    archive_hashes = iter(
-        hashlib.sha256(archive.read_bytes()).hexdigest()
-        for archive in (eigen_archive, sqlite_archive))
     cache_root = tmp_path / "offline cache with spaces"
     build_directory, download_directories = _configure_external(
         tmp_path / "offline",
         cache_directory=str(cache_root),
-        archive_hashes=archive_hashes,
+        archive_hashes=_hash_archives((eigen_archive, sqlite_archive)),
     )
 
     for library, archive in (
@@ -167,7 +168,7 @@ def test_eigen_and_sqlite_download_steps_reuse_cached_archives_offline(
     ):
         destination = cache_root / library / archive.name
         shutil.copyfile(archive, destination)
-        result = subprocess.run(
+        subprocess.run(
             [
                 cmake, "--build",
                 str(build_directory), "--target", f"{library}-download"
@@ -178,52 +179,11 @@ def test_eigen_and_sqlite_download_steps_reuse_cached_archives_offline(
         )
         assert destination.stat().st_size == archive.stat().st_size
         assert Path(download_directories[library]) == cache_root / library
-        assert "Dependency source cache mismatch" not in result.stdout + result.stderr
 
 
-@pytest.mark.parametrize("state", ["missing", "valid", "corrupt"])
-@pytest.mark.parametrize("github_actions", [False, True])
-def test_source_archive_warning(tmp_path, state, github_actions):
+def test_corrupt_source_cache_recovers(tmp_path):
     """
-    Warn only for a mismatch, without modifying the archive or failing.
-    """
-    archive = tmp_path / "source archive.tar.bz2"
-    contents = b"pinned source archive"
-    expected_hash = hashlib.sha256(contents).hexdigest()
-    if state != "missing":
-        archive.write_bytes(contents if state == "valid" else b"corrupt")
-    result = subprocess.run(
-        [
-            shutil.which("cmake"), f"-DARCHIVE_PATH={archive}",
-            f"-DARCHIVE_HASH=SHA256={expected_hash}",
-            "-DCACHE_KEY=dependency-source-fixture-1.0", "-P",
-            str(REPOSITORY_ROOT / "external/check_source_archive.cmake")
-        ],
-        env={
-            **os.environ, "GITHUB_ACTIONS": str(github_actions).lower()
-        },
-        check=True,
-        capture_output=True,
-        text=True)
-    output = result.stdout + result.stderr
-    if state == "corrupt":
-        assert "failed SHA256 verification" in output
-        assert expected_hash in output
-        assert hashlib.sha256(b"corrupt").hexdigest() in output
-        assert archive.read_bytes() == b"corrupt"
-        if github_actions:
-            assert "::warning title=Dependency source cache mismatch::" in output
-            assert "Remove GitHub Actions cache entry 'dependency-source-fixture-1.0'" in output
-        else:
-            assert "CMake Warning" in output
-            assert "::warning" not in output
-    else:
-        assert not output
-
-
-def test_corrupt_source_cache_warns_and_recovers(tmp_path):
-    """
-    Both real download targets warn before replacing invalid cached files.
+    Both real download targets replace invalid cached files.
     """
     archives = _create_test_archives(tmp_path / "fixtures")
     archives_by_name = {
@@ -253,29 +213,18 @@ def test_corrupt_source_cache_warns_and_recovers(tmp_path):
             build_directory, _ = _configure_external(
                 tmp_path / "configure",
                 cache_directory=str(cache_root),
-                archive_hashes=iter(
-                    hashlib.sha256(archive.read_bytes()).hexdigest()
-                    for archive in archives),
+                archive_hashes=_hash_archives(archives),
                 source_url_base=f"http://127.0.0.1:{server.server_port}/")
-            versions = json.loads(
-                (REPOSITORY_ROOT / "external/versions.json").read_text())
             for library, archive in zip(("eigen", "sqlite"), archives):
                 cached_archive = cache_root / library / archive.name
                 cached_archive.write_bytes(b"corrupt cached archive")
-                result = subprocess.run(
-                    [
-                        shutil.which("cmake"), "--build",
-                        str(build_directory), "--target", f"{library}-download"
-                    ],
-                    env={
-                        **os.environ, "GITHUB_ACTIONS": "true"
-                    },
-                    check=True,
-                    capture_output=True,
-                    text=True)
-                output = result.stdout + result.stderr
-                assert "::warning title=Dependency source cache mismatch::" in output
-                assert f"Remove GitHub Actions cache entry 'dependency-source-{library}-{versions[library]}'" in output
+                subprocess.run([
+                    shutil.which("cmake"), "--build",
+                    str(build_directory), "--target", f"{library}-download"
+                ],
+                               check=True,
+                               capture_output=True,
+                               text=True)
                 assert cached_archive.read_bytes() == archive.read_bytes()
         finally:
             server.shutdown()

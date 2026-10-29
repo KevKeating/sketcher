@@ -28,6 +28,14 @@ runs:
         echo "build-dir=${BUILD_DIR}" >> $GITHUB_OUTPUT
         echo "lib-dir=${BUILD_DIR}/${{ inputs.library }}-${{ inputs.version }}" >> $GITHUB_OUTPUT
         echo "cache-key=${{ inputs.library }}-${{ inputs.version }}-${{ matrix.runner }}-${{ matrix.build-name }}${{ inputs.host-build == 'true' && '-host' || '' }}-${{ hashFiles('external/CMakeLists.txt', 'external/versions.json', 'external/sqlite_cmake/*', 'external/*.patch') }}" >> $GITHUB_OUTPUT
+        # Only dependencies with a pinned source archive hash in versions.json
+        # have their source archive cached. The cache is shared across OSes, and
+        # including the hash in the key means that a hash change can never
+        # restore a stale archive.
+        SOURCE_ARCHIVE_SHA256="${{ fromJson(env.VERSIONS_JSON).source_archive_sha256[inputs.library] }}"
+        echo "cache-source=$([ -n "${SOURCE_ARCHIVE_SHA256}" ] && echo true || echo false)" >> $GITHUB_OUTPUT
+        echo "source-cache-path=${{ env.DEPENDENCY_SOURCE_CODE_CACHE_DIR }}/${{ inputs.library }}" >> $GITHUB_OUTPUT
+        echo "source-cache-key=dependency-source-${{ inputs.library }}-${{ inputs.version }}-${SOURCE_ARCHIVE_SHA256}" >> $GITHUB_OUTPUT
 
     - uses: actions/cache@v5
       id: cache-check
@@ -38,15 +46,31 @@ runs:
 
     - uses: actions/cache/restore@v5
       id: source-cache-check
-      if: steps.cache-check.outputs.cache-hit != 'true' && (inputs.library == 'eigen' || inputs.library == 'sqlite')
+      if: steps.cache-check.outputs.cache-hit != 'true' && steps.vars.outputs.cache-source == 'true'
       continue-on-error: true
       with:
-        path: ${{ env.DEPENDENCY_SOURCE_CODE_CACHE_DIR }}/${{ inputs.library }}
-        key: dependency-source-${{ inputs.library }}-${{ inputs.version }}
+        path: ${{ steps.vars.outputs.source-cache-path }}
+        key: ${{ steps.vars.outputs.source-cache-key }}
+        enableCrossOsArchive: true
+
+    # Download the source archive separately from the build so that it gets
+    # cached as soon as possible, which lets runners that reach this point later
+    # use it even if they started before it was available
+    - name: Download library source
+      id: download-source
+      if: steps.cache-check.outputs.cache-hit != 'true' && steps.vars.outputs.cache-source == 'true' && steps.source-cache-check.outputs.cache-hit != 'true'
+      shell: bash
+      run: cmake --build ${{ steps.vars.outputs.build-dir }} --verbose --target ${{ inputs.library }}-download
+
+    - uses: actions/cache/save@v5
+      if: steps.download-source.outcome == 'success'
+      continue-on-error: true
+      with:
+        path: ${{ steps.vars.outputs.source-cache-path }}
+        key: ${{ steps.vars.outputs.source-cache-key }}
         enableCrossOsArchive: true
 
     - name: Build library
-      id: build-library
       if: steps.cache-check.outputs.cache-hit != 'true'
       # The Windows Qt build fails if we try to use bash, since it shells out to
       # cmd and doesn't protect the path backslashes from bash
@@ -60,14 +84,6 @@ runs:
         cmake --build ${{ steps.vars.outputs.build-dir }} --verbose${{env.endl}}
               --target ${{ inputs.library }}${{env.endl}}
               --config ${{ env.BUILD_TYPE }}
-
-    - uses: actions/cache/save@v5
-      if: steps.build-library.outcome == 'success' && steps.cache-check.outputs.cache-hit != 'true' && (inputs.library == 'eigen' || inputs.library == 'sqlite') && steps.source-cache-check.outputs.cache-hit != 'true'
-      continue-on-error: true
-      with:
-        path: ${{ env.DEPENDENCY_SOURCE_CODE_CACHE_DIR }}/${{ inputs.library }}
-        key: dependency-source-${{ inputs.library }}-${{ inputs.version }}
-        enableCrossOsArchive: true
 
     # save the dependency build even if the rest of the build fails
     - name: Save dependency to cache

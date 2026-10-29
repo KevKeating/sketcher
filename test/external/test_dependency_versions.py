@@ -149,6 +149,9 @@ def pytest_generate_tests(metafunc: "_pytest.python.Metafunc"):
         sketcher_versions = json.load(sketcher_versions_in)
     for package in PACKAGES_TO_SKIP:
         sketcher_versions.pop(package)
+    # source archive hashes are stored alongside the versions, but aren't
+    # versions themselves
+    sketcher_versions.pop("source_archive_sha256")
     # convert the versions to tuples of ints.  Otherwise, RDKit version
     # comparisons may fail because of leading zeroes in the month.  (I.e.
     # "2024.09.6" != "2024.9.6", even though they represent the same versions)

@@ -18,15 +18,11 @@ string(JSON SQLITE_VERSION GET ${VERSIONS} sqlite)
 string(JSON ZLIB_VERSION GET ${VERSIONS} zlib)
 string(JSON ZSTD_VERSION GET ${VERSIONS} zstd)
 
+# Note that a relative path given with -D is resolved against the current
+# working directory
 set(SKETCHER_DEPENDENCY_SOURCE_CODE_CACHE_DIR
     ""
     CACHE PATH "Directory for cached dependency source archives")
-if(NOT SKETCHER_DEPENDENCY_SOURCE_CODE_CACHE_DIR STREQUAL "")
-  get_filename_component(
-    SKETCHER_DEPENDENCY_SOURCE_CODE_CACHE_DIR_ABSOLUTE
-    "${SKETCHER_DEPENDENCY_SOURCE_CODE_CACHE_DIR}" ABSOLUTE BASE_DIR
-    "${CMAKE_CURRENT_BINARY_DIR}")
-endif()
 
 # Ensure args passed to ExternalProject_Add's CMAKE_ARGS support semicolons
 function(set_cmake_arg VAR_NAME)
@@ -37,37 +33,21 @@ function(set_cmake_arg VAR_NAME)
       PARENT_SCOPE)
 endfunction()
 
-# Return DOWNLOAD_DIR arguments only when a source archive cache is configured.
-function(get_dependency_source_cache_args VAR_NAME LIBRARY)
-  set(DOWNLOAD_ARGS)
-  if(SKETCHER_DEPENDENCY_SOURCE_CODE_CACHE_DIR_ABSOLUTE)
-    set(DOWNLOAD_DIR
-        "${SKETCHER_DEPENDENCY_SOURCE_CODE_CACHE_DIR_ABSOLUTE}/${LIBRARY}")
-    file(MAKE_DIRECTORY "${DOWNLOAD_DIR}")
-    set(DOWNLOAD_ARGS DOWNLOAD_DIR "${DOWNLOAD_DIR}")
+# Return the ExternalProject_Add arguments for a dependency whose source archive
+# is pinned in versions.json's source_archive_sha256 (and may therefore be
+# cached by CI). The archive is downloaded to the source archive cache when one
+# is configured, and a <LIBRARY>-download target is created so that CI can cache
+# a newly downloaded archive before building the dependency.
+function(get_source_archive_args VAR_NAME LIBRARY)
+  string(JSON ARCHIVE_SHA256 GET "${VERSIONS}" source_archive_sha256 ${LIBRARY})
+  set(ARCHIVE_ARGS URL_HASH SHA256=${ARCHIVE_SHA256} STEP_TARGETS download)
+  if(NOT SKETCHER_DEPENDENCY_SOURCE_CODE_CACHE_DIR STREQUAL "")
+    list(APPEND ARCHIVE_ARGS DOWNLOAD_DIR
+         "${SKETCHER_DEPENDENCY_SOURCE_CODE_CACHE_DIR}/${LIBRARY}")
   endif()
   set(${VAR_NAME}
-      "${DOWNLOAD_ARGS}"
+      "${ARCHIVE_ARGS}"
       PARENT_SCOPE)
-endfunction()
-
-# Warn before ExternalProject silently replaces a corrupt cached archive.
-function(add_dependency_source_cache_check LIBRARY VERSION)
-  if(NOT SKETCHER_DEPENDENCY_SOURCE_CODE_CACHE_DIR_ABSOLUTE)
-    return()
-  endif()
-  ExternalProject_Get_Property(${LIBRARY} DOWNLOAD_DIR DOWNLOAD_NAME URL_HASH)
-  set(CHECK_SCRIPT
-      "${CMAKE_CURRENT_FUNCTION_LIST_DIR}/check_source_archive.cmake")
-  ExternalProject_Add_Step(
-    ${LIBRARY} check_source_cache
-    COMMAND
-      "${CMAKE_COMMAND}" "-DARCHIVE_PATH=${DOWNLOAD_DIR}/${DOWNLOAD_NAME}"
-      "-DARCHIVE_HASH=${URL_HASH}"
-      "-DCACHE_KEY=dependency-source-${LIBRARY}-${VERSION}" -P "${CHECK_SCRIPT}"
-    DEPENDS "${CHECK_SCRIPT}"
-    DEPENDEES mkdir
-    DEPENDERS download INDEPENDENT TRUE)
 endfunction()
 
 # generate_git_patch_command(<var_name> [SUBMODULE <submodule>]
@@ -218,19 +198,15 @@ ExternalProject_Add(
     -DZSTD_BUILD_SHARED=OFF -DZSTD_BUILD_PROGRAMS=OFF)
 
 # Download the official Eigen release archive so CI can cache it across OSes.
-get_dependency_source_cache_args(EIGEN_DOWNLOAD_ARGS eigen)
+get_source_archive_args(EIGEN_ARCHIVE_ARGS eigen)
 ExternalProject_Add(
   eigen
   URL https://gitlab.com/libeigen/eigen/-/archive/${EIGEN_VERSION}/eigen-${EIGEN_VERSION}.tar.bz2
-  # Update the hash when changing the Eigen version.
-  URL_HASH
-    SHA256=b4c198460eba6f28d34894e3a5710998818515104d6e74e5cc331ce31e46e626
   DOWNLOAD_NAME eigen-${EIGEN_VERSION}.tar.bz2
-  DOWNLOAD_EXTRACT_TIMESTAMP FALSE ${EIGEN_DOWNLOAD_ARGS}
+  DOWNLOAD_EXTRACT_TIMESTAMP FALSE ${EIGEN_ARCHIVE_ARGS}
   CMAKE_ARGS
     ${COMMON_EXTERNAL_PROJECT_CMAKE_ARGS}
     -DCMAKE_INSTALL_PREFIX=${CMAKE_CURRENT_BINARY_DIR}/eigen-${EIGEN_VERSION})
-add_dependency_source_cache_check(eigen ${EIGEN_VERSION})
 
 # Build expat library
 string(REPLACE "." "_" EXPAT_GIT_TAG ${EXPAT_VERSION})
@@ -251,15 +227,12 @@ ExternalProject_Add(
 
 # Build SQLite library
 generate_sqlite_urls(SQLITE_URLS)
-get_dependency_source_cache_args(SQLITE_DOWNLOAD_ARGS sqlite)
+get_source_archive_args(SQLITE_ARCHIVE_ARGS sqlite)
 ExternalProject_Add(
   sqlite
   URL ${SQLITE_URLS}
-  # Update the hash when changing the SQLite version.
-  URL_HASH
-    SHA256=1cc824d0f5e675829fa37018318fda833ea56f7e9de2b41eddd9f7643b5ec29e
   DOWNLOAD_NAME ${SQLITE_URLS_ARCHIVE_NAME}
-  DOWNLOAD_EXTRACT_TIMESTAMP FALSE ${SQLITE_DOWNLOAD_ARGS}
+  DOWNLOAD_EXTRACT_TIMESTAMP FALSE ${SQLITE_ARCHIVE_ARGS}
   # SQLite doesn't work with CMake out of the box, so copy in our CMake files
   PATCH_COMMAND ${CMAKE_COMMAND} -E copy_directory
                 ${CMAKE_CURRENT_SOURCE_DIR}/sqlite_cmake <SOURCE_DIR>
@@ -267,7 +240,6 @@ ExternalProject_Add(
     ${COMMON_EXTERNAL_PROJECT_CMAKE_ARGS}
     -DCMAKE_INSTALL_PREFIX=${CMAKE_CURRENT_BINARY_DIR}/sqlite-${SQLITE_VERSION}
     -DCMAKE_PREFIX_PATH=${CMAKE_CURRENT_BINARY_DIR}/zlib-${ZLIB_VERSION})
-add_dependency_source_cache_check(sqlite ${SQLITE_VERSION})
 
 # Build Boost library
 set(BOOST_LIBS_TO_INCLUDE
