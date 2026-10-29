@@ -56,15 +56,18 @@ runs:
         set | findstr /c:"oneAPI" >> "%GITHUB_ENV%"
         >> "%GITHUB_ENV%" echo SETVARS_COMPLETED=1
 
+    # Git Bash's GNU link utility creates hard links and can shadow MSVC's
+    # link.exe on PATH. Hide it so compiler invocations use the MSVC linker.
+    # setup-fortran already hides this utility on cache misses.
+    - name: Hide GNU link utility
+      if: steps.fortran-cache.outputs.cache-hit == 'true'
+      shell: bash
+      run: mv /usr/bin/link "$RUNNER_TEMP/link"
+
     # Only set the Fortran compiler; the C and C++ compilers must remain MSVC.
-    # setup-fortran already hides the GNU linker on cache misses.
     - name: Activate Fortran
       shell: bash
-      run: |
-        if [[ "${{ steps.fortran-cache.outputs.cache-hit }}" == 'true' ]]; then
-            mv /usr/bin/link "$RUNNER_TEMP/link"
-        fi
-        echo FC=ifx >> "$GITHUB_ENV"
+      run: echo FC=ifx >> "$GITHUB_ENV"
 
       # Find MSVC using vswhere.exe, then use vcvarsall.bat to output the
       # appropriate environment variable updates and put them into $GITHUB_ENV
