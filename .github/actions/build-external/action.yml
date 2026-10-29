@@ -20,7 +20,7 @@ outputs:
 runs:
   using: 'composite'
   steps:
-    - name: Determine the build directories and cache key
+    - name: Determine build directories and cache keys
       id: vars
       shell: bash
       run: |
@@ -37,14 +37,16 @@ runs:
         echo "source-cache-path=${{ env.DEPENDENCY_SOURCE_CODE_CACHE_DIR }}/${{ inputs.library }}" >> $GITHUB_OUTPUT
         echo "source-cache-key=dependency-source-${{ inputs.library }}-${{ inputs.version }}-${SOURCE_ARCHIVE_SHA256}" >> $GITHUB_OUTPUT
 
-    - uses: actions/cache@v5
+    - name: Restore built dependency from cache
+      uses: actions/cache@v5
       id: cache-check
       with:
         path: ${{ steps.vars.outputs.lib-dir }}
         # Regenerate the cache if the version OR external/CMakeLists.txt changes
         key: ${{ steps.vars.outputs.cache-key }}
 
-    - uses: actions/cache/restore@v5
+    - name: Restore dependency source archive from cache
+      uses: actions/cache/restore@v5
       id: source-cache-check
       if: steps.cache-check.outputs.cache-hit != 'true' && steps.vars.outputs.cache-source == 'true'
       continue-on-error: true
@@ -56,13 +58,14 @@ runs:
     # Download the source archive separately from the build so that it gets
     # cached as soon as possible, which lets runners that reach this point later
     # use it even if they started before it was available
-    - name: Download library source
+    - name: Download dependency source archive
       id: download-source
       if: steps.cache-check.outputs.cache-hit != 'true' && steps.vars.outputs.cache-source == 'true' && steps.source-cache-check.outputs.cache-hit != 'true'
       shell: bash
       run: cmake --build ${{ steps.vars.outputs.build-dir }} --verbose --target ${{ inputs.library }}-download
 
-    - uses: actions/cache/save@v5
+    - name: Save dependency source archive to cache
+      uses: actions/cache/save@v5
       if: steps.download-source.outcome == 'success'
       continue-on-error: true
       with:
@@ -70,7 +73,7 @@ runs:
         key: ${{ steps.vars.outputs.source-cache-key }}
         enableCrossOsArchive: true
 
-    - name: Build library
+    - name: Build dependency
       if: steps.cache-check.outputs.cache-hit != 'true'
       # The Windows Qt build fails if we try to use bash, since it shells out to
       # cmd and doesn't protect the path backslashes from bash
@@ -86,7 +89,7 @@ runs:
               --config ${{ env.BUILD_TYPE }}
 
     # save the dependency build even if the rest of the build fails
-    - name: Save dependency to cache
+    - name: Save built dependency to cache
       if: steps.cache-check.outputs.cache-hit != 'true'
       uses: actions/cache/save@v5
       with:
