@@ -62,14 +62,6 @@ export type SketcherWASM = {
   sketcher_export_image: (format: SketcherWasmImageFormat) => string;
   sketcher_clear: () => void;
   sketcher_is_empty: () => boolean;
-  /**
-   * Replace the custom monomer database contents with definitions from JSON.
-   * @param json JSON string containing the new monomer definitions.
-   * @param runSmilesCanonicalization Run SMILES canonicalization for the new
-   * database contents. Defaults to true. Set this to false to skip
-   * canonicalization only when all SMILES in the JSON string have been
-   * canonicalized using the same canonicalization scheme as the Sketcher.
-   */
   sketcher_load_custom_monomers: (
     json: string,
     runSmilesCanonicalization?: boolean,
