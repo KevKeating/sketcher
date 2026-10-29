@@ -18,12 +18,36 @@ string(JSON SQLITE_VERSION GET ${VERSIONS} sqlite)
 string(JSON ZLIB_VERSION GET ${VERSIONS} zlib)
 string(JSON ZSTD_VERSION GET ${VERSIONS} zstd)
 
+set(SKETCHER_DEPENDENCY_SOURCE_CODE_CACHE_DIR
+    ""
+    CACHE PATH "Directory for cached dependency source archives")
+if(NOT SKETCHER_DEPENDENCY_SOURCE_CODE_CACHE_DIR STREQUAL "")
+  get_filename_component(
+    SKETCHER_DEPENDENCY_SOURCE_CODE_CACHE_DIR_ABSOLUTE
+    "${SKETCHER_DEPENDENCY_SOURCE_CODE_CACHE_DIR}" ABSOLUTE BASE_DIR
+    "${CMAKE_CURRENT_BINARY_DIR}")
+endif()
+
 # Ensure args passed to ExternalProject_Add's CMAKE_ARGS support semicolons
 function(set_cmake_arg VAR_NAME)
   set(CMAKE_ARG ${ARGN})
   string(REPLACE ";" "$<SEMICOLON>" CMAKE_ARG "${CMAKE_ARG}")
   set(${VAR_NAME}
       "${CMAKE_ARG}"
+      PARENT_SCOPE)
+endfunction()
+
+# Return DOWNLOAD_DIR arguments only when a source archive cache is configured.
+function(get_dependency_source_cache_args VAR_NAME LIBRARY)
+  set(DOWNLOAD_ARGS)
+  if(SKETCHER_DEPENDENCY_SOURCE_CODE_CACHE_DIR_ABSOLUTE)
+    set(DOWNLOAD_DIR
+        "${SKETCHER_DEPENDENCY_SOURCE_CODE_CACHE_DIR_ABSOLUTE}/${LIBRARY}")
+    file(MAKE_DIRECTORY "${DOWNLOAD_DIR}")
+    set(DOWNLOAD_ARGS DOWNLOAD_DIR "${DOWNLOAD_DIR}")
+  endif()
+  set(${VAR_NAME}
+      "${DOWNLOAD_ARGS}"
       PARENT_SCOPE)
 endfunction()
 
@@ -175,15 +199,15 @@ ExternalProject_Add(
     -DZSTD_BUILD_SHARED=OFF -DZSTD_BUILD_PROGRAMS=OFF)
 
 # Download the official Eigen release archive so CI can cache it across OSes.
+get_dependency_source_cache_args(EIGEN_DOWNLOAD_ARGS eigen)
 ExternalProject_Add(
   eigen
-  URL https://gitlab.com/libeigen/eigen/-/archive/${EIGEN_VERSION}/eigen-${EIGEN_VERSION}.tar.gz
+  URL https://gitlab.com/libeigen/eigen/-/archive/${EIGEN_VERSION}/eigen-${EIGEN_VERSION}.tar.bz2
   # Update the hash when changing the Eigen version.
   URL_HASH
-    SHA256=8586084f71f9bde545ee7fa6d00288b264a2b7ac3607b974e54d13e7162c1c72
-  DOWNLOAD_NAME eigen-${EIGEN_VERSION}.tar.gz
-  DOWNLOAD_DIR ${CMAKE_CURRENT_BINARY_DIR}/downloads/eigen
-  DOWNLOAD_EXTRACT_TIMESTAMP FALSE
+    SHA256=b4c198460eba6f28d34894e3a5710998818515104d6e74e5cc331ce31e46e626
+  DOWNLOAD_NAME eigen-${EIGEN_VERSION}.tar.bz2
+  DOWNLOAD_EXTRACT_TIMESTAMP FALSE ${EIGEN_DOWNLOAD_ARGS}
   CMAKE_ARGS
     ${COMMON_EXTERNAL_PROJECT_CMAKE_ARGS}
     -DCMAKE_INSTALL_PREFIX=${CMAKE_CURRENT_BINARY_DIR}/eigen-${EIGEN_VERSION})
@@ -207,6 +231,7 @@ ExternalProject_Add(
 
 # Build SQLite library
 generate_sqlite_urls(SQLITE_URLS)
+get_dependency_source_cache_args(SQLITE_DOWNLOAD_ARGS sqlite)
 ExternalProject_Add(
   sqlite
   URL ${SQLITE_URLS}
@@ -214,8 +239,7 @@ ExternalProject_Add(
   URL_HASH
     SHA256=1cc824d0f5e675829fa37018318fda833ea56f7e9de2b41eddd9f7643b5ec29e
   DOWNLOAD_NAME ${SQLITE_URLS_ARCHIVE_NAME}
-  DOWNLOAD_DIR ${CMAKE_CURRENT_BINARY_DIR}/downloads/sqlite
-  DOWNLOAD_EXTRACT_TIMESTAMP FALSE
+  DOWNLOAD_EXTRACT_TIMESTAMP FALSE ${SQLITE_DOWNLOAD_ARGS}
   # SQLite doesn't work with CMake out of the box, so copy in our CMake files
   PATCH_COMMAND ${CMAKE_COMMAND} -E copy_directory
                 ${CMAKE_CURRENT_SOURCE_DIR}/sqlite_cmake <SOURCE_DIR>
@@ -402,29 +426,3 @@ ExternalProject_Add(
     -DQT_FEATURE_brotli=OFF
     -DQT_FEATURE_sql=OFF
     ${EXTRA_QT_CMAKE_ARGS})
-
-# Publish stable metadata for the two direct non-GitHub source archives. The
-# relative paths keep the cache layout independent of the build root and OS.
-set(SOURCE_ARCHIVE_METADATA "{\"archives\":{")
-foreach(LIBRARY eigen sqlite)
-  ExternalProject_Get_Property(${LIBRARY} URL URL_HASH DOWNLOAD_DIR
-                               DOWNLOAD_NAME)
-  file(RELATIVE_PATH CACHE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
-       ${DOWNLOAD_DIR})
-  file(TO_CMAKE_PATH "${CACHE_DIRECTORY}" CACHE_DIRECTORY)
-  string(REGEX REPLACE "^SHA256=" "" CACHE_SHA256 "${URL_HASH}")
-  string(SHA256 CACHE_KEY "v1|${LIBRARY}|${URL}|${URL_HASH}")
-  if(LIBRARY STREQUAL "eigen")
-    set(METADATA_SEPARATOR "")
-  else()
-    set(METADATA_SEPARATOR ",")
-  endif()
-  string(
-    APPEND
-    SOURCE_ARCHIVE_METADATA
-    "${METADATA_SEPARATOR}\"${LIBRARY}\":{\"directory\":\"${CACHE_DIRECTORY}\",\"archive\":\"${DOWNLOAD_NAME}\",\"sha256\":\"${CACHE_SHA256}\",\"key\":\"${CACHE_KEY}\"}"
-  )
-endforeach()
-string(APPEND SOURCE_ARCHIVE_METADATA "}}\n")
-file(WRITE ${CMAKE_CURRENT_BINARY_DIR}/dependency-archives.json
-     "${SOURCE_ARCHIVE_METADATA}")
