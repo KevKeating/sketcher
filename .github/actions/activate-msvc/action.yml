@@ -12,21 +12,57 @@ permissions:
 runs:
   using: 'composite'
   steps:
+    - name: Determine Fortran cache settings
+      id: fortran-vars
+      shell: bash
+      run: |
+        echo 'version=2025.2' >> "$GITHUB_OUTPUT"
+        echo "image=$ImageOS" >> "$GITHUB_OUTPUT"
+        echo 'ONEAPI_ROOT=C:\Program Files (x86)\Intel\oneAPI' >> "$GITHUB_ENV"
+
+    # setup-fortran rotates its own cache daily. Only call it when our stable
+    # cache is missing, and activate the restored installation ourselves.
+    - name: Restore Fortran
+      id: fortran-cache
+      uses: actions/cache/restore@v5
+      with:
+        path: ${{ env.ONEAPI_ROOT }}
+        key: ${{ runner.os }}-${{ runner.arch }}-${{ steps.fortran-vars.outputs.image }}-intel-${{ steps.fortran-vars.outputs.version }}-v1
+
     - name: Install Fortran
-      id: install-fortran
+      if: steps.fortran-cache.outputs.cache-hit != 'true'
       uses: fortran-lang/setup-fortran@v1.9.0
       with:
         compiler: 'intel'
-        version: '2025.2'
+        version: ${{ steps.fortran-vars.outputs.version }}
         update-environment: false
 
-      # If we'd let the previous step update the environment variables, it
-      # would've also set the C and C++ compilers, and we only want the Fortran
-      # compiler. Instead, we manually set the Fortran compiler environment
-      # variable here.
+    # Save immediately so a later build failure doesn't discard the installation.
+    - name: Save Fortran
+      if: steps.fortran-cache.outputs.cache-hit != 'true'
+      uses: actions/cache/save@v5
+      with:
+        path: ${{ env.ONEAPI_ROOT }}
+        key: ${{ steps.fortran-cache.outputs.cache-primary-key }}
+
+    - name: Activate cached oneAPI
+      if: steps.fortran-cache.outputs.cache-hit == 'true'
+      shell: cmd
+      run: |
+        call "%ONEAPI_ROOT%\setvars.bat"
+        if errorlevel 1 exit /b 1
+        set | findstr /c:"oneAPI" >> "%GITHUB_ENV%"
+        >> "%GITHUB_ENV%" echo SETVARS_COMPLETED=1
+
+    # Only set the Fortran compiler; the C and C++ compilers must remain MSVC.
+    # setup-fortran already hides the GNU linker on cache misses.
     - name: Activate Fortran
       shell: bash
-      run: echo FC=${{ steps.install-fortran.outputs.fc }} >> $GITHUB_ENV
+      run: |
+        if [[ "${{ steps.fortran-cache.outputs.cache-hit }}" == 'true' ]]; then
+            mv /usr/bin/link "$RUNNER_TEMP/link"
+        fi
+        echo FC=ifx >> "$GITHUB_ENV"
 
       # Find MSVC using vswhere.exe, then use vcvarsall.bat to output the
       # appropriate environment variable updates and put them into $GITHUB_ENV
