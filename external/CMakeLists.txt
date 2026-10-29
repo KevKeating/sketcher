@@ -39,7 +39,19 @@ endfunction()
 # is configured, and a <LIBRARY>-download target is created so that CI can cache
 # a newly downloaded archive before building the dependency.
 function(get_source_archive_args VAR_NAME LIBRARY)
-  string(JSON ARCHIVE_SHA256 GET "${VERSIONS}" source_archive_sha256 ${LIBRARY})
+  string(
+    JSON
+    ARCHIVE_SHA256
+    ERROR_VARIABLE
+    JSON_ERROR
+    GET
+    "${VERSIONS}"
+    source_archive_sha256
+    ${LIBRARY})
+  if(JSON_ERROR)
+    message(FATAL_ERROR "No SHA256 hash for ${LIBRARY}'s source archive. Add "
+                        "it to source_archive_sha256 in versions.json.")
+  endif()
   set(ARCHIVE_ARGS URL_HASH SHA256=${ARCHIVE_SHA256} STEP_TARGETS download)
   if(NOT SKETCHER_DEPENDENCY_SOURCE_CODE_CACHE_DIR STREQUAL "")
     list(APPEND ARCHIVE_ARGS DOWNLOAD_DIR
