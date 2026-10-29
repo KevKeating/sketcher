@@ -20,8 +20,10 @@ runs:
         echo "image=$ImageOS" >> "$GITHUB_OUTPUT"
         echo 'ONEAPI_ROOT=C:\Program Files (x86)\Intel\oneAPI' >> "$GITHUB_ENV"
 
-    # setup-fortran rotates its own cache daily. Only call it when our stable
-    # cache is missing, and activate the restored installation ourselves.
+    # setup-fortran has built-in caching, but it rotates its own cache daily as
+    # a workaround to https://github.com/actions/cache/issues/144, which was
+    # fixed years ago. To avoid reinstalling Fortran every day and filling up
+    # our cache space with repeated copies of Fortan, we handle caching ourselves
     - name: Restore Fortran
       id: fortran-cache
       uses: actions/cache/restore@v5
