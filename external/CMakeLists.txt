@@ -85,6 +85,9 @@ function(generate_sqlite_urls VAR_NAME)
   set(${VAR_NAME}
       "${JOINED_URLS}"
       PARENT_SCOPE)
+  set(${VAR_NAME}_ARCHIVE_NAME
+      "sqlite-amalgamation-${SQLITE_VERS_DIGITS}${TRAILING_ZEROS}.zip"
+      PARENT_SCOPE)
 endfunction()
 
 set(COMMON_EXTERNAL_PROJECT_CMAKE_ARGS
@@ -171,12 +174,16 @@ ExternalProject_Add(
     -DCMAKE_INSTALL_PREFIX=${CMAKE_CURRENT_BINARY_DIR}/zstd-${ZSTD_VERSION}
     -DZSTD_BUILD_SHARED=OFF -DZSTD_BUILD_PROGRAMS=OFF)
 
-# Build Eigen library
+# Download the official Eigen release archive so CI can cache it across OSes.
 ExternalProject_Add(
   eigen
-  GIT_REPOSITORY https://gitlab.com/libeigen/eigen.git
-  GIT_TAG ${EIGEN_VERSION}
-  GIT_SHALLOW TRUE
+  URL https://gitlab.com/libeigen/eigen/-/archive/${EIGEN_VERSION}/eigen-${EIGEN_VERSION}.tar.gz
+  # Update the hash when changing the Eigen version.
+  URL_HASH
+    SHA256=8586084f71f9bde545ee7fa6d00288b264a2b7ac3607b974e54d13e7162c1c72
+  DOWNLOAD_NAME eigen-${EIGEN_VERSION}.tar.gz
+  DOWNLOAD_DIR ${CMAKE_CURRENT_BINARY_DIR}/downloads/eigen
+  DOWNLOAD_EXTRACT_TIMESTAMP FALSE
   CMAKE_ARGS
     ${COMMON_EXTERNAL_PROJECT_CMAKE_ARGS}
     -DCMAKE_INSTALL_PREFIX=${CMAKE_CURRENT_BINARY_DIR}/eigen-${EIGEN_VERSION})
@@ -203,6 +210,12 @@ generate_sqlite_urls(SQLITE_URLS)
 ExternalProject_Add(
   sqlite
   URL ${SQLITE_URLS}
+  # Update the hash when changing the SQLite version.
+  URL_HASH
+    SHA256=1cc824d0f5e675829fa37018318fda833ea56f7e9de2b41eddd9f7643b5ec29e
+  DOWNLOAD_NAME ${SQLITE_URLS_ARCHIVE_NAME}
+  DOWNLOAD_DIR ${CMAKE_CURRENT_BINARY_DIR}/downloads/sqlite
+  DOWNLOAD_EXTRACT_TIMESTAMP FALSE
   # SQLite doesn't work with CMake out of the box, so copy in our CMake files
   PATCH_COMMAND ${CMAKE_COMMAND} -E copy_directory
                 ${CMAKE_CURRENT_SOURCE_DIR}/sqlite_cmake <SOURCE_DIR>
@@ -389,3 +402,29 @@ ExternalProject_Add(
     -DQT_FEATURE_brotli=OFF
     -DQT_FEATURE_sql=OFF
     ${EXTRA_QT_CMAKE_ARGS})
+
+# Publish stable metadata for the two direct non-GitHub source archives. The
+# relative paths keep the cache layout independent of the build root and OS.
+set(SOURCE_ARCHIVE_METADATA "{\"archives\":{")
+foreach(LIBRARY eigen sqlite)
+  ExternalProject_Get_Property(${LIBRARY} URL URL_HASH DOWNLOAD_DIR
+                               DOWNLOAD_NAME)
+  file(RELATIVE_PATH CACHE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+       ${DOWNLOAD_DIR})
+  file(TO_CMAKE_PATH "${CACHE_DIRECTORY}" CACHE_DIRECTORY)
+  string(REGEX REPLACE "^SHA256=" "" CACHE_SHA256 "${URL_HASH}")
+  string(SHA256 CACHE_KEY "v1|${LIBRARY}|${URL}|${URL_HASH}")
+  if(LIBRARY STREQUAL "eigen")
+    set(METADATA_SEPARATOR "")
+  else()
+    set(METADATA_SEPARATOR ",")
+  endif()
+  string(
+    APPEND
+    SOURCE_ARCHIVE_METADATA
+    "${METADATA_SEPARATOR}\"${LIBRARY}\":{\"directory\":\"${CACHE_DIRECTORY}\",\"archive\":\"${DOWNLOAD_NAME}\",\"sha256\":\"${CACHE_SHA256}\",\"key\":\"${CACHE_KEY}\"}"
+  )
+endforeach()
+string(APPEND SOURCE_ARCHIVE_METADATA "}}\n")
+file(WRITE ${CMAKE_CURRENT_BINARY_DIR}/dependency-archives.json
+     "${SOURCE_ARCHIVE_METADATA}")

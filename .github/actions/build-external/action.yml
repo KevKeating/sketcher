@@ -36,6 +36,24 @@ runs:
         # Regenerate the cache if the version OR external/CMakeLists.txt changes
         key: ${{ steps.vars.outputs.cache-key }}
 
+    - name: Read source archive cache metadata
+      id: source-archive
+      if: steps.cache-check.outputs.cache-hit != 'true' && (inputs.library == 'eigen' || inputs.library == 'sqlite')
+      continue-on-error: true
+      shell: bash
+      run: |
+        python3 .github/actions/build-external/source_archive_cache.py prepare \
+          "${{ steps.vars.outputs.build-dir }}" "${{ inputs.library }}"
+
+    - uses: actions/cache/restore@v5
+      id: source-cache-check
+      if: steps.source-archive.outputs.key != ''
+      continue-on-error: true
+      with:
+        path: ${{ steps.source-archive.outputs.path }}
+        key: source-${{ steps.source-archive.outputs.key }}
+        enableCrossOsArchive: true
+
     - name: Build library
       if: steps.cache-check.outputs.cache-hit != 'true'
       # The Windows Qt build fails if we try to use bash, since it shells out to
@@ -50,6 +68,23 @@ runs:
         cmake --build ${{ steps.vars.outputs.build-dir }} --verbose${{env.endl}}
               --target ${{ inputs.library }}${{env.endl}}
               --config ${{ env.BUILD_TYPE }}
+
+    - name: Check downloaded source archive
+      id: source-archive-check
+      if: always() && steps.source-archive.outputs.key != ''
+      continue-on-error: true
+      shell: bash
+      run: |
+        python3 .github/actions/build-external/source_archive_cache.py check \
+          "${{ steps.vars.outputs.build-dir }}" "${{ inputs.library }}"
+
+    - uses: actions/cache/save@v5
+      if: always() && !cancelled() && steps.source-archive-check.outputs.valid == 'true' && steps.source-cache-check.outputs.cache-hit != 'true'
+      continue-on-error: true
+      with:
+        path: ${{ steps.source-archive-check.outputs.path }}
+        key: source-${{ steps.source-archive-check.outputs.key }}
+        enableCrossOsArchive: true
 
     # save the dependency build even if the rest of the build fails
     - name: Save dependency to cache
