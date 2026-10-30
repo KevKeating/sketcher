@@ -43,8 +43,6 @@ runs:
         curl.exe --fail --location --retry 5 --retry-delay 5 --output "%RUNNER_TEMP%\oneapi.exe" --url "${{ steps.oneapi.outputs.url }}" || exit /b 1
         start /b /wait "" "%RUNNER_TEMP%\oneapi.exe" -s -x -f "%RUNNER_TEMP%\oneapi_extracted" --log "%RUNNER_TEMP%\oneapi_extract.log"
         "%RUNNER_TEMP%\oneapi_extracted\bootstrapper.exe" -s --action install --components=${{ steps.oneapi.outputs.components }} --eula=accept -p=NEED_VS2017_INTEGRATION=0 -p=NEED_VS2019_INTEGRATION=0 -p=NEED_VS2022_INTEGRATION=0 --log-dir="%RUNNER_TEMP%"
-        :: Delete the installer only after installation is complete, since
-        :: something still has it open immediately after extraction finishes
         del "%RUNNER_TEMP%\oneapi.exe"
         rmdir /s /q "%RUNNER_TEMP%\oneapi_extracted"
         :: The installer's exit codes aren't reliable, so instead make sure that
