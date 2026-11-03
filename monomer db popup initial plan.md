@@ -21,37 +21,29 @@ This will be the model for the pop up's table of monomers.  In the near future, 
 - We'll also create a subclass of QAbstractItemModel with a setMonomers method that takes a vector of MonomerInfo and populates the table to match the spec.
 
 
-### Step 2: Initial version of the button and pop up
+### Step 2: The button and pop up
 
-We want to implement an version of the side bar button and pop up that offers the functionality that's required or straight-forward to implement, but leaves out anything that's complicated.  This initial version would include:
+We want to implement an initial version of the side bar button and pop up.  In order to keep things simpler, this step will leave out the atomistic image of the monomer as well as the text description of the filtering that's right above the image.  The database pop up and filtering pop up should each have their own ui files.
 
-- the table
-- the search line edit
-- the filtering button and filtering pop up, excluding the Clear All link (and the "Matching SMILES" part)
-- the ability to click on a monomer in the table to activate the scene tool
-- the number of matches below the table
-- the "No monomer database found" label, which would be implemented using a QStackedWidget
-
-This initial version would leave out:
-- the image of the monomer
-- the text description of the filtering
-- the footer of the pop up that shows the Update Database... and Close links
-- 
-
-The database pop up and filtering pop up should each have their own ui files.
+- Make sure that the table updates its contents if a new monomer database is loaded.
 
 ### Step 3: Remove the "Unclassified" buttons and simplify the monomer button pop ups
 
 - Remove the "Unclasified" buttons from the side bar
-- The pop ups that appear when a user long-clicks on a monomer button should be simplified to only show the monomers from the MonomerDatabase's m_core_monomers_db, plus an additional button that shows the monomer database pop up with filtering set to the relevant polymer type and natural analog.
+- The pop ups that appear when a user long-clicks on a monomer button should be simplified to only show the monomers from the MonomerDatabase's m_core_monomers_db instead of all of the custom monomers
+- The monomer button pops us should also have an additional button showing the same folder icon as the monomer database button, but with a letter(s) in the corner that matches the current monomer.  Clicking on this button causes the monomer database pop up to pop up from the monomer database side bar button (i.e. not from the current monomer button pop up).  The monomer database pop up should have its filtering set to the relevant polymer type and natural analog, with all other filtering cleared.
 - With this change, we can remove the code that updates the monomer button pop ups when the database updates.
 
-### Step 4: The link UI elements
+### Step 4: The atomistic monomer image
 
-### Step 4: The side bar showing the monomer image
+Add the atomistic image of the monomer contents to the pop up, as well as the textual description of the filtering that's above the image.
 
-Add the atomistic image of the monomer contents to the pop up, as well as the textual description of the filtering
 
+
+
+TODO: explain backbone/terminal monomer type filtering
+TODO: explain Any or None in natural analogs filtering
+TODO: disable irrelevant filtering widgets based on polymer type
 
 
 
