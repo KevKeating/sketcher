@@ -1,0 +1,12 @@
+Q7: My response to Q7 was incorrect.  Don't count changes from the Clear All state; instead, count changes from the most permissive settings (e.g. all 3 polymer types allowed, any monomer type, any or none for natural analog).
+Q10: Yes, your interpretation is correct.  Show the column when the filter allows more than one type.
+Q5: Great!  That sounds good.
+Q9: I agree with your adjustment.  We should do that.
+
+New issues:
+
+- Core monomers ac and am would become unreachable: That's a very good point.  The table should exclude core monomers unless they have X/N or empty string natural analogs, not all core monomers.  Do that instead of giving pop ups to unk_btn or na_n_btn.
+
+- Switching pages and the single shared button: Many of the changes for custom_monomer_btn were intended to be temporary and quick to implement, so we don't want to follow that standard here.  We should modify SketcherModel to store two separate values: the last used monomer database monomer for MonomerToolType::AMINO_ACID (which could be of monomer type peptide or CHEM) and the last used monomer database monomer for MonomerToolType::NUCLEIC_ACID (which could be of monomer type RNA or CHEM).  Then, we could restore the relevant database monomer when the user switches the side bar between AMINO and NUCLEIC.
+
+- Monomer type and Natural analog start disabled: That's a good point.  Continue to disable those combo boxes if both peptides and nucleic acids are enabled in polymer type, but don't disable them when CHEM is enabled along with either peptides or nucleic acids.  (Other than disabling the monomer type combo when CHEM and nucleic acids are enabled, since that combo box only applies to amino acids.)  When filtering, the CHEM monomers would only show up for the "Any" selection of monomer type and the "None" or "Any or None" selections of natural analog.
