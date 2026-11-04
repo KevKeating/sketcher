@@ -35,7 +35,8 @@ Questions:
 We need to make some changes to the plan based on updated information that I just received:
 - There should only be one monomer database button, not two.  Place the new button above custom_monomer_btn and below the horizontal line that's above that button.
 - The "Polymer type" combo box contents should be the same regardless of the MonomerToolType setting when the pop up was opened.
-- The "Polymer type" combo box should now be a multi-selection combo box with three entries: "Peptide", "Nucleic acid", and "Structure".  
+- The "Polymer type" combo box should now be a multi-selection combo box with three entries: "Peptide", "Nucleic acid", and "Structure".
+- There's a Python implementation of a multi-selection combo box in `F:\repos\src\mmshare\python\modules\schrodinger\ui\qt\multi_combo_box.py`.  That _might_ be helpful as a loose starting point for our implementation, but note that the Python implementation is quite old and out-of-date.  For example, the comments mention that it works around a handful of Mac-only Qt bugs, but those bugs have very likely been fixed in current versions of Qt.  We should start with the assumption that these bugs are no longer relevant and not include those workarounds in our implementation.  In other words, you can mimic the general intent of that combo box, but don't feel beholden to the implementation itself.  If you can build a better implementation, do so.
 - Regardless of the current page loaded into amino_or_nucleic stack, the "Polymer type" filtering should give the four options described in the spec (but still using the new strings where applicable): "Any", "Peptide", "Nucleic acid", and "Structure".
 
 If the monomer database popup is opened while:
