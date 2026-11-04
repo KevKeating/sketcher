@@ -1,0 +1,53 @@
+I like all of your proposed changes.  Use all of them.
+
+
+For the problems
+- Duplicate rows: I forgot to mention earlier, but the table should only contain custom monomers, not core ones.  We should presumably filter out all core monomers before storing the list of monomers in memory.
+- "None" must depend on polymer type:  That's correct.  This won't be an issue once "None" is consistently indicated by an empty string, but your solution is correct for the current state of the database.
+- The spec’s peptide analog list is wrong: You're correct
+- The spec mockups count filters inconsistently: You're correct
+- The core database has no CHEM monomers: That's correct.  We'll be filtering out the core database anyways.
+- Existing bug: That's correct.  We can ignore the usage of DNA in that function for the initial steps.
+- Small fixes to your notes: Yes, you're correct.
+
+Questions:
+
+- Q2: As I mentioned above, the table should only contain custom, not core, monomers, so table selection should only follow custom monomers.  Opening the pop-up doesn't activate the last-used database monomer.  However, clicking on the new button to the left of the monomer database pop up button (i.e. the one with the symbol for the last-used database monomer) _would_ activate the last-used database monomer.
+- Q1: This can't happen any more now that we're excluding core monomers from the table.
+- Q3: Yes, that's correct.  That click should mutate the selected monomers and not change the scene tool.
+- Q4: Yes, it should also reach the canvas.  That's the behavior of the current monomer button pop ups, so we'll match that behavior here.
+- Q5: I think that depends on what type of performance we can expect from the filtering.  Based on your comment that "even the 12k-monomer ChEMBL file is cheap to filter this way", I'm assuming that it's reasonable to expect that applying the changes would be reasonably quick (e.g. typically under 400 ms or so)?  If that's the case, then lets remove the Apply button and apply the filtering changes live.  If filtering would be significantly slower than that, then we should keep the Apply button.  There's no need to try to explicitly measure performance right now since it shouldn't be difficult to switch from one to the other after implementation is complete.  If there's a quick back-of-the-envelope estimate you can do to guess at performance, then do that.  Otherwise, let's go with removing the button and applying changes live and I'll test the performance once things are implemented.
+- Q6: 
+- Q7: The default behavior you listed is correct.
+- Q8: The defaults that you listed are correct
+- Q9: For Load Database... and Update database..., follow the same behavior as the Load Monomer Database... item in the import button menu: by default, show these.  However, calling `SketcherWidget::setLoadMonomerDatabaseVisible` with `false` should hide them.  We do want the "No monomer database found" state, which should be shown whenever there are no custom monomers loaded.  I think the best way to implement the "No monomer database found" state would be to use a QStackedWidget with the table on one page and the "No monomer database found" message on another.  Does that sound like the best implementation to you?
+- Q10: Yes, the table should include a Type column, but hide it when only one monomer type is visible.  Use blanks for "None" analogs.
+- Q11: That click should have no effect.  Since the buttons don't have outlines, the button should look like empty space when blank, so it shouldn't have any behavior.
+- Q12: Yes and yes
+- Q13: Show the SMILES as it appears in the monomer database, which will most likely include atom mapping numbers on the capping groups.
+- Q14: `sketcher/model/`
+
+
+
+- incorporate any relevant information from `monomer db popup initial plan.md` into `monomer db popup detailed plan.md` so we can get rid of the initial plan document.  That way, there will be one document with all of the up-to-date information instead of one document with out-of-date info and a separate document with corrections.
+
+
+We need to make some changes to the plan based on updated information that I just received:
+- There should only be one monomer database button, not two.  Place the new button above custom_monomer_btn and below the horizontal line that's above that button.
+- The "Polymer type" combo box contents should be the same regardless of the MonomerToolType setting when the pop up was opened.
+- The "Polymer type" combo box should now be a multi-selection combo box with three entries: "Peptide", "Nucleic acid", and "Structure".  
+- Regardless of the current page loaded into amino_or_nucleic stack, the "Polymer type" filtering should give the four options described in the spec (but still using the new strings where applicable): "Any", "Peptide", "Nucleic acid", and "Structure".
+
+If the monomer database popup is opened while:
+  - MonomerToolType is set to AMINO_ACID
+  - the monomer database popup hasn't been opened before or MonomerToolType was set to NUCLEIC_ACID the last time it was opened
+then we want to default the 
+
+
+
+
+
+
+
+Make sure that we're using a stacked widget for the database is empty message
+The table should only include monomers from the custom database, not the core database
