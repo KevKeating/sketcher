@@ -24,13 +24,15 @@ This will be the model for the pop up's table of monomers.  In the near future, 
 
 ### Step 2: The button and pop up
 
-We want to implement an initial version of the side bar button and pop up.  In order to keep things simpler, this step will leave out the atomistic image of the monomer as well as the text description of the filtering that's right above the image.  The database pop up and filtering pop up should each have their own ui files.
+We want to implement an initial version of the side bar button and monomer database pop up.  In order to keep things simpler, this step will leave out the atomistic image of the monomer as well as the text description of the filtering that's right above the image.  The database pop up and filtering pop up should each have their own ui files.
 
 - for the side bar button, use `src\schrodinger\sketcher\icons\monomer_db.svg` as the icon.  I haven't added that icon to the qrc file yet, so you'll need to do that.
 - for the filtering button, use the icons from `F:\repos\src\mmshare\python\modules\schrodinger\ui\qt\standard\icons\icon_data\filter-menu`.  Copy them into this repo.
-
-
+- For the "Polymer type" combo box, use different texts in the combo box than what's shown in the spec.  Use "Peptide", "Nucleic Acid" in place of RNA, and "Structure" in place of CHEM.
+- In the filtering pop up, the "Monomer type" combo box is only relevant when polymer type is set to peptide.  Disable it otherwise.  Additionally, the "Natural analog" combo box is only relevant when polymer type is set to peptide or nucleic acid.  Disable is otherwise.  "Natural analog" combo box's contents should be different between peptide and nucleic acid, as shown on the spec.
+- In the "Natural analog:" combo box, "Any or None" indicates that no filtering should be done based on natural analog.   "None" indicates the natural analog must be an empty string or the unknown residue, i.e. "X" for peptides and "N" for nucleic acids.  Current databases will use "X" or "N" to indicate "None", but we'll be switching to empty string in SHARED-12734, so we should count them both.  "Any" indicates that natural analog can be any value other than None (i.e. empty or "X"/"N").  The other strings indicate that the natural analog field should match that string.  Leave "dR" out of the nucleic acid combo box.  Any sugar with a natural analog of deoxyribose will use "R", not "dR", in the natural analog field.
 - Make sure that the table updates its contents if a new monomer database is loaded.
+- In the table, at most one row can be selected.  Selection should always correspond to the Scene's active scene tool (as determined by examining the SketcherWidget settings).  If the active scene tool isn't present in the table, no rows should be selected.  Selecting a row in the table should immediately update the scene tool, but not close the pop up.
 
 ### Step 3: Remove the "Unclassified" buttons and simplify the monomer button pop ups
 
@@ -49,6 +51,12 @@ Add the atomistic image of the monomer contents to the pop up, as well as the te
 TODO: explain backbone/terminal monomer type filtering
 TODO: explain Any or None in natural analogs filtering
 TODO: disable irrelevant filtering widgets based on polymer type
+TODO: in table, don't select the first item by default, that contradicts closing pane with no item selected leaves the previously active tool active
+
+
+
+
+
 
 
 
