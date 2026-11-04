@@ -17,7 +17,7 @@ Questions:
 - Q3: Yes, that's correct.  That click should mutate the selected monomers and not change the scene tool.
 - Q4: Yes, it should also reach the canvas.  That's the behavior of the current monomer button pop ups, so we'll match that behavior here.
 - Q5: I think that depends on what type of performance we can expect from the filtering.  Based on your comment that "even the 12k-monomer ChEMBL file is cheap to filter this way", I'm assuming that it's reasonable to expect that applying the changes would be reasonably quick (e.g. typically under 400 ms or so)?  If that's the case, then lets remove the Apply button and apply the filtering changes live.  If filtering would be significantly slower than that, then we should keep the Apply button.  There's no need to try to explicitly measure performance right now since it shouldn't be difficult to switch from one to the other after implementation is complete.  If there's a quick back-of-the-envelope estimate you can do to guess at performance, then do that.  Otherwise, let's go with removing the button and applying changes live and I'll test the performance once things are implemented.
-- Q6: 
+- Q6: This question should be answered by the section below (after "Also, we need to make some changes to the plan based on updated information that I just received:")  It it's not, let me know.
 - Q7: The default behavior you listed is correct.
 - Q8: The defaults that you listed are correct
 - Q9: For Load Database... and Update database..., follow the same behavior as the Load Monomer Database... item in the import button menu: by default, show these.  However, calling `SketcherWidget::setLoadMonomerDatabaseVisible` with `false` should hide them.  We do want the "No monomer database found" state, which should be shown whenever there are no custom monomers loaded.  I think the best way to implement the "No monomer database found" state would be to use a QStackedWidget with the table on one page and the "No monomer database found" message on another.  Does that sound like the best implementation to you?
@@ -27,28 +27,28 @@ Questions:
 - Q13: Show the SMILES as it appears in the monomer database, which will most likely include atom mapping numbers on the capping groups.
 - Q14: `sketcher/model/`
 
+Also, update the plan to ensure that we have Playwright test coverage for any of the steps that affect the GUI (which should be everything other than step 1).  Also make sure to update any Playwright tests that are testing for behavior we've intentionally changed - either tests that already exist or tests from earlier steps.  If necessary, I can run a remote build and point an agent at a WASM artifact to facilitate this.
+
+As an additional note, please incorporate any relevant information from `monomer db popup initial plan.md` into `monomer db popup detailed plan.md` so we can get rid of the initial plan document.  That way, there will be one document with all of the up-to-date information instead of one document with out-of-date info and a separate document with corrections.  Additionally, incorporate the question answers into the body of `monomer db popup detailed plan.md` instead of referencing the question sections.  That will make it easier for me to go through the plan document.
 
 
-- incorporate any relevant information from `monomer db popup initial plan.md` into `monomer db popup detailed plan.md` so we can get rid of the initial plan document.  That way, there will be one document with all of the up-to-date information instead of one document with out-of-date info and a separate document with corrections.
-
-
-We need to make some changes to the plan based on updated information that I just received:
+Also, we need to make some changes to the plan based on updated information that I just received:
 - There should only be one monomer database button, not two.  Place the new button above custom_monomer_btn and below the horizontal line that's above that button.
 - The "Polymer type" combo box contents should be the same regardless of the MonomerToolType setting when the pop up was opened.
 - The "Polymer type" combo box should now be a multi-selection combo box with three entries: "Peptide", "Nucleic acid", and "Structure".
 - There's a Python implementation of a multi-selection combo box in `F:\repos\src\mmshare\python\modules\schrodinger\ui\qt\multi_combo_box.py`.  That _might_ be helpful as a loose starting point for our implementation, but note that the Python implementation is quite old and out-of-date.  For example, the comments mention that it works around a handful of Mac-only Qt bugs, but those bugs have very likely been fixed in current versions of Qt.  We should start with the assumption that these bugs are no longer relevant and not include those workarounds in our implementation.  In other words, you can mimic the general intent of that combo box, but don't feel beholden to the implementation itself.  If you can build a better implementation, do so.
-- Regardless of the current page loaded into amino_or_nucleic stack, the "Polymer type" filtering should give the four options described in the spec (but still using the new strings where applicable): "Any", "Peptide", "Nucleic acid", and "Structure".
 
 If the monomer database popup is opened while:
   - MonomerToolType is set to AMINO_ACID
   - the monomer database popup hasn't been opened before or MonomerToolType was set to NUCLEIC_ACID the last time it was opened
-then we want to default the 
+then we should clear the search text and set the filtering to show all "Peptide" and "Structure" (i.e. CHEM) monomers.  Clicking Clear All in the filtering popup should reset the filtering pop up to this state.
+
+If the monomer database popup is opened while:
+  - MonomerToolType is set to NUCLEIC_ACID
+  - the monomer database popup hasn't been opened before or MonomerToolType was set to AMINO_ACID the last time it was opened
+then we should clear the search text and set the filtering to show all "Nucleic acid" and "Structure" (i.e. CHEM) monomers.  Clicking Clear All in the filtering popup should reset the filtering pop up to this state.
+
+- If any filtering is applied in the filtering pop up (even if it's the default "Peptide" and "Structure" or "Nucleic acid" and "Structure" filtering), then the filtering button should be pressed, which should cause it to appear orange.  If there's no filtering applied in the filtering pop up (including all three entries being checked in the "Polymer type" combo), then the filtering button should be unpressed and not orange.
 
 
-
-
-
-
-
-Make sure that we're using a stacked widget for the database is empty message
-The table should only include monomers from the custom database, not the core database
+Confirm that this explicitly answered all of your questions.  Let me know if you have any additional questions, suggestions, etc after incorporating this feedback.
