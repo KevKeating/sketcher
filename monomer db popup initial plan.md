@@ -16,6 +16,7 @@ This change is quite large, so I've broken the plan down into multiple steps.  W
 This will be the model for the pop up's table of monomers.  In the near future, we may switch away from Qt, so we want to keep the business logic independent of Qt's table model.
 
 - To accomplish this, we'll create a MonomerDatabaseFilter object that stores the current filtering settings from the filtering pop up as well as the current monomer sorting (the field and sort direction).  This object will have a method to return the number of filters applied (used to populate the "# filters applied" label) and a method to return a text description of the filtering (used to populate the description next to the filtering button).
+- For filtering based on the polymer type, note that we may need to allow all monomer types, or we may want to display two monomer types at a time (either peptides and chem or nucleic acid and chem).  Based on that, we may want to create a bit flag with bits for peptide, nucleic acid, and chem.  (Remember than ChainType::DNA is unused - DNA molecules are categorized as ChainType::RNA.)
 - We will also have a function that takes a MonomerDatabase instance and a MonomerDatabaseFilter instance and returns a vector of MonomerInfo instances containing a sorted list of all monomers that match the filtering criteria.
 - For performance reasons, I suspect we should have a separate function that applies filtering based on values typed into the line edit above the table.  That function would take a search string and a vector of MonomerInfos and return a filtered vector.  That way, we don't need to repeat the database query every time the user types a character into the line edit.  The filtering should search both the monomer symbol and the monomer name
 - We'll also create a subclass of QAbstractItemModel with a setMonomers method that takes a vector of MonomerInfo and populates the table to match the spec.
@@ -24,6 +25,10 @@ This will be the model for the pop up's table of monomers.  In the near future, 
 ### Step 2: The button and pop up
 
 We want to implement an initial version of the side bar button and pop up.  In order to keep things simpler, this step will leave out the atomistic image of the monomer as well as the text description of the filtering that's right above the image.  The database pop up and filtering pop up should each have their own ui files.
+
+- for the side bar button, use `src\schrodinger\sketcher\icons\monomer_db.svg` as the icon.  I haven't added that icon to the qrc file yet, so you'll need to do that.
+- for the filtering button, use the icons from `F:\repos\src\mmshare\python\modules\schrodinger\ui\qt\standard\icons\icon_data\filter-menu`.  Copy them into this repo.
+
 
 - Make sure that the table updates its contents if a new monomer database is loaded.
 
@@ -68,3 +73,5 @@ we want a simple solution here
 Additional questions for Laura:
 - Should we still have two versions of the dialog, one for peptide/chem and one for nucleic acid/chem?  Or should the dialog always allow all polymer types regardless of the current side bar tab?
 - Do we want a title bar on the pop up?  That seems a bit unexpected for something that's a pop up.  I'd expect that more if it were a dialog.
+
+- 
