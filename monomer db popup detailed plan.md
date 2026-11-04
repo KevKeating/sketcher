@@ -46,14 +46,24 @@ scene tool becomes a `DrawMonomerSceneTool` for that monomer.
 
 ### The table
 
-- **The table contains custom monomers only.** Core monomers
-  (`m_core_monomers_db`) never appear, so the core/custom de-duplication
-  problem goes away. Core monomers stay reachable through the side-bar
-  buttons and their long-press popups.
+- **The table contains custom monomers plus the core monomers that have no
+  natural analog.**
+  - "No natural analog" is the type-specific "None" rule below: empty, or
+    `X` for peptides and `N` for nucleic acids.
+  - In today's core DB this adds only `ac` and `am` (PEPTIDE Terminal, analog
+    `X`). Their only entry point today is the Unclassified popup, which this
+    work removes.
+  - Every other core monomer is reachable through the side-bar buttons and
+    their long-press popups, so it's excluded from the table.
+  - A custom monomer with the same symbol and polymer type as an included
+    core one replaces it, matching the custom-first rule of
+    `get_info_from_database`. The core row isn't shown as well.
 - **One read per database change; everything else happens in memory.**
-  - `MonomerDatabase` gets a single new public call, `getCustomMonomers()`.
+  - `MonomerDatabase` gets two small public calls, `getCustomMonomers()` and
+    `getCoreMonomers()`. Both use one shared row-reading loop.
+  - A pure, Qt-free function builds the table's source list from them.
   - Filtering, text search and sorting are pure, Qt-free functions over
-    the cached vector.
+    that cached list.
 - **Use a `QAbstractTableModel` subclass** for the table model, not a bare
   `QAbstractItemModel`.
 - **Live filtering; no Apply button.** The back-of-the-envelope cost for the
@@ -82,38 +92,52 @@ scene tool becomes a `DrawMonomerSceneTool` for that monomer.
   - below the horizontal `line`;
   - above `custom_monomer_btn`.
 
-  This follows the `custom_monomer_btn` precedent:
-  - the pair isn't in `amino_monomer_group` or `nucleic_monomer_group`;
-  - the last-used button is checked exactly when the DB tool is active and
-    there's no canvas selection;
-  - the page's buttons are unchecked while it is.
-- **The "Unclassified" buttons and the `AminoAcidTool::UNCLASSIFIED` /
-  `NucleicAcidTool::UNCLASSIFIED` enum values are removed in Step 2.** They
-  are removed, not renamed: a shared button outside the page groups has no
-  use for a per-page marker.
+  Neither button is in `amino_monomer_group` or `nucleic_monomer_group`.
+  **Don't copy the `custom_monomer_btn` / `DrawTool::CUSTOM_MONOMER` code as a
+  pattern.** Much of it was meant to be temporary.
+- **Each page remembers its own DB monomer, stored in `SketcherModel`.**
+  - Replace `ModelKey::MONOMER_DB_MONOMER` with two keys:
+    - `AMINO_ACID_DB_MONOMER`: a PEPTIDE or CHEM `MonomerID`;
+    - `NUCLEIC_ACID_DB_MONOMER`: an RNA or CHEM `MonomerID`.
+  - Add `SketcherModel::getMonomerDbMonomer()`, which returns the key for the
+    current `MONOMER_TOOL_TYPE`. The scene, the mutation code, the side bar
+    and the popup all go through it.
+  - These keys are the last-used slots. There's no separate widget member.
+    The shared last-used button shows the current page's value, so it
+    changes when the page changes.
+- **Keep the per-page "DB tool" marker, renamed.**
+  `AminoAcidTool::UNCLASSIFIED` and `NucleicAcidTool::UNCLASSIFIED` become
+  `MONOMER_DATABASE`. They keep their current meaning: this page's last tool
+  was its DB monomer. They drive restoring:
+  - switching pages restores the new page's DB monomer when that page's tool
+    is `MONOMER_DATABASE`, otherwise its standard tool (today's behaviour);
+  - toggling atomistic→monomeric restores the DB tool the same way.
 
-  **Pending confirmation.** Today each page remembers its own DB monomer,
-  which SKETCH-2870 tests. With one shared button, the plan follows the
-  custom-monomer precedent:
-  - switching pages while the DB tool is active activates the new page's
-    standard tool;
-  - toggling atomistic→monomeric activates `DrawTool::MONOMER`.
+  The value isn't mapped to any button in the bimaps, so code must not call
+  `.at()` with it.
+- **Choosing a monomer switches the side-bar page to match it.**
+  - A PEPTIDE monomer switches to AMINO_ACID, and an RNA monomer to
+    NUCLEIC_ACID.
+  - A CHEM monomer leaves the page as it is, and is stored as the current
+    page's DB monomer.
+  - Without a canvas selection, choosing sets these together:
+    - `DRAW_TOOL = MONOMER_DB_MONOMER`;
+    - `MONOMER_TOOL_TYPE`;
+    - that page's `*_DB_MONOMER`;
+    - that page's `AMINO_ACID_TOOL` / `NUCLEIC_ACID_TOOL = MONOMER_DATABASE`.
+  - With a canvas selection, choosing does three things:
+    - it mutates the selection by setting that page's `*_DB_MONOMER`;
+    - it switches the page;
+    - it leaves the draw tool unchanged.
 
-  The alternative is to keep the DB tool active across page switches.
-- **The last-used slot is the model's `ModelKey::MONOMER_DB_MONOMER` value.**
-  It isn't a separate widget member. `SketcherModel::setValues()` stores the
-  value and also pings it, so one `setValue` call does both jobs:
-  - with a canvas selection, it mutates the selection and updates the
-    last-used slot, and doesn't change the scene tool;
-  - without one, it is set together with `DRAW_TOOL = MONOMER_DB_MONOMER`.
-- **Choosing a monomer doesn't change `MONOMER_TOOL_TYPE` (the side-bar
-  page).** The DB scene tool takes its chain type from the `MonomerID`, so the
-  page is irrelevant to drawing. Switching pages would also reset the popup's
-  filter on its next opening.
+    `setValues()` pings every key it is given, and a ping of
+    `AMINO_ACID_TOOL` mutates the selection (`sketcher_widget.cpp`,
+    `onModelValuePinged`). So in this case, don't set the page's tool key.
+    Check every other key against `onModelValuePinged` before including it.
 - **Table selection mirrors the model, and only for the DB tool.** A row is
   selected only when:
   - `getDrawTool() == DrawTool::MONOMER_DB_MONOMER`, and
-  - the `MONOMER_DB_MONOMER` monomer is one of the current rows.
+  - `getMonomerDbMonomer()` is one of the current rows.
 
   Otherwise no row is selected. No row is selected by default; this overrides
   the spec's "first item should probably be selected".
@@ -128,9 +152,11 @@ scene tool becomes a `DrawMonomerSceneTool` for that monomer.
 - **Clicking outside the popup dismisses it, and the click also reaches
   what's underneath** (e.g. the canvas). This matches the existing long-press
   monomer popups, so don't set `WA_NoMouseReplay`.
-- **Popup state and reset rule.** One popup instance exists. It remembers
-  the page (`MonomerToolType`) it was last opened from. On opening:
-  - **First opening, or the page differs from the last opening:**
+- **Popup state and reset rule.** One popup instance exists. It records the
+  `MONOMER_TOOL_TYPE` at the moment it **closes**, however it closes. On
+  opening:
+  - **First opening, or the page now differs from the page at the last
+    close:**
     - clear the search text;
     - reset the filter to the page default:
       - AMINO_ACID: polymer type {Peptide, Structure}, monomer type Any,
@@ -139,40 +165,52 @@ scene tool becomes a `DrawMonomerSceneTool` for that monomer.
         None.
   - **Otherwise:** the search text, filter and sort are kept.
 
-  **Clear All** in the filter popup resets the filter to the default for the
-  last-opened page.
+  Recording the page at close time is what lets the page switch when a row
+  is chosen. For example:
+  1. The user opens the popup on the AA page.
+  2. They choose an RNA row, which switches to the NA page.
+  3. They close the popup, which records NA.
+  4. They reopen it on the NA page, and nothing is reset.
+
+  The filter only resets when the user changes page while the popup is
+  closed.
+
+  **Clear All** resets the filter to the default for the **current**
+  `MONOMER_TOOL_TYPE`. That can differ from the page at opening if a row
+  choice switched pages. **Pending confirmation.**
+- **Anchor.** A page switch while the popup is open must not move the popup's
+  anchor. `QStackedWidget` sizes itself to its largest page, so the shared
+  buttons below it shouldn't move. Verify this.
 - **Polymer type is a multi-select combo** with "Peptide", "Nucleic acid"
   and "Structure" (CHEM). Its contents don't depend on the page.
-- **Applicability rules:**
-  - The **Monomer type** combo applies only when the polymer types are
-    exactly {Peptide}.
-  - The **Natural analog** combo applies only when they are exactly
-    {Peptide} or exactly {Nucleic acid}.
+- **Applicability rules.** Structure (CHEM) never affects applicability.
+  - The **Monomer type** combo applies only when Peptide is checked and
+    Nucleic acid isn't: {Peptide} or {Peptide, Structure}. It only applies
+    to amino acids.
+  - The **Natural analog** combo applies only when exactly one of Peptide and
+    Nucleic acid is checked, with or without Structure.
   - An inapplicable combo is disabled and reset to Any / Any or None, so a
     disabled combo never hides a stale value.
-
-  **Pending confirmation:** with the new defaults, both combos are **disabled
-  when the popup first opens**, because Structure is also checked. The user
-  has to uncheck Structure to filter by monomer type or analog.
-- **"Filtering" baseline.** A filter is "filtering" when it differs from
-  showing everything: all three polymer types, Any, and Any or None.
-  - While it's filtering, the filter button looks pressed (orange
-    `filter-menu_lb_filtering.png`). Otherwise it looks normal.
-  - This holds even in the page-default state.
-
-  **Pending confirmation:** use the same baseline for the "N filters applied"
-  count and for bolding a combo. Count:
-  - 1 if the polymer types aren't all three;
-  - +1 if an applicable monomer type isn't Any;
-  - +1 if an applicable analog isn't Any or None.
-
-  A combo is bold when it contributes to the count. The page-default state
-  therefore reads "1 filter applied" with Polymer type in bold, consistent
-  with the orange button.
-
-  The previously approved rule ("count combos that differ from Clear All")
-  was agreed when Clear All meant "show everything". Under the new Clear All,
-  it would show "0 filters applied" next to an orange button.
+  - Both page defaults therefore start with the Natural analog combo
+    enabled. The AA default also starts with Monomer type enabled.
+- **How CHEM rows match.** CHEM monomers have no monomer type and no natural
+  analog.
+  - They pass the monomer-type filter only for "Any".
+  - They pass the analog filter only for "None" and "Any or None".
+- **"Filtering" baseline.** One baseline drives three things: the "N
+  filters applied" count, the bold combos and the filter button's look. The
+  baseline is the most permissive filter: all three polymer types, Any, and
+  Any or None.
+  - **Count:**
+    - 1 if the polymer types aren't all three;
+    - +1 if an applicable monomer type isn't Any;
+    - +1 if an applicable analog isn't Any or None.
+  - **Bold:** a combo is bold when it contributes to the count.
+  - **Filter button:** it looks pressed (orange
+    `filter-menu_lb_filtering.png`) when the count is above 0, and normal
+    otherwise.
+  - So the page-default state reads "1 filter applied", shows Polymer type
+    in bold, and has an orange button.
 - **Natural analog "None"** means empty, or the polymer type's unknown
   residue: `X` for peptides, `N` for nucleic acids.
   - Current databases use `X`/`N`. SHARED-12734 will switch them to an empty
@@ -189,12 +227,17 @@ scene tool becomes a `DrawMonomerSceneTool` for that monomer.
 - **Type column:**
   - The table has Symbol, Name, Type and Analog columns. Type shows
     "Peptide", "Nucleic acid" or "Structure".
-  - **Pending confirmation:** the Type column is hidden when the *filter*
-    allows exactly one polymer type. The alternative is to hide it when the
-    *visible rows* happen to have one type; that would flicker while typing.
+  - The column is shown when the *filter* allows more than one polymer
+    type, and hidden when it allows exactly one. The rows actually displayed
+    don't affect it.
   - None analogs (`X`/`N`/empty) display blank.
-- **Description text** (Step 5) has the form
-  `<polymer types>[, <monomer type>][, <analog>]`.
+- **Description text** (Step 5) describes the filter. Its form is
+  `<polymer types>[, <monomer type>] monomers[ with <analog>]`, or
+  `<polymer types>[, <monomer type>], <X> analogs` for a specific analog.
+  - **Drop "structure"** when the other filters exclude CHEM: when the
+    monomer type isn't Any, or the analog is Any or a specific analog.
+    "Peptide or structure" + Terminal therefore reads `Peptide, terminal
+    monomers`.
 
   | Filter | Description |
   |---|---|
@@ -209,8 +252,12 @@ scene tool becomes a `DrawMonomerSceneTool` for that monomer.
   | Peptide + analog C | `Peptide, Cys analogs` (peptides use three-letter codes) |
   | Peptide + Backbone + analog C | `Peptide, backbone, Cys analogs` |
   | Nucleic acid + analog A | `Nucleic acid, A analogs` |
-  | Peptide + analog None | `Peptide, unclassified monomers` |
-  | Peptide + analog Any | `Peptide, classified monomers` (new wording) |
+  | {Peptide, Structure} + Terminal | `Peptide, terminal monomers` |
+  | {Peptide, Structure} + analog C | `Peptide, Cys analogs` |
+  | Peptide + analog None | `Peptide monomers with no natural analog` |
+  | {Peptide, Structure} + analog None | `Peptide or structure monomers with no natural analog` |
+  | Peptide + Terminal + analog None | `Peptide, terminal monomers with no natural analog` |
+  | Peptide + analog Any | `Peptide monomers with any natural analog` |
 
 - **Load Database… / Update Database… links:**
   - "Load Database…" is shown in the empty state and "Update Database…"
@@ -222,7 +269,13 @@ scene tool becomes a `DrawMonomerSceneTool` for that monomer.
     automatically after a host page loads monomers.
   - Both links and the import-menu action run the same extracted function.
 - **"No monomer database found" state:**
-  - It's shown whenever there are no custom monomers.
+  - **Pending confirmation:** it's shown only when the table's source list
+    is empty. "Load Database…" vs "Update Database…" still depends on
+    whether any custom monomers are loaded.
+    - With today's core DB the source list always contains `ac` and `am`, so
+      in practice the empty state never appears.
+    - The alternative, "show it whenever no custom monomers are loaded",
+      would make `ac` and `am` unreachable until a database is loaded.
   - It's a `QStackedWidget` whose content page holds everything above the
     bottom link row: search, filter button, description, table, match
     count and image.
@@ -267,7 +320,8 @@ things clean:
 | Default filter: PEPTIDE + backbone on the AA tab, RNA on the NA tab | AA: {Peptide, Structure}. NA: {Nucleic acid, Structure}. Monomer type Any, analog Any or None |
 | Clear All: "Any" everywhere | Resets to the page default above |
 | Apply button | No Apply. Changes apply live |
-| Table includes all monomers; first item selected by default | Custom monomers only; no default selection; the selection mirrors the active DB tool |
+| Table includes all monomers; first item selected by default | Custom monomers, plus core monomers with no natural analog. No default selection; the selection mirrors the active DB tool |
+| Monomer type: chooser contents depend on the polymer type | Monomer type and Natural analog stay enabled with Structure checked, and CHEM rows only match their permissive values |
 | Opening the popup loads the last-used item | It doesn't. Only the last-used button does |
 | Peptide analog list includes X and omits N | Includes N and omits X (X is "None") |
 | No Type column | A Type column, hidden when the filter allows one polymer type |
@@ -307,18 +361,24 @@ things clean:
     - `get_merged_na_analogs()` (`rdkit/monomer_analog.cpp`) queries
       `ChainType::DNA`. Leave it alone for this work.
 - **Tool state** lives in `SketcherModel` (`model/sketcher_model.h`).
-  - **A DB monomer is active** when `getDrawTool() ==
-    DrawTool::MONOMER_DB_MONOMER` and `ModelKey::MONOMER_DB_MONOMER` holds an
-    `rdkit_extensions::MonomerID`.
+  - **Today, a DB monomer is active** when:
+    - `getDrawTool() == DrawTool::MONOMER_DB_MONOMER`;
+    - `ModelKey::MONOMER_DB_MONOMER` holds an `rdkit_extensions::MonomerID`;
+    - the page's `AMINO_ACID_TOOL` / `NUCLEIC_ACID_TOOL` is `UNCLASSIFIED`.
+
+    Step 2 changes this to the two per-page keys and `MONOMER_DATABASE` (see
+    "Buttons and tool state").
   - **Scene tool.** `Scene::getNewSceneTool()` builds the
     `DrawMonomerSceneTool` from the `MonomerID` alone.
   - **Selection mutation.** With an active canvas selection, a `setValue` or
-    ping of `MONOMER_DB_MONOMER` makes `SketcherWidget::onModelValuePinged`
+    ping of the DB-monomer key makes `SketcherWidget::onModelValuePinged`
     mutate the selected monomers (`sketcher_widget.cpp`, `case
     ModelKey::MONOMER_DB_MONOMER`).
-  - **`setValues()`** stores *and* pings every key.
-  - **Precedent.** `custom_monomer_btn` and `DrawTool::CUSTOM_MONOMER` are
-    the existing pattern for a shared, non-grouped monomer button.
+  - **`setValues()`** stores *and* pings every key, so any key that
+    `onModelValuePinged` handles, such as `AMINO_ACID_TOOL`, also mutates a
+    selection.
+  - **Don't treat `custom_monomer_btn` / `DrawTool::CUSTOM_MONOMER` as a
+    pattern.** Much of that code was meant to be temporary.
 - **C++ tests**
   - One executable per `test/**/*.cpp`; they're auto-discovered.
   - Tests that load a DB must reset it on exit. Copy the `ResetDatabase` RAII
@@ -392,22 +452,24 @@ things clean:
 **Goal:** all of the popup's non-visual logic, with unit tests and no UI
 change.
 
-### 1a. `MonomerDatabase::getCustomMonomers()` (rdkit_extensions)
+### 1a. `getCustomMonomers()` and `getCoreMonomers()` (rdkit_extensions)
 
-- **Add the method.** Add `[[nodiscard]] std::vector<MonomerInfo>
-  getCustomMonomers() const;`.
-  - It returns every monomer in the custom DB, of all polymer types.
-  - It returns an empty vector when no custom DB is loaded.
+- **Add the methods** to `MonomerDatabase`:
+  - `[[nodiscard]] std::vector<MonomerInfo> getCustomMonomers() const;`
+    returns every monomer in the custom DB, of all polymer types. It returns
+    an empty vector when no custom DB is loaded.
+  - `[[nodiscard]] std::vector<MonomerInfo> getCoreMonomers() const;`
+    returns every monomer in `m_core_monomers_db`.
 - **Refactor, don't copy.** Refactor the private `getMonomers(ChainType,
-  bool)` so that both functions share the row-reading loop (prepare, step,
+  bool)` so that all of these share the row-reading loop (prepare, step,
   `assign_monomer_info`). Parameterize it by which DB handle(s) to read, so
-  that Step 4 can add a core-only query without copying it.
+  that Step 4 can add a core-only analog query without copying it.
 - **Tests** go in `test/schrodinger/rdkit_extensions/test_monomer_database.cpp`:
-  - empty when only the core DB exists;
-  - returns all custom monomers across polymer types;
-  - a custom monomer that shadows a core symbol appears once, with its
-    custom fields;
-  - empty again after `resetMonomerDefinitions()`.
+  - `getCustomMonomers()` is empty when only the core DB exists;
+  - it returns all custom monomers across polymer types;
+  - `getCoreMonomers()` returns the 70 core monomers whether or not a custom
+    DB is loaded;
+  - `getCustomMonomers()` is empty again after `resetMonomerDefinitions()`.
 
 ### 1b. Filter, sort and pure functions (Qt-free)
 
@@ -444,8 +506,10 @@ class MonomerDatabaseFilter
     // getters/setters; setPolymerTypes() resets any filter that becomes
     // inapplicable; setNaturalAnalog(NaturalAnalogFilter, std::string
     // specific = {})
-    bool isMonomerTypeApplicable() const;   // polymer types == PEPTIDE
-    bool isNaturalAnalogApplicable() const; // == PEPTIDE or == NUCLEIC_ACID
+    // CHEM never affects applicability:
+    bool isMonomerTypeApplicable() const;   // PEPTIDE set, NUCLEIC_ACID not
+    bool isNaturalAnalogApplicable() const; // exactly one of PEPTIDE and
+                                            // NUCLEIC_ACID set
     std::vector<std::string> getNaturalAnalogChoices() const;
 
     // "Filtering" is relative to the default-constructed (show-everything)
@@ -460,6 +524,17 @@ class MonomerDatabaseFilter
     bool matches(const rdkit_extensions::MonomerInfo& info) const;
     bool operator==(const MonomerDatabaseFilter&) const = default;
 };
+
+// The table's source list: every custom monomer, plus each core monomer whose
+// natural analog is "None" (type-specific; see has_no_natural_analog) unless a
+// custom monomer has the same symbol and polymer type
+std::vector<rdkit_extensions::MonomerInfo> get_monomer_database_table_monomers(
+    std::vector<rdkit_extensions::MonomerInfo> custom_monomers,
+    const std::vector<rdkit_extensions::MonomerInfo>& core_monomers);
+
+// The type-specific "None" rule: empty, X for PEPTIDE, N for RNA; always true
+// for CHEM. Shared by the source-list builder and NaturalAnalogFilter::NONE.
+bool has_no_natural_analog(const rdkit_extensions::MonomerInfo& info);
 
 // Returns indices into all_monomers of the matching rows, in sorted order
 std::vector<std::size_t> filter_and_sort_monomers(
@@ -484,7 +559,10 @@ std::vector<std::size_t> filter_by_search_text(
   calls them: `matches()`, the count, the description, and Step 3's combo
   enabling.
 - **Monomer type:** a case-insensitive comparison with `Backbone` /
-  `Terminal`.
+  `Terminal`. CHEM rows match only `ANY`.
+- **CHEM and the analog filter:** CHEM rows match only `NONE` and
+  `ANY_OR_NONE`. They have no natural analog, so `has_no_natural_analog()`
+  is true for them.
 - **Natural analog:** as described under "Design decisions".
   - Don't hard-code `"X"` and `"N"`. Find and reuse the existing constants,
     for example `AMINO_ACID_TOOL_TO_RES_NAME.at(AminoAcidTool::UNK)` and the
@@ -509,9 +587,16 @@ std::vector<std::size_t> filter_by_search_text(
 
 **Tests** go in `test/schrodinger/sketcher/model/test_monomer_database_filter.cpp`.
 Use hand-built `MonomerInfo` vectors, so no DB is needed. Cover:
+- `get_monomer_database_table_monomers`:
+  - it keeps every custom monomer;
+  - it keeps core monomers with X, N or empty analogs only, by type, so a
+    core peptide with analog `N` (Asn) is excluded;
+  - a custom monomer replaces a core one with the same symbol and polymer
+    type, but not one of a different polymer type;
 - every polymer-type combination, including NONE and ALL;
-- applicability for every combination, and the reset of inapplicable
-  filters;
+- applicability for every combination, including Structure combined with
+  Peptide or Nucleic acid, and the reset of inapplicable filters;
+- CHEM rows against every monomer-type and analog value;
 - None/Any with `X`, `N` and empty for both peptides and nucleic acids,
   including that peptide `N` (Asn) is **not** None;
 - case-insensitive monomer type;
@@ -572,46 +657,54 @@ unchanged. No Playwright work is needed for this step.
 - The filter is the page default, with no way to change it yet.
 - There's no filter button, description or image yet.
 
-### 2a. Remove the Unclassified buttons and the UNCLASSIFIED markers
+### 2a. Remove the Unclassified buttons; rename the markers; split the model key
 
 - **Delete the buttons.** Remove `aa_unclassified_btn` and
   `na_unclassified_btn` from `ui/monomer_tool_widget.ui`.
-- **Delete `AminoAcidTool::UNCLASSIFIED` and `NucleicAcidTool::UNCLASSIFIED`.**
-  Trace every use:
+- **Rename `AminoAcidTool::UNCLASSIFIED` and `NucleicAcidTool::UNCLASSIFIED`
+  to `MONOMER_DATABASE`.** Keep their meaning (see "Buttons and tool
+  state"). Trace every use:
   - `sketcher_model.h`;
   - `scene.cpp` (around line 766);
   - `sketcher_widget.cpp` (`nucleic_acid_tool_to_monomer_type`, and the
     `NUCLEIC_ACID_SYMBOL` mutation guard);
-  - `sketcher_side_bar.cpp` (`updateCheckState`: the atomistic→monomeric
-    toggle now picks `DrawTool::MONOMER`);
+  - `sketcher_side_bar.cpp` (`updateCheckState`);
   - `monomer_tool_widget.cpp`;
   - `monomer_symbol_popup_utils.cpp`;
   - the C++ tests.
+
+  If a use existed only to serve the Unclassified popup (for example a
+  `NUCLEIC_ACID_SYMBOL` ping carrying `UNCLASSIFIED`) and is now dead, remove
+  it instead of renaming it.
+- **Split the key.** Replace `ModelKey::MONOMER_DB_MONOMER` with
+  `AMINO_ACID_DB_MONOMER` and `NUCLEIC_ACID_DB_MONOMER`.
+  - Both default to an empty `MonomerID`.
+  - Add `SketcherModel::getMonomerDbMonomer()`.
+  - Update `sketcher_model.cpp` (the default-value table and the key list
+    around line 94), `Scene::getNewSceneTool()`, the
+    `SketcherWidget::onModelValuePinged` mutation case (handle both keys),
+    `monomer_symbol_popup_utils.cpp` and the tests.
 - **Delete the Unclassified-only code in `MonomerToolWidget`:**
   - the X/N + CHEM popup construction;
   - the `-1` enum-item handling;
-  - `getMonomerDbMonomerForButton`;
-  - the Unclassified branches of `updateCheckedButton`,
-    `onAminoOrNucleicBtnClicked` and `onNucleicAcidClicked`.
+  - `getMonomerDbMonomerForButton`.
 
-  Leave the normal analog-popup construction alone; Step 4 replaces it.
-- **Keep `ac` and `am` reachable. Pending confirmation.** The core terminal
-  peptides `ac` and `am` (analog `X`) are reachable today *only* through the
-  Unclassified popup. The table excludes core monomers, so removing that
-  popup would strand them.
-  - Default: give `unk_btn` and `na_n_btn` long-press popups of
-    None-analog monomers, built the same way as the other analog popups.
-  - Both are currently plain `QToolButton`s, so they must become
-    `ModularToolButton`s.
-  - In Step 4 they become core-only, plus the folder entry.
+  Rework the `UNCLASSIFIED` branches of `updateCheckedButton`,
+  `onAminoOrNucleicBtnClicked` and `onNucleicAcidClicked` for the shared
+  pair (2d). Leave the normal analog-popup construction alone; Step 4
+  replaces it.
+- **No popups for `unk_btn` / `na_n_btn`.** `ac` and `am` stay reachable
+  through the table.
 - **Rewrite the affected C++ tests.**
   - Remove or rewrite `unclassified_monomers` and
     `unclassified_chem_monomers` in `test_monomer_tool_widget.cpp`.
   - Rewrite the related cases in `test_sketcher_widget.cpp`,
     `test_sketcher_model.cpp` and the side-bar tests.
-  - Their scenarios carry over to the new pair where they still apply:
+  - Their scenarios carry over to the new pair:
     - CHEM reachable from either page;
-    - mutation of a selection.
+    - mutation of a selection;
+    - each page remembering its own DB monomer;
+    - the atomistic↔monomeric toggle restoring the DB tool.
 
 ### 2b. Shared helpers
 
@@ -635,8 +728,8 @@ Keep the existing monomer-item rendering and top-bar tests green.
 - **Last-used button**
   - Files: `widget/monomer_database_last_used_button.{h,cpp}`, a
     checkable `QToolButton` subclass, objectName `monomer_db_last_used_btn`.
-  - **Display:** it shows the symbol of the model's `MONOMER_DB_MONOMER`
-    value.
+  - **Display:** it shows the symbol of `getMonomerDbMonomer()`, the
+    current page's DB monomer. It updates when the page changes.
     - It uses `paint_text_with_fade_out` when the symbol is too wide, like
       the monomer graphics items.
     - The tooltip is the monomer's name.
@@ -686,8 +779,12 @@ Keep the existing monomer-item rendering and top-bar tests green.
     The path is `SketcherWidget` → `SketcherSideBar` → `MonomerToolWidget` →
     popup. Store the flag so that it applies even before the popup exists.
   - **Data:**
-    - Cache `getCustomMonomers()` in a `shared_ptr<const vector>`.
+    - Cache `get_monomer_database_table_monomers(getCustomMonomers(),
+      getCoreMonomers())` in a `shared_ptr<const vector>`.
     - Refresh the cache on `subscribeToChanges`.
+    - Show the empty page only when the cache is empty.
+    - The load link says "Load Database…" when `getCustomMonomers()` is
+      empty and "Update Database…" otherwise.
     - After a refresh, re-filter, re-sync the selection and switch the stack
       page.
     - Filter and sort changes re-run `filter_and_sort_monomers`.
@@ -695,9 +792,12 @@ Keep the existing monomer-item rendering and top-bar tests green.
       filtered rows.
     - After every model reset, re-sync the selection.
   - **API:**
-    - `showFromButton(QWidget* anchor, MonomerToolType page)` applies the
-      reset rule from "Design decisions" and positions the popup with
-      `show_popup_next_to_widget`.
+    - `showFromButton(QWidget* anchor, MonomerToolType page)` positions the
+      popup with `show_popup_next_to_widget`. Before showing, it applies the
+      reset rule from "Design decisions".
+    - On every close (×, Close, outside click, Escape, DB button), the popup
+      records the current `MONOMER_TOOL_TYPE`. Hook `hideEvent` so that no
+      path is missed.
     - Signal `monomerChosen(MonomerID)` fires on user-driven selection
       changes (mouse or keyboard).
     - `syncSelectionToModel(const SketcherModel*)` applies the selection
@@ -720,56 +820,80 @@ Keep the existing monomer-item rendering and top-bar tests green.
   [monomer_db_btn]`. Neither button joins a `QButtonGroup`.
 - **One activation function.** Write a single
   `activateMonomerDbMonomer(const MonomerID&)` for both the row choice and
-  the last-used click.
-  - With a canvas selection: `setValue(MONOMER_DB_MONOMER, id)`. This
-    mutates the selection, updates the last-used slot and leaves the tool
-    unchanged.
-  - Otherwise: `setValues({DRAW_TOOL = MONOMER_DB_MONOMER,
-    MONOMER_DB_MONOMER = id})`. `MONOMER_TOOL_TYPE` is unchanged.
-- **DB-button click:** show the popup with the current `MONOMER_TOOL_TYPE`.
+  the last-used click. It implements "Choosing a monomer switches the
+  side-bar page" from "Design decisions":
+  - It picks the target page: PEPTIDE→AMINO_ACID, RNA→NUCLEIC_ACID,
+    CHEM→the current page.
+  - With a canvas selection, it sets that page's `*_DB_MONOMER` (which
+    mutates the selection) and `MONOMER_TOOL_TYPE`. It doesn't set the
+    page's tool key, because that ping would also mutate.
+  - Otherwise, it sets `DRAW_TOOL`, `MONOMER_TOOL_TYPE`, the page's
+    `*_DB_MONOMER` and the page's tool key (`MONOMER_DATABASE`) in one
+    `setValues` call.
+- **DB-button click:** show the popup for the current `MONOMER_TOOL_TYPE`.
   It doesn't activate anything.
+- **Last-used click:**
+  - When blank, it does nothing.
+  - Otherwise it activates `getMonomerDbMonomer()`. That keeps the current
+    page, since the stored monomer belongs to it.
 - **`updateCheckedButton()`:**
   - Check `monomer_db_last_used_btn` exactly when
     `draw_tool == MONOMER_DB_MONOMER` and there's no selection. In that
-    case, uncheck the page groups, as for `CUSTOM_MONOMER`.
-  - Refresh the last-used text from the model.
+    case, uncheck the page groups.
+  - Refresh the last-used text from `getMonomerDbMonomer()`.
   - Call `popup->syncSelectionToModel()`.
-- **`onAminoOrNucleicBtnClicked`:** the DB-restore branch goes away. A page
-  switch activates the page's standard tool. This is pending confirmation.
-- **DB reload:** if the stored `MONOMER_DB_MONOMER` is no longer in the
-  custom DB:
-  - reset it to an empty `MonomerID`, which blanks the button;
-  - if the DB tool was active, fall back to `DrawTool::MONOMER`.
+- **`onAminoOrNucleicBtnClicked`:** keep today's restore behaviour.
+  - If the new page's tool is `MONOMER_DATABASE` and its `*_DB_MONOMER` isn't
+    empty, reactivate that DB monomer.
+  - Otherwise, activate the page's standard tool.
+- **`SketcherSideBar::updateCheckState`:** keep today's atomistic→monomeric
+  restore, using the renamed value.
+- **DB reload:** if a page's stored `*_DB_MONOMER` is no longer in the table's
+  source list:
+  - reset it to an empty `MonomerID`, which blanks the button for that page;
+  - if that page's DB tool was active, fall back to the page's standard
+    tool.
 
   Check what the current Unclassified code does on reload, and keep that
   behaviour where it still applies.
-- **Enabled state:** mirror `custom_monomer_btn`'s
-  `updateWidgetsEnabled()` logic. Keep whatever `mutateMonomers` does today
-  for a DB monomer that's incompatible with the selection.
+- **Enabled state:** both buttons are enabled whenever the monomeric tools
+  are. The only exception is the blank last-used button.
+  - Keep whatever `mutateMonomers` does today for a DB monomer that's
+    incompatible with the selection.
+  - If `updateWidgetsEnabled()` would re-enable a blank last-used button,
+    fix it there.
 
 ### C++ tests
 
 Add these to `test_monomer_tool_widget.cpp`, or put popup-only behaviour in a
 new `test_monomer_database_popup.cpp`.
-- **Empty state:**
-  - No custom DB shows the empty page with "Load Database…".
-  - Loading a DB shows the content page with "Update Database…".
+- **Empty state and load link:**
+  - With no custom DB, the table shows `ac` and `am`, and the link reads
+    "Load Database…".
+  - After loading a DB, it reads "Update Database…".
   - `setLoadMonomerDatabaseVisible(false)` hides the link.
+  - The empty page appears only for an empty source list. Test this with an
+    injected empty list, since the core DB always provides rows.
 - **Table contents:**
-  - Only custom monomers appear.
+  - The table holds custom monomers plus core monomers with no natural
+    analog, with custom winning on a symbol clash.
   - The AA default shows peptide and CHEM rows. The NA default shows nucleic
     acid and CHEM rows. The Type column is visible.
-- **Reset rule:**
-  - Reopening from the same page keeps the search text.
-  - Opening from the other page clears the search text and resets the
-    filter.
+- **Reset rule (keyed on the page at close):**
+  - Reopening on the same page keeps the search text.
+  - Opening on a page that differs from the page at the last close clears
+    the search text and resets the filter.
+  - Choosing an RNA row from a popup opened on the AA page, then closing and
+    reopening, does *not* reset.
 - **Search:**
   - Search narrows the rows, and the match count is correct.
   - Zero matches shows the placeholder.
 - **Choosing a row:**
   - It sets the tool and checks and labels the last-used button.
   - The popup stays open.
-  - `MONOMER_TOOL_TYPE` is unchanged.
+  - A peptide switches to the AA page, an RNA monomer to the NA page, and
+    CHEM stays on the current page.
+  - The chosen monomer is stored in that page's key only.
 - **Opening the popup** doesn't change the tool.
 - **Last-used button:**
   - Clicking it reactivates the monomer after another tool was chosen.
@@ -778,13 +902,21 @@ new `test_monomer_database_popup.cpp`.
   - A model change made elsewhere moves the table selection.
   - The selection is cleared for a non-DB tool and for a monomer that isn't
     in the table.
-- **With a canvas selection,** choosing a row mutates the selection, keeps
-  the scene tool and updates the last-used slot.
+- **With a canvas selection,** choosing a row:
+  - mutates the selection;
+  - keeps the scene tool;
+  - switches the page;
+  - updates that page's last-used slot;
+  - doesn't ping the page's tool key.
 - **DB reload:**
   - It refreshes the table.
-  - A monomer that has disappeared blanks the button and drops the DB tool.
-- **Page switching** while the DB tool is active (the new behaviour).
-- **`unk_btn` popup:** it contains `ac` and `am`.
+  - A monomer that has disappeared blanks that page's button and drops the
+    DB tool.
+- **Page switching:**
+  - Each page restores its own DB monomer, and the last-used button shows
+    the current page's value.
+  - A page whose last tool was a standard button restores that button.
+- **`ac` / `am`** can be chosen from the table and drawn.
 - **Long symbol:** a long symbol takes the fade path.
 - **`SketcherSideBar`:** an atomistic↔monomeric toggle case.
 
@@ -797,12 +929,16 @@ new `test_monomer_database_popup.cpp`.
 - **New suite `e2e/monomer_database_popup.test.js`:**
   - opening and closing via ×, Close, the DB button and an outside click;
   - an outside click on the canvas *also* places the active monomer;
-  - the empty state, and loading a DB through the popup's link;
+  - `ac` / `am` with no DB loaded, and loading a DB through the popup's
+    "Load Database…" link;
   - search narrowing the table and the match count;
   - choosing a row and then drawing it, with the HELM checked;
+  - choosing an RNA row from the AA page switches the side bar to the NA
+    page while the popup stays open and anchored;
   - the last-used label and its fade for a long symbol;
   - reactivation from the last-used button;
-  - the reset rule across page switches;
+  - each page restoring its own DB monomer;
+  - the reset rule, keyed on the page at close;
   - typing letters in the search box doesn't switch tools (see
     `popup_shortcuts.test.js`), and shortcuts work after the popup closes;
   - the popup stays within a small viewport;
@@ -813,7 +949,7 @@ new `test_monomer_database_popup.cpp`.
   `aa_unclassified_btn` and `na_unclassified_btn`. Grep all of `test/wasm`
   for `unclassified`. Rewrite each case against the new popup:
   - the SKETCH-2870 palette-contents, scrolling, per-tab-memory and mutation
-    tests. Per-tab memory becomes the new page-switch behaviour.
+    tests. Per-tab memory is kept, now through the shared last-used button.
   - the `expectPalette(page, 'aa_unclassified_btn', …)` assertions in the
     SKETCH-2788 malformed-JSON test.
   - replace the `unclassified-*.png` references.
@@ -855,10 +991,9 @@ intent, but don't port its implementation:
   programmatic ones. Use `QSignalBlocker` for silent updates.
 - **API:** `setCheckedData` / `checkedData`, `setItemChecked`, and
   `setMinimumCheckedCount(int)`. The filter popup uses 1, and unchecking the
-  last checked item is ignored. **Pending confirmation:** the alternative is
-  to allow zero, giving an empty table.
+  last checked item is ignored.
 - **Display text:** paint the checked items joined with ", ", in item order.
-  **Pending confirmation:** show "Any" when every item is checked.
+  Show "Any" when every item is checked.
   - Use `QStylePainter` with the combo option's `currentText` overridden.
   - Never use `setCurrentText`.
 - **Bold** works through the widget font, as for a normal combo.
@@ -882,16 +1017,16 @@ positioned below the filter button with `show_popup_next_to_widget`.
   - enabled only when `isNaturalAnalogApplicable()`.
 
 **Footer:**
-- "Clear All" (`filter_clear_all_link`) resets the filter to the
-  last-opened page's default.
+- "Clear All" (`filter_clear_all_link`) resets the filter to the default
+  for the current `MONOMER_TOOL_TYPE`.
 - "N filter(s) applied" (`filters_applied_lbl`, gray italics).
 - An × close button (`filter_close_btn`) at top right.
 
 **Behaviour:**
 - **Live updates:** every change emits `filterChanged(MonomerDatabaseFilter)`
   immediately. The popup never touches the table.
-- **Bold:** a combo is bold when its `is*Filtered()` is true (pending
-  confirmation; see "Design decisions").
+- **Bold:** a combo is bold when its `is*Filtered()` is true, i.e. when it
+  differs from the most permissive value.
 
 ### 3c. DB popup integration
 
@@ -912,8 +1047,15 @@ positioned below the filter button with `show_popup_next_to_widget`.
 - **C++ (filter popup and DB popup):**
   - the combo contents;
   - the multi-select default for each page;
-  - the monomer-type and analog combos are disabled in the default state
-    and enabled for exactly {Peptide};
+  - enabling for every polymer-type combination:
+    - Monomer type is enabled for {Peptide} and {Peptide, Structure} only;
+    - Natural analog is enabled whenever exactly one of Peptide and Nucleic
+      acid is checked;
+    - both are enabled in the AA default, and only Natural analog in the NA
+      default;
+  - with {Peptide, Structure}, choosing Terminal or a specific analog hides
+    the CHEM rows, and choosing None keeps them;
+  - "Any" is displayed when all three types are checked;
   - the analog choices switch between peptide and nucleic acid;
   - a combo that becomes disabled resets;
   - bold and count values;
@@ -959,7 +1101,8 @@ positioned below the filter button with `show_popup_next_to_widget`.
     load".
   - Every AA button and every NA base, sugar and phosphate button now gets a
     popup, even with zero analogs, because the folder entry always exists.
-  - This includes `unk_btn` and `na_n_btn`; see Step 2a.
+  - The exceptions are `unk_btn` (X) and `na_n_btn` (N), which stay
+    popup-free. Their monomers are in the table.
 - **Folder entry** in `build_monomer_symbol_buttons()`
   (`widget/monomer_symbol_popup_utils.cpp`):
   - **Placement and look:** add a final row with a `QToolButton` named
@@ -977,15 +1120,17 @@ positioned below the filter button with `show_popup_next_to_widget`.
       std::string analog)`.
   - **Analog value:**
     - SPECIFIC with the button's symbol;
-    - SPECIFIC `R` for dR;
-    - None for X and N.
+    - SPECIFIC `R` for dR.
 - **`MonomerToolWidget` on `monomerDatabaseRequested`:**
   - build a filter with exactly that one polymer type, monomer type Any,
     and the given analog;
   - `setFilter` it and `clearSearchText()`;
-  - record the current page as the popup's last-opened page, so that the
-    next ordinary opening doesn't reset;
-  - open the popup from **`monomer_db_btn`**, not from the long-press popup.
+  - open the popup from **`monomer_db_btn`**, not from the long-press popup;
+  - skip the reset rule for this opening, so that it doesn't overwrite the
+    requested filter.
+
+  The page is recorded at close as usual, so the next ordinary opening on
+  the same page keeps this filter.
 
   It doesn't activate anything.
 - **Remove dead code.** Remove code paths that existed only for large
@@ -1002,8 +1147,8 @@ positioned below the filter button with `show_popup_next_to_widget`.
     `test_modular_tool_button.cpp`.
 - **Playwright.**
   - **New cases:**
-    - the folder entry from a peptide button, a base, dR (filtered to `R`)
-      and X (filtered to None);
+    - the folder entry from a peptide button, a base and dR (filtered to
+      `R`);
     - each opens the DB popup at the side-bar button, with the right
       filter, count and description, and a cleared search;
     - a normal reopening afterwards keeps that filter.
