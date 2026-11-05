@@ -193,7 +193,7 @@ get_polymer_types_description(MonomerDbPolymerType polymer_types)
 /**
  * @return the text used to describe a specific natural analog, which is the
  * three-letter code (e.g. "Cys") for standard amino acids and the symbol
- * otherwise
+ * otherwise (i.e. for nucleic acids)
  */
 static std::string get_specific_analog_description(MonomerDbPolymerType type,
                                                    const std::string& analog)
