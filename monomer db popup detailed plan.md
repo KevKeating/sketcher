@@ -344,8 +344,14 @@ scene tool becomes a `DrawMonomerSceneTool` for that monomer.
   the user's choice, and restores it when it applies again. For example:
   {Peptide} + Backbone + C, then check Nucleic acid (both combos disable and
   show Any / Any or None), then uncheck it: Backbone and C come back.
-  - **Monomer type:** remember its value. It only ever applies to peptides,
-    so restoring it is always meaningful.
+  - **Monomer type:** remember its value, but forget it (back to Any) as
+    soon as the polymer types make the Natural analog combo apply to
+    Nucleic acid, that is, Nucleic acid checked and Peptide not. Monomer
+    type only applies to peptides, so it can't be restored for the wrong
+    type, but the user has then moved on to nucleic acids, and a forgotten
+    Backbone or Terminal shouldn't reappear when they return. This is the
+    same moment, and the same two-toggle barrier, as forgetting a peptide
+    analog.
   - **Natural analog:** remember one value **together with the polymer type
     it was chosen for** (Peptide or Nucleic acid). When the combo applies
     again:
@@ -691,7 +697,8 @@ class MonomerDatabaseFilter
     // are remembered" under Design decisions). setPolymerTypes() never
     // clears a remembered value, except that it forgets the natural analog
     // when that combo becomes applicable for a different polymer type than
-    // the one the value was chosen for.
+    // the one the value was chosen for, and forgets the monomer type when
+    // the natural analog becomes applicable for Nucleic acid.
     void setPolymerTypes(MonomerDbPolymerType polymer_types);
     void setMonomerType(MonomerTypeFilter monomer_type);
     // Records the currently applicable polymer type alongside the value.
@@ -820,8 +827,9 @@ Use hand-built `MonomerInfo` vectors, so no DB is needed. Cover:
     acid} → {Nucleic acid}, or {Structure} → {Nucleic acid, Structure}), and
     stays forgotten on returning to {Peptide};
   - the reverse, from a nucleic-acid analog to Peptide;
-  - Monomer type is restored however the polymer types travel, since it only
-    ever applies to peptides;
+  - Monomer type survives {Peptide, Nucleic acid} and {Structure}, but is
+    forgotten on reaching {Nucleic acid} or {Nucleic acid, Structure}, and
+    stays Any on returning to {Peptide};
   - `setNaturalAnalog` records the polymer type it was applicable for;
   - `==` sees remembered values, and the effective getters don't;
 - CHEM rows against every monomer-type and analog value;
@@ -1497,7 +1505,8 @@ Reposition an open filter popup if canvas resizing moves its anchor.
     unchecking Nucleic acid in the open dropdown, restores Backbone and C
     (enabled, bold, counted, table filtered);
   - checking Nucleic acid and then unchecking Peptide re-enables Natural
-    analog at Any or None, and re-checking Peptide doesn't bring C back;
+    analog at Any or None, and re-checking Peptide brings back neither C nor
+    Backbone;
   - closing and reopening the filter popup while the combos are disabled,
     then restoring Peptide only, still restores Backbone and C;
   - Clear All and a page-default reset forget remembered values;
@@ -1527,7 +1536,7 @@ Reposition an open filter popup if canvas resizing moves its anchor.
     - monomer type and analog enabling;
     - Backbone + C survive checking and unchecking Nucleic acid, while the
       disabled combos show "Any" / "Any or None"; checking Nucleic acid and
-      then unchecking Peptide forgets C;
+      then unchecking Peptide forgets both;
     - live table changes and the count label;
     - Clear All produces the most permissive filter and zero applied filters
       on either page, preserving search and sort;
