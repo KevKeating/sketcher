@@ -665,8 +665,11 @@ change.
 ### 1b. Filter, sort and pure functions (Qt-free)
 
 **New files:** `src/schrodinger/sketcher/model/monomer_database_filter.{h,cpp}`.
-- They must include no Qt headers.
-- They must not depend on `sketcher_model.h`, which is Qt.
+- The header must include no Qt headers, directly or indirectly.
+- The implementation must not use Qt. The `.cpp` may include
+  `sketcher_model.h`, which is Qt, for the monomer tool constants
+  (`AminoAcidTool`, `AMINO_ACID_TOOL_TO_RES_NAME` and so on); those stay in
+  `sketcher_model.h`.
 
 **Proposed API.** The sub-agent may refine names.
 
@@ -788,9 +791,8 @@ std::vector<std::size_t> filter_by_search_text(
     for example `AMINO_ACID_TOOL_TO_RES_NAME.at(AminoAcidTool::UNK)` and the
     NA `N` entry, or an rdkit_extensions constant.
   - Peptide choices come from `AMINO_ACID_TOOL_DISPLAY_ORDER` minus UNK,
-    reusing existing tables. That header is Qt-free apart from its includes;
-    if it isn't, move the needed constants to a Qt-free header rather than
-    copying them.
+    reusing the existing tables in `sketcher_model.h` rather than copying
+    them.
 - **Description:** follow the table under "Design decisions". Reuse an
   existing one-letter→three-letter amino-acid map for "Cys". Search the code
   before adding one.

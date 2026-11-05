@@ -12,7 +12,7 @@
 
 #include "schrodinger/rdkit_extensions/constants.h"
 #include "schrodinger/rdkit_extensions/monomer_mol.h"
-#include "schrodinger/sketcher/model/monomer_tool_constants.h"
+#include "schrodinger/sketcher/model/sketcher_model.h"
 
 using schrodinger::rdkit_extensions::ChainType;
 using schrodinger::rdkit_extensions::MonomerInfo;
