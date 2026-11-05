@@ -145,11 +145,17 @@ class SKETCHER_API MonomerDatabaseFilter
     explicit MonomerDatabaseFilter(MonomerDbPolymerType polymer_types);
 
     /**
-     * Set the polymer types to show. This never clears a remembered setting,
-     * except that it forgets the natural analog when that setting becomes
-     * applicable for a different polymer type than the one the value was
-     * chosen for, and it forgets the monomer type when the natural analog
-     * becomes applicable for Nucleic acid.
+     * Set the polymer types to show.
+     *
+     * Note that this may clear a remembered setting: the remembered natural
+     * analog and monomer type will be forgotten when the natural analog setting
+     * becomes applicable for a different polymer type than the one the value
+     * was chosen for. For example, switching filtering from peptides to both
+     * peptides and nucleic acids will remember the natural analog and monomer
+     * settings from peptide (so that switching the polymer type filtering back
+     * to peptide will restore them). However, switching from peptides to both
+     * peptides and nucleic acids and then switching again to only nucleic acids
+     * will clear the remembered natural analog and monomer settings.
      */
     void setPolymerTypes(MonomerDbPolymerType polymer_types);
 
