@@ -401,8 +401,9 @@ scene tool becomes a `DrawMonomerSceneTool` for that monomer.
 - **Natural-analog choices:**
   - **Peptide:** the 20 standard one-letter codes (includes `N`; excludes
     `X`, which None covers).
-  - **Nucleic acid:** `R, P, A, C, G, T, U`. `dR` is omitted, because a sugar
-    whose analog is deoxyribose uses `R` in the natural-analog field.
+  - **Nucleic acid:** `R, P, A, C, G, U, T` (the existing base display
+    order). `dR` is omitted, because a sugar whose analog is deoxyribose
+    uses `R` in the natural-analog field.
 - **Type column:**
   - The table has Symbol, Name, Type and Analog columns. Type shows
     "Peptide", "Nucleic acid" or "Structure".
@@ -796,7 +797,8 @@ std::vector<std::size_t> filter_by_search_text(
 - **Sort**
   - Case-insensitive and stable.
   - Tie-breaks: symbol, then polymer type.
-  - Missing values sort last in ascending order.
+  - Missing values sort last in ascending order and first in descending
+    order (the whole order is reversed).
   - Polymer type sorts by its display text.
 - **Search:** a case-insensitive substring match on symbol or name. Empty
   text returns the input unchanged.
