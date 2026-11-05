@@ -1153,7 +1153,15 @@ Keep the existing monomer-item rendering and top-bar tests green.
       - no editing;
       - no vertical header;
       - fixed row heights;
-      - sorting enabled through the model's `sortRequested`;
+      - sorting enabled through the model's `sortRequested`. The initial
+        sort is the `MonomerDbSort` default, Symbol ascending. Set the
+        header's sort indicator from the stored `MonomerDbSort` (with
+        `setSortIndicator`) **before** calling `setSortingEnabled(true)`.
+        Enabling sorting immediately sorts by the current indicator, and
+        Qt's default indicator is likely column 0 descending, which would
+        request a descending sort and mismatch the stored one. Keep the
+        indicator in sync whenever the stored sort changes, with signals
+        blocked so syncing doesn't request another sort;
       - Name column stretched;
       - Type column hidden when the filter allows one polymer type.
 
@@ -1290,6 +1298,11 @@ new `test_monomer_database_popup.cpp`.
 - **Search:**
   - Search narrows the rows, and the match count is correct.
   - Zero matches shows the placeholder.
+- **Sorting:**
+  - On first opening, the rows are in Symbol-ascending order, and the
+    header's indicator shows Symbol ascending.
+  - Clicking a header sorts by that column, and the indicator and the
+    stored sort agree; reopening the popup keeps both.
 - **Choosing a row in tool mode:**
   - It sets the tool and checks and labels the last-used button.
   - The popup stays open.
