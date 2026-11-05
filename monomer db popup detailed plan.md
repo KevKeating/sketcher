@@ -202,6 +202,30 @@ scene tool becomes a `DrawMonomerSceneTool` for that monomer.
 - **Anchor.** A page switch while the popup is open must not move the popup's
   anchor. The side bar's `amino_or_nucleic_stack` sizes itself to its
   largest page, so the shared buttons below it shouldn't move. Verify this.
+- **Popup bounds and resizing.**
+  - Use the available desktop area on native builds and the hosting canvas
+    on WASM. Prefer placement below the anchor; use above when that fits
+    better, then clamp the position to the available bounds.
+  - Keep the top-left reachable. Apply the bottom/right limits first and
+    the top/left limits last, matching `ModalDialog::moveOntoScreen()`. If a
+    popup is larger than the available area, top/left take precedence and
+    any unavoidable overflow extends to the right/bottom.
+  - The DB popup owns its layout adaptation: shrink the table viewport and
+    scale the structure preview to fit, preserving the image's aspect ratio
+    and readable UI text. The table retains its normal scrolling. Keep the
+    title, search/filter controls and close controls accessible whenever the
+    minimum layout fits.
+  - If the minimum layout still cannot fit, use the top-left clamping rule.
+    Do not add a scrollable whole-popup body or further layout adaptations
+    for exceptionally small canvases in this work; those can be added later
+    if needed.
+  - Recalculate size and position on opening and when the available area
+    changes while the popup is open, including canvas shrinkage. Reposition
+    any open nested filter popup against its anchor and the updated bounds.
+    Ordinary page switches retain the stable anchor described above.
+  - Shared positioning helpers own placement and clamping only; the DB
+    popup owns shrinking its contents. Do not impose DB-specific resizing
+    behavior on other existing popups.
 - **Polymer type is a multi-select combo** with "Peptide", "Nucleic acid"
   and "Structure" (CHEM). Its contents don't depend on the page.
 - **Applicability rules.** Structure (CHEM) never affects applicability.
@@ -321,7 +345,10 @@ These come from the user's style rule.
 
 - `show_popup_next_to_widget(QWidget* popup, QWidget* anchor)`. This is the
   positioning logic in `ToolButtonWithPopup::showPopup()`, which is
-  protected and button-specific.
+  protected and button-specific. Apply the bounds rules above. Extract the
+  reusable position-clamping calculation from `ModalDialog::moveOntoScreen()`
+  so dialogs and popups share it without changing the dialog's existing
+  top-left precedence. Keep DB-popup layout adaptation outside this helper.
 - `paint_text_with_fade_out(...)` and `elide_text()`. These are the fade
   painting from `AbstractMonomerItem::paint()`
   (`molviewer/abstract_monomer_item.cpp`).
@@ -857,8 +884,12 @@ Keep the existing monomer-item rendering and top-bar tests green.
   - **Clicks outside the popup** dismiss it and pass through, except over
     the originating button. Install `configure_button_popup` rather than
     globally setting `WA_NoMouseReplay` or duplicating its event filter.
-  - **Bounds:** the popup must stay inside a small canvas on WASM
-    (SKETCH-2920).
+  - **Bounds:** follow "Popup bounds and resizing" under Design decisions
+    (SKETCH-2920). Shrink the table viewport to keep the popup within the
+    available area whenever its minimum layout fits; Step 5 adds preview
+    scaling. Recalculate while open on available-area changes. If the
+    minimum layout cannot fit, keep the top-left reachable and allow
+    right/bottom overflow, without adding whole-popup scrolling.
 
 ### 2d. Layout and wiring in `MonomerToolWidget`
 
@@ -1001,6 +1032,11 @@ new `test_monomer_database_popup.cpp`.
 - **`ac` / `am`** can be chosen from the table and drawn.
 - **Long symbol:** a long symbol takes the fade path.
 - **`SketcherSideBar`:** an atomistic↔monomeric toggle case.
+- **Bounds:** test placement below/above the anchor, clamping at each edge,
+  shrinking the table viewport, and resizing the available area while open.
+  Include an area smaller than the minimum layout: top/left remain in bounds
+  and any unavoidable overflow is confined to right/bottom. Verify the shared
+  clamping helper preserves the existing dialog behavior.
 
 ### Playwright
 
@@ -1024,7 +1060,11 @@ new `test_monomer_database_popup.cpp`.
   - the reset rule, keyed on the page at close;
   - typing letters in the search box doesn't switch tools (see
     `popup_shortcuts.test.js`), and shortcuts work after the popup closes;
-  - the popup stays within a small viewport;
+  - the popup stays within a small viewport when its minimum layout fits,
+    including after shrinking the canvas while it is open; its table scrolls
+    and its title, search/filter and close controls remain accessible;
+  - below the minimum layout size, the popup's top-left stays reachable,
+    with right/bottom overflow permitted;
   - browsing rows with a canvas selection causes no mutation; click, Enter
     and Space each commit exactly once and preserve the current row;
   - inactive-page DB removal and removal while atomistic mode is active,
@@ -1090,6 +1130,8 @@ intent, but don't port its implementation:
 **Files:** `ui/monomer_database_filter_popup.ui` and
 `widget/monomer_database_filter_popup.{h,cpp}`. It's a nested `Qt::Popup`,
 positioned below the filter button with `show_popup_next_to_widget`.
+Use the shared bounds rules, allowing placement above or clamping when needed.
+Reposition an open filter popup if canvas resizing moves its anchor.
 
 **Rows:**
 - **Polymer type:** a `MultiSelectComboBox` with "Peptide", "Nucleic acid"
@@ -1323,6 +1365,10 @@ positioned below the filter button with `show_popup_next_to_widget`.
   right of the filter button. It shows `filter.getDescription()` and updates
   live with the filter.
 - **Image** (`monomer_db_image_lbl`, in a rounded frame):
+  - **Sizing:** scale the preview within its available pane, preserving
+    aspect ratio. Its natural image size must not force the popup beyond the
+    available bounds; coordinate with table-viewport shrinking under the
+    shared bounds policy. Recalculate on available-area changes while open.
   - **Preview row:** the selected row, or the valid current index if there
     is no selected row. Update on both selection and current-index changes,
     and explicitly after signal-blocked synchronization or model resets.
@@ -1362,6 +1408,9 @@ positioned below the filter button with `show_popup_next_to_widget`.
   - a same-ID/different-SMILES database replacement refreshes the image,
     including when the replacement fails to render;
   - an unparseable SMILES not crashing.
+  - preview scaling and table shrinking preserve the bounds policy after
+    adding the right-hand pane, including top-left precedence below the
+    minimum layout size.
 - **Playwright:**
   - the description text through several filter changes;
   - the image appearing for a selected row or an unselected current row,
@@ -1370,5 +1419,8 @@ positioned below the filter button with `show_popup_next_to_widget`.
   - replacing a database with changed SMILES under the same ID refreshes
     the preview; a failed render clears the old image;
   - fast keyboard scrolling through the ChEMBL DB staying responsive.
+  - repeat the small-viewport and live canvas-resize checks with the preview
+    pane present: the image scales without distortion and the popup remains
+    within bounds whenever its minimum layout fits.
   - Update earlier suites' popup screenshots, which now include the
     right-hand pane.
