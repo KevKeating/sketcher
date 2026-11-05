@@ -1,10 +1,10 @@
 # Monomer Database popup: implementation plan (SKETCH-2827)
 
-This is the single source of truth for SKETCH-2827. It replaces
-`monomer db popup initial plan.md`. The work is split into five steps. Each step
-is one self-contained brief for a sub-agent, and each ends in a building,
-tested, reviewable state. A sub-agent should read **Goal and background**,
-**Design decisions** and **Shared context**, then only its own step.
+This is the single source of truth for SKETCH-2827. The work is split into five
+steps. Each step is one self-contained brief for a sub-agent, and each ends in a
+building, tested, reviewable state. A sub-agent should read **Goal and
+background**, **Design decisions** and **Shared context**, then only its own
+step.
 
 ---
 
