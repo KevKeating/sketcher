@@ -6,10 +6,6 @@ is one self-contained brief for a sub-agent, and each ends in a building,
 tested, reviewable state. A sub-agent should read **Goal and background**,
 **Design decisions** and **Shared context**, then only its own step.
 
-Items marked **Pending confirmation** are new decisions raised by the latest
-round of feedback. The plan follows the stated default until the user says
-otherwise.
-
 ---
 
 ## Goal and background
@@ -24,8 +20,8 @@ scene tool becomes a `DrawMonomerSceneTool` for that monomer.
   - Main popup mockup: `image-20260727-212310.png`.
   - Filter popup mockup: `image-20260728-133216.png`.
   - Both are in the same folder.
-  - The docx also has an empty-state mockup ("No monomer database found",
-    "Load Database…", "Close").
+  - The docx also has a "No monomer database found" empty-state mockup.
+    This plan doesn't implement it (see "Deviations from the spec").
 - **Offline discussion has changed parts of the spec.** Where this plan and
   the spec differ, the plan wins. Every known difference is listed under
   "Deviations from the spec".
@@ -177,10 +173,10 @@ scene tool becomes a `DrawMonomerSceneTool` for that monomer.
 
   **Clear All** resets the filter to the default for the **current**
   `MONOMER_TOOL_TYPE`. That can differ from the page at opening if a row
-  choice switched pages. **Pending confirmation.**
+  choice switched pages.
 - **Anchor.** A page switch while the popup is open must not move the popup's
-  anchor. `QStackedWidget` sizes itself to its largest page, so the shared
-  buttons below it shouldn't move. Verify this.
+  anchor. The side bar's `amino_or_nucleic_stack` sizes itself to its
+  largest page, so the shared buttons below it shouldn't move. Verify this.
 - **Polymer type is a multi-select combo** with "Peptide", "Nucleic acid"
   and "Structure" (CHEM). Its contents don't depend on the page.
 - **Applicability rules.** Structure (CHEM) never affects applicability.
@@ -260,31 +256,24 @@ scene tool becomes a `DrawMonomerSceneTool` for that monomer.
   | Peptide + analog Any | `Peptide monomers with any natural analog` |
 
 - **Load Database… / Update Database… links:**
-  - "Load Database…" is shown in the empty state and "Update Database…"
-    otherwise, both at bottom-left as in the mockups.
+  - "Load Database…" is shown when no custom monomers are loaded, and
+    "Update Database…" otherwise. Both sit at bottom-left, as in the
+    mockups.
   - They're shown by default.
   - `SketcherWidget::setLoadMonomerDatabaseVisible(false)` hides them, along
     with the import menu's "Load Monomer Database…". The WASM JS API
     `sketcher_load_custom_monomers` (`src/app/main.cpp`) calls that
     automatically after a host page loads monomers.
   - Both links and the import-menu action run the same extracted function.
-- **"No monomer database found" state:**
-  - **Pending confirmation:** it's shown only when the table's source list
-    is empty. "Load Database…" vs "Update Database…" still depends on
-    whether any custom monomers are loaded.
-    - With today's core DB the source list always contains `ac` and `am`, so
-      in practice the empty state never appears.
-    - The alternative, "show it whenever no custom monomers are loaded",
-      would make `ac` and `am` unreachable until a database is loaded.
-  - It's a `QStackedWidget` whose content page holds everything above the
-    bottom link row: search, filter button, description, table, match
-    count and image.
-  - The empty page holds the centered gray-italic message.
-  - The bottom row (load/update link and Close) sits outside the stack.
-- **"No monomers match search & filter criteria"** is a separate state
-  (gray italics). The spec shows it inside the empty table with the header
-  still visible, so paint it in the table's viewport when there are zero
-  rows (for example, a small `QTableView` subclass). It isn't a stack page.
+- **No "No monomer database found" state.** The table's source list always
+  has at least one monomer, because the core DB provides `ac` and `am`, so
+  the popup always shows its normal content. Don't add a `QStackedWidget`
+  or an empty page.
+- **"No monomers match search & filter criteria"** (gray italics) is shown
+  when the search and filters leave zero rows. The spec shows it inside the
+  empty table with the header still visible, so paint it in the table's
+  viewport when there are zero rows (for example, a small `QTableView`
+  subclass).
 - **The structure image (Step 5) renders the monomer's DB SMILES as-is.**
   Capping groups and atom-map numbers are shown as stored. Nothing is capped
   or converted.
@@ -326,6 +315,7 @@ things clean:
 | Peptide analog list includes X and omits N | Includes N and omits X (X is "None") |
 | No Type column | A Type column, hidden when the filter allows one polymer type |
 | Image shows a capped structure | The DB SMILES as stored, with capping groups and atom-map numbers |
+| "No monomer database found" state with "Load Database…" | No empty state: the table always has core monomers with no natural analog. "Load Database…" / "Update Database…" depends on whether custom monomers are loaded |
 | Matching SMILES filter; Recently-used palette | Out of scope |
 
 ---
@@ -415,7 +405,7 @@ things clean:
     |---|---|
     | Side-bar pair | `monomer_db_last_used_btn`, `monomer_db_btn` |
     | Popup | `monomer_db_popup` |
-    | Popup contents | `monomer_db_search_le`, `monomer_db_table`, `monomer_db_match_count_lbl`, `monomer_db_content_stack`, `monomer_db_empty_lbl` |
+    | Popup contents | `monomer_db_search_le`, `monomer_db_table`, `monomer_db_match_count_lbl` |
     | Popup links and close | `monomer_db_load_link`, `monomer_db_close_link`, `monomer_db_close_btn` (×) |
     | Filter popup | `monomer_db_filter_btn`, `monomer_db_filter_popup`, `polymer_type_combo`, `monomer_type_combo`, `natural_analog_combo`, `filter_clear_all_link`, `filters_applied_lbl`, `filter_close_btn` |
     | Folder entry in long-press popups | `analog_monomer_db_btn` |
@@ -652,7 +642,7 @@ unchanged. No Playwright work is needed for this step.
   - a search box;
   - the table;
   - a match count;
-  - Close, Load Database… / Update Database…, and the empty state.
+  - Close, and Load Database… / Update Database….
 - Choosing a row activates that monomer.
 - The filter is the page default, with no way to change it yet.
 - There's no filter button, description or image yet.
@@ -750,30 +740,27 @@ Keep the existing monomer-item rendering and top-bar tests green.
     `FileSaveImagePopup`.
   - **Header:** follow the mockup, with the title "Monomer Database" and an
     × (`monomer_db_close_btn`).
-  - **`monomer_db_content_stack`** has two pages.
-    - **Content page:**
-      - **Search box:** a `QLineEdit` with a leading search icon,
-        `setClearButtonEnabled(true)` and live filtering on `textChanged`.
-        Typing in it must not trigger Sketcher keyboard shortcuts.
-      - **Table:** a `QTableView` with:
-        - single selection, selecting rows;
-        - no editing;
-        - no vertical header;
-        - fixed row heights;
-        - sorting enabled through the model's `sortRequested`;
-        - Name column stretched;
-        - Type column hidden when the filter allows one polymer type.
+  - **Content:**
+    - **Search box:** a `QLineEdit` with a leading search icon,
+      `setClearButtonEnabled(true)` and live filtering on `textChanged`.
+      Typing in it must not trigger Sketcher keyboard shortcuts.
+    - **Table:** a `QTableView` with:
+      - single selection, selecting rows;
+      - no editing;
+      - no vertical header;
+      - fixed row heights;
+      - sorting enabled through the model's `sortRequested`;
+      - Name column stretched;
+      - Type column hidden when the filter allows one polymer type.
 
-        It paints "No monomers match search & filter criteria" (gray italics)
-        when it has zero rows.
-      - **Match count:** "N matches" ("1 match").
-      - **Room** on the right for Step 3's filter button and Step 5's
-        description and image.
-    - **Empty page:** "No monomer database found", centered, in gray
-      italics.
-  - **Bottom row (outside the stack):**
-    - `monomer_db_load_link` on the left, with the text "Load Database…" in
-      the empty state or "Update Database…" otherwise;
+      It paints "No monomers match search & filter criteria" (gray italics)
+      when it has zero rows.
+    - **Match count:** "N matches" ("1 match").
+    - **Room** on the right for Step 3's filter button and Step 5's
+      description and image.
+  - **Bottom row:**
+    - `monomer_db_load_link` on the left, with the text "Load Database…"
+      when no custom monomers are loaded or "Update Database…" otherwise;
     - "Close" (`monomer_db_close_link`, `TEXT_LINK_STYLE`) on the right.
   - **Load-link visibility:** it follows `setLoadMonomerDatabaseVisible`.
     The path is `SketcherWidget` → `SketcherSideBar` → `MonomerToolWidget` →
@@ -782,11 +769,10 @@ Keep the existing monomer-item rendering and top-bar tests green.
     - Cache `get_monomer_database_table_monomers(getCustomMonomers(),
       getCoreMonomers())` in a `shared_ptr<const vector>`.
     - Refresh the cache on `subscribeToChanges`.
-    - Show the empty page only when the cache is empty.
     - The load link says "Load Database…" when `getCustomMonomers()` is
       empty and "Update Database…" otherwise.
-    - After a refresh, re-filter, re-sync the selection and switch the stack
-      page.
+    - After a refresh, re-filter, re-sync the selection and update the
+      load-link text.
     - Filter and sort changes re-run `filter_and_sort_monomers`.
       `textChanged` re-runs only `filter_by_search_text` on the cached
       filtered rows.
@@ -867,13 +853,12 @@ Keep the existing monomer-item rendering and top-bar tests green.
 
 Add these to `test_monomer_tool_widget.cpp`, or put popup-only behaviour in a
 new `test_monomer_database_popup.cpp`.
-- **Empty state and load link:**
+- **Load link:**
   - With no custom DB, the table shows `ac` and `am`, and the link reads
     "Load Database…".
   - After loading a DB, it reads "Update Database…".
+  - After `resetMonomerDefinitions()`, it reads "Load Database…" again.
   - `setLoadMonomerDatabaseVisible(false)` hides the link.
-  - The empty page appears only for an empty source list. Test this with an
-    injected empty list, since the core DB always provides rows.
 - **Table contents:**
   - The table holds custom monomers plus core monomers with no natural
     analog, with custom winning on a symbol clash.
