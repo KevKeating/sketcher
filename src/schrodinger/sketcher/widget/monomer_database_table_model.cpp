@@ -1,6 +1,5 @@
 #include "schrodinger/sketcher/widget/monomer_database_table_model.h"
 
-#include <array>
 #include <utility>
 
 #include <QString>
@@ -14,10 +13,6 @@ namespace schrodinger
 {
 namespace sketcher
 {
-
-// Header labels, in MonomerDbColumn order
-static const std::array<QString, 4> COLUMN_LABELS{"Symbol", "Name", "Type",
-                                                  "Analog"};
 
 MonomerDatabaseTableModel::MonomerDatabaseTableModel(QObject* parent) :
     QAbstractTableModel(parent)
@@ -47,7 +42,7 @@ int MonomerDatabaseTableModel::columnCount(const QModelIndex& parent) const
     if (parent.isValid()) {
         return 0;
     }
-    return static_cast<int>(COLUMN_LABELS.size());
+    return static_cast<int>(MONOMER_DB_COLUMN_LABELS.size());
 }
 
 QVariant MonomerDatabaseTableModel::data(const QModelIndex& index,
@@ -89,7 +84,9 @@ QVariant MonomerDatabaseTableModel::headerData(int section,
         return QAbstractTableModel::headerData(section, orientation, role);
     }
     if (role == Qt::DisplayRole && section >= 0 && section < columnCount()) {
-        return COLUMN_LABELS[section];
+        auto label = MONOMER_DB_COLUMN_LABELS[section].second;
+        return QString::fromUtf8(label.data(),
+                                 static_cast<qsizetype>(label.size()));
     }
     return QVariant();
 }

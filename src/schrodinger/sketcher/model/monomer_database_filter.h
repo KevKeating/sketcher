@@ -6,9 +6,11 @@
 
 #pragma once
 
+#include <array>
 #include <cstddef>
 #include <string>
 #include <string_view>
+#include <utility>
 #include <vector>
 
 #include "schrodinger/rdkit_extensions/monomer_database.h"
@@ -101,6 +103,34 @@ enum class MonomerDbColumn {
     POLYMER_TYPE,
     NATURAL_ANALOG,
 };
+
+/**
+ * The header label of each column of the Monomer Database table, in
+ * MonomerDbColumn order. Each label is paired with its column so that the
+ * static_assert below can check the order: reordering MonomerDbColumn without
+ * reordering this array fails to compile. A column added to MonomerDbColumn
+ * must also be added here, since this array's size is the table's column
+ * count.
+ */
+constexpr std::array<std::pair<MonomerDbColumn, std::string_view>, 4>
+    MONOMER_DB_COLUMN_LABELS{{
+        {MonomerDbColumn::SYMBOL, "Symbol"},
+        {MonomerDbColumn::NAME, "Name"},
+        {MonomerDbColumn::POLYMER_TYPE, "Type"},
+        {MonomerDbColumn::NATURAL_ANALOG, "Analog"},
+    }};
+
+static_assert(
+    [] {
+        for (std::size_t i = 0; i < MONOMER_DB_COLUMN_LABELS.size(); ++i) {
+            if (static_cast<std::size_t>(MONOMER_DB_COLUMN_LABELS[i].first) !=
+                i) {
+                return false;
+            }
+        }
+        return true;
+    }(),
+    "MONOMER_DB_COLUMN_LABELS must list the columns in MonomerDbColumn order");
 
 /**
  * The sort column and direction for the Monomer Database table. This is kept
