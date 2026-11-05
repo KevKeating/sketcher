@@ -10,6 +10,7 @@
 #include <boost/test/data/test_case.hpp>
 #include <boost/test/unit_test.hpp>
 
+#include "../test_common.h"
 #include "schrodinger/rdkit_extensions/monomer_database.h"
 #include "schrodinger/sketcher/model/monomer_database_filter.h"
 
@@ -20,35 +21,24 @@ namespace schrodinger
 namespace sketcher
 {
 
-// allow Boost to print these enums
-#define MAKE_ENUM_LOGGABLE(T)                                 \
-    std::ostream& operator<<(std::ostream& os, const T value) \
-    {                                                         \
-        os << #T << "<" << static_cast<int>(value) << ">";    \
-        return os;                                            \
-    }
 MAKE_ENUM_LOGGABLE(MonomerDbPolymerType)
 MAKE_ENUM_LOGGABLE(MonomerTypeFilter)
 MAKE_ENUM_LOGGABLE(NaturalAnalogFilter)
 
-using Type = MonomerDbPolymerType;
+using PolymerType = MonomerDbPolymerType;
 
-static const Type PEPTIDE = Type::PEPTIDE;
-static const Type NUCLEIC_ACID = Type::NUCLEIC_ACID;
-static const Type CHEM = Type::CHEM;
+static const PolymerType PEPTIDE = PolymerType::PEPTIDE;
+static const PolymerType NUCLEIC_ACID = PolymerType::NUCLEIC_ACID;
+static const PolymerType CHEM = PolymerType::CHEM;
 
 /**
  * Every combination of polymer type flags, from NONE to ALL
  */
-static const std::vector<Type> ALL_POLYMER_TYPE_COMBINATIONS{
-    Type::NONE,
-    PEPTIDE,
-    NUCLEIC_ACID,
-    CHEM,
-    PEPTIDE | NUCLEIC_ACID,
-    PEPTIDE | CHEM,
-    NUCLEIC_ACID | CHEM,
-    Type::ALL,
+static const std::vector<PolymerType> ALL_POLYMER_TYPE_COMBINATIONS{
+    PolymerType::NONE,      PEPTIDE,
+    NUCLEIC_ACID,           CHEM,
+    PEPTIDE | NUCLEIC_ACID, PEPTIDE | CHEM,
+    NUCLEIC_ACID | CHEM,    PolymerType::ALL,
 };
 
 static MonomerInfo
@@ -109,16 +99,16 @@ static void check_peptide_backbone_cys(const MonomerDatabaseFilter& filter)
 
 BOOST_AUTO_TEST_CASE(test_polymer_type_flags)
 {
-    BOOST_TEST(has_flag(Type::ALL, PEPTIDE));
+    BOOST_TEST(has_flag(PolymerType::ALL, PEPTIDE));
     BOOST_TEST(has_flag(PEPTIDE | CHEM, CHEM));
     BOOST_TEST(!has_flag(PEPTIDE | CHEM, NUCLEIC_ACID));
-    BOOST_TEST(!has_flag(Type::ALL, Type::NONE));
+    BOOST_TEST(!has_flag(PolymerType::ALL, PolymerType::NONE));
     BOOST_TEST(!has_flag(PEPTIDE, PEPTIDE | CHEM));
-    BOOST_TEST(count_flags(Type::NONE) == 0);
+    BOOST_TEST(count_flags(PolymerType::NONE) == 0);
     BOOST_TEST(count_flags(NUCLEIC_ACID) == 1);
     BOOST_TEST(count_flags(PEPTIDE | NUCLEIC_ACID) == 2);
-    BOOST_TEST(count_flags(Type::ALL) == 3);
-    BOOST_TEST((PEPTIDE | NUCLEIC_ACID | CHEM) == Type::ALL);
+    BOOST_TEST(count_flags(PolymerType::ALL) == 3);
+    BOOST_TEST((PEPTIDE | NUCLEIC_ACID | CHEM) == PolymerType::ALL);
     BOOST_TEST(((PEPTIDE | CHEM) & (NUCLEIC_ACID | CHEM)) == CHEM);
 }
 
@@ -130,13 +120,13 @@ BOOST_AUTO_TEST_CASE(test_get_monomer_db_polymer_type)
                NUCLEIC_ACID);
     BOOST_TEST(get_monomer_db_polymer_type(make_monomer("A", "CHEM")) == CHEM);
     BOOST_TEST(get_monomer_db_polymer_type(make_monomer("A", "BOGUS")) ==
-               Type::NONE);
+               PolymerType::NONE);
     BOOST_TEST(get_monomer_db_polymer_type(make_monomer("A", std::nullopt)) ==
-               Type::NONE);
+               PolymerType::NONE);
     BOOST_TEST(get_polymer_type_display_text(PEPTIDE) == "Peptide");
     BOOST_TEST(get_polymer_type_display_text(NUCLEIC_ACID) == "Nucleic acid");
     BOOST_TEST(get_polymer_type_display_text(CHEM) == "Structure");
-    BOOST_TEST(get_polymer_type_display_text(Type::NONE) == "");
+    BOOST_TEST(get_polymer_type_display_text(PolymerType::NONE) == "");
 }
 
 BOOST_AUTO_TEST_CASE(test_get_monomer_database_table_monomers)
@@ -212,7 +202,8 @@ BOOST_DATA_TEST_CASE(
     // rows with a missing or unparseable polymer type never match
     BOOST_TEST(!filter.matches(make_monomer("A", "BOGUS", "A")));
     BOOST_TEST(!filter.matches(make_monomer("A", std::nullopt, "A")));
-    BOOST_TEST(filter.isPolymerTypeFiltered() == (polymer_types != Type::ALL));
+    BOOST_TEST(filter.isPolymerTypeFiltered() ==
+               (polymer_types != PolymerType::ALL));
 }
 
 BOOST_DATA_TEST_CASE(
@@ -264,7 +255,8 @@ BOOST_AUTO_TEST_CASE(test_natural_analog_choices)
     BOOST_TEST(filter.getNaturalAnalogChoices() == expected,
                boost::test_tools::per_element());
 
-    for (auto polymer_types : {Type::NONE, CHEM, PEPTIDE | NUCLEIC_ACID}) {
+    for (auto polymer_types :
+         {PolymerType::NONE, CHEM, PEPTIDE | NUCLEIC_ACID}) {
         filter.setPolymerTypes(polymer_types);
         BOOST_TEST(filter.getNaturalAnalogChoices().empty());
     }
@@ -400,7 +392,7 @@ BOOST_DATA_TEST_CASE(test_nucleic_acid_analog_forgotten,
  */
 BOOST_AUTO_TEST_CASE(test_monomer_type_remembered_and_forgotten)
 {
-    for (auto intermediate : {PEPTIDE | NUCLEIC_ACID, CHEM, Type::ALL}) {
+    for (auto intermediate : {PEPTIDE | NUCLEIC_ACID, CHEM, PolymerType::ALL}) {
         MonomerDatabaseFilter filter(PEPTIDE);
         filter.setMonomerType(MonomerTypeFilter::TERMINAL);
         filter.setPolymerTypes(intermediate);
@@ -409,7 +401,7 @@ BOOST_AUTO_TEST_CASE(test_monomer_type_remembered_and_forgotten)
         BOOST_TEST(filter.getMonomerType() == MonomerTypeFilter::TERMINAL);
     }
 
-    for (auto path : std::vector<std::vector<Type>>{
+    for (auto path : std::vector<std::vector<PolymerType>>{
              {NUCLEIC_ACID},
              {PEPTIDE | NUCLEIC_ACID, NUCLEIC_ACID},
              {CHEM, NUCLEIC_ACID | CHEM},
@@ -464,7 +456,8 @@ BOOST_AUTO_TEST_CASE(test_set_natural_analog_records_polymer_type)
  */
 BOOST_AUTO_TEST_CASE(test_equality)
 {
-    BOOST_TEST((MonomerDatabaseFilter() == MonomerDatabaseFilter(Type::ALL)));
+    BOOST_TEST(
+        (MonomerDatabaseFilter() == MonomerDatabaseFilter(PolymerType::ALL)));
     BOOST_TEST(!(MonomerDatabaseFilter() == MonomerDatabaseFilter(PEPTIDE)));
 
     MonomerDatabaseFilter remembering(PEPTIDE);
@@ -526,7 +519,7 @@ BOOST_AUTO_TEST_CASE(test_none_and_any_analogs)
 {
     struct AnalogCase {
         MonomerInfo info;
-        Type polymer_type;
+        PolymerType polymer_type;
         bool has_no_analog;
     };
     std::vector<AnalogCase> cases{
@@ -712,7 +705,7 @@ BOOST_AUTO_TEST_CASE(test_search)
 }
 
 struct DescriptionCase {
-    Type polymer_types;
+    PolymerType polymer_types;
     MonomerTypeFilter monomer_type;
     NaturalAnalogFilter analog;
     std::string specific;
@@ -739,8 +732,8 @@ static const std::vector<DescriptionCase> DESCRIPTION_CASES{
      "Nucleic acid or structure monomers"},
     {PEPTIDE | NUCLEIC_ACID, MonomerTypeFilter::ANY,
      NaturalAnalogFilter::ANY_OR_NONE, "", "Peptide or nucleic acid monomers"},
-    {Type::ALL, MonomerTypeFilter::ANY, NaturalAnalogFilter::ANY_OR_NONE, "",
-     "All monomers"},
+    {PolymerType::ALL, MonomerTypeFilter::ANY, NaturalAnalogFilter::ANY_OR_NONE,
+     "", "All monomers"},
     {PEPTIDE, MonomerTypeFilter::TERMINAL, NaturalAnalogFilter::ANY_OR_NONE, "",
      "Peptide, terminal monomers"},
     {PEPTIDE, MonomerTypeFilter::ANY, NaturalAnalogFilter::SPECIFIC, "C",
@@ -773,7 +766,7 @@ BOOST_DATA_TEST_CASE(test_count_and_description,
     }
     BOOST_TEST(filter.getDescription() == desc_case.description);
 
-    bool polymer_type_filtered = desc_case.polymer_types != Type::ALL;
+    bool polymer_type_filtered = desc_case.polymer_types != PolymerType::ALL;
     bool monomer_type_filtered =
         desc_case.monomer_type != MonomerTypeFilter::ANY;
     bool analog_filtered = desc_case.analog != NaturalAnalogFilter::ANY_OR_NONE;
@@ -789,7 +782,7 @@ BOOST_AUTO_TEST_CASE(test_default_filters)
 {
     // the most permissive filter (Clear All)
     MonomerDatabaseFilter most_permissive;
-    BOOST_TEST(most_permissive.getPolymerTypes() == Type::ALL);
+    BOOST_TEST(most_permissive.getPolymerTypes() == PolymerType::ALL);
     BOOST_TEST(most_permissive.getNumFiltersApplied() == 0);
     BOOST_TEST(!most_permissive.isFiltering());
     BOOST_TEST(!most_permissive.isPolymerTypeFiltered());
@@ -797,7 +790,7 @@ BOOST_AUTO_TEST_CASE(test_default_filters)
 
     // the page defaults
     for (auto [polymer_types, description] :
-         std::vector<std::pair<Type, std::string>>{
+         std::vector<std::pair<PolymerType, std::string>>{
              {PEPTIDE | CHEM, "Peptide or structure monomers"},
              {NUCLEIC_ACID | CHEM, "Nucleic acid or structure monomers"}}) {
         MonomerDatabaseFilter page_default(polymer_types);
