@@ -334,10 +334,38 @@ scene tool becomes a `DrawMonomerSceneTool` for that monomer.
     to amino acids.
   - The **Natural analog** combo applies only when exactly one of Peptide and
     Nucleic acid is checked, with or without Structure.
-  - An inapplicable combo is disabled and reset to Any / Any or None, so a
-    disabled combo never hides a stale value.
+  - An inapplicable combo is disabled and **shows** its effective value,
+    "Any" / "Any or None", so a disabled combo never displays a value that
+    isn't applied.
   - Both page defaults therefore start with the Natural analog combo
     enabled. The AA default also starts with Monomer type enabled.
+- **Values hidden by applicability are remembered, not cleared.** A combo
+  that becomes inapplicable only because the polymer types changed keeps
+  the user's choice, and restores it when it applies again. For example:
+  {Peptide} + Backbone + C, then check Nucleic acid (both combos disable and
+  show Any / Any or None), then uncheck it: Backbone and C come back.
+  - **Monomer type:** remember its value. It only ever applies to peptides,
+    so restoring it is always meaningful.
+  - **Natural analog:** remember one value **together with the polymer type
+    it was chosen for** (Peptide or Nucleic acid). When the combo applies
+    again:
+    - for the same polymer type, restore the value;
+    - for the other polymer type, forget it and use Any or None.
+
+    This applies to every analog value, including Any and None, because
+    "peptides with no natural analog" and "nucleic acids with no natural
+    analog" are different questions. Peptide C (Cys) and nucleic-acid C
+    (cytosine) show why a value must never carry across types. Forgetting
+    takes at least two polymer-type toggles (check the new type, uncheck the
+    old one, in either order), which is a deliberate barrier. Remembering
+    one value per type was rejected: it could restore a value the user had
+    long forgotten after time spent on the other type.
+  - **Explicit resets forget everything:** Clear All, the page-default reset
+    on opening, and `setFilter()` (the Step 5 folder entry).
+  - The memory lives in `MonomerDatabaseFilter`, not in the combo widgets.
+    The filter popup is rebuilt from the filter each time it opens, and the
+    analog combo's items are rebuilt when the polymer types change, so a
+    widget can't hold it.
 - **How CHEM rows match.** CHEM monomers have no monomer type and no natural
   analog.
   - They pass the monomer-type filter only for "Any".
@@ -659,9 +687,26 @@ class MonomerDatabaseFilter
     MonomerDatabaseFilter() = default;
     explicit MonomerDatabaseFilter(MonomerDbPolymerType polymer_types);
 
-    // getters/setters; setPolymerTypes() resets any filter that becomes
-    // inapplicable; setNaturalAnalog(NaturalAnalogFilter, std::string
-    // specific = {})
+    // Setters store the user's choice (see "Values hidden by applicability
+    // are remembered" under Design decisions). setPolymerTypes() never
+    // clears a remembered value, except that it forgets the natural analog
+    // when that combo becomes applicable for a different polymer type than
+    // the one the value was chosen for.
+    void setPolymerTypes(MonomerDbPolymerType polymer_types);
+    void setMonomerType(MonomerTypeFilter monomer_type);
+    // Records the currently applicable polymer type alongside the value.
+    // Precondition: isNaturalAnalogApplicable() (assert)
+    void setNaturalAnalog(NaturalAnalogFilter analog,
+                          std::string specific = {});
+
+    // Effective values: what is actually applied. They return ANY /
+    // ANY_OR_NONE while the combo is inapplicable, and the remembered value
+    // otherwise. The remembered values themselves stay private.
+    MonomerDbPolymerType getPolymerTypes() const;
+    MonomerTypeFilter getMonomerType() const;
+    NaturalAnalogFilter getNaturalAnalog() const;
+    const std::string& getSpecificNaturalAnalog() const; // "" unless SPECIFIC
+
     // CHEM never affects applicability:
     bool isMonomerTypeApplicable() const;   // PEPTIDE set, NUCLEIC_ACID not
     bool isNaturalAnalogApplicable() const; // exactly one of PEPTIDE and
@@ -678,6 +723,7 @@ class MonomerDatabaseFilter
 
     std::string getDescription() const;
     bool matches(const rdkit_extensions::MonomerInfo& info) const;
+    // Compares the full state, including remembered values
     bool operator==(const MonomerDatabaseFilter&) const = default;
 };
 
@@ -714,6 +760,16 @@ std::vector<std::size_t> filter_by_search_text(
 - **Applicability** is defined once, by the methods above. Everything else
   calls them: `matches()`, the count, the description, and Step 4's combo
   enabling.
+- **Effective vs remembered values.** `matches()`, the count, the
+  `is*Filtered()` methods, the description and the combo display all use the
+  effective getters, never the remembered values directly. Clear All and the
+  page defaults are new filter objects, so they carry no memory.
+- **Equality.** `operator==` compares the full state, so two filters with
+  the same effective values but different remembered values are unequal.
+  That's intended. Nothing in this plan needs `==` in production code; it's
+  for tests, and optionally for skipping a re-filter when nothing changed (a
+  memory-only change then causes one cheap extra re-filter). Tests that mean
+  "applies the same filtering" compare the effective getters instead.
 - **Monomer type:** a case-insensitive comparison with `Backbone` /
   `Terminal`. CHEM rows match only `ANY`.
 - **CHEM and the analog filter:** CHEM rows match only `NONE` and
@@ -751,7 +807,23 @@ Use hand-built `MonomerInfo` vectors, so no DB is needed. Cover:
     type, but not one of a different polymer type;
 - every polymer-type combination, including NONE and ALL;
 - applicability for every combination, including Structure combined with
-  Peptide or Nucleic acid, and the reset of inapplicable filters;
+  Peptide or Nucleic acid, and that inapplicable combos have effective
+  values Any / Any or None;
+- remembered values:
+  - {Peptide} + Backbone + C, then {Peptide, Nucleic acid}, then {Peptide}
+    restores Backbone and C, and the inapplicable middle state matches,
+    counts and describes as Any / Any or None;
+  - the same through {Peptide, Structure} → {Structure} → {Peptide,
+    Structure};
+  - a peptide analog (C, None or Any) is forgotten when the analog applies
+    again for Nucleic acid, through either toggle order ({Peptide, Nucleic
+    acid} → {Nucleic acid}, or {Structure} → {Nucleic acid, Structure}), and
+    stays forgotten on returning to {Peptide};
+  - the reverse, from a nucleic-acid analog to Peptide;
+  - Monomer type is restored however the polymer types travel, since it only
+    ever applies to peptides;
+  - `setNaturalAnalog` records the polymer type it was applicable for;
+  - `==` sees remembered values, and the effective getters don't;
 - CHEM rows against every monomer-type and analog value;
 - None/Any with `X`, `N` and empty for both peptides and nucleic acids,
   including that peptide `N` (Asn) is **not** None;
@@ -1379,6 +1451,14 @@ Reposition an open filter popup if canvas resizing moves its anchor.
   immediately. The popup never touches the table.
 - **Bold:** a combo is bold when its `is*Filtered()` is true, i.e. when it
   differs from the most permissive value.
+- **Combos display the filter's effective values.** After every change,
+  write each combo from the filter's effective getters, with signals
+  blocked. So a disabled combo shows "Any" / "Any or None", and a re-enabled
+  one shows the restored value. A user edit to an enabled combo calls the
+  filter's setter. The combos never hold state of their own; the memory is
+  in `MonomerDatabaseFilter` (see "Values hidden by applicability are
+  remembered"). This also covers the analog combo, whose items are rebuilt
+  when the polymer types change.
 
 ### 4c. DB popup integration
 
@@ -1411,7 +1491,16 @@ Reposition an open filter popup if canvas resizing moves its anchor.
     the CHEM rows, and choosing None keeps them;
   - "Any" is displayed when all three types are checked;
   - the analog choices switch between peptide and nucleic acid;
-  - a combo that becomes disabled resets;
+  - a combo that becomes disabled shows "Any" / "Any or None", isn't bold,
+    and doesn't count;
+  - the Design-decisions example: {Peptide} + Backbone + C, then checking and
+    unchecking Nucleic acid in the open dropdown, restores Backbone and C
+    (enabled, bold, counted, table filtered);
+  - checking Nucleic acid and then unchecking Peptide re-enables Natural
+    analog at Any or None, and re-checking Peptide doesn't bring C back;
+  - closing and reopening the filter popup while the combos are disabled,
+    then restoring Peptide only, still restores Backbone and C;
+  - Clear All and a page-default reset forget remembered values;
   - bold and count values;
   - Clear All selects all polymer types, Any and Any or None on either page;
     count becomes zero, bold styling clears and the button becomes normal,
@@ -1436,6 +1525,9 @@ Reposition an open filter popup if canvas resizing moves its anchor.
       popup nesting is the main WASM risk);
     - the last item can't be unchecked;
     - monomer type and analog enabling;
+    - Backbone + C survive checking and unchecking Nucleic acid, while the
+      disabled combos show "Any" / "Any or None"; checking Nucleic acid and
+      then unchecking Peptide forgets C;
     - live table changes and the count label;
     - Clear All produces the most permissive filter and zero applied filters
       on either page, preserving search and sort;
