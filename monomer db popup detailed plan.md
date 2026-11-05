@@ -1,10 +1,10 @@
 # Monomer Database popup: implementation plan (SKETCH-2827)
 
-This is the single source of truth for SKETCH-2827. The work is split into five
-steps. Each step is one self-contained brief for a sub-agent, and each ends in a
-building, tested, reviewable state. A sub-agent should read **Goal and
-background**, **Design decisions** and **Shared context**, then only its own
-step.
+This is the single source of truth for SKETCH-2827. The work is split into six
+steps, one PR per step. Each step is one self-contained brief for a sub-agent,
+and each ends in a building, tested, reviewable state. A sub-agent should read
+**Goal and background**, **Design decisions** and **Shared context**, then
+only its own step.
 
 ---
 
@@ -132,25 +132,111 @@ scene tool becomes a `DrawMonomerSceneTool` for that monomer.
     `AMINO_ACID_TOOL` no longer mutates the selection; `AMINO_ACID_SYMBOL`
     does. `setValues()` pings every key it is given, so check every key
     against `SketcherWidget::applyModelValuePingToTargets` before including it.
+
+    `MolModel::mutateMonomers` skips selected monomers whose type doesn't
+    match the chosen monomer. So committing an RNA row with only peptides
+    selected switches to the NA page and updates its last-used slot, but
+    changes nothing on the canvas and adds no undo entry. That's accepted
+    behavior; don't add special handling for it.
 - **Page synchronization is independent of the draw tool.** Synchronize the
   AA/NA page buttons and `amino_or_nucleic_stack` with `MONOMER_TOOL_TYPE`
   even while Select or Move/Rotate is active. Choosing a mutation target can
   switch the visible page without changing the draw tool.
+- **`SketcherModel` repairs its own DB state when the database changes.**
+  The repair touches only `SketcherModel` keys, so it lives there, not in
+  `MonomerToolWidget`.
+  - `SketcherModel` subscribes to `MonomerDatabase::subscribeToChanges()` in
+    its constructor. It keeps the `scoped_connection` as a member and
+    marshals the callback with `QMetaObject::invokeMethod(this, …)`.
+  - A page's `*_DB_MONOMER` is valid when it's in the table's source list.
+    Check this with Step 1's `get_monomer_database_table_monomers()`; don't
+    re-implement the inclusion rule. This is about membership, not
+    drawability. For example, if a custom override of core `meG` is
+    unloaded, `meG` reverts to a core monomer with analog G, leaves the
+    table, and is cleared from the slot, even though it can still be drawn
+    from the G palette.
+  - For each page whose slot is no longer valid, including an inactive page
+    and while atomistic mode is active:
+    - reset the slot to an empty `MonomerID`, which blanks the last-used
+      button for that page;
+    - if the page's remembered tool is `MONOMER_DATABASE`, reset it to the
+      model's default: `AminoAcidTool::ALA` with symbol `A`, or
+      `NucleicAcidTool::RNA_NUCLEOTIDE` with the default
+      `NUCLEIC_ACID_SYMBOL`. Keep an already remembered standard tool. Never
+      leave a `MONOMER_DATABASE` marker with an empty slot;
+    - if that page's DB tool is the active draw tool, set `DRAW_TOOL` to
+      `MONOMER`; otherwise keep the active draw tool.
+  - Apply all the repairs in one update that emits `valuesChanged` (so the
+    scene and widgets refresh) but never `valuePinged` (so nothing mutates
+    a canvas selection or adds an undo entry). Do this with a **private**
+    helper: refactor `setValues()` so that it and the new helper share the
+    store-and-emit code. Don't add a ping parameter or a new public setter.
+  - The logic is small, so it belongs in `SketcherModel` itself. Move it to a
+    separate friend class only if it grows well beyond that.
+- **Database-change listeners are independent of each other.** Several
+  objects subscribe to database changes: `SketcherModel` (the repair), the DB
+  popup (its cached table rows, from Step 3) and `MonomerToolWidget` (the
+  long-press palettes). They run in subscription order, which depends on
+  construction order, so none may depend on another having run first:
+  - each listener reads the database directly, never another listener's
+    cache;
+  - the popup's selection sync tolerates a model ID that isn't in its cache
+    yet (it selects nothing), and the popup re-syncs to the model after each
+    of its own refreshes.
 - **Table selection mirrors the model, and only for the DB tool.** A row is
   selected only when:
-  - `getDrawTool() == DrawTool::MONOMER_DB_MONOMER`, and
+  - `getDrawTool() == DrawTool::MONOMER_DB_MONOMER`,
+  - there's no canvas selection, and
   - `getMonomerDbMonomer()` is one of the current rows.
 
   Otherwise no row is selected. No row is selected by default; this overrides
-  the spec's "first item should probably be selected".
-- **Browsing and committing a mutation are separate.** With a canvas
-  selection, keyboard navigation only moves the table's current index; it
-  does not mutate, update a last-used slot, or switch pages. A click on a
-  valid row, Enter/Return, or Space explicitly commits that row's mutation.
-  Keep the table selection empty in this mode, but preserve the current
-  index for keyboard navigation and preview, including after a commit.
-  Without a canvas selection, retain live tool activation when the user
-  changes rows with the mouse or keyboard.
+  the spec's "first item should probably be selected". The canvas-selection
+  condition matches the last-used button's checked rule. It's mostly
+  defensive: `SketcherModel::onSelectionChanged()` already switches a drawing
+  tool to Select whenever a canvas selection appears.
+- **The popup has two modes, fixed while it's open.** The popup reads
+  `SketcherModel::hasActiveSelection()` once, when it opens:
+  - **Tool mode** (no canvas selection): changing rows with the mouse or
+    keyboard activates the row's monomer live, as before.
+  - **Mutation mode** (canvas selection): keyboard navigation only moves the
+    table's current index. It doesn't mutate, update a last-used slot or
+    switch pages. A click on a valid row, Enter/Return or Space commits that
+    row's mutation. The table selection stays empty, but the current index
+    is kept for keyboard navigation and preview, including after a commit.
+    Stop the selection at its source: a small `QTableView` subclass
+    overrides `selectionCommand()` to return `QItemSelectionModel::NoUpdate`
+    in this mode, rather than clearing a selection after Qt has made it.
+
+  **Why the mode can be fixed.** Nothing the user does inside the popup
+  changes the canvas selection:
+  - A commit mutates monomers in place (`MolModel::mutateMonomers`), so the
+    selection snapshot is unchanged.
+  - While a `Qt::Popup` is active, Qt matches window-context shortcuts
+    against the popup rather than the main window, so the Sketcher's
+    Ctrl+A, Ctrl+D, Ctrl+I and Ctrl+Z actions (`MoreActionsMenu`, default
+    `Qt::WindowShortcut`) don't fire. Ctrl+A selects the search text in the
+    search box and does nothing in a single-selection table. Verify this with
+    tests rather than relying on it.
+
+  The selection can still change programmatically while the popup is open,
+  for example through a host API call such as the WASM JS API or Maestro's
+  Python API. The popup listens to `SketcherModel::selectionChanged` and
+  **closes itself** when `hasActiveSelection()` no longer matches the value
+  it read on opening. The user can reopen it in the new mode. Don't close it
+  on every `selectionChanged`, since the scene may re-emit that signal while
+  rebuilding items after a commit.
+- **Enter/Return and Space apply the current row in both modes and never
+  close the popup.** In mutation mode they commit it. In tool mode they
+  activate it, which does nothing if it's already the active monomer (it
+  usually is, because changing rows activates). Handle both keys in one
+  place, only when the table has focus; consume them and ignore auto-repeat.
+- **The current row has its own subtle highlight.** Without a selected row,
+  only Qt's focus rectangle would mark the current row, and it can be faint
+  or invisible, especially on WASM. Paint the current row's background in a
+  light color whenever the current row isn't the selected row. Use
+  `#edf7fc`, the side bar's existing hover color, which is a pale tint of the
+  `#d4e6f1` checked color, and use `#d4e6f1` for the selected row. Make sure
+  the whole old and new rows repaint when the current index changes.
 - **Preview row:** use the selected row if there is one, otherwise the valid
   current index. Selection and current index are independent; clearing the
   selection must not clear the current index. If neither exists, the preview
@@ -203,9 +289,17 @@ scene tool becomes a `DrawMonomerSceneTool` for that monomer.
   anchor. The side bar's `amino_or_nucleic_stack` sizes itself to its
   largest page, so the shared buttons below it shouldn't move. Verify this.
 - **Popup bounds and resizing.**
-  - Use the available desktop area on native builds and the hosting canvas
-    on WASM. Prefer placement below the anchor; use above when that fits
-    better, then clamp the position to the available bounds.
+  - **Available area:** `anchor->screen()->availableGeometry()`. That is the
+    desktop on native builds and the hosting canvas on WASM, because each
+    WASM canvas is its own `QScreen` (see `ModalDialog::showEvent`). Use this
+    one code path; don't branch on the platform.
+  - **Placement order:**
+    1. below the anchor, at full size, if it fits;
+    2. otherwise above the anchor, at full size, if it fits;
+    3. otherwise on whichever side has more room. The DB popup shrinks to
+       fit that side, down to its minimum layout (see below); other popups
+       keep their size;
+    4. finally, clamp the position to the available area.
   - Keep the top-left reachable. Apply the bottom/right limits first and
     the top/left limits last, matching `ModalDialog::moveOntoScreen()`. If a
     popup is larger than the available area, top/left take precedence and
@@ -226,6 +320,12 @@ scene tool becomes a `DrawMonomerSceneTool` for that monomer.
   - Shared positioning helpers own placement and clamping only; the DB
     popup owns shrinking its contents. Do not impose DB-specific resizing
     behavior on other existing popups.
+  - **Existing popups change too, deliberately.** `ToolButtonWithPopup`
+    will use the shared helper (Step 2), so the long-press popups gain the
+    placement order and top/left clamping. They also switch from
+    `QApplication::screenAt(QCursor::pos())->geometry()` to the anchor's
+    available area. They're positioned only when shown; live recalculation
+    while open is only for the DB popup and its filter popup.
 - **Polymer type is a multi-select combo** with "Peptide", "Nucleic acid"
   and "Structure" (CHEM). Its contents don't depend on the page.
 - **Applicability rules.** Structure (CHEM) never affects applicability.
@@ -276,7 +376,7 @@ scene tool becomes a `DrawMonomerSceneTool` for that monomer.
     type, and hidden when it allows exactly one. The rows actually displayed
     don't affect it.
   - None analogs (`X`/`N`/empty) display blank.
-- **Description text** (Step 5) describes the filter. Its form is
+- **Description text** (Step 6) describes the filter. Its form is
   `<polymer types>[, <monomer type>] monomers[ with <analog>]`, or
   `<polymer types>[, <monomer type>], <X> analogs` for a specific analog.
   - **Drop "structure"** when the other filters exclude CHEM: when the
@@ -335,7 +435,7 @@ scene tool becomes a `DrawMonomerSceneTool` for that monomer.
   empty table with the header still visible, so paint it in the table's
   viewport when there are zero rows (for example, a small `QTableView`
   subclass).
-- **The structure image (Step 5) renders the monomer's DB SMILES as-is.**
+- **The structure image (Step 6) renders the monomer's DB SMILES as-is.**
   Capping groups and atom-map numbers are shown as stored. Nothing is capped
   or converted.
 
@@ -343,19 +443,20 @@ scene tool becomes a `DrawMonomerSceneTool` for that monomer.
 
 These come from the user's style rule.
 
-- `show_popup_next_to_widget(QWidget* popup, QWidget* anchor)`. This is the
-  positioning logic in `ToolButtonWithPopup::showPopup()`, which is
-  protected and button-specific. Apply the bounds rules above. Extract the
+- `show_popup_next_to_widget(QWidget* popup, QWidget* anchor)` (Step 2).
+  This is the positioning logic in `ToolButtonWithPopup::showPopup()`, which
+  is protected and button-specific. Apply the bounds rules above.
+  `ToolButtonWithPopup::showPopup()` calls it afterwards. Extract the
   reusable position-clamping calculation from `ModalDialog::moveOntoScreen()`
   so dialogs and popups share it without changing the dialog's existing
   top-left precedence. Keep DB-popup layout adaptation outside this helper.
-- `paint_text_with_fade_out(...)` and `elide_text()`. These are the fade
-  painting from `AbstractMonomerItem::paint()`
+- `paint_text_with_fade_out(...)` and `elide_text()` (Step 3). These are the
+  fade painting from `AbstractMonomerItem::paint()`
   (`molviewer/abstract_monomer_item.cpp`).
-- `load_monomer_database_from_file(QWidget* parent)`. This is the body of
-  `SketcherTopBar::onLoadMonomerDatabaseClicked()`.
+- `load_monomer_database_from_file(QWidget* parent)` (Step 3). This is the
+  body of `SketcherTopBar::onLoadMonomerDatabaseClicked()`.
 - The SMILES → RDKit mol → image path in
-  `get_tool_tip_containing_smiles_image()` (Step 5).
+  `get_tool_tip_containing_smiles_image()` (Step 6).
 
 ### Separate sort from filter
 
@@ -390,7 +491,8 @@ things clean:
     files, and no commits.
   - Use the `sketcher-architecture`, `sketcher-monomer-helm` and
     `sketcher-build-and-debug` skills.
-  - Steps 2–5 also use `implement-ux-spec` and `schrodinger-cpp-style`.
+  - All steps use `schrodinger-cpp-style`. Steps 3–6 also use
+    `implement-ux-spec`.
 - **Monomer DB facts**
   (`include/schrodinger/rdkit_extensions/monomer_database.h`):
   - **Singleton.** `MonomerDatabase::instance()` always holds the core DB,
@@ -437,7 +539,7 @@ things clean:
   - One executable per `test/**/*.cpp`; they're auto-discovered.
   - Tests that load a DB must reset it on exit. Copy the `ResetDatabase` RAII
     struct from `test/schrodinger/sketcher/widget/test_monomer_tool_widget.cpp`.
-- **Playwright (WASM) tests.** Every step that changes the GUI (Steps 2–5)
+- **Playwright (WASM) tests.** Every step that changes the GUI (Steps 2–6)
   must add Playwright coverage. It must also update any existing Playwright
   test whose behavior this work intentionally changes, including tests added
   by earlier steps.
@@ -455,10 +557,10 @@ things clean:
     objectName and reports their state. Tests then drive the app with real
     mouse and keyboard events.
     - It can't yet read table rows or combo-popup items.
-    - Step 2 adds table support: row count, visible headers, the selected
+    - Step 3 adds table support: row count, visible headers, the selected
       row, cell text for a row, and a selector that yields a row's rect
       after scrolling it into view.
-    - Step 3 adds checkable-combo support: the item check states, plus a
+    - Step 4 adds checkable-combo support: the item check states, plus a
       selector for an item in an open combo dropdown.
     - Follow the bridge's stated philosophy: close only the gap Playwright
       can't, and keep driving through real events.
@@ -473,7 +575,7 @@ things clean:
     | Popup links and close | `monomer_db_load_link`, `monomer_db_close_link`, `monomer_db_close_btn` (×) |
     | Filter popup | `monomer_db_filter_btn`, `monomer_db_filter_popup`, `polymer_type_combo`, `monomer_type_combo`, `natural_analog_combo`, `filter_clear_all_link`, `filters_applied_lbl`, `filter_close_btn` |
     | Folder entry in long-press popups | `analog_monomer_db_btn` |
-    | Right-hand pane (Step 5) | `monomer_db_description_lbl`, `monomer_db_image_lbl` |
+    | Right-hand pane (Step 6) | `monomer_db_description_lbl`, `monomer_db_image_lbl` |
 
   - **Running the tests needs a WASM artifact.** WASM builds are remote, and
     the user runs them.
@@ -517,7 +619,7 @@ change.
 - **Refactor, don't copy.** Refactor the private `getMonomers(ChainType,
   bool)` so that all of these share the row-reading loop (prepare, step,
   `assign_monomer_info`). Parameterize it by which DB handle(s) to read, so
-  that Step 4 can add a core-only analog query without copying it.
+  that Step 5 can add a core-only analog query without copying it.
 - **Tests** go in `test/schrodinger/rdkit_extensions/test_monomer_database.cpp`:
   - `getCustomMonomers()` is empty when only the core DB exists;
   - it returns all custom monomers across polymer types;
@@ -607,10 +709,10 @@ std::vector<std::size_t> filter_by_search_text(
   - Map `MonomerInfo::polymer_type` with `rdkit_extensions::toChainType`:
     PEPTIDE→PEPTIDE, RNA→NUCLEIC_ACID, CHEM→CHEM.
   - Rows with a missing or unparseable type never match.
-  - `NONE` matches nothing. The UI never produces it (Step 3), but the API
+  - `NONE` matches nothing. The UI never produces it (Step 4), but the API
     stays total.
 - **Applicability** is defined once, by the methods above. Everything else
-  calls them: `matches()`, the count, the description, and Step 3's combo
+  calls them: `matches()`, the count, the description, and Step 4's combo
   enabling.
 - **Monomer type:** a case-insensitive comparison with `Backbone` /
   `Terminal`. CHEM rows match only `ANY`.
@@ -698,23 +800,23 @@ unchanged. No Playwright work is needed for this step.
 
 ---
 
-## Step 2: Side-bar buttons and the Monomer Database popup (no filter popup)
+## Step 2: Tool-state model and shared popup positioning
 
-**Goal:**
-- The shared button pair replaces the Unclassified buttons.
-- The DB button opens the popup, which has:
-  - a search box;
-  - the table;
-  - a match count;
-  - Close, and Load Database… / Update Database….
-- Choosing a row activates that monomer.
-- The filter is the page default, with no way to change it yet.
-- There's no filter button, description or image yet.
+**Goal:** the model and tool-state changes the popup depends on, plus the
+shared popup positioning, with no new widgets.
+- The Unclassified buttons and their popups keep working, now on top of the
+  new keys and the new activation function. Step 3 replaces them.
+- User-visible changes after this step:
+  - committing a mutation from an Unclassified popup also stores the monomer
+    in that page's last-used slot, and keeps the page's remembered tool;
+  - the AA/NA page buttons follow `MONOMER_TOOL_TYPE` under every draw tool;
+  - a database change that removes a remembered DB monomer repairs the tool
+    state;
+  - long-press popups use the new placement order and stay inside the
+    available area.
 
-### 2a. Remove the Unclassified buttons; rename the markers; split the model key
+### 2a. Rename the markers and split the model key
 
-- **Delete the buttons.** Remove `aa_unclassified_btn` and
-  `na_unclassified_btn` from `ui/monomer_tool_widget.ui`.
 - **Rename `AminoAcidTool::UNCLASSIFIED` and `NucleicAcidTool::UNCLASSIFIED`
   to `MONOMER_DATABASE`.** Keep their meaning (see "Buttons and tool
   state"). Trace every use:
@@ -727,50 +829,198 @@ unchanged. No Playwright work is needed for this step.
   - `monomer_symbol_popup_utils.cpp`;
   - the C++ tests.
 
-  If a use existed only to serve the Unclassified popup (for example a
-  `NUCLEIC_ACID_SYMBOL` ping carrying `UNCLASSIFIED`) and is now dead, remove
-  it instead of renaming it.
+  If a use is already dead (for example a `NUCLEIC_ACID_SYMBOL` ping
+  carrying `UNCLASSIFIED` that nothing sends), remove it instead of renaming
+  it. Leave uses that only serve the Unclassified popup for Step 3 to
+  remove.
 - **Split the key.** Replace `ModelKey::MONOMER_DB_MONOMER` with
   `AMINO_ACID_DB_MONOMER` and `NUCLEIC_ACID_DB_MONOMER`.
   - Both default to an empty `MonomerID`.
   - Add `SketcherModel::getMonomerDbMonomer()`.
   - Update `sketcher_model.cpp` (the default-value table and the key list
-    around line 94), `Scene::getNewSceneTool()`, the
-    `SketcherWidget::onModelValuePinged` mutation case (handle both keys),
-    `monomer_symbol_popup_utils.cpp` and the tests.
+    around line 94), `Scene::getNewSceneTool()`,
+    `Scene::onModelValuesChanged()` (both new keys), the
+    `SketcherWidget::applyModelValuePingToTargets` mutation case (handle
+    both keys), `monomer_symbol_popup_utils.cpp` and the tests.
+  - Make the Unclassified buttons read and write their page's key, replacing
+    any per-button storage such as `getMonomerDbMonomerForButton`.
+
+### 2b. One activation function
+
+Replace `MonomerToolWidget::activateMonomerDbMonomer(QAbstractButton*)` with
+`activateMonomerDbMonomer(const MonomerID&)`. It implements "Choosing a
+monomer switches the side-bar page" from "Design decisions":
+- It picks the target page: PEPTIDE→AMINO_ACID, RNA→NUCLEIC_ACID,
+  CHEM→the current page.
+- With a canvas selection, it sets that page's `*_DB_MONOMER` (which mutates
+  the selection) and `MONOMER_TOOL_TYPE` in one `setValues` call. It doesn't
+  set the page's tool key: mutation updates only the last-used slot, not the
+  remembered tool. Today's code only pings the key in this case; storing it
+  is the intended change.
+- Otherwise, it sets `DRAW_TOOL`, `MONOMER_TOOL_TYPE`, the page's
+  `*_DB_MONOMER` and the page's tool key (`MONOMER_DATABASE`) in one
+  `setValues` call.
+- In this step the Unclassified popups call it. In Step 3 the table rows and
+  the last-used button do.
+
+### 2c. Page synchronization and restoration
+
+- **`updateCheckedButton()`:** synchronize the AA/NA page buttons and
+  `amino_or_nucleic_stack` from `MONOMER_TOOL_TYPE` regardless of
+  `DRAW_TOOL`. Move this synchronization out of the current
+  monomer-drawing-tool conditional, so it also runs for Select, Move/Rotate
+  and the connection tools.
+- **`onAminoOrNucleicBtnClicked`:** keep today's restore behaviour.
+  - With a canvas selection, it still only sets `MONOMER_TOOL_TYPE`.
+  - If the new page's tool is `MONOMER_DATABASE` and its `*_DB_MONOMER`
+    isn't empty, reactivate that DB monomer.
+  - Otherwise, activate the page's standard tool.
+- **`SketcherSideBar::updateCheckState`:** keep today's atomistic→monomeric
+  restore, using the renamed value.
+- Page and atomistic→monomeric restoration require a non-empty DB slot
+  before restoring a DB tool. Never send the DB marker through a
+  standard-button bimap lookup (`.at()`).
+
+### 2d. Database-change repair in `SketcherModel`
+
+Implement "`SketcherModel` repairs its own DB state when the database
+changes" from "Design decisions":
+- the subscription and its `scoped_connection` member;
+- validity through Step 1's `get_monomer_database_table_monomers()`;
+- the per-page repair rules;
+- one update that emits `valuesChanged` but no `valuePinged`, through a
+  private helper that shares code with `setValues()`. Don't change
+  `SketcherModel`'s public API for this.
+
+Remove any equivalent repair from `MonomerToolWidget`. If the current
+Unclassified code does something on reload that these rules don't cover,
+tell the user rather than silently keeping or dropping it.
+
+### 2e. Shared popup positioning
+
+- Extract `show_popup_next_to_widget` and the clamping helper (see "Shared
+  helpers"), following "Popup bounds and resizing" for placement and
+  clamping. DB-popup shrinking isn't part of this step.
+- `ToolButtonWithPopup::showPopup()` calls `show_popup_next_to_widget`.
+- `ModalDialog::moveOntoScreen()` calls the clamping helper, with its
+  behaviour unchanged.
+
+### C++ tests
+
+Put model tests in `test_sketcher_model.cpp`, widget tests in
+`test_monomer_tool_widget.cpp`, and positioning tests next to the helper's
+existing tests (or in a new `test_widget_utils.cpp`).
+- **Keys:** each page stores its own slot, and `getMonomerDbMonomer()`
+  returns the current page's.
+- **Activation without a canvas selection:**
+  - it sets the draw tool, the page, the page's slot and `MONOMER_DATABASE`;
+  - a peptide switches to the AA page, an RNA monomer to the NA page, and
+    CHEM stays on the current page (call the function directly, since no UI
+    can reach a cross-page monomer yet);
+  - the monomer is stored in that page's key only.
+- **Activation with a canvas selection:**
+  - it mutates once, with one undo entry;
+  - it keeps the draw tool;
+  - it switches the model and visible page, including the checked page
+    button, under both Select and Move/Rotate;
+  - it updates that page's last-used slot;
+  - it doesn't ping or change the page's tool key;
+  - a type-mismatched monomer switches the page and updates the slot without
+    mutating or adding an undo entry.
+- **Page switching:**
+  - each page restores its own DB monomer;
+  - a page whose last tool was a standard button restores that button;
+  - an empty slot never restores a DB tool.
+- **`SketcherSideBar`:** an atomistic↔monomeric toggle restores the DB tool.
+- **Database-change repair:**
+  - a still-valid slot is kept;
+  - removal on the active page with the DB tool active blanks the slot,
+    restores Ala (or the RNA nucleotide) and sets `DRAW_TOOL` to `MONOMER`;
+  - removal on an inactive page, and while atomistic mode is active, blanks
+    the slot and resets the marker, so returning to that page restores the
+    standard fallback;
+  - removal with a canvas selection causes no mutation and no undo entry, and
+    keeps Select or Move/Rotate;
+  - an existing standard-tool marker is kept;
+  - unloading a custom override of a core monomer with an analog (`meG`)
+    clears a slot holding it;
+  - the repair emits `valuesChanged` but no `valuePinged`.
+- **Unclassified buttons:** rewrite the existing `unclassified_monomers` and
+  `unclassified_chem_monomers` cases, and the related cases in
+  `test_sketcher_widget.cpp` and the side-bar tests, for the new keys. They
+  keep covering CHEM from either page, mutation of a selection, and per-page
+  memory.
+- **Positioning:** placement below, above and on the side with more room;
+  clamping at each edge; an area smaller than the popup keeps top/left in
+  bounds with overflow to the right/bottom. `ModalDialog` positions exactly
+  as before.
+
+### Playwright
+
+- Run the suites that touch the Unclassified buttons and long-press popups
+  (grep `test/wasm/e2e` for `unclassified`, `clickPopupTool` and
+  `choosePopup`). Update cases whose behaviour this step intentionally
+  changes, such as per-tab memory after a mutation.
+- **New cases** (in `monomer_database_regressions.test.js`, or a new suite
+  if that reads better):
+  - mutating a selection from an Unclassified popup, then switching pages
+    and back, shows that page's remembered DB monomer;
+  - choosing a DB monomer, then loading a database without it, falls back to
+    the standard tool: the page's Ala (or RNA nucleotide) button is checked
+    and clicking the canvas draws it;
+  - a long-press popup opened near the bottom or right of a small viewport
+    stays inside the canvas.
+
+**Done when:** the C++ and Playwright tests above pass, and there's no new
+widget yet.
+
+---
+
+## Step 3: Side-bar buttons and the Monomer Database popup (no filter popup)
+
+**Goal:**
+- The shared button pair replaces the Unclassified buttons.
+- The DB button opens the popup, which has:
+  - a search box;
+  - the table;
+  - a match count;
+  - Close, and Load Database… / Update Database….
+- Choosing a row activates or commits that monomer through Step 2's
+  activation function.
+- The filter is the page default, with no way to change it yet.
+- There's no filter button, description or image yet.
+
+### 3a. Remove the Unclassified buttons
+
+- **Delete the buttons.** Remove `aa_unclassified_btn` and
+  `na_unclassified_btn` from `ui/monomer_tool_widget.ui`.
 - **Delete the Unclassified-only code in `MonomerToolWidget`:**
   - the X/N + CHEM popup construction;
   - the `-1` enum-item handling;
-  - `getMonomerDbMonomerForButton`.
+  - anything Step 2 kept only for these buttons.
 
-  Rework the `UNCLASSIFIED` branches of `updateCheckedButton`,
+  Rework the remaining Unclassified branches of `updateCheckedButton`,
   `onAminoOrNucleicBtnClicked` and `onNucleicAcidClicked` for the shared
-  pair (2d). Leave the normal analog-popup construction alone; Step 4
+  pair (3d). Leave the normal analog-popup construction alone; Step 5
   replaces it.
 - **No popups for `unk_btn` / `na_n_btn`.** `ac` and `am` stay reachable
   through the table.
-- **Rewrite the affected C++ tests.**
-  - Remove or rewrite `unclassified_monomers` and
-    `unclassified_chem_monomers` in `test_monomer_tool_widget.cpp`.
-  - Rewrite the related cases in `test_sketcher_widget.cpp`,
-    `test_sketcher_model.cpp` and the side-bar tests.
-  - Their scenarios carry over to the new pair:
-    - CHEM reachable from either page;
-    - mutation of a selection;
-    - each page remembering its own DB monomer;
-    - the atomistic↔monomeric toggle restoring the DB tool.
+- **Rewrite the affected C++ tests.** Step 2's Unclassified cases move to
+  the new pair: CHEM reachable from either page, mutation of a selection,
+  each page remembering its own DB monomer, and the atomistic↔monomeric
+  toggle restoring the DB tool.
 
-### 2b. Shared helpers
+### 3b. Shared helpers
 
-Extract the helpers listed under "Design decisions → Shared helpers", except
-the Step 5 image helper. Then make the original call sites use them:
-- `ToolButtonWithPopup::showPopup()`;
+Extract `paint_text_with_fade_out` / `elide_text()` and
+`load_monomer_database_from_file` (see "Shared helpers"). Then make the
+original call sites use them:
 - `AbstractMonomerItem::paint()`;
 - `SketcherTopBar::onLoadMonomerDatabaseClicked()`.
 
 Keep the existing monomer-item rendering and top-bar tests green.
 
-### 2c. New widgets
+### 3c. New widgets
 
 - **Icons:**
   - Add `icons/monomer_db.svg` to `src/schrodinger/sketcher/sketcher.qrc`.
@@ -778,7 +1028,7 @@ Keep the existing monomer-item rendering and top-bar tests green.
     `filter-menu_lb_filtering.png` and `filter-menu_lb_hvr.png` from
     `F:\repos\src\mmshare\python\modules\schrodinger\ui\qt\standard\icons\icon_data\filter-menu`
     into `src/schrodinger/sketcher/icons/`.
-  - Add them to the qrc now, ready for Step 3.
+  - Add them to the qrc now, ready for Step 4.
 - **Last-used button**
   - Files: `widget/monomer_database_last_used_button.{h,cpp}`, a
     checkable `QToolButton` subclass, objectName `monomer_db_last_used_btn`.
@@ -802,15 +1052,22 @@ Keep the existing monomer-item rendering and top-bar tests green.
     `widget/monomer_database_popup.{h,cpp}`.
   - It's a `SketcherViewWithWasmOutlineFix` with `Qt::Popup`, modeled on
     `FileSaveImagePopup`.
+  - It holds a `const SketcherModel*`, passed once at construction or
+    through a setter. It reads tool state and `hasActiveSelection()` from it
+    and listens to its `selectionChanged`.
   - **Header:** follow the mockup, with the title "Monomer Database" and an
     × (`monomer_db_close_btn`).
   - **Content:**
     - **Search box:** a `QLineEdit` with a leading search icon,
       `setClearButtonEnabled(true)` and live filtering on `textChanged`.
       Typing in it must not trigger Sketcher keyboard shortcuts.
-    - **Table:** a `QTableView` with:
-      - single selection, selecting rows; with a canvas selection, navigation
-        changes the current index without retaining a selected row;
+    - **Table:** a small `QTableView` subclass with:
+      - single selection, selecting rows;
+      - the `selectionCommand()` override for mutation mode (see "The popup
+        has two modes");
+      - the current-row highlight (see "The current row has its own subtle
+        highlight");
+      - the Enter/Return/Space handling (see "Enter/Return and Space");
       - no editing;
       - no vertical header;
       - fixed row heights;
@@ -821,7 +1078,7 @@ Keep the existing monomer-item rendering and top-bar tests green.
       It paints "No monomers match search & filter criteria" (gray italics)
       when it has zero rows.
     - **Match count:** "N matches" ("1 match").
-    - **Room** on the right for Step 3's filter button and Step 5's
+    - **Room** on the right for Step 4's filter button and Step 6's
       description and image.
   - **Bottom row:**
     - `monomer_db_load_link` on the left, with the text "Load Database…"
@@ -830,15 +1087,18 @@ Keep the existing monomer-item rendering and top-bar tests green.
   - **Load-link visibility:** it follows `setLoadMonomerDatabaseVisible`.
     The path is `SketcherWidget` → `SketcherSideBar` → `MonomerToolWidget` →
     popup. Store the flag so that it applies even before the popup exists.
-  - **Load-link activation:** hide nested popups and this popup before calling
-    the shared loader with a stable owning widget/window as its parent.
-    Preserve search/filter/sort, keep processing database-change notifications
-    while hidden, and never reopen automatically after the chooser or result
-    dialog finishes. Follow the lifecycle under "Design decisions".
+  - **Load-link activation:** hide nested popups and this popup before
+    calling the shared loader with a stable owning widget/window as its
+    parent. Preserve search/filter/sort, keep processing database-change
+    notifications while hidden, and never reopen automatically after the
+    chooser or result dialog finishes. Follow the lifecycle under "Design
+    decisions".
   - **Data:**
     - Cache `get_monomer_database_table_monomers(getCustomMonomers(),
       getCoreMonomers())` in a `shared_ptr<const vector>`.
-    - Refresh the cache on `subscribeToChanges`.
+    - Refresh the cache from its own `subscribeToChanges` subscription. Read
+      the database directly; don't depend on `SketcherModel`'s repair having
+      run first (see "Database-change listeners are independent").
     - The load link says "Load Database…" when `getCustomMonomers()` is
       empty and "Update Database…" otherwise.
     - After a refresh, re-filter, re-sync the selection and update the
@@ -851,33 +1111,36 @@ Keep the existing monomer-item rendering and top-bar tests green.
       current index by ID if it is still visible. A model-selected row takes
       precedence; otherwise preserve the browsing row. If it disappeared or
       was filtered out, clear the current index instead of choosing another
-      monomer by row number. Explicitly refresh the preview after this process.
+      monomer by row number. Explicitly refresh the preview after this
+      process.
   - **API:**
     - `showFromButton(QWidget* anchor, MonomerToolType page)` positions the
       popup with `show_popup_next_to_widget`. Before showing, it applies the
-      reset rule from "Design decisions".
+      reset rule from "Design decisions" and reads the mode.
     - On every close (×, Close, outside click, Escape, DB button, load/update
-      link), the popup records the current `MONOMER_TOOL_TYPE`. Hook
-      `hideEvent` so that no path is missed.
+      link, a mode change), the popup records the current
+      `MONOMER_TOOL_TYPE`. Hook `hideEvent` so that no path is missed.
+    - **Mode change:** on `selectionChanged`, if `hasActiveSelection()` no
+      longer matches the value read on opening, hide the popup.
     - Signal `monomerChosen(MonomerID)` fires:
-      - without a canvas selection, on user-driven row changes (mouse or
-        keyboard), retaining live drawing-tool activation;
-      - with a canvas selection, only on an explicit click on a valid row,
+      - in tool mode, on user-driven row changes (mouse or keyboard), and on
+        Enter/Return or Space;
+      - in mutation mode, only on an explicit click on a valid row,
         Enter/Return, or Space. Keyboard commits use the current index.
-      - Navigation, model resets and programmatic selection/current-index
-        changes never commit a mutation. Handle commit keys only when the
-        table has focus, consume them, and avoid duplicate handling through
-        both key events and activation signals. Ignore commit-key auto-repeat.
-    - `syncSelectionToModel(const SketcherModel*)` applies the selection
-      rule from "Design decisions":
+      - Navigation in mutation mode, model resets and programmatic
+        selection/current-index changes never fire it. Avoid firing twice
+        through both key events and activation signals.
+    - `syncSelectionToModel()` applies the selection rule from "Design
+      decisions":
       - it uses `QSignalBlocker` on the selection model;
       - it calls `scrollTo` for the selected row;
       - when clearing selection, use `clearSelection()` rather than `clear()`
         so the browsing current index survives;
+      - a model ID that isn't in the cache selects nothing;
       - refresh the preview explicitly after blocked updates; normal browsing
         also refreshes it on current-index changes.
 
-      With a canvas selection, a commit mutates the selection and leaves the
+      In mutation mode, a commit mutates the selection and leaves the
       committed row current, with no table selection. Its preview remains
       visible. Clicking it again or pressing Enter/Return or Space re-applies
       it, even though neither the current index nor the last-used ID changed.
@@ -886,75 +1149,32 @@ Keep the existing monomer-item rendering and top-bar tests green.
     globally setting `WA_NoMouseReplay` or duplicating its event filter.
   - **Bounds:** follow "Popup bounds and resizing" under Design decisions
     (SKETCH-2920). Shrink the table viewport to keep the popup within the
-    available area whenever its minimum layout fits; Step 5 adds preview
+    available area whenever its minimum layout fits; Step 6 adds preview
     scaling. Recalculate while open on available-area changes. If the
     minimum layout cannot fit, keep the top-left reachable and allow
     right/bottom overflow, without adding whole-popup scrolling.
 
-### 2d. Layout and wiring in `MonomerToolWidget`
+### 3d. Layout and wiring in `MonomerToolWidget`
 
 - **Layout.** In `ui/monomer_tool_widget.ui`, add a horizontal row between
   `line` and `custom_monomer_btn`: `[monomer_db_last_used_btn]
   [monomer_db_btn]`. Neither button joins a `QButtonGroup`.
-- **One activation function.** Write a single
-  `activateMonomerDbMonomer(const MonomerID&)` for both the row choice and
-  the last-used click. It implements "Choosing a monomer switches the
-  side-bar page" from "Design decisions":
-  - It picks the target page: PEPTIDE→AMINO_ACID, RNA→NUCLEIC_ACID,
-    CHEM→the current page.
-  - With a canvas selection, it sets that page's `*_DB_MONOMER` (which
-    mutates the selection) and `MONOMER_TOOL_TYPE`. It doesn't set the
-    page's tool key: mutation must update only its last-used DB slot, not
-    its remembered tool. Enter/Return, Space and row clicks all use this
-    activation function, as does the last-used button.
-  - Otherwise, it sets `DRAW_TOOL`, `MONOMER_TOOL_TYPE`, the page's
-    `*_DB_MONOMER` and the page's tool key (`MONOMER_DATABASE`) in one
-    `setValues` call.
+- **Row choice:** `monomerChosen` calls Step 2's
+  `activateMonomerDbMonomer(const MonomerID&)`.
 - **DB-button click:** show the popup for the current `MONOMER_TOOL_TYPE`.
   It doesn't activate anything.
 - **Last-used click:**
   - When blank, it does nothing.
-  - Otherwise it activates `getMonomerDbMonomer()`. That keeps the current
-    page, since the stored monomer belongs to it.
+  - Otherwise it calls `activateMonomerDbMonomer(getMonomerDbMonomer())`.
+    That keeps the current page, since the stored monomer belongs to it.
 - **`updateCheckedButton()`:**
-  - Synchronize the AA/NA page buttons and `amino_or_nucleic_stack` from
-    `MONOMER_TOOL_TYPE` regardless of `DRAW_TOOL`. Move this synchronization
-    out of the current monomer-drawing-tool conditional so it also runs for
-    Select and Move/Rotate.
   - Check `monomer_db_last_used_btn` exactly when
     `draw_tool == MONOMER_DB_MONOMER` and there's no selection. In that
     case, uncheck the page groups.
   - Refresh the last-used text from `getMonomerDbMonomer()`.
   - Call `popup->syncSelectionToModel()`.
-- **`onAminoOrNucleicBtnClicked`:** keep today's restore behaviour.
-  - If the new page's tool is `MONOMER_DATABASE` and its `*_DB_MONOMER` isn't
-    empty, reactivate that DB monomer.
-  - Otherwise, activate the page's standard tool.
-- **`SketcherSideBar::updateCheckState`:** keep today's atomistic→monomeric
-  restore, using the renamed value.
-- **DB reload:** if a page's stored `*_DB_MONOMER` is no longer in the table's
-  source list:
-  - reset it to an empty `MonomerID`, which blanks the button for that page;
-  - if its remembered tool is `MONOMER_DATABASE`, reset that marker to the
-    model's standard default: `AminoAcidTool::ALA` with symbol `A`, or
-    `NucleicAcidTool::RNA_NUCLEOTIDE`. Repair any associated state needed to
-    activate that fallback. Preserve an already remembered standard tool;
-  - repair both pages, including an inactive page and while atomistic mode
-    is active. Never leave a `MONOMER_DATABASE` marker with an empty ID;
-  - if that page's DB tool is currently active, switch `DRAW_TOOL` to
-    `MONOMER`; otherwise preserve the active draw tool;
-  - apply the related state repairs atomically, without selection mutation
-    or undo entries. In particular, fallback symbol updates must not dispatch
-    mutation pings; use a state-only model update path if needed.
-
-  Page and atomistic-to-monomeric restoration must require a non-empty DB
-  slot before restoring a DB tool, and never send the DB marker through a
-  standard-button bimap lookup. Keep the two new keys in
-  `Scene::onModelValuesChanged` as well as `Scene::getNewSceneTool`.
 - **Enabled state:** both buttons are enabled whenever the monomeric tools
   are. The only exception is the blank last-used button.
-  - Keep whatever `mutateMonomers` does today for a DB monomer that's
-    incompatible with the selection.
   - If `updateWidgetsEnabled()` would re-enable a blank last-used button,
     fix it there.
 
@@ -969,9 +1189,10 @@ new `test_monomer_database_popup.cpp`.
   - After `resetMonomerDefinitions()`, it reads "Load Database…" again.
   - `setLoadMonomerDatabaseVisible(false)` hides the link.
   - Load/update hides the popup before the chooser opens and records the page
-    at close; success, cancellation, partial import and failure leave it closed.
+    at close; success, cancellation, partial import and failure leave it
+    closed.
   - Reopening on the same page preserves search and sort and uses refreshed
-    data after a load. In Step 3, also verify that the filter is preserved.
+    data after a load. In Step 4, also verify that the filter is preserved.
     Changing page while hidden still invokes the normal page-default reset.
 - **Table contents:**
   - The table holds custom monomers plus core monomers with no natural
@@ -982,18 +1203,14 @@ new `test_monomer_database_popup.cpp`.
   - Reopening on the same page keeps the search text.
   - Opening on a page that differs from the page at the last close clears
     the search text and resets the filter.
-  - Cross-page row-choice/reopening tests belong to Step 3, when the filter
+  - Cross-page row-choice/reopening tests belong to Step 4, when the filter
     controls make an RNA row reachable from the AA page.
 - **Search:**
   - Search narrows the rows, and the match count is correct.
   - Zero matches shows the placeholder.
-- **Choosing a row:**
+- **Choosing a row in tool mode:**
   - It sets the tool and checks and labels the last-used button.
   - The popup stays open.
-  - A peptide switches to the AA page, an RNA monomer to the NA page, and
-    CHEM stays on the current page. Test cross-page activation directly in
-    this step; the popup's fixed page-default filter cannot expose it yet.
-  - The chosen monomer is stored in that page's key only.
 - **Opening the popup** doesn't change the tool.
 - **Last-used button:**
   - Clicking it reactivates the monomer after another tool was chosen.
@@ -1002,41 +1219,41 @@ new `test_monomer_database_popup.cpp`.
   - A model change made elsewhere moves the table selection.
   - The selection is cleared for a non-DB tool and for a monomer that isn't
     in the table.
-- **With a canvas selection,** choosing a row:
-  - mutates only on click, Enter/Return or Space, once per explicit commit;
-  - keeps the scene tool;
-  - switches the model and visible page, including its checked page button,
-    under both Select and Move/Rotate (direct activation tests in this step);
-  - updates that page's last-used slot;
-  - doesn't ping or change the page's tool key;
-  - leaves the committed row current, with the table selection empty;
-  - permits another commit of the same current row without a row change.
-- **Keyboard browsing with a canvas selection:** navigation changes only
-  the current index, with no mutation, undo entry, last-used update or page
-  switch. Commit keys in the search box do not commit a row.
+  - A model ID missing from the popup's cache selects nothing.
+- **Mutation mode:**
+  - it mutates only on click, Enter/Return or Space, once per explicit
+    commit;
+  - keyboard navigation changes only the current index, with no mutation,
+    undo entry, last-used update or page switch;
+  - commit keys in the search box don't commit a row;
+  - the committed row stays current, with the table selection empty, and
+    the same row can be committed again without a row change;
+  - the table never gains a selected row, even on click (`selectionCommand`).
+- **Mode is fixed while open:**
+  - a commit doesn't close the popup;
+  - Ctrl+A with focus in the search box selects its text and doesn't select
+    the canvas; with focus in the table it does nothing;
+  - a programmatic change that adds a canvas selection while the popup is
+    open in tool mode closes it; one that clears the selection in mutation
+    mode closes it too; a change that keeps a selection non-empty doesn't.
+- **Enter/Return and Space:**
+  - in tool mode, on a current row that isn't the active monomer (for
+    example after reopening with a standard tool active), they activate it;
+  - they never close the popup in either mode.
+- **Current-row highlight:** a current row that isn't selected paints the
+  highlight color; the selected row paints the selection color.
 - **Current index across resets:** preserve by ID after sorting/filtering
   or DB refresh when still visible; clear when removed/filtered out. No
   reset or synchronization commits a mutation.
-- **DB reload:**
-  - It refreshes the table.
-  - A monomer that has disappeared blanks that page's button and drops the
-    DB tool.
-  - Removal on an inactive page and while atomistic mode is active clears
-    its DB marker and restores the specified standard fallback on returning.
-  - Removal with a canvas selection causes no mutation or undo entry and
-    preserves Select/Move/Rotate. An existing standard-tool marker is kept.
-- **Page switching:**
-  - Each page restores its own DB monomer, and the last-used button shows
-    the current page's value.
-  - A page whose last tool was a standard button restores that button.
+- **DB reload while the popup exists:** the table refreshes, and a removed
+  DB monomer blanks the last-used button (the repair itself is tested in
+  Step 2).
 - **`ac` / `am`** can be chosen from the table and drawn.
 - **Long symbol:** a long symbol takes the fade path.
-- **`SketcherSideBar`:** an atomistic↔monomeric toggle case.
-- **Bounds:** test placement below/above the anchor, clamping at each edge,
+- **Bounds:** placement below/above the anchor, clamping at each edge,
   shrinking the table viewport, and resizing the available area while open.
   Include an area smaller than the minimum layout: top/left remain in bounds
-  and any unavoidable overflow is confined to right/bottom. Verify the shared
-  clamping helper preserves the existing dialog behavior.
+  and any unavoidable overflow is confined to right/bottom.
 
 ### Playwright
 
@@ -1060,20 +1277,26 @@ new `test_monomer_database_popup.cpp`.
   - the reset rule, keyed on the page at close;
   - typing letters in the search box doesn't switch tools (see
     `popup_shortcuts.test.js`), and shortcuts work after the popup closes;
+  - Ctrl+A in the search box selects the search text and leaves the canvas
+    selection unchanged;
   - the popup stays within a small viewport when its minimum layout fits,
     including after shrinking the canvas while it is open; its table scrolls
     and its title, search/filter and close controls remain accessible;
   - below the minimum layout size, the popup's top-left stays reachable,
     with right/bottom overflow permitted;
-  - browsing rows with a canvas selection causes no mutation; click, Enter
-    and Space each commit exactly once and preserve the current row;
-  - inactive-page DB removal and removal while atomistic mode is active,
-    followed by returning to that page without restoring an empty DB tool;
+  - mutation mode: browsing rows causes no mutation; click, Enter and Space
+    each commit exactly once, keep the popup open and preserve the current
+    row, which shows the highlight (screenshot of the table region);
+  - Enter in tool mode doesn't close the popup;
+  - removing the remembered DB monomer on an inactive page, and while
+    atomistic mode is active, then returning to that page doesn't restore an
+    empty DB tool;
   - CHEM chosen from both pages;
   - scrolling to an off-screen row in the ChEMBL DB and drawing it.
 - **Update `monomer_database_regressions.test.js`.** It is built around
-  `aa_unclassified_btn` and `na_unclassified_btn`. Grep all of `test/wasm`
-  for `unclassified`. Rewrite each case against the new popup:
+  `aa_unclassified_btn` and `na_unclassified_btn`, including the cases Step 2
+  added or updated. Grep all of `test/wasm` for `unclassified`. Rewrite each
+  case against the new popup:
   - the SKETCH-2870 palette-contents, scrolling, per-tab-memory and mutation
     tests. Per-tab memory is kept, now through the shared last-used button.
   - the `expectPalette(page, 'aa_unclassified_btn', …)` assertions in the
@@ -1084,7 +1307,7 @@ new `test_monomer_database_popup.cpp`.
 
 ---
 
-## Step 3: Filter popup and multi-select combo box
+## Step 4: Filter popup and multi-select combo box
 
 **Goal:**
 - the filter button and filter popup from the mockup, without Matching
@@ -1092,7 +1315,7 @@ new `test_monomer_database_popup.cpp`.
 - live filtering;
 - a reusable multi-select combo box.
 
-### 3a. `MultiSelectComboBox`
+### 4a. `MultiSelectComboBox`
 
 **Files:** `widget/multi_select_combo_box.{h,cpp}`, a `QComboBox` subclass.
 
@@ -1125,7 +1348,7 @@ intent, but don't port its implementation:
 - **Bold** works through the widget font, as for a normal combo.
 - **Tests:** `test/schrodinger/sketcher/widget/test_multi_select_combo_box.cpp`.
 
-### 3b. Filter popup
+### 4b. Filter popup
 
 **Files:** `ui/monomer_database_filter_popup.ui` and
 `widget/monomer_database_filter_popup.{h,cpp}`. It's a nested `Qt::Popup`,
@@ -1157,7 +1380,7 @@ Reposition an open filter popup if canvas resizing moves its anchor.
 - **Bold:** a combo is bold when its `is*Filtered()` is true, i.e. when it
   differs from the most permissive value.
 
-### 3c. DB popup integration
+### 4c. DB popup integration
 
 - **Filter button:** `monomer_db_filter_btn` sits next to the search box. It
   has a dropdown arrow and uses the `filter-menu_lb*` icons:
@@ -1170,7 +1393,7 @@ Reposition an open filter popup if canvas resizing moves its anchor.
   dismisses its popup without reopening it, while other outside clicks replay.
 - **`filterChanged`:** store the filter, re-filter, update the Type-column
   visibility and re-sync the selection.
-- **Step 4 API:** add `setFilter(const MonomerDatabaseFilter&)`,
+- **Step 5 API:** add `setFilter(const MonomerDatabaseFilter&)`,
   `getFilter()` and `clearSearchText()`.
 
 ### Tests
@@ -1227,11 +1450,11 @@ Reposition an open filter popup if canvas resizing moves its anchor.
     - the orange and normal button states (use the screenshot of the
       button);
     - the Type column visibility.
-  - **Update any Step 2 tests** that assumed the filter can't change.
+  - **Update any Step 3 tests** that assumed the filter can't change.
 
 ---
 
-## Step 4: Core-only long-press popups and the folder entry
+## Step 5: Core-only long-press popups and the folder entry
 
 **Goal:**
 - the long-press monomer popups have fixed core-ID membership, with displayed
@@ -1249,10 +1472,11 @@ Reposition an open filter popup if canvas resizing moves its anchor.
 - **Build the popups once, in the constructor.**
   - Remove `clear_popups` and `ToolButtonWithPopup::clearPopupWidget()` if
     nothing else uses it. Do not rebuild popup widgets on database changes.
-  - Keep the `subscribeToChanges` subscription, but make its palette work
-    refresh displayed metadata in place. Preserve Step 2's DB-slot repair and
-    DB-popup refresh behavior; removing palette reconstruction must not remove
-    those database-change responsibilities.
+  - Keep `MonomerToolWidget`'s `subscribeToChanges` subscription, but make
+    it refresh the palettes' displayed metadata in place. `SketcherModel`
+    (Step 2) and the DB popup (Step 3) have their own subscriptions; don't
+    move their work here, and don't make the palette refresh depend on
+    either having run first.
   - Turn the `refresh_monomer_popups` test into "palette membership and widget
     identity stay fixed; displayed metadata follows the effective database".
   - Every AA button and every NA base, sugar and phosphate button now gets a
@@ -1357,7 +1581,7 @@ Reposition an open filter popup if canvas resizing moves its anchor.
 
 ---
 
-## Step 5: Description and structure image
+## Step 6: Description and structure image
 
 **Goal:** the right-hand pane of the DB popup.
 
