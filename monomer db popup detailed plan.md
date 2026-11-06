@@ -545,6 +545,13 @@ things clean:
     `sketcher-build-and-debug` skills.
   - All steps use `schrodinger-cpp-style`. Steps 3–6 also use
     `implement-ux-spec`.
+- **Terminology in code.** This plan says "slot" for a page's last-used
+  database monomer (`AMINO_ACID_DB_MONOMER` / `NUCLEIC_ACID_DB_MONOMER`).
+  Don't use "slot" in code or comments; say "last-used database monomer".
+  Don't say a page's "remembered tool" either. That described the removed
+  `MONOMER_DB` marker. Say "last monomeric tool" (the per-page record behind
+  `getDrawToolToRestore()`) or "standard tool" (`AMINO_ACID_TOOL` /
+  `NUCLEIC_ACID_TOOL`).
 - **Monomer DB facts**
   (`include/schrodinger/rdkit_extensions/monomer_database.h`):
   - **Singleton.** `MonomerDatabase::instance()` always holds the core DB,
