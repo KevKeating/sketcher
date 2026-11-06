@@ -304,10 +304,12 @@ SketcherModel::getMonomerDbMonomer(MonomerToolType page) const
 }
 
 /**
- * @return whether the page's remembered tool is MONOMER_DB
+ * @return whether the page's tool (AMINO_ACID_TOOL or NUCLEIC_ACID_TOOL) is
+ * MONOMER_DB, i.e. whether the last tool used on the page was its database
+ * monomer
  */
-static bool remembers_monomer_database_tool(const SketcherModel& model,
-                                            MonomerToolType page)
+static bool tool_for_page_is_monomer_db(const SketcherModel& model,
+                                        MonomerToolType page)
 {
     return page == MonomerToolType::AMINO_ACID
                ? model.getAminoAcidTool() == AminoAcidTool::MONOMER_DB
@@ -316,7 +318,7 @@ static bool remembers_monomer_database_tool(const SketcherModel& model,
 
 bool SketcherModel::shouldRestoreMonomerDbTool(MonomerToolType page) const
 {
-    return remembers_monomer_database_tool(*this, page) &&
+    return tool_for_page_is_monomer_db(*this, page) &&
            !getMonomerDbMonomer(page).symbol.empty();
 }
 
@@ -433,7 +435,7 @@ void SketcherModel::onMonomerDatabaseChanged()
         // the page's database monomer tool is somehow active or remembered
         const auto db_key = get_monomer_db_monomer_key(page);
         repairs[db_key] = defaults.at(db_key);
-        if (remembers_monomer_database_tool(*this, page)) {
+        if (tool_for_page_is_monomer_db(*this, page)) {
             // replace the remembered tool with the page's default tool
             const auto tool_keys =
                 page == MonomerToolType::AMINO_ACID
