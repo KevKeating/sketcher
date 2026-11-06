@@ -121,6 +121,12 @@ scene tool becomes a `DrawMonomerSceneTool` for that monomer.
   - Page switching (`MonomerToolWidget::onAminoOrNucleicBtnClicked`) and the
     atomistic→monomeric toggle (`SketcherSideBar::updateCheckState`) both use
     it.
+  - Both only replace a tool from the other set. A shared tool (select,
+    move-rotate or erase, i.e. anything `is_monomeric_draw_tool()` rejects)
+    stays active across a page switch, just as it already did across the
+    atomistic↔monomeric toggle, so a page switch never switches to or away
+    from one. No extra state is needed: the shared tool simply remains
+    active, and the per-page record is untouched.
 - **Choosing a monomer switches the side-bar page to match it.**
   - A PEPTIDE monomer switches to AMINO_ACID, and an RNA monomer to
     NUCLEIC_ACID.

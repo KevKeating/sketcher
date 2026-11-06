@@ -159,12 +159,6 @@ void SketcherSideBar::updateCheckState()
         DrawTool::ATOM, DrawTool::BOND,        DrawTool::CHARGE,
         DrawTool::RING, DrawTool::ENUMERATION, DrawTool::EXPLICIT_H,
     };
-    static const std::unordered_set<DrawTool> MONOMERIC_TOOLS = {
-        DrawTool::MONOMER,
-        DrawTool::CUSTOM_MONOMER,
-        DrawTool::MONOMER_DB_MONOMER,
-        DrawTool::MONOMERIC_CONNECTION,
-    };
     QWidget* page;
     std::optional<DrawTool> new_draw_tool = std::nullopt;
     auto model = getModel();
@@ -173,7 +167,7 @@ void SketcherSideBar::updateCheckState()
     if (tool_set == ToolSet::ATOMISTIC) {
         page = ui->atomistic_page;
         // if there's a monomeric tool selected, switch to an atomistic tool
-        if (MONOMERIC_TOOLS.contains(cur_draw_tool)) {
+        if (is_monomeric_draw_tool(cur_draw_tool)) {
             new_draw_tool = m_previous_atomistic_draw_tool;
         }
     } else {

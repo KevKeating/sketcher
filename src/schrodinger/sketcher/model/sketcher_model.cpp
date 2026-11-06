@@ -109,6 +109,19 @@ ModelKey get_monomer_db_monomer_key(MonomerToolType page)
                : ModelKey::NUCLEIC_ACID_DB_MONOMER;
 }
 
+bool is_monomeric_draw_tool(DrawTool draw_tool)
+{
+    switch (draw_tool) {
+        case DrawTool::MONOMER:
+        case DrawTool::MONOMERIC_CONNECTION:
+        case DrawTool::CUSTOM_MONOMER:
+        case DrawTool::MONOMER_DB_MONOMER:
+            return true;
+        default:
+            return false;
+    }
+}
+
 /**
  * @return the default value for every model key
  */
@@ -333,14 +346,8 @@ DrawTool SketcherModel::getDrawToolToRestore(MonomerToolType page) const
 
 void SketcherModel::recordMonomericDrawTool()
 {
-    static const std::unordered_set<DrawTool> MONOMERIC_DRAW_TOOLS = {
-        DrawTool::MONOMER,
-        DrawTool::MONOMERIC_CONNECTION,
-        DrawTool::CUSTOM_MONOMER,
-        DrawTool::MONOMER_DB_MONOMER,
-    };
     const auto draw_tool = getDrawTool();
-    if (MONOMERIC_DRAW_TOOLS.contains(draw_tool)) {
+    if (is_monomeric_draw_tool(draw_tool)) {
         m_last_monomeric_draw_tool[getMonomerToolType()] = draw_tool;
     }
 }

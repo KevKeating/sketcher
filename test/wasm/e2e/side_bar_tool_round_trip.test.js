@@ -5,7 +5,8 @@ import { BASE, CHEM, PEPTIDE, defineCustom, openMonomerSketcher } from './monome
 // Switching the side bar to the other monomer page, or to the atomistic tools,
 // and straight back should leave the tool selection exactly as it was. The
 // connection and custom monomer tools used to be replaced by the page's
-// standard monomer tool.
+// standard monomer tool, and so did the shared select and erase tools on a
+// page switch.
 
 test.beforeEach(async ({ page }) => {
   await openMonomerSketcher(page);
@@ -24,6 +25,29 @@ test('a page round trip restores the connection tool', async ({ page }) => {
   await clickWidget(page, 'amino_monomer_btn');
   await expectChecked(page, 'hbond_btn', true);
 });
+
+for (const sharedTool of ['select_tool_btn', 'erase_btn']) {
+  test(`a page round trip keeps the shared ${sharedTool} tool active`, async ({ page }) => {
+    // The select and erase tools are only enabled when the scene has contents
+    await clickWidget(page, 'ala_btn');
+    await place(page);
+    await waitAtoms(page, 1);
+    await clickWidget(page, sharedTool);
+    await expectChecked(page, sharedTool, true);
+    await clickWidget(page, 'nucleic_monomer_btn');
+    await expectChecked(page, sharedTool, true);
+    await clickWidget(page, 'amino_monomer_btn');
+    await expectChecked(page, sharedTool, true);
+    await expectChecked(page, 'ala_btn', false);
+
+    // the page's own monomeric tool is still remembered
+    await clickWidget(page, 'nucleic_monomer_btn');
+    await clickWidget(page, 'na_c_btn');
+    await clickWidget(page, 'amino_monomer_btn');
+    await expectChecked(page, 'ala_btn', true);
+    await expectChecked(page, sharedTool, false);
+  });
+}
 
 test('a page round trip restores a custom monomer unless the other page replaced it', async ({
   page,

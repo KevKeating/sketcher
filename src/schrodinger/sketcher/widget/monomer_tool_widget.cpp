@@ -524,8 +524,12 @@ void MonomerToolWidget::onAminoOrNucleicBtnClicked(QAbstractButton* button)
     }
     ui->amino_or_nucleic_stack->setCurrentWidget(page);
     auto* model = getModel();
-    if (model->hasActiveSelection()) {
-        // Changing pages must not ping a remembered monomer into the selection.
+    if (model->hasActiveSelection() ||
+        !is_monomeric_draw_tool(model->getDrawTool())) {
+        // Keep the current tool and only change the page. A shared tool
+        // (select, move-rotate or erase) stays active, so switching pages and
+        // straight back leaves it active. With a canvas selection, changing
+        // pages must also not ping a remembered monomer into the selection.
         model->setValue(ModelKey::MONOMER_TOOL_TYPE, tool_type);
         return;
     }

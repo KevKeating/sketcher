@@ -518,6 +518,14 @@ SKETCHER_API std::vector<ModelKey> get_model_keys();
 SKETCHER_API ModelKey get_monomer_db_monomer_key(MonomerToolType page);
 
 /**
+ * @return whether the given draw tool belongs to the monomeric side-bar tools:
+ * MONOMER, MONOMERIC_CONNECTION, CUSTOM_MONOMER or MONOMER_DB_MONOMER. The
+ * select, move-rotate and erase tools are shared by both tool sets, so they
+ * aren't monomeric tools.
+ */
+SKETCHER_API bool is_monomeric_draw_tool(DrawTool draw_tool);
+
+/**
  * Model for shared state among the various sketcher views.
  *
  * In order to reduce coupling, any state that needs to be accessed by more than

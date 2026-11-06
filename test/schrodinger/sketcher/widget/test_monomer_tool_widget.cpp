@@ -985,6 +985,63 @@ BOOST_DATA_TEST_CASE(page_round_trip_restores_connection_tool,
 }
 
 /**
+ * Switching pages while a shared tool (select, move-rotate or erase) is active
+ * keeps that tool active and doesn't disturb either page's last monomeric tool
+ */
+BOOST_DATA_TEST_CASE(page_round_trip_keeps_shared_tool,
+                     bdata::make({DrawTool::SELECT, DrawTool::MOVE_ROTATE,
+                                  DrawTool::ERASE}),
+                     shared_tool)
+{
+    SketcherModel model;
+    MonomerToolWidget widget;
+    widget.setModel(&model);
+    widget.show();
+    auto* aa_page_button =
+        widget.findChild<QAbstractButton*>("amino_monomer_btn");
+    auto* na_page_button =
+        widget.findChild<QAbstractButton*>("nucleic_monomer_btn");
+    auto* hbond_button = widget.findChild<QAbstractButton*>("hbond_btn");
+    auto* na_c_button = widget.findChild<QAbstractButton*>("na_c_btn");
+    // the amino acid page's last tool is the H-bond tool, and the nucleic acid
+    // page's is C
+    model.setValue(ModelKey::DRAW_TOOL, DrawTool::MONOMER);
+    hbond_button->click();
+    na_page_button->click();
+    na_c_button->click();
+    BOOST_REQUIRE(model.getDrawTool() == DrawTool::MONOMER);
+
+    model.setValue(ModelKey::DRAW_TOOL, shared_tool);
+    for (const bool amino_acid : {true, false, true}) {
+        (amino_acid ? aa_page_button : na_page_button)->click();
+        BOOST_CHECK(model.getDrawTool() == shared_tool);
+        BOOST_CHECK(model.getMonomerToolType() ==
+                    (amino_acid ? MonomerToolType::AMINO_ACID
+                                : MonomerToolType::NUCLEIC_ACID));
+        check_visible_page(widget, amino_acid);
+        BOOST_TEST(!hbond_button->isChecked());
+        BOOST_TEST(!na_c_button->isChecked());
+    }
+    BOOST_CHECK(model.getDrawToolToRestore(MonomerToolType::AMINO_ACID) ==
+                DrawTool::MONOMERIC_CONNECTION);
+    BOOST_CHECK(model.getDrawToolToRestore(MonomerToolType::NUCLEIC_ACID) ==
+                DrawTool::MONOMER);
+
+    // a monomeric tool chosen afterwards is recorded as usual, and the other
+    // page still restores its own tool
+    widget.findChild<QAbstractButton*>("gly_btn")->click();
+    BOOST_CHECK(model.getDrawTool() == DrawTool::MONOMER);
+    BOOST_CHECK(model.getAminoAcidTool() == AminoAcidTool::GLY);
+    na_page_button->click();
+    BOOST_CHECK(model.getDrawTool() == DrawTool::MONOMER);
+    BOOST_CHECK(model.getNucleicAcidTool() == NucleicAcidTool::C);
+    BOOST_TEST(na_c_button->isChecked());
+    aa_page_button->click();
+    BOOST_CHECK(model.getAminoAcidTool() == AminoAcidTool::GLY);
+    BOOST_TEST(widget.findChild<QAbstractButton*>("gly_btn")->isChecked());
+}
+
+/**
  * Switching to the other page and straight back restores a custom monomer
  * tool, as long as the shared stored custom monomer still belongs on the page
  */
