@@ -503,11 +503,10 @@ BOOST_AUTO_TEST_CASE(unclassified_monomers)
         BOOST_TEST(!popup->isVisible());
         BOOST_TEST(button->isChecked());
         if (amino_acid) {
-            BOOST_CHECK(model.getAminoAcidTool() ==
-                        AminoAcidTool::MONOMER_DATABASE);
+            BOOST_CHECK(model.getAminoAcidTool() == AminoAcidTool::MONOMER_DB);
         } else {
             BOOST_CHECK(model.getNucleicAcidTool() ==
-                        NucleicAcidTool::MONOMER_DATABASE);
+                        NucleicAcidTool::MONOMER_DB);
         }
         BOOST_CHECK(model.getDrawTool() == DrawTool::MONOMER_DB_MONOMER);
         const auto monomer = model.getMonomerDbMonomer();
@@ -776,9 +775,8 @@ BOOST_AUTO_TEST_CASE(activate_monomer_db_monomer)
                            ->isChecked());
         }
     }
-    BOOST_CHECK(model.getAminoAcidTool() == AminoAcidTool::MONOMER_DATABASE);
-    BOOST_CHECK(model.getNucleicAcidTool() ==
-                NucleicAcidTool::MONOMER_DATABASE);
+    BOOST_CHECK(model.getAminoAcidTool() == AminoAcidTool::MONOMER_DB);
+    BOOST_CHECK(model.getNucleicAcidTool() == NucleicAcidTool::MONOMER_DB);
 
     // an empty monomer is ignored
     QSignalSpy pinged(&model, &SketcherModel::valuePinged);
@@ -842,10 +840,10 @@ BOOST_AUTO_TEST_CASE(monomer_db_page_switching)
     BOOST_CHECK(model.getMonomerDbMonomer() == rna);
     BOOST_TEST(na_a_button->isChecked());
 
-    // a MONOMER_DATABASE marker with an empty slot never restores the DB tool
+    // a MONOMER_DB marker with an empty slot never restores the DB tool
     model.setValues({{ModelKey::AMINO_ACID_DB_MONOMER,
                       QVariant::fromValue(MonomerID{"", ChainType::PEPTIDE})}});
-    BOOST_CHECK(model.getAminoAcidTool() == AminoAcidTool::MONOMER_DATABASE);
+    BOOST_CHECK(model.getAminoAcidTool() == AminoAcidTool::MONOMER_DB);
     aa_page_button->click();
     BOOST_CHECK(model.getDrawTool() == DrawTool::MONOMER);
     BOOST_CHECK(model.getMonomerToolType() == MonomerToolType::AMINO_ACID);

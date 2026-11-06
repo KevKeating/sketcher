@@ -304,15 +304,14 @@ SketcherModel::getMonomerDbMonomer(MonomerToolType page) const
 }
 
 /**
- * @return whether the page's remembered tool is MONOMER_DATABASE
+ * @return whether the page's remembered tool is MONOMER_DB
  */
 static bool remembers_monomer_database_tool(const SketcherModel& model,
                                             MonomerToolType page)
 {
     return page == MonomerToolType::AMINO_ACID
-               ? model.getAminoAcidTool() == AminoAcidTool::MONOMER_DATABASE
-               : model.getNucleicAcidTool() ==
-                     NucleicAcidTool::MONOMER_DATABASE;
+               ? model.getAminoAcidTool() == AminoAcidTool::MONOMER_DB
+               : model.getNucleicAcidTool() == NucleicAcidTool::MONOMER_DB;
 }
 
 bool SketcherModel::shouldRestoreMonomerDbTool(MonomerToolType page) const

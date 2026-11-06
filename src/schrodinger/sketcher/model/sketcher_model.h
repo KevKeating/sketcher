@@ -372,7 +372,7 @@ enum class AminoAcidTool {
     UNK,
     // The page's last tool was its database monomer (AMINO_ACID_DB_MONOMER).
     // This isn't a standard monomer, so it has no button or residue name.
-    MONOMER_DATABASE,
+    MONOMER_DB,
 };
 
 const std::unordered_map<AminoAcidTool, std::string>
@@ -454,7 +454,7 @@ enum class NucleicAcidTool {
     CUSTOM_NUCLEOTIDE,
     // The page's last tool was its database monomer (NUCLEIC_ACID_DB_MONOMER).
     // This isn't a standard monomer, so it has no button or residue name.
-    MONOMER_DATABASE,
+    MONOMER_DB,
 };
 
 const std::unordered_map<NucleicAcidTool, std::string>
@@ -589,7 +589,7 @@ class SKETCHER_API SketcherModel : public QObject
     /**
      * @param page A side-bar monomer page
      * @return whether activating the page should restore its database monomer
-     * tool, i.e. whether the page's remembered tool is MONOMER_DATABASE and the
+     * tool, i.e. whether the page's remembered tool is MONOMER_DB and the
      * page has a last-used database monomer
      */
     bool shouldRestoreMonomerDbTool(MonomerToolType page) const;
@@ -929,7 +929,7 @@ class SKETCHER_API SketcherModel : public QObject
      * For each page whose last-used database monomer is no longer in the
      * Monomer Database table (see get_monomer_database_table_monomers()):
      *  - clear the page's last-used database monomer;
-     *  - if the page's remembered tool is MONOMER_DATABASE, reset it to the
+     *  - if the page's remembered tool is MONOMER_DB, reset it to the
      *    model's default tool for the page;
      *  - if the page's database monomer tool is active, switch to the page's
      *    standard monomer tool.

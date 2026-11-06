@@ -82,7 +82,7 @@ MonomerToolWidget::MonomerToolWidget(QWidget* parent) :
             (ui->tyr_btn, AminoAcidTool::TYR)
             (ui->val_btn, AminoAcidTool::VAL)
             (ui->unk_btn, AminoAcidTool::UNK)
-            (ui->aa_unclassified_btn, AminoAcidTool::MONOMER_DATABASE);
+            (ui->aa_unclassified_btn, AminoAcidTool::MONOMER_DB);
     m_button_nucleic_acid_bimap =
         boost::assign::list_of<ButtonNucleicAcidBimapType::relation>
             (ui->na_a_btn, NucleicAcidTool::A)
@@ -97,7 +97,7 @@ MonomerToolWidget::MonomerToolWidget(QWidget* parent) :
             (ui->na_rna_btn, NucleicAcidTool::RNA_NUCLEOTIDE)
             (ui->na_dna_btn, NucleicAcidTool::DNA_NUCLEOTIDE)
             (ui->na_custom_nt_btn, NucleicAcidTool::CUSTOM_NUCLEOTIDE)
-            (ui->na_unclassified_btn, NucleicAcidTool::MONOMER_DATABASE);
+            (ui->na_unclassified_btn, NucleicAcidTool::MONOMER_DB);
     // clang-format on
 
     connect(ui->amino_or_nucleic_group, &QButtonGroup::buttonClicked, this,
@@ -174,7 +174,7 @@ void MonomerToolWidget::updateMonomerButtons()
     for (auto& entry : m_button_amino_acid_bimap.left) {
         auto* button = entry.first;
         auto aa_tool = entry.second;
-        const bool unclassified = aa_tool == AminoAcidTool::MONOMER_DATABASE;
+        const bool unclassified = aa_tool == AminoAcidTool::MONOMER_DB;
         auto symbol =
             unclassified ? "X" : AMINO_ACID_TOOL_TO_RES_NAME.at(aa_tool);
         auto name = unclassified ? "Unclassified"
@@ -222,7 +222,7 @@ void MonomerToolWidget::updateMonomerButtons()
 
     auto na_tool_to_std_name = [](NucleicAcidTool na_tool)
         -> std::optional<std::pair<std::string, std::string>> {
-        if (na_tool == NucleicAcidTool::MONOMER_DATABASE) {
+        if (na_tool == NucleicAcidTool::MONOMER_DB) {
             return {{"N", "Unclassified"}};
         }
         auto res_it = NUCLEIC_ACID_TOOL_TO_RES_NAME.find(na_tool);
@@ -257,7 +257,7 @@ void MonomerToolWidget::updateMonomerButtons()
         // attached.
         modular_btn->showPopupIndicator(false);
 
-        const bool unclassified = na_tool == NucleicAcidTool::MONOMER_DATABASE;
+        const bool unclassified = na_tool == NucleicAcidTool::MONOMER_DB;
         auto analogs = unclassified
                            ? analogs_by_na[symbol]
                            : get_analogs_for_na_button(symbol, analogs_by_na,
@@ -391,16 +391,16 @@ void MonomerToolWidget::updateCheckedButton()
         page_button =
             amino_acid_page ? ui->aa_unclassified_btn : ui->na_unclassified_btn;
     } else if (draw_tool == DrawTool::MONOMER) {
-        // MONOMER_DATABASE doesn't correspond to a standard monomer button,
+        // MONOMER_DB doesn't correspond to a standard monomer button,
         // so never look it up in the bimaps
         if (amino_acid_page) {
             auto amino_acid = model->getAminoAcidTool();
-            if (amino_acid != AminoAcidTool::MONOMER_DATABASE) {
+            if (amino_acid != AminoAcidTool::MONOMER_DB) {
                 page_button = m_button_amino_acid_bimap.right.at(amino_acid);
             }
         } else {
             auto nucleic_acid = model->getNucleicAcidTool();
-            if (nucleic_acid != NucleicAcidTool::MONOMER_DATABASE) {
+            if (nucleic_acid != NucleicAcidTool::MONOMER_DB) {
                 page_button =
                     m_button_nucleic_acid_bimap.right.at(nucleic_acid);
             }
@@ -750,13 +750,11 @@ void MonomerToolWidget::activateMonomerDbMonomer(
         values.emplace(ModelKey::DRAW_TOOL,
                        QVariant::fromValue(DrawTool::MONOMER_DB_MONOMER));
         if (page == MonomerToolType::AMINO_ACID) {
-            values.emplace(
-                ModelKey::AMINO_ACID_TOOL,
-                QVariant::fromValue(AminoAcidTool::MONOMER_DATABASE));
+            values.emplace(ModelKey::AMINO_ACID_TOOL,
+                           QVariant::fromValue(AminoAcidTool::MONOMER_DB));
         } else {
-            values.emplace(
-                ModelKey::NUCLEIC_ACID_TOOL,
-                QVariant::fromValue(NucleicAcidTool::MONOMER_DATABASE));
+            values.emplace(ModelKey::NUCLEIC_ACID_TOOL,
+                           QVariant::fromValue(NucleicAcidTool::MONOMER_DB));
         }
     }
     model->setValues(values);

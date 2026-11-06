@@ -103,10 +103,10 @@ scene tool becomes a `DrawMonomerSceneTool` for that monomer.
     changes when the page changes.
 - **Keep the per-page "DB tool" marker, renamed.**
   `AminoAcidTool::UNCLASSIFIED` and `NucleicAcidTool::UNCLASSIFIED` become
-  `MONOMER_DATABASE`. They keep their current meaning: this page's last tool
+  `MONOMER_DB`. They keep their current meaning: this page's last tool
   was its DB monomer. They drive restoring:
   - switching pages restores the new page's DB monomer when that page's tool
-    is `MONOMER_DATABASE`, otherwise its standard tool (today's behaviour);
+    is `MONOMER_DB`, otherwise its standard tool (today's behaviour);
   - toggling atomistic→monomeric restores the DB tool the same way.
 
   The value isn't mapped to any button in the bimaps, so code must not call
@@ -120,7 +120,7 @@ scene tool becomes a `DrawMonomerSceneTool` for that monomer.
     - `DRAW_TOOL = MONOMER_DB_MONOMER`;
     - `MONOMER_TOOL_TYPE`;
     - that page's `*_DB_MONOMER`;
-    - that page's `AMINO_ACID_TOOL` / `NUCLEIC_ACID_TOOL = MONOMER_DATABASE`.
+    - that page's `AMINO_ACID_TOOL` / `NUCLEIC_ACID_TOOL = MONOMER_DB`.
   - With a canvas selection, choosing does three things:
     - it mutates the selection by setting that page's `*_DB_MONOMER`;
     - it switches the page;
@@ -159,11 +159,11 @@ scene tool becomes a `DrawMonomerSceneTool` for that monomer.
     and while atomistic mode is active:
     - reset the slot to an empty `MonomerID`, which blanks the last-used
       button for that page;
-    - if the page's remembered tool is `MONOMER_DATABASE`, reset it to the
+    - if the page's remembered tool is `MONOMER_DB`, reset it to the
       model's default: `AminoAcidTool::ALA` with symbol `A`, or
       `NucleicAcidTool::RNA_NUCLEOTIDE` with the default
       `NUCLEIC_ACID_SYMBOL`. Keep an already remembered standard tool. Never
-      leave a `MONOMER_DATABASE` marker with an empty slot;
+      leave a `MONOMER_DB` marker with an empty slot;
     - if that page's DB tool is the active draw tool, set `DRAW_TOOL` to
       `MONOMER`; otherwise keep the active draw tool.
   - Apply all the repairs in one update that emits `valuesChanged` (so the
@@ -556,7 +556,7 @@ things clean:
     - `ModelKey::MONOMER_DB_MONOMER` holds an `rdkit_extensions::MonomerID`;
     - the page's `AMINO_ACID_TOOL` / `NUCLEIC_ACID_TOOL` is `UNCLASSIFIED`.
 
-    Step 2 changes this to the two per-page keys and `MONOMER_DATABASE` (see
+    Step 2 changes this to the two per-page keys and `MONOMER_DB` (see
     "Buttons and tool state").
   - **Scene tool.** `Scene::getNewSceneTool()` builds the
     `DrawMonomerSceneTool` from the `MonomerID` alone.
@@ -902,7 +902,7 @@ shared popup positioning, with no new widgets.
 ### 2a. Rename the markers and split the model key
 
 - **Rename `AminoAcidTool::UNCLASSIFIED` and `NucleicAcidTool::UNCLASSIFIED`
-  to `MONOMER_DATABASE`.** Keep their meaning (see "Buttons and tool
+  to `MONOMER_DB`.** Keep their meaning (see "Buttons and tool
   state"). Trace every use:
   - `sketcher_model.h`;
   - `scene.cpp` (around line 766);
@@ -942,7 +942,7 @@ monomer switches the side-bar page" from "Design decisions":
   remembered tool. Today's code only pings the key in this case; storing it
   is the intended change.
 - Otherwise, it sets `DRAW_TOOL`, `MONOMER_TOOL_TYPE`, the page's
-  `*_DB_MONOMER` and the page's tool key (`MONOMER_DATABASE`) in one
+  `*_DB_MONOMER` and the page's tool key (`MONOMER_DB`) in one
   `setValues` call.
 - In this step the Unclassified popups call it. In Step 3 the table rows and
   the last-used button do.
@@ -956,7 +956,7 @@ monomer switches the side-bar page" from "Design decisions":
   and the connection tools.
 - **`onAminoOrNucleicBtnClicked`:** keep today's restore behaviour.
   - With a canvas selection, it still only sets `MONOMER_TOOL_TYPE`.
-  - If the new page's tool is `MONOMER_DATABASE` and its `*_DB_MONOMER`
+  - If the new page's tool is `MONOMER_DB` and its `*_DB_MONOMER`
     isn't empty, reactivate that DB monomer.
   - Otherwise, activate the page's standard tool.
 - **`SketcherSideBar::updateCheckState`:** keep today's atomistic→monomeric
@@ -997,7 +997,7 @@ existing tests (or in a new `test_widget_utils.cpp`).
 - **Keys:** each page stores its own slot, and `getMonomerDbMonomer()`
   returns the current page's.
 - **Activation without a canvas selection:**
-  - it sets the draw tool, the page, the page's slot and `MONOMER_DATABASE`;
+  - it sets the draw tool, the page, the page's slot and `MONOMER_DB`;
   - a peptide switches to the AA page, an RNA monomer to the NA page, and
     CHEM stays on the current page (call the function directly, since no UI
     can reach a cross-page monomer yet);
