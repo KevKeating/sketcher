@@ -768,8 +768,7 @@ std::shared_ptr<AbstractSceneTool> Scene::getNewSceneTool()
                 m_mol_model, is_smiles);
         } else {
             auto tool = m_sketcher_model->getNucleicAcidTool();
-            if (NUCLEIC_ACID_TOOL_TO_RES_NAME.contains(tool) ||
-                tool == NucleicAcidTool::MONOMER_DB) {
+            if (NUCLEIC_ACID_TOOL_TO_RES_NAME.contains(tool)) {
                 auto mutation =
                     m_sketcher_model->getValue(ModelKey::NUCLEIC_ACID_SYMBOL)
                         .value<NucleicAcidMutation>();

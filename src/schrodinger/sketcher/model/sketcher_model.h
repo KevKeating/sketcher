@@ -370,7 +370,6 @@ enum class AminoAcidTool {
     TYR,
     VAL,
     UNK,
-    MONOMER_DB,
 };
 
 const std::unordered_map<AminoAcidTool, std::string>
@@ -450,7 +449,6 @@ enum class NucleicAcidTool {
     RNA_NUCLEOTIDE,
     DNA_NUCLEOTIDE,
     CUSTOM_NUCLEOTIDE,
-    MONOMER_DB,
 };
 
 const std::unordered_map<NucleicAcidTool, std::string>
@@ -933,10 +931,11 @@ class SKETCHER_API SketcherModel : public QObject
      * For each page whose last-used database monomer is no longer in the
      * Monomer Database table (see get_monomer_database_table_monomers()):
      *  - clear the page's last-used database monomer;
-     *  - if the page's remembered tool is MONOMER_DB, reset it to the
-     *    model's default tool for the page;
      *  - if the page's database monomer tool is active, switch to the page's
-     *    standard monomer tool.
+     *    standard monomer tool, i.e. the last standard monomer button used on
+     *    the page.
+     * A page whose last monomeric tool was its database monomer tool then
+     * restores its standard monomer tool instead (see getDrawToolToRestore()).
      * The update never mutates a canvas selection.
      */
     void onMonomerDatabaseChanged();

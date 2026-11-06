@@ -502,11 +502,11 @@ BOOST_AUTO_TEST_CASE(unclassified_monomers)
         button->click();
         BOOST_TEST(!popup->isVisible());
         BOOST_TEST(button->isChecked());
+        // the page's standard tool still names the last standard button used
         if (amino_acid) {
-            BOOST_CHECK(model.getAminoAcidTool() == AminoAcidTool::MONOMER_DB);
+            BOOST_CHECK(model.getAminoAcidTool() == AminoAcidTool::ALA);
         } else {
-            BOOST_CHECK(model.getNucleicAcidTool() ==
-                        NucleicAcidTool::MONOMER_DB);
+            BOOST_CHECK(model.getNucleicAcidTool() == NucleicAcidTool::A);
         }
         BOOST_CHECK(model.getDrawTool() == DrawTool::MONOMER_DB_MONOMER);
         const auto monomer = model.getMonomerDbMonomer();
@@ -776,8 +776,9 @@ BOOST_AUTO_TEST_CASE(activate_monomer_db_monomer)
                            ->isChecked());
         }
     }
-    BOOST_CHECK(model.getAminoAcidTool() == AminoAcidTool::MONOMER_DB);
-    BOOST_CHECK(model.getNucleicAcidTool() == NucleicAcidTool::MONOMER_DB);
+    // activating database monomers leaves the pages' standard tools alone
+    BOOST_CHECK(model.getAminoAcidTool() == AminoAcidTool::ALA);
+    BOOST_CHECK(model.getNucleicAcidTool() == NucleicAcidTool::RNA_NUCLEOTIDE);
 
     // an empty monomer is ignored
     QSignalSpy pinged(&model, &SketcherModel::valuePinged);
@@ -841,18 +842,16 @@ BOOST_AUTO_TEST_CASE(monomer_db_page_switching)
     BOOST_CHECK(model.getMonomerDbMonomer() == rna);
     BOOST_TEST(na_a_button->isChecked());
 
-    // a MONOMER_DB marker with an empty slot never restores the DB tool
+    // a page whose last tool was its database monomer tool never restores it
+    // with an empty slot, and restores its standard tool instead
     model.setValues({{ModelKey::AMINO_ACID_DB_MONOMER,
                       QVariant::fromValue(MonomerID{"", ChainType::PEPTIDE})}});
-    BOOST_CHECK(model.getAminoAcidTool() == AminoAcidTool::MONOMER_DB);
     aa_page_button->click();
     BOOST_CHECK(model.getDrawTool() == DrawTool::MONOMER);
     BOOST_CHECK(model.getMonomerToolType() == MonomerToolType::AMINO_ACID);
+    BOOST_CHECK(model.getAminoAcidTool() == AminoAcidTool::ALA);
     check_visible_page(widget, true);
-    for (auto* button :
-         widget.findChild<QButtonGroup*>("amino_monomer_group")->buttons()) {
-        BOOST_TEST(!button->isChecked());
-    }
+    BOOST_TEST(widget.findChild<QAbstractButton*>("ala_btn")->isChecked());
 }
 
 /**

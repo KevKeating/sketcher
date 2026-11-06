@@ -1,7 +1,6 @@
 #include "schrodinger/sketcher/model/sketcher_model.h"
 
 #include <algorithm>
-#include <array>
 #include <stdexcept>
 #include <string>
 
@@ -303,19 +302,6 @@ SketcherModel::getMonomerDbMonomer(MonomerToolType page) const
         .value<rdkit_extensions::MonomerID>();
 }
 
-/**
- * @return whether the page's tool (AMINO_ACID_TOOL or NUCLEIC_ACID_TOOL) is
- * MONOMER_DB, i.e. whether the last tool used on the page was its database
- * monomer
- */
-static bool tool_for_page_is_monomer_db(const SketcherModel& model,
-                                        MonomerToolType page)
-{
-    return page == MonomerToolType::AMINO_ACID
-               ? model.getAminoAcidTool() == AminoAcidTool::MONOMER_DB
-               : model.getNucleicAcidTool() == NucleicAcidTool::MONOMER_DB;
-}
-
 DrawTool SketcherModel::getDrawToolToRestore(MonomerToolType page) const
 {
     const auto draw_tool = m_last_monomeric_draw_tool.at(page);
@@ -477,23 +463,15 @@ void SketcherModel::onMonomerDatabaseChanged()
             continue;
         }
         // Note that an empty slot is also "repaired", which is a no-op unless
-        // the page's database monomer tool is somehow active or remembered
+        // the page's database monomer tool is somehow active
         const auto db_key = get_monomer_db_monomer_key(page);
         repairs[db_key] = defaults.at(db_key);
-        if (tool_for_page_is_monomer_db(*this, page)) {
-            // replace the remembered tool with the page's default tool
-            const auto tool_keys =
-                page == MonomerToolType::AMINO_ACID
-                    ? std::to_array({ModelKey::AMINO_ACID_TOOL,
-                                     ModelKey::AMINO_ACID_SYMBOL})
-                    : std::to_array({ModelKey::NUCLEIC_ACID_TOOL,
-                                     ModelKey::NUCLEIC_ACID_SYMBOL});
-            for (auto key : tool_keys) {
-                repairs[key] = defaults.at(key);
-            }
-        }
         if (getDrawTool() == DrawTool::MONOMER_DB_MONOMER &&
             getMonomerToolType() == page) {
+            // Switch to the page's standard monomer tool. Activating the
+            // database monomer left the page's AMINO_ACID_TOOL or
+            // NUCLEIC_ACID_TOOL (and its symbol) alone, so this restores the
+            // last standard monomer button used on the page.
             repairs[ModelKey::DRAW_TOOL] =
                 QVariant::fromValue(DrawTool::MONOMER);
         }

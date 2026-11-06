@@ -429,13 +429,7 @@ static void activate_db_monomer(SketcherModel& model, MonomerToolType page,
         {{ModelKey::DRAW_TOOL,
           QVariant::fromValue(DrawTool::MONOMER_DB_MONOMER)},
          {ModelKey::MONOMER_TOOL_TYPE, QVariant::fromValue(page)},
-         {get_monomer_db_monomer_key(page), QVariant::fromValue(monomer)},
-         page == MonomerToolType::AMINO_ACID
-             ? std::make_pair(ModelKey::AMINO_ACID_TOOL,
-                              QVariant::fromValue(AminoAcidTool::MONOMER_DB))
-             : std::make_pair(
-                   ModelKey::NUCLEIC_ACID_TOOL,
-                   QVariant::fromValue(NucleicAcidTool::MONOMER_DB))});
+         {get_monomer_db_monomer_key(page), QVariant::fromValue(monomer)}});
 }
 
 /**
@@ -458,8 +452,11 @@ BOOST_AUTO_TEST_CASE(monomer_db_repair_keeps_valid_monomers)
                 CHEM_DB_MONOMER);
     BOOST_CHECK(model.getMonomerDbMonomer(MonomerToolType::NUCLEIC_ACID) ==
                 RNA_DB_MONOMER);
-    BOOST_CHECK(model.getAminoAcidTool() == AminoAcidTool::MONOMER_DB);
-    BOOST_CHECK(model.getNucleicAcidTool() == NucleicAcidTool::MONOMER_DB);
+    for (auto page :
+         {MonomerToolType::AMINO_ACID, MonomerToolType::NUCLEIC_ACID}) {
+        BOOST_TEST(
+            (model.getDrawToolToRestore(page) == DrawTool::MONOMER_DB_MONOMER));
+    }
     BOOST_CHECK(model.getDrawTool() == DrawTool::MONOMER_DB_MONOMER);
 
     // core monomers with no natural analog are always in the table
@@ -473,7 +470,8 @@ BOOST_AUTO_TEST_CASE(monomer_db_repair_keeps_valid_monomers)
 
 /**
  * Removing the active page's database monomer while its tool is active clears
- * the page's slot and restores the page's default monomer tool without pinging
+ * the page's slot and switches to the page's last standard monomer tool, which
+ * activating the database monomer left alone, without pinging
  */
 BOOST_DATA_TEST_CASE(monomer_db_repair_active_page,
                      boost::unit_test::data::make({true, false}), amino_acid)
@@ -483,8 +481,11 @@ BOOST_DATA_TEST_CASE(monomer_db_repair_active_page,
     SketcherModel model;
     const auto page = amino_acid ? MonomerToolType::AMINO_ACID
                                  : MonomerToolType::NUCLEIC_ACID;
+    // the last standard monomer buttons used: Gly and C
     model.setValues(
-        {{ModelKey::AMINO_ACID_SYMBOL, QString("G")},
+        {{ModelKey::AMINO_ACID_TOOL, QVariant::fromValue(AminoAcidTool::GLY)},
+         {ModelKey::AMINO_ACID_SYMBOL, QString("G")},
+         {ModelKey::NUCLEIC_ACID_TOOL, QVariant::fromValue(NucleicAcidTool::C)},
          {ModelKey::NUCLEIC_ACID_SYMBOL,
           QVariant::fromValue(NucleicAcidMutation{NucleicAcidTool::C, "C"})}});
     activate_db_monomer(model, page,
@@ -501,36 +502,31 @@ BOOST_DATA_TEST_CASE(monomer_db_repair_active_page,
         changed.front().front().value<std::unordered_set<ModelKey>>();
     BOOST_TEST(changed_keys.contains(get_monomer_db_monomer_key(page)));
     BOOST_TEST(changed_keys.contains(ModelKey::DRAW_TOOL));
+    for (auto key :
+         {ModelKey::AMINO_ACID_TOOL, ModelKey::AMINO_ACID_SYMBOL,
+          ModelKey::NUCLEIC_ACID_TOOL, ModelKey::NUCLEIC_ACID_SYMBOL}) {
+        BOOST_TEST(!changed_keys.contains(key));
+    }
 
     BOOST_TEST(model.getMonomerDbMonomer(page).symbol.empty());
     BOOST_TEST(
         (model.getDrawToolToRestore(page) != DrawTool::MONOMER_DB_MONOMER));
     BOOST_CHECK(model.getDrawTool() == DrawTool::MONOMER);
     BOOST_CHECK(model.getMonomerToolType() == page);
-    if (amino_acid) {
-        BOOST_CHECK(model.getAminoAcidTool() == AminoAcidTool::ALA);
-        BOOST_TEST(model.getValueString(ModelKey::AMINO_ACID_SYMBOL) == "A");
-        // the other page is untouched
-        BOOST_CHECK(model.getNucleicAcidTool() ==
-                    NucleicAcidTool::RNA_NUCLEOTIDE);
-        BOOST_TEST(model.getValue(ModelKey::NUCLEIC_ACID_SYMBOL)
-                       .value<NucleicAcidMutation>()
-                       .symbol == "C");
-    } else {
-        BOOST_CHECK(model.getNucleicAcidTool() ==
-                    NucleicAcidTool::RNA_NUCLEOTIDE);
-        const auto symbol = model.getValue(ModelKey::NUCLEIC_ACID_SYMBOL)
-                                .value<NucleicAcidMutation>();
-        BOOST_CHECK(symbol.tool == NucleicAcidTool::A);
-        BOOST_TEST(symbol.symbol == "A");
-        BOOST_TEST(model.getValueString(ModelKey::AMINO_ACID_SYMBOL) == "G");
-    }
+    // both pages keep their last standard monomer buttons
+    BOOST_CHECK(model.getAminoAcidTool() == AminoAcidTool::GLY);
+    BOOST_TEST(model.getValueString(ModelKey::AMINO_ACID_SYMBOL) == "G");
+    BOOST_CHECK(model.getNucleicAcidTool() == NucleicAcidTool::C);
+    const auto symbol = model.getValue(ModelKey::NUCLEIC_ACID_SYMBOL)
+                            .value<NucleicAcidMutation>();
+    BOOST_CHECK(symbol.tool == NucleicAcidTool::C);
+    BOOST_TEST(symbol.symbol == "C");
 }
 
 /**
  * Removing an inactive page's database monomer, or removing a database monomer
- * while atomistic mode is active, clears the slot and replaces the
- * MONOMER_DB marker without changing the active tool
+ * while atomistic mode is active, clears the slot without changing the active
+ * tool, so the page restores its standard monomer tool instead
  */
 BOOST_AUTO_TEST_CASE(monomer_db_repair_inactive_page)
 {
@@ -549,7 +545,8 @@ BOOST_AUTO_TEST_CASE(monomer_db_repair_inactive_page)
                 DrawTool::MONOMER_DB_MONOMER));
     BOOST_CHECK(model.getDrawTool() == DrawTool::MONOMER_DB_MONOMER);
     BOOST_CHECK(model.getMonomerDbMonomer() == PEPTIDE_DB_MONOMER);
-    BOOST_CHECK(model.getAminoAcidTool() == AminoAcidTool::MONOMER_DB);
+    BOOST_TEST((model.getDrawToolToRestore(MonomerToolType::AMINO_ACID) ==
+                DrawTool::MONOMER_DB_MONOMER));
 
     // remove the amino acid page's monomer while atomistic mode is active
     model.setValues(
