@@ -28,8 +28,10 @@ test('a page round trip restores the connection tool', async ({ page }) => {
 
 for (const sharedTool of ['select_tool_btn', 'erase_btn']) {
   test(`a page round trip keeps the shared ${sharedTool} tool active`, async ({ page }) => {
-    // The select and erase tools are only enabled when the scene has contents
-    await clickWidget(page, 'ala_btn');
+    // The select and erase tools are only enabled when the scene has contents.
+    // Ala is already the active tool. (Clicking its checked button would open
+    // its analog popup instead, and the canvas click would only close it.)
+    await expectChecked(page, 'ala_btn', true);
     await place(page);
     await waitAtoms(page, 1);
     await clickWidget(page, sharedTool);

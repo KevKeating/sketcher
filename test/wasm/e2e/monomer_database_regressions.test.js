@@ -201,8 +201,11 @@ test('SKETCH-2827: a mutation from an Unclassified popup is remembered as the DB
   expect(await getExportedHelm(page)).toBe('PEPTIDE1{[ac]}$$$$V2.0');
   await clickWidget(page, 'clear_selection_btn');
 
-  // The mutation didn't change the page's last monomeric tool
+  // The mutation didn't change the page's last monomeric tool. Clearing the
+  // selection leaves the select tool active, and a page switch keeps a shared
+  // tool like that, so choose a monomer on the NA page before switching back.
   await clickWidget(page, 'nucleic_monomer_btn');
+  await clickWidget(page, 'na_a_btn');
   await clickWidget(page, 'amino_monomer_btn');
   await expect.poll(async () => (await widgetState(page, 'ala_btn')).checked).toBe(true);
 
