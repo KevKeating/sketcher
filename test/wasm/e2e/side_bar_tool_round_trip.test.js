@@ -1,0 +1,68 @@
+import { expect, test } from '@playwright/test';
+import { clickWidget, place, waitAtoms, widgetState } from './e2e_helpers.js';
+import { BASE, CHEM, PEPTIDE, defineCustom, openMonomerSketcher } from './monomer_helpers.js';
+
+// Switching the side bar to the other monomer page, or to the atomistic tools,
+// and straight back should leave the tool selection exactly as it was. The
+// connection and custom monomer tools used to be replaced by the page's
+// standard monomer tool.
+
+test.beforeEach(async ({ page }) => {
+  await openMonomerSketcher(page);
+});
+test.setTimeout(90_000);
+
+async function expectChecked(page, name, checked) {
+  await expect.poll(async () => (await widgetState(page, name)).checked).toBe(checked);
+}
+
+test('a page round trip restores the connection tool', async ({ page }) => {
+  await clickWidget(page, 'hbond_btn');
+  await expectChecked(page, 'hbond_btn', true);
+  await clickWidget(page, 'nucleic_monomer_btn');
+  await expectChecked(page, 'hbond_btn', false);
+  await clickWidget(page, 'amino_monomer_btn');
+  await expectChecked(page, 'hbond_btn', true);
+});
+
+test('a page round trip restores a custom monomer unless the other page replaced it', async ({
+  page,
+}) => {
+  await defineCustom(page, 'peptide', PEPTIDE);
+  await expectChecked(page, 'custom_monomer_btn', true);
+  await clickWidget(page, 'nucleic_monomer_btn');
+  await expectChecked(page, 'custom_monomer_btn', false);
+  await clickWidget(page, 'amino_monomer_btn');
+  await expectChecked(page, 'custom_monomer_btn', true);
+  await place(page);
+  await waitAtoms(page, 1);
+
+  // A custom base replaces the stored custom peptide, so the amino acid page
+  // falls back to its standard tool, while the nucleic acid page keeps the base
+  await defineCustom(page, 'base', BASE);
+  await expectChecked(page, 'custom_monomer_btn', true);
+  await clickWidget(page, 'amino_monomer_btn');
+  await expectChecked(page, 'custom_monomer_btn', false);
+  await expectChecked(page, 'ala_btn', true);
+  await clickWidget(page, 'nucleic_monomer_btn');
+  await expectChecked(page, 'custom_monomer_btn', true);
+});
+
+test('a round trip through the atomistic tools restores the connection and custom monomer tools', async ({
+  page,
+}) => {
+  await clickWidget(page, 'covalent_or_disulfide_btn');
+  await expectChecked(page, 'covalent_or_disulfide_btn', true);
+  await clickWidget(page, 'atomistic_btn');
+  await clickWidget(page, 'monomeric_btn');
+  await expectChecked(page, 'covalent_or_disulfide_btn', true);
+
+  await defineCustom(page, 'chem', CHEM);
+  await expectChecked(page, 'custom_monomer_btn', true);
+  await clickWidget(page, 'atomistic_btn');
+  await clickWidget(page, 'monomeric_btn');
+  await expectChecked(page, 'custom_monomer_btn', true);
+  await expectChecked(page, 'covalent_or_disulfide_btn', false);
+  await place(page);
+  await waitAtoms(page, 1);
+});

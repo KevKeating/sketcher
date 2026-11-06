@@ -522,7 +522,9 @@ void MonomerToolWidget::onAminoOrNucleicBtnClicked(QAbstractButton* button)
         model->setValue(ModelKey::MONOMER_TOOL_TYPE, tool_type);
         return;
     }
-    if (model->shouldRestoreMonomerDbTool(tool_type)) {
+    // Restore the monomeric tool that was last used on the new page
+    const auto draw_tool = model->getDrawToolToRestore(tool_type);
+    if (draw_tool == DrawTool::MONOMER_DB_MONOMER) {
         // The model is still on the previous page, so name the page that a
         // CHEM monomer belongs to
         activateMonomerDbMonomer(model->getMonomerDbMonomer(tool_type),
@@ -530,7 +532,7 @@ void MonomerToolWidget::onAminoOrNucleicBtnClicked(QAbstractButton* button)
         return;
     }
     model->setValues(
-        {{ModelKey::DRAW_TOOL, QVariant::fromValue(DrawTool::MONOMER)},
+        {{ModelKey::DRAW_TOOL, QVariant::fromValue(draw_tool)},
          {ModelKey::MONOMER_TOOL_TYPE, QVariant::fromValue(tool_type)}});
     updateCheckedButton();
 }

@@ -316,16 +316,47 @@ static bool tool_for_page_is_monomer_db(const SketcherModel& model,
                : model.getNucleicAcidTool() == NucleicAcidTool::MONOMER_DB;
 }
 
-bool SketcherModel::shouldRestoreMonomerDbTool(MonomerToolType page) const
+DrawTool SketcherModel::getDrawToolToRestore(MonomerToolType page) const
 {
-    // the !getMonomerDbMonomer(page).symbol.empty() check here is a safeguard
-    // that loading a new monomer database hasn't left us in an invalid state:
-    // with the MONOMER_DB tool active but no valid monomer selected. This
-    // should never happen since SketcherModel::onMonomerDatabaseChanged should
-    // reset the relevant tool if the new database doesn't contain the
-    // previously selected monomer, but we double check here just to be safe.
-    return tool_for_page_is_monomer_db(*this, page) &&
-           !getMonomerDbMonomer(page).symbol.empty();
+    const auto draw_tool = m_last_monomeric_draw_tool.at(page);
+    if (draw_tool == DrawTool::MONOMER_DB_MONOMER) {
+        // This check is a safeguard that loading a new monomer database hasn't
+        // left us in an invalid state: with the MONOMER_DB_MONOMER tool active
+        // but no valid monomer selected. This should never happen since
+        // SketcherModel::onMonomerDatabaseChanged should reset the relevant
+        // tool if the new database doesn't contain the previously selected
+        // monomer, but we double check here just to be safe.
+        if (getMonomerDbMonomer(page).symbol.empty()) {
+            return DrawTool::MONOMER;
+        }
+    } else if (draw_tool == DrawTool::CUSTOM_MONOMER) {
+        // Both pages share a single stored custom monomer, so it may have been
+        // replaced by a custom monomer for the other page
+        const auto [smiles, chain_type] = getCustomMonomer();
+        const auto page_chain_type = page == MonomerToolType::AMINO_ACID
+                                         ? rdkit_extensions::ChainType::PEPTIDE
+                                         : rdkit_extensions::ChainType::RNA;
+        if (smiles.isEmpty() ||
+            (chain_type != rdkit_extensions::ChainType::CHEM &&
+             chain_type != page_chain_type)) {
+            return DrawTool::MONOMER;
+        }
+    }
+    return draw_tool;
+}
+
+void SketcherModel::recordMonomericDrawTool()
+{
+    static const std::unordered_set<DrawTool> MONOMERIC_DRAW_TOOLS = {
+        DrawTool::MONOMER,
+        DrawTool::MONOMERIC_CONNECTION,
+        DrawTool::CUSTOM_MONOMER,
+        DrawTool::MONOMER_DB_MONOMER,
+    };
+    const auto draw_tool = getDrawTool();
+    if (MONOMERIC_DRAW_TOOLS.contains(draw_tool)) {
+        m_last_monomeric_draw_tool[getMonomerToolType()] = draw_tool;
+    }
 }
 
 InterfaceTypeType SketcherModel::getInterfaceType() const
@@ -362,6 +393,10 @@ void SketcherModel::reset()
 {
     // Reset all model values to defaults
     m_model_map = get_default_model_values();
+    m_last_monomeric_draw_tool = {
+        {MonomerToolType::AMINO_ACID, DrawTool::MONOMER},
+        {MonomerToolType::NUCLEIC_ACID, DrawTool::MONOMER},
+    };
     // Notify listeners that all values have changed
     std::unordered_set<ModelKey> all_keys;
     all_keys.reserve(m_model_map.size());
@@ -387,6 +422,10 @@ std::unordered_set<ModelKey> SketcherModel::storeValues(
             m_model_map[key] = value;
             changed_keys.insert(key);
         }
+    }
+    if (key_value_map.contains(ModelKey::DRAW_TOOL) ||
+        key_value_map.contains(ModelKey::MONOMER_TOOL_TYPE)) {
+        recordMonomericDrawTool();
     }
     updateAtomDisplaySettings(changed_keys);
     return changed_keys;

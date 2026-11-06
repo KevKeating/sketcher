@@ -104,13 +104,27 @@ scene tool becomes a `DrawMonomerSceneTool` for that monomer.
 - **Keep the per-page "DB tool" marker, renamed.**
   `AminoAcidTool::UNCLASSIFIED` and `NucleicAcidTool::UNCLASSIFIED` become
   `MONOMER_DB`. They keep their current meaning: this page's last tool
-  was its DB monomer. They drive restoring:
-  - switching pages restores the new page's DB monomer when that page's tool
-    is `MONOMER_DB`, otherwise its standard tool (today's behaviour);
-  - toggling atomistic→monomeric restores the DB tool the same way.
+  was its DB monomer.
 
   The value isn't mapped to any button in the bimaps, so code must not call
   `.at()` with it.
+- **Each page restores its last monomeric draw tool.** Switching to the other
+  page, or to the atomistic tools, and straight back must leave the tool
+  selection exactly as it was.
+  - `SketcherModel` records the last monomeric draw tool used on each page
+    (`MONOMER`, `MONOMER_DB_MONOMER`, `CUSTOM_MONOMER` or
+    `MONOMERIC_CONNECTION`) whenever `DRAW_TOOL` or `MONOMER_TOOL_TYPE`
+    changes, so the code that activates tools doesn't have to.
+  - `SketcherModel::getDrawToolToRestore(page)` returns that tool, falling
+    back to `MONOMER` when it can no longer be used: a DB tool with an empty
+    slot, or a custom monomer that the other page replaced. Both pages share
+    one stored custom monomer, so the AA page can restore a custom peptide
+    or CHEM monomer, and the NA page a custom nucleic acid or CHEM monomer.
+  - Page switching (`MonomerToolWidget::onAminoOrNucleicBtnClicked`) and the
+    atomistic→monomeric toggle (`SketcherSideBar::updateCheckState`) both use
+    it.
+  - The `MONOMER_DB` marker is now redundant with this record. Removing it is
+    a planned follow-up.
 - **Choosing a monomer switches the side-bar page to match it.**
   - A PEPTIDE monomer switches to AMINO_ACID, and an RNA monomer to
     NUCLEIC_ACID.

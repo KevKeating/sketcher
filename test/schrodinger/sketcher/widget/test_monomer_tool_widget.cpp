@@ -769,7 +769,8 @@ BOOST_AUTO_TEST_CASE(activate_monomer_db_monomer)
                             MonomerToolType::AMINO_ACID) == expected.aa_slot);
             BOOST_CHECK(model.getMonomerDbMonomer(
                             MonomerToolType::NUCLEIC_ACID) == expected.na_slot);
-            BOOST_TEST(model.shouldRestoreMonomerDbTool(page));
+            BOOST_TEST((model.getDrawToolToRestore(page) ==
+                        DrawTool::MONOMER_DB_MONOMER));
             check_visible_page(widget, expected.amino_acid_page);
             BOOST_TEST((expected.amino_acid_page ? aa_button : na_button)
                            ->isChecked());
@@ -913,6 +914,135 @@ BOOST_AUTO_TEST_CASE(monomer_db_page_switching_chem)
                     (amino_acid ? chem1 : chem2));
         check_visible_page(widget, amino_acid);
     }
+}
+
+/**
+ * Sketch a custom monomer through the custom monomer button's menu, as a user
+ * would. The menu offers a monomer of the current page's chain type, or a CHEM
+ * structure.
+ */
+static void sketch_custom_monomer(MonomerToolWidget& widget, bool chem,
+                                  const QString& smiles)
+{
+    auto* button = widget.findChild<CustomMonomerButton*>("custom_monomer_btn");
+    BOOST_REQUIRE(button != nullptr);
+    auto* menu = button->findChild<QMenu*>();
+    BOOST_REQUIRE(menu != nullptr);
+    menu->actions()[chem ? 2 : 0]->trigger();
+    // Earlier dialogs are deleted later, so find the one that's open
+    CustomMonomerDialog* dialog = nullptr;
+    for (auto* child : button->findChildren<CustomMonomerDialog*>()) {
+        if (child->isVisible()) {
+            dialog = child;
+        }
+    }
+    BOOST_REQUIRE(dialog != nullptr);
+    dialog->addSMILES(smiles.toStdString());
+    dialog->accept();
+}
+
+/**
+ * Switching to the other page and straight back restores the connection tool
+ * that was active, on either page
+ */
+BOOST_DATA_TEST_CASE(page_round_trip_restores_connection_tool,
+                     bdata::make({true, false}) *
+                         bdata::make({"covalent_or_disulfide_btn",
+                                      "hbond_btn"}),
+                     start_on_amino_acid_page, connection_button_name)
+{
+    SketcherModel model;
+    MonomerToolWidget widget;
+    widget.setModel(&model);
+    widget.show();
+    auto* aa_page_button =
+        widget.findChild<QAbstractButton*>("amino_monomer_btn");
+    auto* na_page_button =
+        widget.findChild<QAbstractButton*>("nucleic_monomer_btn");
+    auto* start_page_button =
+        start_on_amino_acid_page ? aa_page_button : na_page_button;
+    auto* other_page_button =
+        start_on_amino_acid_page ? na_page_button : aa_page_button;
+    auto* connection_button =
+        widget.findChild<QAbstractButton*>(connection_button_name);
+    BOOST_REQUIRE(connection_button != nullptr);
+    start_page_button->click();
+    connection_button->click();
+    BOOST_CHECK(model.getDrawTool() == DrawTool::MONOMERIC_CONNECTION);
+    const auto connection_tool =
+        model.getValueInt(ModelKey::MONOMERIC_CONNECTION_TOOL);
+
+    // the other page restores its own standard tool
+    other_page_button->click();
+    BOOST_CHECK(model.getDrawTool() == DrawTool::MONOMER);
+    BOOST_TEST(!connection_button->isChecked());
+
+    start_page_button->click();
+    BOOST_CHECK(model.getDrawTool() == DrawTool::MONOMERIC_CONNECTION);
+    BOOST_TEST(model.getValueInt(ModelKey::MONOMERIC_CONNECTION_TOOL) ==
+               connection_tool);
+    check_visible_page(widget, start_on_amino_acid_page);
+    BOOST_TEST(connection_button->isChecked());
+}
+
+/**
+ * Switching to the other page and straight back restores a custom monomer
+ * tool, as long as the shared stored custom monomer still belongs on the page
+ */
+BOOST_AUTO_TEST_CASE(page_round_trip_restores_custom_monomer_tool)
+{
+    SketcherModel model;
+    MonomerToolWidget widget;
+    widget.setModel(&model);
+    widget.show();
+    auto* aa_page_button =
+        widget.findChild<QAbstractButton*>("amino_monomer_btn");
+    auto* na_page_button =
+        widget.findChild<QAbstractButton*>("nucleic_monomer_btn");
+    auto* custom_button =
+        widget.findChild<QAbstractButton*>("custom_monomer_btn");
+    auto* ala_button = widget.findChild<QAbstractButton*>("ala_btn");
+    auto check_custom_monomer = [&](const QString& smiles,
+                                    ChainType chain_type) {
+        BOOST_CHECK(model.getDrawTool() == DrawTool::CUSTOM_MONOMER);
+        const auto monomer = model.getCustomMonomer();
+        BOOST_TEST(monomer.first == smiles);
+        BOOST_CHECK(monomer.second == chain_type);
+        BOOST_TEST(custom_button->isChecked());
+    };
+
+    // a custom peptide on the amino acid page
+    aa_page_button->click();
+    sketch_custom_monomer(widget, /*chem=*/false, "CC");
+    check_custom_monomer("CC", ChainType::PEPTIDE);
+    na_page_button->click();
+    BOOST_CHECK(model.getDrawTool() == DrawTool::MONOMER);
+    BOOST_TEST(!custom_button->isChecked());
+    aa_page_button->click();
+    check_custom_monomer("CC", ChainType::PEPTIDE);
+    check_visible_page(widget, true);
+
+    // a custom base on the nucleic acid page replaces the stored peptide, so
+    // the amino acid page falls back to its standard tool
+    na_page_button->click();
+    sketch_custom_monomer(widget, /*chem=*/false, "CCC");
+    check_custom_monomer("CCC", ChainType::RNA);
+    aa_page_button->click();
+    BOOST_CHECK(model.getDrawTool() == DrawTool::MONOMER);
+    BOOST_CHECK(model.getAminoAcidTool() == AminoAcidTool::ALA);
+    BOOST_TEST(ala_button->isChecked());
+    na_page_button->click();
+    check_custom_monomer("CCC", ChainType::RNA);
+    check_visible_page(widget, false);
+
+    // a CHEM custom monomer can be restored on either page
+    sketch_custom_monomer(widget, /*chem=*/true, "CO");
+    check_custom_monomer("CO", ChainType::CHEM);
+    aa_page_button->click();
+    BOOST_CHECK(model.getDrawTool() == DrawTool::MONOMER);
+    na_page_button->click();
+    check_custom_monomer("CO", ChainType::CHEM);
+    check_visible_page(widget, false);
 }
 
 /**

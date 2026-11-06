@@ -178,12 +178,11 @@ void SketcherSideBar::updateCheckState()
         }
     } else {
         page = ui->monomeric_page;
-        // if there's an atomistic tool selected, switch to a monomeric tool
+        // if there's an atomistic tool selected, switch back to the monomeric
+        // tool that was last used on the current page
         if (ATOMISTIC_TOOLS.contains(cur_draw_tool)) {
             new_draw_tool =
-                model->shouldRestoreMonomerDbTool(model->getMonomerToolType())
-                    ? DrawTool::MONOMER_DB_MONOMER
-                    : DrawTool::MONOMER;
+                model->getDrawToolToRestore(model->getMonomerToolType());
         }
     }
     ui->atomistic_or_monomeric_stack->setCurrentWidget(page);

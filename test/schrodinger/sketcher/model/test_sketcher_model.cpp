@@ -107,34 +107,96 @@ BOOST_AUTO_TEST_CASE(monomer_db_monomer)
 }
 
 /**
- * A page restores its database monomer tool only when its remembered tool is
- * MONOMER_DB and it has a database monomer.
+ * Switch the model to the given page and draw tool, as a side-bar button would
  */
-BOOST_AUTO_TEST_CASE(should_restore_monomer_db_tool)
+static void use_monomeric_draw_tool(SketcherModel& model, MonomerToolType page,
+                                    DrawTool draw_tool)
+{
+    model.setValues(
+        {{ModelKey::TOOL_SET, QVariant::fromValue(ToolSet::MONOMERIC)},
+         {ModelKey::MONOMER_TOOL_TYPE, QVariant::fromValue(page)},
+         {ModelKey::DRAW_TOOL, QVariant::fromValue(draw_tool)}});
+}
+
+/**
+ * Each page restores the last monomeric draw tool used on it, independently
+ * of the other page and of any atomistic or shared tools used in between
+ */
+BOOST_AUTO_TEST_CASE(get_draw_tool_to_restore)
 {
     using rdkit_extensions::ChainType;
     using rdkit_extensions::MonomerID;
+    const auto AA = MonomerToolType::AMINO_ACID;
+    const auto NA = MonomerToolType::NUCLEIC_ACID;
     SketcherModel model;
-    for (auto page :
-         {MonomerToolType::AMINO_ACID, MonomerToolType::NUCLEIC_ACID}) {
-        BOOST_TEST(!model.shouldRestoreMonomerDbTool(page));
-    }
-    model.setValues({{ModelKey::AMINO_ACID_TOOL,
-                      QVariant::fromValue(AminoAcidTool::MONOMER_DB)},
-                     {ModelKey::NUCLEIC_ACID_TOOL,
-                      QVariant::fromValue(NucleicAcidTool::MONOMER_DB)}});
-    // the slots are still empty
-    BOOST_TEST(!model.shouldRestoreMonomerDbTool(MonomerToolType::AMINO_ACID));
+    BOOST_TEST((model.getDrawToolToRestore(AA) == DrawTool::MONOMER));
+    BOOST_TEST((model.getDrawToolToRestore(NA) == DrawTool::MONOMER));
+
+    use_monomeric_draw_tool(model, AA, DrawTool::MONOMERIC_CONNECTION);
+    use_monomeric_draw_tool(model, NA, DrawTool::MONOMER);
     BOOST_TEST(
-        !model.shouldRestoreMonomerDbTool(MonomerToolType::NUCLEIC_ACID));
+        (model.getDrawToolToRestore(AA) == DrawTool::MONOMERIC_CONNECTION));
+    BOOST_TEST((model.getDrawToolToRestore(NA) == DrawTool::MONOMER));
+
+    // atomistic and shared tools don't replace a page's monomeric tool
+    for (auto draw_tool : {DrawTool::BOND, DrawTool::SELECT, DrawTool::ERASE}) {
+        model.setValue(ModelKey::DRAW_TOOL, draw_tool);
+    }
+    model.setValue(ModelKey::MONOMER_TOOL_TYPE, AA);
+    BOOST_TEST(
+        (model.getDrawToolToRestore(AA) == DrawTool::MONOMERIC_CONNECTION));
+    BOOST_TEST((model.getDrawToolToRestore(NA) == DrawTool::MONOMER));
+
+    // a page restores its database monomer tool only when it has a database
+    // monomer
+    use_monomeric_draw_tool(model, NA, DrawTool::MONOMER_DB_MONOMER);
+    BOOST_TEST((model.getDrawToolToRestore(NA) == DrawTool::MONOMER));
     model.setValue(ModelKey::NUCLEIC_ACID_DB_MONOMER,
                    MonomerID{"chem", ChainType::CHEM});
-    BOOST_TEST(!model.shouldRestoreMonomerDbTool(MonomerToolType::AMINO_ACID));
-    BOOST_TEST(model.shouldRestoreMonomerDbTool(MonomerToolType::NUCLEIC_ACID));
-    // a standard remembered tool is never restored as a database tool
-    model.setValue(ModelKey::NUCLEIC_ACID_TOOL, NucleicAcidTool::A);
     BOOST_TEST(
-        !model.shouldRestoreMonomerDbTool(MonomerToolType::NUCLEIC_ACID));
+        (model.getDrawToolToRestore(NA) == DrawTool::MONOMER_DB_MONOMER));
+    BOOST_TEST(
+        (model.getDrawToolToRestore(AA) == DrawTool::MONOMERIC_CONNECTION));
+
+    // reset() forgets every page's tool
+    model.reset();
+    BOOST_TEST((model.getDrawToolToRestore(AA) == DrawTool::MONOMER));
+    BOOST_TEST((model.getDrawToolToRestore(NA) == DrawTool::MONOMER));
+}
+
+/**
+ * A page restores its custom monomer tool only when the stored custom monomer
+ * belongs on that page, since both pages share one stored custom monomer
+ */
+BOOST_AUTO_TEST_CASE(get_draw_tool_to_restore_custom_monomer)
+{
+    using rdkit_extensions::ChainType;
+    const auto AA = MonomerToolType::AMINO_ACID;
+    const auto NA = MonomerToolType::NUCLEIC_ACID;
+    auto set_custom_monomer = [](SketcherModel& model, const QString& smiles,
+                                 ChainType chain_type) {
+        model.setValue(ModelKey::CUSTOM_MONOMER,
+                       std::make_pair(smiles, chain_type));
+    };
+    SketcherModel model;
+    // the default custom monomer is empty, so there's nothing to restore
+    use_monomeric_draw_tool(model, AA, DrawTool::CUSTOM_MONOMER);
+    BOOST_TEST((model.getDrawToolToRestore(AA) == DrawTool::MONOMER));
+
+    set_custom_monomer(model, "C[*:1].[*:2]", ChainType::PEPTIDE);
+    BOOST_TEST((model.getDrawToolToRestore(AA) == DrawTool::CUSTOM_MONOMER));
+
+    // a nucleic acid custom monomer replaces the peptide, so the amino acid
+    // page can't restore it, but the nucleic acid page can
+    use_monomeric_draw_tool(model, NA, DrawTool::CUSTOM_MONOMER);
+    set_custom_monomer(model, "N[*:1].[*:2]", ChainType::RNA);
+    BOOST_TEST((model.getDrawToolToRestore(AA) == DrawTool::MONOMER));
+    BOOST_TEST((model.getDrawToolToRestore(NA) == DrawTool::CUSTOM_MONOMER));
+
+    // a CHEM custom monomer belongs on either page
+    set_custom_monomer(model, "O[*:1]", ChainType::CHEM);
+    BOOST_TEST((model.getDrawToolToRestore(AA) == DrawTool::CUSTOM_MONOMER));
+    BOOST_TEST((model.getDrawToolToRestore(NA) == DrawTool::CUSTOM_MONOMER));
 }
 
 /**
@@ -427,7 +489,8 @@ BOOST_DATA_TEST_CASE(monomer_db_repair_active_page,
           QVariant::fromValue(NucleicAcidMutation{NucleicAcidTool::C, "C"})}});
     activate_db_monomer(model, page,
                         amino_acid ? PEPTIDE_DB_MONOMER : RNA_DB_MONOMER);
-    BOOST_TEST(model.shouldRestoreMonomerDbTool(page));
+    BOOST_TEST(
+        (model.getDrawToolToRestore(page) == DrawTool::MONOMER_DB_MONOMER));
 
     QSignalSpy pinged(&model, &SketcherModel::valuePinged);
     QSignalSpy changed(&model, &SketcherModel::valuesChanged);
@@ -440,7 +503,8 @@ BOOST_DATA_TEST_CASE(monomer_db_repair_active_page,
     BOOST_TEST(changed_keys.contains(ModelKey::DRAW_TOOL));
 
     BOOST_TEST(model.getMonomerDbMonomer(page).symbol.empty());
-    BOOST_TEST(!model.shouldRestoreMonomerDbTool(page));
+    BOOST_TEST(
+        (model.getDrawToolToRestore(page) != DrawTool::MONOMER_DB_MONOMER));
     BOOST_CHECK(model.getDrawTool() == DrawTool::MONOMER);
     BOOST_CHECK(model.getMonomerToolType() == page);
     if (amino_acid) {
@@ -481,8 +545,8 @@ BOOST_AUTO_TEST_CASE(monomer_db_repair_inactive_page)
     BOOST_TEST(model.getMonomerDbMonomer(MonomerToolType::NUCLEIC_ACID)
                    .symbol.empty());
     BOOST_CHECK(model.getNucleicAcidTool() == NucleicAcidTool::RNA_NUCLEOTIDE);
-    BOOST_TEST(
-        !model.shouldRestoreMonomerDbTool(MonomerToolType::NUCLEIC_ACID));
+    BOOST_TEST((model.getDrawToolToRestore(MonomerToolType::NUCLEIC_ACID) !=
+                DrawTool::MONOMER_DB_MONOMER));
     BOOST_CHECK(model.getDrawTool() == DrawTool::MONOMER_DB_MONOMER);
     BOOST_CHECK(model.getMonomerDbMonomer() == PEPTIDE_DB_MONOMER);
     BOOST_CHECK(model.getAminoAcidTool() == AminoAcidTool::MONOMER_DB);
@@ -494,7 +558,8 @@ BOOST_AUTO_TEST_CASE(monomer_db_repair_inactive_page)
     load_db_monomers(false, false, true);
     BOOST_TEST(model.getMonomerDbMonomer().symbol.empty());
     BOOST_CHECK(model.getAminoAcidTool() == AminoAcidTool::ALA);
-    BOOST_TEST(!model.shouldRestoreMonomerDbTool(MonomerToolType::AMINO_ACID));
+    BOOST_TEST((model.getDrawToolToRestore(MonomerToolType::AMINO_ACID) !=
+                DrawTool::MONOMER_DB_MONOMER));
     BOOST_CHECK(model.getDrawTool() == DrawTool::BOND);
 }
 

@@ -1,6 +1,7 @@
 #define BOOST_TEST_MODULE sketcher_widget_test
 
 #include <memory>
+#include <functional>
 #include <string>
 #include <tuple>
 
@@ -1132,6 +1133,92 @@ static MonomerToolWidget* get_monomer_tool_widget(TestSketcherWidget& sk)
         sk.findChild<QWidget*>("monomeric_wdg"));
     BOOST_REQUIRE(widget != nullptr);
     return widget;
+}
+
+/**
+ * Switching to the atomistic tools and straight back restores the monomeric
+ * tool that was active: a standard monomer, a connection tool, a custom
+ * monomer or a database monomer
+ */
+BOOST_AUTO_TEST_CASE(test_tool_set_round_trip_restores_monomeric_tool)
+{
+    using schrodinger::rdkit_extensions::MonomerID;
+    TestSketcherWidget& sk = *TestWidgetFixture::get();
+    sk.setInterfaceType(InterfaceType::ATOMISTIC_OR_MONOMERIC);
+    auto* sketcher_model = sk.m_sketcher_model;
+    auto* widget = get_monomer_tool_widget(sk);
+    auto* atomistic_button = sk.findChild<QAbstractButton*>("atomistic_btn");
+    auto* monomeric_button = sk.findChild<QAbstractButton*>("monomeric_btn");
+    BOOST_REQUIRE(atomistic_button != nullptr);
+    BOOST_REQUIRE(monomeric_button != nullptr);
+    auto click = [&sk](const char* name) {
+        auto* button = sk.findChild<QAbstractButton*>(name);
+        BOOST_REQUIRE(button != nullptr);
+        button->click();
+    };
+    auto set_custom_monomer = [sketcher_model](const QString& smiles,
+                                               ChainType chain_type) {
+        sketcher_model->setValues(
+            {{ModelKey::DRAW_TOOL,
+              QVariant::fromValue(DrawTool::CUSTOM_MONOMER)},
+             {ModelKey::CUSTOM_MONOMER,
+              QVariant::fromValue(std::make_pair(smiles, chain_type))}});
+    };
+    const MonomerID ac{"ac", ChainType::PEPTIDE};
+
+    struct RoundTripCase {
+        std::string description;
+        bool amino_acid_page;
+        std::function<void()> choose_tool;
+        DrawTool expected_draw_tool;
+    };
+    const std::vector<RoundTripCase> cases = {
+        {"standard monomer", true, [&]() { click("gly_btn"); },
+         DrawTool::MONOMER},
+        {"H-bond connection", true, [&]() { click("hbond_btn"); },
+         DrawTool::MONOMERIC_CONNECTION},
+        {"covalent connection on the NA page", false,
+         [&]() { click("covalent_or_disulfide_btn"); },
+         DrawTool::MONOMERIC_CONNECTION},
+        {"CHEM custom monomer", true,
+         [&]() { set_custom_monomer("CO", ChainType::CHEM); },
+         DrawTool::CUSTOM_MONOMER},
+        {"custom base on the NA page", false,
+         [&]() { set_custom_monomer("CCC", ChainType::RNA); },
+         DrawTool::CUSTOM_MONOMER},
+        {"database monomer", true,
+         [&]() { widget->activateMonomerDbMonomer(ac); },
+         DrawTool::MONOMER_DB_MONOMER},
+    };
+    for (const auto& round_trip : cases) {
+        BOOST_TEST_CONTEXT(round_trip.description)
+        {
+            monomeric_button->click();
+            BOOST_REQUIRE(sketcher_model->getToolSet() == ToolSet::MONOMERIC);
+            click(round_trip.amino_acid_page ? "amino_monomer_btn"
+                                             : "nucleic_monomer_btn");
+            round_trip.choose_tool();
+            BOOST_REQUIRE(sketcher_model->getDrawTool() ==
+                          round_trip.expected_draw_tool);
+            const auto page = sketcher_model->getMonomerToolType();
+            const auto amino_acid_tool = sketcher_model->getAminoAcidTool();
+            const auto custom_monomer = sketcher_model->getCustomMonomer();
+            const auto db_monomer = sketcher_model->getMonomerDbMonomer();
+
+            atomistic_button->click();
+            BOOST_CHECK(sketcher_model->getToolSet() == ToolSet::ATOMISTIC);
+            BOOST_CHECK(sketcher_model->getDrawTool() == DrawTool::ATOM);
+
+            monomeric_button->click();
+            BOOST_CHECK(sketcher_model->getToolSet() == ToolSet::MONOMERIC);
+            BOOST_CHECK(sketcher_model->getDrawTool() ==
+                        round_trip.expected_draw_tool);
+            BOOST_CHECK(sketcher_model->getMonomerToolType() == page);
+            BOOST_CHECK(sketcher_model->getAminoAcidTool() == amino_acid_tool);
+            BOOST_TEST((sketcher_model->getCustomMonomer() == custom_monomer));
+            BOOST_CHECK(sketcher_model->getMonomerDbMonomer() == db_monomer);
+        }
+    }
 }
 
 /**

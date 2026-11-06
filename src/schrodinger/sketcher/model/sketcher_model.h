@@ -584,11 +584,19 @@ class SKETCHER_API SketcherModel : public QObject
 
     /**
      * @param page A side-bar monomer page
-     * @return whether activating the page should restore its database monomer
-     * tool, i.e. whether the page's remembered tool is MONOMER_DB and the
-     * page has a last-used database monomer
+     * @return the draw tool to activate when the user switches to the page,
+     * either from the other monomer page or from the atomistic tools. This is
+     * the last monomeric draw tool used on the page, so that switching away
+     * and straight back restores the same tool, as long as that tool can still
+     * be used:
+     *  - MONOMER_DB_MONOMER requires the page to have a last-used database
+     *    monomer.
+     *  - CUSTOM_MONOMER requires the stored custom monomer to be a CHEM monomer
+     *    or to match the page's chain type, since both pages share a single
+     *    stored custom monomer.
+     * Otherwise, this is MONOMER, i.e. the page's standard monomer tool.
      */
-    bool shouldRestoreMonomerDbTool(MonomerToolType page) const;
+    DrawTool getDrawToolToRestore(MonomerToolType page) const;
 
     /**
      * Retrieve data from the model's state map.
@@ -932,6 +940,15 @@ class SKETCHER_API SketcherModel : public QObject
      * The update never mutates a canvas selection.
      */
     void onMonomerDatabaseChanged();
+
+    /**
+     * If the active draw tool is a monomeric draw tool, record it as the last
+     * monomeric draw tool of the current page (see getDrawToolToRestore())
+     */
+    void recordMonomericDrawTool();
+
+    // The last monomeric draw tool used on each side-bar page
+    std::unordered_map<MonomerToolType, DrawTool> m_last_monomeric_draw_tool;
 
     // Declared last so that it disconnects before the other members are
     // destroyed
