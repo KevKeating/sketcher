@@ -318,6 +318,12 @@ static bool tool_for_page_is_monomer_db(const SketcherModel& model,
 
 bool SketcherModel::shouldRestoreMonomerDbTool(MonomerToolType page) const
 {
+    // the !getMonomerDbMonomer(page).symbol.empty() check here is a safeguard
+    // that loading a new monomer database hasn't left us in an invalid state:
+    // with the MONOMER_DB tool active but no valid monomer selected. This
+    // should never happen since SketcherModel::onMonomerDatabaseChanged should
+    // reset the relevant tool if the new database doesn't contain the
+    // previously selected monomer, but we double check here just to be safe.
     return tool_for_page_is_monomer_db(*this, page) &&
            !getMonomerDbMonomer(page).symbol.empty();
 }
