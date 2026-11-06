@@ -125,3 +125,5 @@ const MonomerInfo& MonomerDatabaseTableModel::getMonomerInfo(int row) const
 
 } // namespace sketcher
 } // namespace schrodinger
+
+#include "schrodinger/sketcher/widget/monomer_database_table_model.moc"
