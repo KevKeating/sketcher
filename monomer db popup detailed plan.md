@@ -266,9 +266,13 @@ scene tool becomes a `DrawMonomerSceneTool` for that monomer.
 
 ### Popup and filter behaviour
 
-- **Clicking outside the popup dismisses it, and the click also reaches
-  what's underneath** (e.g. the canvas). This matches the existing long-press
-  monomer popups. Don't suppress replay globally. Reuse
+- **Clicking outside the popup dismisses it. On native builds, the click
+  also reaches what's underneath** (e.g. the canvas). **On WASM, it doesn't:**
+  the click only dismisses the popup. This matches the existing long-press
+  monomer popups, which behave the same way on `main` (confirmed manually on
+  Windows and in a WASM build; not caused by this work or by simulated
+  clicks). Treat it as a known platform difference: don't try to make WASM
+  replay the click in this work. Don't suppress replay globally. Reuse
   `configure_button_popup(button, popup)` from `widget/widget_utils.h` for
   both the DB button and the filter button: it sets `WA_NoMouseReplay` only
   for a dismissing press over the originating button, preventing immediate
@@ -1257,9 +1261,11 @@ Keep the existing monomer-item rendering and top-bar tests green.
       committed row current, with no table selection. Its preview remains
       visible. Clicking it again or pressing Enter/Return or Space re-applies
       it, even though neither the current index nor the last-used ID changed.
-  - **Clicks outside the popup** dismiss it and pass through, except over
-    the originating button. Install `configure_button_popup` rather than
-    globally setting `WA_NoMouseReplay` or duplicating its event filter.
+  - **Clicks outside the popup** dismiss it and, on native builds, pass
+    through, except over the originating button. On WASM they only dismiss
+    it (see "Clicking outside the popup" under Design decisions). Install
+    `configure_button_popup` rather than globally setting `WA_NoMouseReplay`
+    or duplicating its event filter.
   - **Bounds:** follow "Popup bounds and resizing" under Design decisions
     (SKETCH-2920). Shrink the table viewport to keep the popup within the
     available area whenever its minimum layout fits; Step 6 adds preview
@@ -1381,7 +1387,15 @@ new `test_monomer_database_popup.cpp`.
   should use it.
 - **New suite `e2e/monomer_database_popup.test.js`:**
   - opening and closing via ×, Close, the DB button and an outside click;
-  - an outside click on the canvas *also* places the active monomer;
+  - an outside click on the canvas dismisses the popup without placing a
+    monomer. This is WASM's behaviour, unlike native builds where the click
+    also reaches the canvas (see "Clicking outside the popup" under Design
+    decisions). Assert it, so that a change in Qt's WASM click handling is
+    noticed rather than silently changing behaviour. Because of this, a test
+    that opens a popup and then needs a canvas click must dismiss the popup
+    first. Native replay isn't covered by Playwright; a C++ test of it is
+    optional, since offscreen Qt may not replay clicks the way a desktop
+    session does;
   - `ac` / `am` with no DB loaded, and loading a DB through the popup's
     "Load Database…" link;
   - Load/Update closes the popup before the chooser; it stays closed after
@@ -1516,7 +1530,8 @@ Reposition an open filter popup if canvas resizing moves its anchor.
   It isn't user-toggleable; its look is derived from the filter. Clicking it
   opens the filter popup, initialised from the current filter.
   Reuse `configure_button_popup` so clicking the originating filter button
-  dismisses its popup without reopening it, while other outside clicks replay.
+  dismisses its popup without reopening it, while other outside clicks replay
+  on native builds (on WASM they only dismiss the popup).
 - **`filterChanged`:** store the filter, re-filter, update the Type-column
   visibility and re-sync the selection.
 - **Step 5 API:** add `setFilter(const MonomerDatabaseFilter&)`,
