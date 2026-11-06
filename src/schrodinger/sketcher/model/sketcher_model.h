@@ -370,8 +370,6 @@ enum class AminoAcidTool {
     TYR,
     VAL,
     UNK,
-    // The page's last tool was its database monomer (AMINO_ACID_DB_MONOMER).
-    // This isn't a standard monomer, so it has no button or residue name.
     MONOMER_DB,
 };
 
@@ -452,8 +450,6 @@ enum class NucleicAcidTool {
     RNA_NUCLEOTIDE,
     DNA_NUCLEOTIDE,
     CUSTOM_NUCLEOTIDE,
-    // The page's last tool was its database monomer (NUCLEIC_ACID_DB_MONOMER).
-    // This isn't a standard monomer, so it has no button or residue name.
     MONOMER_DB,
 };
 
