@@ -243,18 +243,18 @@ test('SKETCH-2827: loading a database without the active DB monomer falls back t
   expect(await getExportedHelm(page)).toBe('RNA1{R(A)P}$$$$V2.0');
 });
 
-test('SKETCH-2827: a long-press popup opened near the bottom-right of a small canvas stays inside it', async ({
+test('SKETCH-2827: a long-press popup with no room beside its button in a small canvas is clamped inside it', async ({
   page,
 }) => {
+  // gly_btn is in the side bar's right-hand column, and its ChEMBL palette is
+  // one of the largest, so a small canvas can still hold the palette while
+  // leaving it no room to the right of the button's left edge or on either
+  // side of the button vertically
   await loadDatabase(page, 'chembl_monomers_no_id.json');
-  const full = await popupInfo(page, 'aa_unclassified_btn');
+  const full = await popupInfo(page, 'gly_btn');
   await dismissPopup(page);
-  const button = await requireRect(page, 'widget:aa_unclassified_btn');
-  // Shrink the canvas so that the popup can't extend right from the button's
-  // left edge or fit below the button, but still fits on the canvas
-  const width = full.width + Math.floor(button.x / 2);
-  const height = Math.max(full.height + 10, Math.round(button.y + button.height + full.height / 2));
-  expect(button.x + full.width).toBeGreaterThan(width);
+  const width = full.width + 26;
+  const height = full.height + 76;
   const viewBefore = await requireRect(page, 'widget:view');
   await page.setViewportSize({ width, height });
   // Qt only sees the new canvas size once the browser's ResizeObserver fires
@@ -267,12 +267,21 @@ test('SKETCH-2827: a long-press popup opened near the bottom-right of a small ca
     })
     .toBe(true);
 
-  const popup = await popupInfo(page, 'aa_unclassified_btn');
+  // Check that the shrunken canvas forces both kinds of clamping, using the
+  // button's position after the resize
+  const button = await requireRect(page, 'widget:gly_btn');
+  const roomAbove = button.y;
+  const roomBelow = height - (button.y + button.height);
+  expect(button.x + full.width).toBeGreaterThan(width);
+  expect(roomAbove).toBeLessThan(full.height);
+  expect(roomBelow).toBeLessThan(full.height);
+
+  const popup = await popupInfo(page, 'gly_btn');
+  // A long-press popup keeps its size, opens on the side of the button with
+  // more room, and is then clamped into the canvas
   expect(popup.width).toBe(full.width);
   expect(popup.height).toBe(full.height);
-  expect(popup.x).toBeGreaterThanOrEqual(0);
-  expect(popup.y).toBeGreaterThanOrEqual(0);
-  expect(popup.x + popup.width).toBeLessThanOrEqual(width);
-  expect(popup.y + popup.height).toBeLessThanOrEqual(height);
+  expect(popup.x).toBe(width - full.width);
+  expect(popup.y).toBe(roomBelow >= roomAbove ? height - full.height : 0);
   await dismissPopup(page);
 });

@@ -523,7 +523,10 @@ void MonomerToolWidget::onAminoOrNucleicBtnClicked(QAbstractButton* button)
         return;
     }
     if (model->shouldRestoreMonomerDbTool(tool_type)) {
-        activateMonomerDbMonomer(model->getMonomerDbMonomer(tool_type));
+        // The model is still on the previous page, so name the page that a
+        // CHEM monomer belongs to
+        activateMonomerDbMonomer(model->getMonomerDbMonomer(tool_type),
+                                 tool_type);
         return;
     }
     model->setValues(
@@ -668,11 +671,17 @@ void MonomerToolWidget::onUnclassifiedButtonClicked(QAbstractButton* button)
         updateCheckedButton();
         return;
     }
-    // A choice from the popup has already updated the button's ID
-    activateMonomerDbMonomer(
-        button == ui->aa_unclassified_btn
-            ? m_amino_acid_symbol_popups.at(button)->getMonomerForId(id)
-            : m_nucleic_acid_symbol_popups.at(button)->getMonomerForId(id));
+    // A choice from the popup has already updated the button's ID. A CHEM
+    // monomer belongs to the page that the button is on.
+    if (button == ui->aa_unclassified_btn) {
+        activateMonomerDbMonomer(
+            m_amino_acid_symbol_popups.at(button)->getMonomerForId(id),
+            MonomerToolType::AMINO_ACID);
+    } else {
+        activateMonomerDbMonomer(
+            m_nucleic_acid_symbol_popups.at(button)->getMonomerForId(id),
+            MonomerToolType::NUCLEIC_ACID);
+    }
 }
 
 /**
@@ -712,14 +721,16 @@ void MonomerToolWidget::syncUnclassifiedButtons()
 }
 
 void MonomerToolWidget::activateMonomerDbMonomer(
-    const rdkit_extensions::MonomerID& monomer)
+    const rdkit_extensions::MonomerID& monomer,
+    std::optional<MonomerToolType> chem_page)
 {
     auto* model = getModel();
     if (model == nullptr || monomer.symbol.empty()) {
         return;
     }
-    // CHEM monomers belong on either page, so they stay on the current one
-    auto page = model->getMonomerToolType();
+    // CHEM monomers belong on either page, so they use chem_page, or the
+    // current page if that isn't given
+    auto page = chem_page.value_or(model->getMonomerToolType());
     if (monomer.chain_type == rdkit_extensions::ChainType::PEPTIDE) {
         page = MonomerToolType::AMINO_ACID;
     } else if (monomer.chain_type == rdkit_extensions::ChainType::RNA) {

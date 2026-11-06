@@ -1,6 +1,7 @@
 #pragma once
 
 #include <memory>
+#include <optional>
 #include <unordered_map>
 #include <unordered_set>
 #include <string>
@@ -32,6 +33,7 @@ namespace sketcher
 {
 
 enum class AminoAcidTool;
+enum class MonomerToolType;
 enum class NucleicAcidTool;
 class AminoAcidSymbolPopup;
 class CustomNucleotidePopup;
@@ -57,8 +59,8 @@ class SKETCHER_API MonomerToolWidget : public AbstractDrawToolWidget
      * Activate a database monomer, or use it to mutate the canvas selection.
      * The side-bar page switches to match the monomer: PEPTIDE monomers use
      * the amino acid page, RNA monomers use the nucleic acid page, and CHEM
-     * monomers use the current page. The monomer becomes that page's
-     * last-used database monomer.
+     * monomers use chem_page. The monomer becomes that page's last-used
+     * database monomer.
      *  - Without a canvas selection, the monomer becomes the active draw tool
      *    and the page's remembered tool.
      *  - With a canvas selection, the selected monomers of a matching type are
@@ -67,8 +69,14 @@ class SKETCHER_API MonomerToolWidget : public AbstractDrawToolWidget
      *
      * @param monomer The database monomer. Nothing happens if its symbol is
      * empty.
+     * @param chem_page The page to use for a CHEM monomer, which belongs on
+     * either page. Defaults to the current page (MONOMER_TOOL_TYPE). Pass it
+     * when restoring a page's monomer before the model has switched to that
+     * page.
      */
-    void activateMonomerDbMonomer(const rdkit_extensions::MonomerID& monomer);
+    void activateMonomerDbMonomer(
+        const rdkit_extensions::MonomerID& monomer,
+        std::optional<MonomerToolType> chem_page = std::nullopt);
 
   protected:
     /** Rebuild monomer analog popups from the current monomer database. */
