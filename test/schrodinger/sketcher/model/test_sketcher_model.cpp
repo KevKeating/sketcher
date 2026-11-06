@@ -470,8 +470,9 @@ BOOST_AUTO_TEST_CASE(monomer_db_repair_keeps_valid_monomers)
 
 /**
  * Removing the active page's database monomer while its tool is active clears
- * the page's slot and switches to the page's last standard monomer tool, which
- * activating the database monomer left alone, without pinging
+ * the page's last-used database monomer and switches to the page's last
+ * standard monomer tool, which activating the database monomer left alone,
+ * without pinging
  */
 BOOST_DATA_TEST_CASE(monomer_db_repair_active_page,
                      boost::unit_test::data::make({true, false}), amino_acid)
@@ -525,8 +526,9 @@ BOOST_DATA_TEST_CASE(monomer_db_repair_active_page,
 
 /**
  * Removing an inactive page's database monomer, or removing a database monomer
- * while atomistic mode is active, clears the slot without changing the active
- * tool, so the page restores its standard monomer tool instead
+ * while atomistic mode is active, clears the page's last-used database monomer
+ * without changing the active tool, so the page restores its standard monomer
+ * tool instead
  */
 BOOST_AUTO_TEST_CASE(monomer_db_repair_inactive_page)
 {
@@ -561,15 +563,16 @@ BOOST_AUTO_TEST_CASE(monomer_db_repair_inactive_page)
 }
 
 /**
- * A page whose remembered tool is a standard monomer keeps it when its
- * last-used database monomer is removed
+ * A page whose last tool was a standard monomer keeps it when its last-used
+ * database monomer is removed
  */
 BOOST_AUTO_TEST_CASE(monomer_db_repair_keeps_standard_tool)
 {
     ResetDatabase reset_database;
     load_db_monomers(true, true, true);
     SketcherModel model;
-    // a mutation stores the slot without changing the remembered tool
+    // a mutation stores the last-used database monomer without changing the
+    // draw tool or the page's standard tool
     model.setValues(
         {{ModelKey::DRAW_TOOL, QVariant::fromValue(DrawTool::SELECT)},
          {ModelKey::AMINO_ACID_TOOL, QVariant::fromValue(AminoAcidTool::CYS)},
@@ -585,8 +588,8 @@ BOOST_AUTO_TEST_CASE(monomer_db_repair_keeps_standard_tool)
 
 /**
  * Unloading a custom override of a core monomer that has a natural analog
- * removes the monomer from the Monomer Database table, so the slot is cleared
- * even though the core monomer can still be drawn
+ * removes the monomer from the Monomer Database table, so the page's last-used
+ * database monomer is cleared even though the core monomer can still be drawn
  */
 BOOST_AUTO_TEST_CASE(monomer_db_repair_unloaded_override)
 {

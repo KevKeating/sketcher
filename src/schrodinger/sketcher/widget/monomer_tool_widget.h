@@ -61,11 +61,12 @@ class SKETCHER_API MonomerToolWidget : public AbstractDrawToolWidget
      * the amino acid page, RNA monomers use the nucleic acid page, and CHEM
      * monomers use chem_page. The monomer becomes that page's last-used
      * database monomer.
-     *  - Without a canvas selection, the monomer becomes the active draw tool
-     *    and the page's remembered tool.
+     *  - Without a canvas selection, the monomer becomes the active draw tool,
+     *    and so the page's last monomeric draw tool.
      *  - With a canvas selection, the selected monomers of a matching type are
-     *    mutated, and the draw tool and the page's remembered tool are left
-     *    unchanged.
+     *    mutated, and the draw tool is left unchanged.
+     * Either way, the page's AMINO_ACID_TOOL or NUCLEIC_ACID_TOOL is left
+     * alone, so it still names the page's last standard monomer button.
      *
      * @param monomer The database monomer. Nothing happens if its symbol is
      * empty.

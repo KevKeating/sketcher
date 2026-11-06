@@ -593,14 +593,14 @@ class SKETCHER_API SketcherModel : public QObject
      * @return the draw tool to activate when the user switches to the page,
      * either from the other monomer page or from the atomistic tools. This is
      * the last monomeric draw tool used on the page, so that switching away
-     * and straight back restores the same tool, as long as that tool can still
-     * be used:
-     *  - MONOMER_DB_MONOMER requires the page to have a last-used database
-     *    monomer.
-     *  - CUSTOM_MONOMER requires the stored custom monomer to be a CHEM monomer
-     *    or to match the page's chain type, since both pages share a single
-     *    stored custom monomer.
-     * Otherwise, this is MONOMER, i.e. the page's standard monomer tool.
+     * and straight back restores the same tool. If that tool can no longer
+     * be used, this falls back to MONOMER, which activates the last standard
+     * monomer button used on the page:
+     *  - MONOMER_DB_MONOMER can't be used if the page has no last-used
+     *    database monomer, e.g. because a new monomer database removed it.
+     *  - CUSTOM_MONOMER can't be used if the stored custom monomer is empty or
+     *    belongs on the other page. Both pages share one stored custom
+     *    monomer, so a CHEM custom monomer can be used on either page.
      */
     DrawTool getDrawToolToRestore(MonomerToolType page) const;
 

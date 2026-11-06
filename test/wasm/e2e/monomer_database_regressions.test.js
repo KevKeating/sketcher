@@ -201,7 +201,7 @@ test('SKETCH-2827: a mutation from an Unclassified popup is remembered as the DB
   expect(await getExportedHelm(page)).toBe('PEPTIDE1{[ac]}$$$$V2.0');
   await clickWidget(page, 'clear_selection_btn');
 
-  // The mutation didn't change the page's remembered standard tool
+  // The mutation didn't change the page's last monomeric tool
   await clickWidget(page, 'nucleic_monomer_btn');
   await clickWidget(page, 'amino_monomer_btn');
   await expect.poll(async () => (await widgetState(page, 'ala_btn')).checked).toBe(true);

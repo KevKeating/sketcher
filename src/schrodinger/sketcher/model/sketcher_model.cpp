@@ -319,12 +319,12 @@ DrawTool SketcherModel::getDrawToolToRestore(MonomerToolType page) const
 {
     const auto draw_tool = m_last_monomeric_draw_tool.at(page);
     if (draw_tool == DrawTool::MONOMER_DB_MONOMER) {
-        // This check is a safeguard that loading a new monomer database hasn't
-        // left us in an invalid state: with the MONOMER_DB_MONOMER tool active
-        // but no valid monomer selected. This should never happen since
-        // SketcherModel::onMonomerDatabaseChanged should reset the relevant
-        // tool if the new database doesn't contain the previously selected
-        // monomer, but we double check here just to be safe.
+        // A new monomer database may have removed the page's last-used
+        // database monomer. onMonomerDatabaseChanged then clears
+        // AMINO_ACID_DB_MONOMER / NUCLEIC_ACID_DB_MONOMER (and switches tools
+        // if this page's database monomer tool is active), but it leaves the
+        // per-page record of the last monomeric draw tool alone, so fall back
+        // to the page's standard tool here.
         if (getMonomerDbMonomer(page).symbol.empty()) {
             return DrawTool::MONOMER;
         }
@@ -469,8 +469,9 @@ void SketcherModel::onMonomerDatabaseChanged()
         if (!monomer.symbol.empty() && is_in_table(monomer)) {
             continue;
         }
-        // Note that an empty slot is also "repaired", which is a no-op unless
-        // the page's database monomer tool is somehow active
+        // Note that an empty last-used database monomer is also "repaired",
+        // which is a no-op unless the page's database monomer tool is somehow
+        // active
         const auto db_key = get_monomer_db_monomer_key(page);
         repairs[db_key] = defaults.at(db_key);
         if (getDrawTool() == DrawTool::MONOMER_DB_MONOMER &&

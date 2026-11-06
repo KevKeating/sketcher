@@ -752,7 +752,8 @@ BOOST_AUTO_TEST_CASE(activate_monomer_db_monomer)
              Expected{rna, false, none, rna},
              // CHEM stays on the current page
              Expected{chem, false, none, chem},
-             // a peptide switches to the AA page and leaves the NA slot alone
+             // a peptide switches to the AA page and leaves the NA page's
+             // last-used database monomer alone
              Expected{pep, true, pep, chem},
              Expected{chem, true, chem, chem},
          }) {
@@ -788,7 +789,7 @@ BOOST_AUTO_TEST_CASE(activate_monomer_db_monomer)
 }
 
 /**
- * Each page restores its own remembered tool: its database monomer, or its
+ * Each page restores its own last monomeric tool: its database monomer, or its
  * standard monomer. A page never restores a database tool without a database
  * monomer.
  */
@@ -828,8 +829,8 @@ BOOST_AUTO_TEST_CASE(monomer_db_page_switching)
                        ->isChecked());
     }
 
-    // a standard tool replaces the NA page's remembered DB tool, but not its
-    // last-used DB monomer
+    // a standard tool replaces the NA page's DB tool as its last monomeric
+    // tool, but doesn't clear its last-used DB monomer
     auto* na_a_button = widget.findChild<QAbstractButton*>("na_a_btn");
     na_a_button->click();
     BOOST_CHECK(model.getNucleicAcidTool() == NucleicAcidTool::A);
@@ -843,7 +844,8 @@ BOOST_AUTO_TEST_CASE(monomer_db_page_switching)
     BOOST_TEST(na_a_button->isChecked());
 
     // a page whose last tool was its database monomer tool never restores it
-    // with an empty slot, and restores its standard tool instead
+    // without a last-used database monomer, and restores its standard tool
+    // instead
     model.setValues({{ModelKey::AMINO_ACID_DB_MONOMER,
                       QVariant::fromValue(MonomerID{"", ChainType::PEPTIDE})}});
     aa_page_button->click();
@@ -906,7 +908,7 @@ BOOST_AUTO_TEST_CASE(monomer_db_page_switching_chem)
         BOOST_CHECK(model.getDrawTool() == DrawTool::MONOMER_DB_MONOMER);
         BOOST_CHECK(model.getMonomerDbMonomer() ==
                     (amino_acid ? chem2 : chem1));
-        // the other page's slot is untouched
+        // the other page's last-used database monomer is untouched
         BOOST_CHECK(model.getMonomerDbMonomer(
                         amino_acid ? MonomerToolType::NUCLEIC_ACID
                                    : MonomerToolType::AMINO_ACID) ==

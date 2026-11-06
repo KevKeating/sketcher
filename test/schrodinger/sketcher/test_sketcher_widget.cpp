@@ -1083,7 +1083,7 @@ BOOST_AUTO_TEST_CASE(test_pingMutateChemMonomers)
         BOOST_CHECK(sk.m_sketcher_model->getDrawTool() == DrawTool::SELECT);
     }
     // Mutation stores each page's last-used database monomer, but keeps each
-    // page's remembered tool
+    // page's last monomeric tool
     using schrodinger::rdkit_extensions::MonomerID;
     BOOST_CHECK(
         sk.m_sketcher_model->getMonomerDbMonomer(MonomerToolType::AMINO_ACID) ==
@@ -1113,8 +1113,9 @@ BOOST_AUTO_TEST_CASE(test_pingMutateChemMonomers)
     BOOST_TEST(monomer.symbol == "chemOne");
     BOOST_CHECK(monomer.chain_type == ChainType::CHEM);
 
-    // The AA page's remembered tool is still a standard monomer, so toggling
-    // on that page restores the standard tool rather than its DB monomer
+    // The AA page's last monomeric tool is still a standard monomer, so
+    // toggling on that page restores the standard tool rather than its DB
+    // monomer
     sk.findChild<QAbstractButton*>("amino_monomer_btn")->click();
     BOOST_CHECK(sk.m_sketcher_model->getDrawTool() == DrawTool::MONOMER);
     atomistic_button->click();
@@ -1223,9 +1224,9 @@ BOOST_AUTO_TEST_CASE(test_tool_set_round_trip_restores_monomeric_tool)
 
 /**
  * With a canvas selection, activating a database monomer mutates the matching
- * selected monomers once, stores the monomer in its page's last-used slot and
- * switches the page, without changing the draw tool or the page's remembered
- * tool
+ * selected monomers once, stores the monomer as its page's last-used database
+ * monomer and switches the page, without changing the draw tool or the page's
+ * standard tool
  */
 BOOST_DATA_TEST_CASE(test_activate_monomer_db_monomer_with_selection,
                      boost::unit_test::data::make({DrawTool::SELECT,
@@ -1270,7 +1271,8 @@ BOOST_DATA_TEST_CASE(test_activate_monomer_db_monomer_with_selection,
     }
 
     // A monomer whose type doesn't match the selection switches the page and
-    // updates the page's slot, but doesn't mutate anything
+    // updates the page's last-used database monomer, but doesn't mutate
+    // anything
     const MonomerID base{"A", ChainType::RNA};
     widget->activateMonomerDbMonomer(base);
     check_all_monomers_have_res_name(*sk.m_mol_model->getMol(), "meG");
