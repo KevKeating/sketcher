@@ -53,6 +53,23 @@ class SKETCHER_API MonomerToolWidget : public AbstractDrawToolWidget
     void updateWidgetsEnabled() override;
     std::unordered_set<QAbstractButton*> getCheckableButtons() override;
 
+    /**
+     * Activate a database monomer, or use it to mutate the canvas selection.
+     * The side-bar page switches to match the monomer: PEPTIDE monomers use
+     * the amino acid page, RNA monomers use the nucleic acid page, and CHEM
+     * monomers use the current page. The monomer becomes that page's
+     * last-used database monomer.
+     *  - Without a canvas selection, the monomer becomes the active draw tool
+     *    and the page's remembered tool.
+     *  - With a canvas selection, the selected monomers of a matching type are
+     *    mutated, and the draw tool and the page's remembered tool are left
+     *    unchanged.
+     *
+     * @param monomer The database monomer. Nothing happens if its symbol is
+     * empty.
+     */
+    void activateMonomerDbMonomer(const rdkit_extensions::MonomerID& monomer);
+
   protected:
     /** Rebuild monomer analog popups from the current monomer database. */
     void updateMonomerButtons();
@@ -94,13 +111,16 @@ class SKETCHER_API MonomerToolWidget : public AbstractDrawToolWidget
     void onNucleicAcidClicked(QAbstractButton* button);
 
     /**
-     * Activate the remembered database monomer from either unclassified
-     * button.
+     * Respond to the user clicking an Unclassified button, or choosing a
+     * monomer from its popup, by activating the button's monomer
      */
-    void activateMonomerDbMonomer(QAbstractButton* button);
+    void onUnclassifiedButtonClicked(QAbstractButton* button);
 
-    rdkit_extensions::MonomerID
-    getMonomerDbMonomerForButton(QAbstractButton* button) const;
+    /**
+     * Point each Unclassified button at its page's last-used database
+     * monomer, or at nothing if that monomer isn't in the button's popup
+     */
+    void syncUnclassifiedButtons();
 
     /**
      * Respond to the user clicking on a specific monomeric connection button

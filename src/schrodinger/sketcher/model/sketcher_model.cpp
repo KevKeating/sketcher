@@ -1,8 +1,11 @@
 #include "schrodinger/sketcher/model/sketcher_model.h"
 
+#include <algorithm>
+#include <array>
 #include <stdexcept>
 #include <string>
 
+#include <QMetaObject>
 #include <QMetaType>
 #include <QPointF>
 #include <rdkit/GraphMol/Atom.h>
@@ -10,6 +13,7 @@
 #include "schrodinger/rdkit_extensions/monomer_mol.h"
 #include "schrodinger/rdkit_extensions/monomer_database.h"
 #include "schrodinger/sketcher/image_generation.h"
+#include "schrodinger/sketcher/model/monomer_database_filter.h"
 #include "schrodinger/sketcher/molviewer/abstract_atom_or_monomer_item.h"
 #include "schrodinger/sketcher/molviewer/amino_acid_item.h"
 #include "schrodinger/sketcher/molviewer/atom_item.h"
@@ -91,10 +95,71 @@ std::vector<ModelKey> get_model_keys()
         ModelKey::DNA_NUCLEOBASE,
         ModelKey::CUSTOM_NUCLEOTIDE,
         ModelKey::CUSTOM_MONOMER,
-        ModelKey::MONOMER_DB_MONOMER,
         ModelKey::INTERFACE_TYPE,
         ModelKey::TOOL_SET,
         ModelKey::MOLECULE_TYPE,
+        ModelKey::AMINO_ACID_DB_MONOMER,
+        ModelKey::NUCLEIC_ACID_DB_MONOMER,
+    };
+}
+
+ModelKey get_monomer_db_monomer_key(MonomerToolType page)
+{
+    return page == MonomerToolType::AMINO_ACID
+               ? ModelKey::AMINO_ACID_DB_MONOMER
+               : ModelKey::NUCLEIC_ACID_DB_MONOMER;
+}
+
+/**
+ * @return the default value for every model key
+ */
+static std::unordered_map<ModelKey, QVariant> get_default_model_values()
+{
+    const auto no_db_monomer = QVariant::fromValue(
+        rdkit_extensions::MonomerID{"", rdkit_extensions::ChainType::PEPTIDE});
+    return {
+        {ModelKey::NEW_STRUCTURES_REPLACE_CONTENT, true},
+        {ModelKey::SHOW_LID_LEGEND, false},
+        {ModelKey::ALLOW_MULTIPLE_RXNS, false},
+        {ModelKey::SHOW_VALENCE_ERRORS, true},
+        {ModelKey::COLOR_HETEROATOMS, true},
+        {ModelKey::SHOW_STEREO_LABELS, true},
+        {ModelKey::USE_IMPLICIT_HYDROGENS, false},
+        {ModelKey::SELECTION_TOOL,
+         QVariant::fromValue(SelectionTool::RECTANGLE)},
+        {ModelKey::DRAW_TOOL, QVariant::fromValue(DrawTool::ATOM)},
+        {ModelKey::ATOM_TOOL, QVariant::fromValue(AtomTool::ELEMENT)},
+        {ModelKey::BOND_TOOL, QVariant::fromValue(BondTool::SINGLE)},
+        {ModelKey::CHARGE_TOOL, QVariant::fromValue(ChargeTool::DECREASE)},
+        {ModelKey::RING_TOOL, QVariant::fromValue(RingTool::CYCLOPROPANE)},
+        {ModelKey::ENUMERATION_TOOL,
+         QVariant::fromValue(EnumerationTool::NEW_RGROUP)},
+        {ModelKey::MONOMERIC_CONNECTION_TOOL,
+         QVariant::fromValue(MonomericConnectionTool::COVALENT_OR_DISULFIDE)},
+        {ModelKey::ELEMENT, QVariant::fromValue(Element::C)},
+        {ModelKey::ATOM_QUERY, QVariant::fromValue(AtomQuery::A)},
+        {ModelKey::RGROUP_NUMBER, 1u},
+        {ModelKey::RESIDUE_TYPE, QString("")},
+        {ModelKey::MONOMER_TOOL_TYPE,
+         QVariant::fromValue(MonomerToolType::AMINO_ACID)},
+        {ModelKey::AMINO_ACID_TOOL, QVariant::fromValue(AminoAcidTool::ALA)},
+        {ModelKey::AMINO_ACID_SYMBOL, QString("A")},
+        {ModelKey::NUCLEIC_ACID_TOOL,
+         QVariant::fromValue(NucleicAcidTool::RNA_NUCLEOTIDE)},
+        {ModelKey::NUCLEIC_ACID_SYMBOL,
+         QVariant::fromValue(NucleicAcidMutation{NucleicAcidTool::A, "A"})},
+        {ModelKey::RNA_NUCLEOBASE, QVariant::fromValue(StdNucleobase::A)},
+        {ModelKey::DNA_NUCLEOBASE, QVariant::fromValue(StdNucleobase::A)},
+        {ModelKey::CUSTOM_NUCLEOTIDE,
+         QVariant::fromValue(MonomericNucleotide("R", "N", "P"))},
+        {ModelKey::CUSTOM_MONOMER,
+         QVariant::fromValue(
+             CustomMonomer{"", rdkit_extensions::ChainType::PEPTIDE})},
+        {ModelKey::INTERFACE_TYPE, InterfaceType::ATOMISTIC_OR_MONOMERIC},
+        {ModelKey::TOOL_SET, QVariant::fromValue(ToolSet::ATOMISTIC)},
+        {ModelKey::MOLECULE_TYPE, QVariant::fromValue(MoleculeType::EMPTY)},
+        {ModelKey::AMINO_ACID_DB_MONOMER, no_db_monomer},
+        {ModelKey::NUCLEIC_ACID_DB_MONOMER, no_db_monomer},
     };
 }
 
@@ -106,6 +171,13 @@ SketcherModel::SketcherModel(QObject* parent) : QObject(parent)
             &SketcherModel::onSelectionChanged);
     connect(this, &SketcherModel::interactiveItemsChanged, this,
             &SketcherModel::onInteractiveItemsChanged);
+    m_database_connection =
+        rdkit_extensions::MonomerDatabase::instance().subscribeToChanges(
+            [this]() {
+                QMetaObject::invokeMethod(
+                    this, [this]() { onMonomerDatabaseChanged(); },
+                    Qt::AutoConnection);
+            });
 }
 
 QVariant SketcherModel::getValue(ModelKey key) const
@@ -219,6 +291,36 @@ SketcherModel::getNucleotide() const
     }
 }
 
+rdkit_extensions::MonomerID SketcherModel::getMonomerDbMonomer() const
+{
+    return getMonomerDbMonomer(getMonomerToolType());
+}
+
+rdkit_extensions::MonomerID
+SketcherModel::getMonomerDbMonomer(MonomerToolType page) const
+{
+    return m_model_map.at(get_monomer_db_monomer_key(page))
+        .value<rdkit_extensions::MonomerID>();
+}
+
+/**
+ * @return whether the page's remembered tool is MONOMER_DATABASE
+ */
+static bool remembers_monomer_database_tool(const SketcherModel& model,
+                                            MonomerToolType page)
+{
+    return page == MonomerToolType::AMINO_ACID
+               ? model.getAminoAcidTool() == AminoAcidTool::MONOMER_DATABASE
+               : model.getNucleicAcidTool() ==
+                     NucleicAcidTool::MONOMER_DATABASE;
+}
+
+bool SketcherModel::shouldRestoreMonomerDbTool(MonomerToolType page) const
+{
+    return remembers_monomer_database_tool(*this, page) &&
+           !getMonomerDbMonomer(page).symbol.empty();
+}
+
 InterfaceTypeType SketcherModel::getInterfaceType() const
 {
     return m_model_map.at(ModelKey::INTERFACE_TYPE).value<InterfaceTypeType>();
@@ -252,51 +354,7 @@ QString SketcherModel::getValueString(ModelKey key) const
 void SketcherModel::reset()
 {
     // Reset all model values to defaults
-    m_model_map = {
-        {ModelKey::NEW_STRUCTURES_REPLACE_CONTENT, true},
-        {ModelKey::SHOW_LID_LEGEND, false},
-        {ModelKey::ALLOW_MULTIPLE_RXNS, false},
-        {ModelKey::SHOW_VALENCE_ERRORS, true},
-        {ModelKey::COLOR_HETEROATOMS, true},
-        {ModelKey::SHOW_STEREO_LABELS, true},
-        {ModelKey::USE_IMPLICIT_HYDROGENS, false},
-        {ModelKey::SELECTION_TOOL,
-         QVariant::fromValue(SelectionTool::RECTANGLE)},
-        {ModelKey::DRAW_TOOL, QVariant::fromValue(DrawTool::ATOM)},
-        {ModelKey::ATOM_TOOL, QVariant::fromValue(AtomTool::ELEMENT)},
-        {ModelKey::BOND_TOOL, QVariant::fromValue(BondTool::SINGLE)},
-        {ModelKey::CHARGE_TOOL, QVariant::fromValue(ChargeTool::DECREASE)},
-        {ModelKey::RING_TOOL, QVariant::fromValue(RingTool::CYCLOPROPANE)},
-        {ModelKey::ENUMERATION_TOOL,
-         QVariant::fromValue(EnumerationTool::NEW_RGROUP)},
-        {ModelKey::MONOMERIC_CONNECTION_TOOL,
-         QVariant::fromValue(MonomericConnectionTool::COVALENT_OR_DISULFIDE)},
-        {ModelKey::ELEMENT, QVariant::fromValue(Element::C)},
-        {ModelKey::ATOM_QUERY, QVariant::fromValue(AtomQuery::A)},
-        {ModelKey::RGROUP_NUMBER, 1u},
-        {ModelKey::RESIDUE_TYPE, QString("")},
-        {ModelKey::MONOMER_TOOL_TYPE,
-         QVariant::fromValue(MonomerToolType::AMINO_ACID)},
-        {ModelKey::AMINO_ACID_TOOL, QVariant::fromValue(AminoAcidTool::ALA)},
-        {ModelKey::AMINO_ACID_SYMBOL, QString("A")},
-        {ModelKey::NUCLEIC_ACID_TOOL,
-         QVariant::fromValue(NucleicAcidTool::RNA_NUCLEOTIDE)},
-        {ModelKey::NUCLEIC_ACID_SYMBOL,
-         QVariant::fromValue(NucleicAcidMutation{NucleicAcidTool::A, "A"})},
-        {ModelKey::RNA_NUCLEOBASE, QVariant::fromValue(StdNucleobase::A)},
-        {ModelKey::DNA_NUCLEOBASE, QVariant::fromValue(StdNucleobase::A)},
-        {ModelKey::CUSTOM_NUCLEOTIDE,
-         QVariant::fromValue(MonomericNucleotide("R", "N", "P"))},
-        {ModelKey::CUSTOM_MONOMER,
-         QVariant::fromValue(
-             CustomMonomer{"", rdkit_extensions::ChainType::PEPTIDE})},
-        {ModelKey::MONOMER_DB_MONOMER,
-         QVariant::fromValue(rdkit_extensions::MonomerID{
-             "", rdkit_extensions::ChainType::PEPTIDE})},
-        {ModelKey::INTERFACE_TYPE, InterfaceType::ATOMISTIC_OR_MONOMERIC},
-        {ModelKey::TOOL_SET, QVariant::fromValue(ToolSet::ATOMISTIC)},
-        {ModelKey::MOLECULE_TYPE, QVariant::fromValue(MoleculeType::EMPTY)},
-    };
+    m_model_map = get_default_model_values();
     // Notify listeners that all values have changed
     std::unordered_set<ModelKey> all_keys;
     all_keys.reserve(m_model_map.size());
@@ -306,7 +364,7 @@ void SketcherModel::reset()
     emit valuesChanged(all_keys);
 }
 
-void SketcherModel::setValues(
+std::unordered_set<ModelKey> SketcherModel::storeValues(
     const std::unordered_map<ModelKey, QVariant>& key_value_map)
 {
     // Assign model values individually
@@ -324,14 +382,78 @@ void SketcherModel::setValues(
         }
     }
     updateAtomDisplaySettings(changed_keys);
+    return changed_keys;
+}
 
+void SketcherModel::emitValuesChanged(
+    const std::unordered_set<ModelKey>& changed_keys)
+{
+    if (!changed_keys.empty()) {
+        emit valuesChanged(changed_keys);
+    }
+}
+
+void SketcherModel::setValues(
+    const std::unordered_map<ModelKey, QVariant>& key_value_map)
+{
+    auto changed_keys = storeValues(key_value_map);
     // Finally, emit necessary signals all at once
     for (const auto& [key, value] : key_value_map) {
         emit valuePinged(key, value);
     }
-    if (changed_keys.size() > 0) {
-        emit valuesChanged(changed_keys);
+    emitValuesChanged(changed_keys);
+}
+
+void SketcherModel::setValuesWithoutPinging(
+    const std::unordered_map<ModelKey, QVariant>& key_value_map)
+{
+    emitValuesChanged(storeValues(key_value_map));
+}
+
+void SketcherModel::onMonomerDatabaseChanged()
+{
+    auto& db = rdkit_extensions::MonomerDatabase::instance();
+    const auto table_monomers = get_monomer_database_table_monomers(
+        db.getCustomMonomers(), db.getCoreMonomers());
+    auto is_in_table = [&table_monomers](const auto& monomer) {
+        return std::ranges::any_of(table_monomers,
+                                   [&monomer](const auto& info) {
+                                       return get_monomer_id(info) == monomer;
+                                   });
+    };
+
+    const auto defaults = get_default_model_values();
+    std::unordered_map<ModelKey, QVariant> repairs;
+    for (auto page :
+         {MonomerToolType::AMINO_ACID, MonomerToolType::NUCLEIC_ACID}) {
+        const auto monomer = getMonomerDbMonomer(page);
+        if (!monomer.symbol.empty() && is_in_table(monomer)) {
+            continue;
+        }
+        // Note that an empty slot is also "repaired", which is a no-op unless
+        // the page's database monomer tool is somehow active or remembered
+        const auto db_key = get_monomer_db_monomer_key(page);
+        repairs[db_key] = defaults.at(db_key);
+        if (remembers_monomer_database_tool(*this, page)) {
+            // replace the remembered tool with the page's default tool
+            const auto tool_keys =
+                page == MonomerToolType::AMINO_ACID
+                    ? std::to_array({ModelKey::AMINO_ACID_TOOL,
+                                     ModelKey::AMINO_ACID_SYMBOL})
+                    : std::to_array({ModelKey::NUCLEIC_ACID_TOOL,
+                                     ModelKey::NUCLEIC_ACID_SYMBOL});
+            for (auto key : tool_keys) {
+                repairs[key] = defaults.at(key);
+            }
+        }
+        if (getDrawTool() == DrawTool::MONOMER_DB_MONOMER &&
+            getMonomerToolType() == page) {
+            repairs[ModelKey::DRAW_TOOL] =
+                QVariant::fromValue(DrawTool::MONOMER);
+        }
     }
+    // Never ping, since that would mutate any selected monomers
+    setValuesWithoutPinging(repairs);
 }
 
 /**

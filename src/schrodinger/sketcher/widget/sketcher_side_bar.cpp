@@ -180,13 +180,10 @@ void SketcherSideBar::updateCheckState()
         page = ui->monomeric_page;
         // if there's an atomistic tool selected, switch to a monomeric tool
         if (ATOMISTIC_TOOLS.contains(cur_draw_tool)) {
-            const bool database_monomer =
-                model->getMonomerToolType() == MonomerToolType::AMINO_ACID
-                    ? model->getAminoAcidTool() == AminoAcidTool::UNCLASSIFIED
-                    : model->getNucleicAcidTool() ==
-                          NucleicAcidTool::UNCLASSIFIED;
-            new_draw_tool = database_monomer ? DrawTool::MONOMER_DB_MONOMER
-                                             : DrawTool::MONOMER;
+            new_draw_tool =
+                model->shouldRestoreMonomerDbTool(model->getMonomerToolType())
+                    ? DrawTool::MONOMER_DB_MONOMER
+                    : DrawTool::MONOMER;
         }
     }
     ui->atomistic_or_monomeric_stack->setCurrentWidget(page);

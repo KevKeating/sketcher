@@ -12,10 +12,12 @@ import {
   expectCursor,
   expectDialog,
   getExportedHelm,
+  getRect,
   pasteText,
   place,
   popupButtons,
   popupInfo,
+  requireRect,
   scene,
   screenshotView,
   selectAll,
@@ -184,4 +186,93 @@ test('SKETCH-2788: malformed JSON explains the failure; picker cancellation leav
   // control to the UI. No fixed delay or assertion of silence alone is used.
   await expectPalette(page, 'aa_unclassified_btn', ['ac', 'am']);
   expect(await getExportedHelm(page)).toBe(before);
+});
+
+test('SKETCH-2827: a mutation from an Unclassified popup is remembered as the DB monomer of its page without changing the page tool', async ({
+  page,
+}) => {
+  await pasteText(page, 'PEPTIDE1{A}$$$$V2.0');
+  await selectAll(page);
+  await choosePopup(page, 'aa_unclassified_btn', 'ac');
+  expect(await getExportedHelm(page)).toBe('PEPTIDE1{[ac]}$$$$V2.0');
+  // Switching pages and back with the selection still active changes nothing
+  await clickWidget(page, 'nucleic_monomer_btn');
+  await clickWidget(page, 'amino_monomer_btn');
+  expect(await getExportedHelm(page)).toBe('PEPTIDE1{[ac]}$$$$V2.0');
+  await clickWidget(page, 'clear_selection_btn');
+
+  // The mutation didn't change the page's remembered standard tool
+  await clickWidget(page, 'nucleic_monomer_btn');
+  await clickWidget(page, 'amino_monomer_btn');
+  await expect.poll(async () => (await widgetState(page, 'ala_btn')).checked).toBe(true);
+
+  // The Unclassified button reactivates the remembered DB monomer directly
+  await clickWidget(page, 'aa_unclassified_btn');
+  await expect
+    .poll(async () => (await widgetState(page, 'aa_unclassified_btn')).checked)
+    .toBe(true);
+  expect((await scene(page)).popup?.buttons?.length ?? 0).toBe(0);
+  await place(page, 0, 120);
+  expect((await waitAtoms(page, 2)).map((atom) => atom.label)).toEqual(['ac', 'ac']);
+});
+
+test('SKETCH-2827: loading a database without the active DB monomer falls back to the standard tool of the page', async ({
+  page,
+}) => {
+  await loadDatabase(page, 'chem_monomers.json');
+  await choosePopup(page, 'aa_unclassified_btn', 'CHM2');
+  expect((await widgetState(page, 'aa_unclassified_btn')).checked).toBe(true);
+  // na_monomers.json has no CHEM monomers
+  await loadDatabase(page, 'na_monomers.json');
+  await expect.poll(async () => (await widgetState(page, 'ala_btn')).checked).toBe(true);
+  expect((await widgetState(page, 'aa_unclassified_btn')).checked).toBe(false);
+  await place(page);
+  expect((await waitAtoms(page, 1))[0].label).toBe('A');
+  expect(await getExportedHelm(page)).toBe('PEPTIDE1{A}$$$$V2.0');
+  await clear(page);
+
+  await clickWidget(page, 'nucleic_monomer_btn');
+  await choosePopup(page, 'na_unclassified_btn', 'NA1');
+  expect((await widgetState(page, 'na_unclassified_btn')).checked).toBe(true);
+  // chem_monomers.json has no RNA monomers
+  await loadDatabase(page, 'chem_monomers.json');
+  await expect.poll(async () => (await widgetState(page, 'na_rna_btn')).checked).toBe(true);
+  expect((await widgetState(page, 'na_unclassified_btn')).checked).toBe(false);
+  await place(page);
+  await waitAtoms(page, 3);
+  expect(await getExportedHelm(page)).toBe('RNA1{R(A)P}$$$$V2.0');
+});
+
+test('SKETCH-2827: a long-press popup opened near the bottom-right of a small canvas stays inside it', async ({
+  page,
+}) => {
+  await loadDatabase(page, 'chembl_monomers_no_id.json');
+  const full = await popupInfo(page, 'aa_unclassified_btn');
+  await dismissPopup(page);
+  const button = await requireRect(page, 'widget:aa_unclassified_btn');
+  // Shrink the canvas so that the popup can't extend right from the button's
+  // left edge or fit below the button, but still fits on the canvas
+  const width = full.width + Math.floor(button.x / 2);
+  const height = Math.max(full.height + 10, Math.round(button.y + button.height + full.height / 2));
+  expect(button.x + full.width).toBeGreaterThan(width);
+  const viewBefore = await requireRect(page, 'widget:view');
+  await page.setViewportSize({ width, height });
+  // Qt only sees the new canvas size once the browser's ResizeObserver fires
+  await expect
+    .poll(async () => {
+      const view = await getRect(page, 'widget:view');
+      return (
+        view !== null && (view.width !== viewBefore.width || view.height !== viewBefore.height)
+      );
+    })
+    .toBe(true);
+
+  const popup = await popupInfo(page, 'aa_unclassified_btn');
+  expect(popup.width).toBe(full.width);
+  expect(popup.height).toBe(full.height);
+  expect(popup.x).toBeGreaterThanOrEqual(0);
+  expect(popup.y).toBeGreaterThanOrEqual(0);
+  expect(popup.x + popup.width).toBeLessThanOrEqual(width);
+  expect(popup.y + popup.height).toBeLessThanOrEqual(height);
+  await dismissPopup(page);
 });
