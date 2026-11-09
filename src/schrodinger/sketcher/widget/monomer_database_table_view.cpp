@@ -21,8 +21,10 @@ namespace
 {
 
 /**
- * Paint the current row's background when it isn't selected, and skip Qt's
- * per-cell focus rectangle, since the current row as a whole is highlighted
+ * Paint the current row's background when it isn't selected. Skip the style's
+ * per-cell focus rectangle, since the current row as a whole is highlighted,
+ * and its per-cell hover highlight (drawn by e.g. the Windows style), which
+ * looks out of place in a table that only highlights whole rows.
  */
 class CurrentRowDelegate : public QStyledItemDelegate
 {
@@ -40,9 +42,10 @@ class CurrentRowDelegate : public QStyledItemDelegate
             index.row() == m_view->currentIndex().row()) {
             painter->fillRect(option.rect, QColor(HOVER_BACKGROUND_COLOR));
         }
-        auto option_without_focus = option;
-        option_without_focus.state &= ~QStyle::State_HasFocus;
-        QStyledItemDelegate::paint(painter, option_without_focus, index);
+        auto cell_option = option;
+        cell_option.state &=
+            ~(QStyle::State_HasFocus | QStyle::State_MouseOver);
+        QStyledItemDelegate::paint(painter, cell_option, index);
     }
 
   private:

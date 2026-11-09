@@ -17,7 +17,10 @@
 #include <QImage>
 #include <QLabel>
 #include <QLineEdit>
+#include <QPainter>
+#include <QProxyStyle>
 #include <QSignalSpy>
+#include <QStyleOptionViewItem>
 #include <QTableView>
 #include <QTemporaryDir>
 #include <QTest>
@@ -749,6 +752,57 @@ BOOST_AUTO_TEST_CASE(current_row_highlight)
     BOOST_TEST(get_current_symbol(*table) == "pepA");
     BOOST_TEST(row_color("pepA").name() == HOVER_BACKGROUND_COLOR);
     BOOST_TEST(row_color("pepX").name() != HOVER_BACKGROUND_COLOR);
+    popup->hide();
+}
+
+/**
+ * A style that records the state of each item view cell it draws
+ */
+class CellStateRecordingStyle : public QProxyStyle
+{
+  public:
+    void drawControl(ControlElement element, const QStyleOption* option,
+                     QPainter* painter, const QWidget* widget) const override
+    {
+        if (element == CE_ItemViewItem) {
+            m_states.push_back(option->state);
+        }
+        QProxyStyle::drawControl(element, option, painter, widget);
+    }
+
+    mutable std::vector<QStyle::State> m_states;
+};
+
+/**
+ * The table's cells never pass a hover or focus state on to the style, so
+ * styles such as the Windows style don't highlight the cell under the cursor
+ * or draw a focus rectangle around one cell
+ */
+BOOST_AUTO_TEST_CASE(no_cell_hover_or_focus)
+{
+    PopupFixture fixture;
+    auto* popup = fixture.openPopup();
+    auto* table = get_monomer_db_table(*popup);
+    BOOST_REQUIRE(table->model()->rowCount() > 0);
+    // The delegate paints with the style of the option's widget. The widget
+    // doesn't own its style, so the style must outlive it.
+    auto style = std::make_unique<CellStateRecordingStyle>();
+    QWidget style_widget;
+    style_widget.setStyle(style.get());
+    QStyleOptionViewItem option;
+    option.initFrom(table);
+    option.widget = &style_widget;
+    option.rect = QRect(0, 0, 100, 20);
+    option.state |= QStyle::State_MouseOver | QStyle::State_HasFocus;
+    QImage image(option.rect.size(), QImage::Format_ARGB32);
+    {
+        QPainter painter(&image);
+        table->itemDelegate()->paint(&painter, option,
+                                     table->model()->index(0, 1));
+    }
+    BOOST_REQUIRE(style->m_states.size() == 1);
+    BOOST_TEST(!(style->m_states.front() & QStyle::State_MouseOver));
+    BOOST_TEST(!(style->m_states.front() & QStyle::State_HasFocus));
     popup->hide();
 }
 

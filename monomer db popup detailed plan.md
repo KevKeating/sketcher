@@ -254,6 +254,10 @@ scene tool becomes a `DrawMonomerSceneTool` for that monomer.
   `#edf7fc`, the side bar's existing hover color, which is a pale tint of the
   `#d4e6f1` checked color, and use `#d4e6f1` for the selected row. Make sure
   the whole old and new rows repaint when the current index changes.
+  - Turn off the style's per-cell hover highlight (the Windows style draws
+    one under the cursor) and its per-cell focus rectangle. Both mark a
+    single cell, which looks out of place in a table that only highlights
+    whole rows.
 - **Preview row:** use the selected row if there is one, otherwise the valid
   current index. Selection and current index are independent; clearing the
   selection must not clear the current index. If neither exists, the preview
