@@ -1613,7 +1613,11 @@ Reposition an open filter popup if canvas resizing moves its anchor.
 **Goal:**
 - the long-press monomer popups have fixed core-ID membership, with displayed
   metadata resolved custom-first;
-- each popup also has a folder entry that opens the DB popup, pre-filtered.
+- each popup also has a folder entry that opens the DB popup, pre-filtered,
+  but only when that filtered table would have at least one row (see "When
+  the folder entry is shown");
+- a button whose popup would be empty (no core analogs and no folder entry)
+  has no popup, as today.
 
 - **Core-only membership.**
   - Add a core-only query using the parameterised row-reading loop from
@@ -1624,19 +1628,36 @@ Reposition an open filter popup if canvas resizing moves its anchor.
   - Don't change `get_merged_na_analogs()`'s `ChainType::DNA` query. If
     core-only data makes touching it unavoidable, stop and tell the user.
 - **Build the popups once, in the constructor.**
-  - Remove `clear_popups` and `ToolButtonWithPopup::clearPopupWidget()` if
-    nothing else uses it. Do not rebuild popup widgets on database changes.
-  - Keep `MonomerToolWidget`'s `subscribeToChanges` subscription, but make
-    it refresh the palettes' displayed metadata in place. `SketcherModel`
-    (Step 2) and the DB popup (Step 3) have their own subscriptions; don't
-    move their work here, and don't make the palette refresh depend on
-    either having run first.
-  - Turn the `refresh_monomer_popups` test into "palette membership and widget
-    identity stay fixed; displayed metadata follows the effective database".
-  - Every AA button and every NA base, sugar and phosphate button now gets a
-    popup, even with zero analogs, because the folder entry always exists.
+  - Build a popup widget for every AA button and every NA base, sugar and
+    phosphate button, even one with zero core analogs, because a later
+    database change can give it a folder entry. Do not rebuild popup widgets
+    on database changes.
   - The exceptions are `unk_btn` (X) and `na_n_btn` (N), which stay
     popup-free. Their monomers are in the table.
+  - Keep `MonomerToolWidget`'s `subscribeToChanges` subscription, but make
+    it refresh the palettes in place: their displayed metadata, each folder
+    entry's visibility and whether each button has a popup (see "When the
+    folder entry is shown"). `SketcherModel` (Step 2) and the DB popup
+    (Step 3) have their own subscriptions; don't move their work here, and
+    don't make the palette refresh depend on either having run first.
+  - Turn the `refresh_monomer_popups` test into "palette membership and widget
+    identity stay fixed; displayed metadata and folder visibility follow the
+    effective database".
+- **A button whose popup would be empty has no popup.** A popup is empty
+  when it has no core analogs (only its standard-symbol entry) and its
+  folder entry is hidden. With only the core DB loaded, that's every NA
+  base and the phosphate button, because each is its own only analog. The
+  R and dR buttons keep their popups, since each lists the other.
+  - Such a button behaves exactly like a button without a popup today: no
+    popup indicator (including on hover), press-and-hold shows nothing, and
+    clicking it while it's checked shows nothing.
+  - This changes with the database, so it needs a non-destructive switch,
+    for example `ToolButtonWithPopup::setPopupEnabled(bool)`. Disabling
+    stops the press-and-hold timer, hides the popup if it's open, and turns
+    off the indicators; enabling restores them. The popup widget itself is
+    kept.
+  - Remove `clear_popups` and `ToolButtonWithPopup::clearPopupWidget()` if
+    nothing else uses them.
 - **Custom-first displayed metadata.**
   - For every palette entry, including its standard-symbol entry, resolve its
     `MonomerID` through the existing custom-first `getMonomerInfo` lookup.
@@ -1675,9 +1696,31 @@ Reposition an open filter popup if canvas resizing moves its anchor.
   - **Analog value:**
     - SPECIFIC with the button's symbol;
     - SPECIFIC `R` for dR.
+- **When the folder entry is shown.** Show it only when its filter (below)
+  matches at least one row of the DB popup's table source list, i.e. when
+  clicking it would open a non-empty table. Otherwise hide it.
+  - Compute this from
+    `get_monomer_database_table_monomers(getCustomMonomers(),
+    getCoreMonomers())` and `MonomerDatabaseFilter::matches()`, read once
+    per database change for all buttons. Don't re-implement the inclusion or
+    matching rules, and don't read the DB popup's cache (see
+    "Database-change listeners are independent").
+  - Build the filter with the same function that the click handler uses,
+    so the visibility test and the opened table can't disagree.
+  - Core monomers with an analog aren't in the table (they're in the
+    palettes), and every core peptide and base is its own analog, so with
+    only the core DB loaded no folder entry is shown. In practice the entry
+    appears when a custom monomer has that polymer type and analog,
+    including a custom override of a core ID such as `meG`.
+  - Re-evaluate it on every database change, together with whether the
+    button has a popup at all (see "A button whose popup would be empty has
+    no popup"). If a database change hides the folder entry of an open
+    popup, the popup stays open without it; if it leaves the popup empty,
+    hide the popup.
+  - dR and R share the filter SPECIFIC `R`, so they always agree.
 - **`MonomerToolWidget` on `monomerDatabaseRequested`:**
   - build a filter with exactly that one polymer type, monomer type Any,
-    and the given analog;
+    and the given analog (the shared function above);
   - `setFilter` it and `clearSearchText()`;
   - open the popup from **`monomer_db_btn`**, not from the long-press popup;
   - skip the reset rule for this opening, so that it doesn't overwrite the
@@ -1702,6 +1745,18 @@ Reposition an open filter popup if canvas resizing moves its anchor.
     palette entry; activation resolves the effective custom definition;
   - the folder button exists, shows the right overlay and isn't in the
     group;
+  - with only the core DB, no popup has a folder entry, every NA base
+    button and the phosphate button have no popup (no indicator, and press-and-hold and a click while
+    checked show nothing), and peptide buttons keep their core-analog
+    popups;
+  - loading a custom monomer with polymer type PEPTIDE and analog A shows
+    the folder entry for Ala only; loading one with RNA and analog A gives
+    the adenine button a popup with its standard entry and the folder
+    entry; resetting the database removes both again, without changing
+    popup widget identity;
+  - a custom monomer matching only in another polymer type (e.g. RNA `A`)
+    doesn't show Ala's folder entry, and dR and R show theirs together;
+  - a database change that empties an open popup hides it;
   - clicking it opens the DB popup anchored to `monomer_db_btn`, with the
     expected filter and an empty search;
   - update `test_nucleic_acid_symbol_popup.cpp` and
@@ -1713,6 +1768,10 @@ Reposition an open filter popup if canvas resizing moves its anchor.
     - each opens the DB popup at the side-bar button, with the right
       filter, count and description, and a cleared search;
     - a normal reopening afterwards keeps that filter;
+    - with no custom DB, Ala's popup has no folder entry and the adenine
+      button has no popup; after loading a DB with a peptide A analog and an
+      RNA A analog, both have folder entries, and the adenine popup opens;
+      loading a DB without them removes them again;
     - a custom override of core PEPTIDE `meG` updates the G palette's tooltip
       and the parent button's tooltip without changing palette membership;
       selecting it draws the custom definition, and removing the override
