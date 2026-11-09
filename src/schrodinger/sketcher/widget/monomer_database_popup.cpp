@@ -28,7 +28,7 @@ namespace schrodinger
 namespace sketcher
 {
 
-static const QString SEARCH_ICON_PATH = ":icons/search_ft.png";
+static const QString SEARCH_ICON_PATH = ":icons/search.svg";
 static const QString LOAD_DATABASE_TEXT = "Load Database...";
 static const QString UPDATE_DATABASE_TEXT = "Update Database...";
 
