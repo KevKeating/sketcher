@@ -1172,7 +1172,7 @@ Keep the existing monomer-item rendering and top-bar tests green.
     to a real window (e.g. `Qt::Tool`) would lose the popup behaviour this
     plan relies on, so:
     - **WASM:** the dark appearance, as in the mockup and the WASM dialogs;
-    - **Desktop:** a light appearance that fits the platform: the system
+    - **Desktop:** the native-like appearance (`NATIVE_LIKE`): the system
       palette's window and text colors, and the platform style's close icon
       (`QStyle::SP_TitleBarCloseButton`).
   - **Content:**

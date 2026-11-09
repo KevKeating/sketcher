@@ -418,8 +418,8 @@ BOOST_AUTO_TEST_CASE(table_contents)
 
 /**
  * The popup's title bar shows its title and a close button. On desktop builds
- * (which is where these tests run), it has the light appearance, whose close
- * button uses the platform style's icon.
+ * (which is where these tests run), it has the native-like appearance, whose
+ * close button uses the platform style's icon.
  */
 BOOST_AUTO_TEST_CASE(title_bar)
 {

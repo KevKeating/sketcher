@@ -65,12 +65,13 @@ MonomerDatabasePopup::MonomerDatabasePopup(const SketcherModel* model,
     setWindowFlags(Qt::Popup);
     setStyleSheet(MONOMER_DATABASE_POPUP_STYLE);
     // A popup never has a native title bar. On WASM, use the same dark title
-    // bar as the dialogs. Elsewhere, use a light one that fits the platform.
+    // bar as the dialogs. Elsewhere, use one that looks like the platform's
+    // own controls.
     auto* title_bar = new CustomTitleBar(windowTitle(), this,
 #ifdef __EMSCRIPTEN__
                                          TitleBarAppearance::DARK
 #else
-                                         TitleBarAppearance::LIGHT
+                                         TitleBarAppearance::NATIVE_LIKE
 #endif
     );
     title_bar->setObjectName("monomer_db_title_bar");

@@ -19,9 +19,10 @@ enum class TitleBarAppearance {
     // white text on a dark background, which replaces emscripten's title bar
     // on WASM
     DARK,
-    // the system palette's text and window colors, which fits in on desktop
+    // the system palette's text and window colors and the platform style's
+    // close icon, which look like the platform's own controls on desktop
     // builds
-    LIGHT,
+    NATIVE_LIKE,
 };
 
 /**

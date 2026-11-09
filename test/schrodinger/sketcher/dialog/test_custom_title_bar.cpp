@@ -45,10 +45,11 @@ static void drag_title_bar(CustomTitleBar& title_bar, const QPoint& offset)
  * A title bar has no close button unless one is added, and adding one twice
  * returns the same button
  */
-BOOST_DATA_TEST_CASE(test_close_button,
-                     boost::unit_test::data::make({TitleBarAppearance::DARK,
-                                                   TitleBarAppearance::LIGHT}),
-                     appearance)
+BOOST_DATA_TEST_CASE(
+    test_close_button,
+    boost::unit_test::data::make({TitleBarAppearance::DARK,
+                                  TitleBarAppearance::NATIVE_LIKE}),
+    appearance)
 {
     QWidget parent;
     auto* title_bar = new CustomTitleBar("Title", &parent, appearance);
@@ -58,7 +59,8 @@ BOOST_DATA_TEST_CASE(test_close_button,
     BOOST_TEST(close_button->parent() == title_bar);
     BOOST_TEST(title_bar->getCloseButton() == close_button);
     BOOST_TEST(title_bar->addCloseButton() == close_button);
-    // the dark title bar shows text, and the light one the platform's icon
+    // the dark title bar shows text, and the native-like one the platform's
+    // icon
     BOOST_TEST(close_button->icon().isNull() ==
                (appearance == TitleBarAppearance::DARK));
     // the button fits in the title bar's fixed height
