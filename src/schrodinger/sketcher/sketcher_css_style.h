@@ -162,16 +162,11 @@ const QString AMINO_OR_NUCLEIC_TOGGLE_STYLE{
 const QString CUSTOM_MONOMER_DIALOG_STYLE{
     "#sketcher_widget_holder { background-color: white; }"};
 
-/// style for the Monomer Database popup, which has a dark title bar
+/// style for the Monomer Database popup. Its title bar is a CustomTitleBar,
+/// which styles itself.
 const QString MONOMER_DATABASE_POPUP_STYLE{
     "#monomer_db_popup { background-color: white; "
     "    border: 1px solid #333333; }"
-    "#monomer_db_title_bar { background-color: #333333; }"
-    "#monomer_db_title_lbl { font-size: 13px; font-weight: bold; "
-    "    color: white; }"
-    "#monomer_db_close_btn { font-size: 14px; font-weight: bold; "
-    "    color: white; background-color: transparent; border: none; }"
-    "#monomer_db_close_btn:hover { color: #cccccc; }"
     "#monomer_db_match_count_lbl { font-size: 11px; font-style: italic; "
     "    color: " +
     INFO_TEXT_COLOR +

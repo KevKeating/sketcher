@@ -13,6 +13,7 @@
 #include <QScreen>
 #include <QSignalBlocker>
 
+#include "schrodinger/sketcher/dialog/custom_title_bar.h"
 #include "schrodinger/sketcher/model/sketcher_model.h"
 #include "schrodinger/sketcher/sketcher_css_style.h"
 #include "schrodinger/sketcher/dialog/load_monomer_database.h"
@@ -63,7 +64,22 @@ MonomerDatabasePopup::MonomerDatabasePopup(const SketcherModel* model,
     m_ui->setupUi(this);
     setWindowFlags(Qt::Popup);
     setStyleSheet(MONOMER_DATABASE_POPUP_STYLE);
-    m_ui->monomer_db_title_bar->setAttribute(Qt::WA_StyledBackground);
+    // A popup never has a native title bar. On WASM, use the same dark title
+    // bar as the dialogs. Elsewhere, use a light one that fits the platform.
+    auto* title_bar = new CustomTitleBar(windowTitle(), this,
+#ifdef __EMSCRIPTEN__
+                                         TitleBarAppearance::DARK
+#else
+                                         TitleBarAppearance::LIGHT
+#endif
+    );
+    title_bar->setObjectName("monomer_db_title_bar");
+    title_bar->m_title_label->setObjectName("monomer_db_title_lbl");
+    // the popup stays next to its button
+    title_bar->setDraggable(false);
+    auto* close_button = title_bar->addCloseButton();
+    close_button->setObjectName("monomer_db_close_btn");
+    m_ui->main_layout->insertWidget(0, title_bar);
     m_ui->monomer_db_load_link->setStyleSheet(TEXT_LINK_STYLE);
     m_ui->monomer_db_close_link->setStyleSheet(TEXT_LINK_STYLE);
     m_ui->monomer_db_search_le->addAction(QIcon(SEARCH_ICON_PATH),
@@ -95,7 +111,7 @@ MonomerDatabasePopup::MonomerDatabasePopup(const SketcherModel* model,
             &MonomerDatabasePopup::chooseRow);
     connect(m_ui->monomer_db_search_le, &QLineEdit::textChanged, this,
             &MonomerDatabasePopup::updateTableRows);
-    connect(m_ui->monomer_db_close_btn, &QToolButton::clicked, this,
+    connect(close_button, &QToolButton::clicked, this,
             &MonomerDatabasePopup::hide);
     connect(m_ui->monomer_db_close_link, &QToolButton::clicked, this,
             &MonomerDatabasePopup::hide);

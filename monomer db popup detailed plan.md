@@ -1164,8 +1164,17 @@ Keep the existing monomer-item rendering and top-bar tests green.
   - It holds a `const SketcherModel*`, passed once at construction or
     through a setter. It reads tool state and `hasActiveSelection()` from it
     and listens to its `selectionChanged`.
-  - **Header:** follow the mockup, with the title "Monomer Database" and an
-    × (`monomer_db_close_btn`).
+  - **Header:** a `CustomTitleBar` (`dialog/custom_title_bar.h`), the title
+    bar that `ModalDialog` uses on WASM, with the title "Monomer Database"
+    and an × (`monomer_db_close_btn`). Extend it with an optional close
+    button and an option to turn off dragging, since the popup stays next to
+    its button. A `Qt::Popup` never gets native window chrome, and switching
+    to a real window (e.g. `Qt::Tool`) would lose the popup behaviour this
+    plan relies on, so:
+    - **WASM:** the dark appearance, as in the mockup and the WASM dialogs;
+    - **Desktop:** a light appearance that fits the platform: the system
+      palette's window and text colors, and the platform style's close icon
+      (`QStyle::SP_TitleBarCloseButton`).
   - **Content:**
     - **Search box:** a `QLineEdit` with a leading search icon,
       `setClearButtonEnabled(true)` and live filtering on `textChanged`.

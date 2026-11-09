@@ -31,6 +31,7 @@
 #include "schrodinger/sketcher/model/sketcher_model.h"
 #include "schrodinger/sketcher/rdkit/monomeric.h"
 #include "schrodinger/sketcher/sketcher_css_style.h"
+#include "schrodinger/sketcher/dialog/custom_title_bar.h"
 #include "schrodinger/sketcher/dialog/message_box_dialog.h"
 #include "schrodinger/sketcher/menu/sketcher_top_bar_menus.h"
 #include "schrodinger/sketcher/widget/monomer_database_last_used_button.h"
@@ -413,6 +414,26 @@ BOOST_AUTO_TEST_CASE(table_contents)
     BOOST_TEST(!table->isColumnHidden(
         static_cast<int>(MonomerDbColumn::POLYMER_TYPE)));
     popup->hide();
+}
+
+/**
+ * The popup's title bar shows its title and a close button. On desktop builds
+ * (which is where these tests run), it has the light appearance, whose close
+ * button uses the platform style's icon.
+ */
+BOOST_AUTO_TEST_CASE(title_bar)
+{
+    PopupFixture fixture;
+    auto* popup = fixture.openPopup();
+    auto* title_bar =
+        find_popup_child<CustomTitleBar>(*popup, "monomer_db_title_bar");
+    BOOST_TEST(title_bar->m_title_label->text() == "Monomer Database");
+    auto* close_button =
+        find_popup_child<QToolButton>(*popup, "monomer_db_close_btn");
+    BOOST_TEST(title_bar->getCloseButton() == close_button);
+    BOOST_TEST(!close_button->icon().isNull());
+    close_button->click();
+    BOOST_TEST(!popup->isVisible());
 }
 
 /**
