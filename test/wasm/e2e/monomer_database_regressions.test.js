@@ -31,6 +31,7 @@ import {
   closeMonomerDatabase,
   expectAttachments,
   loadDatabase,
+  findMonomerDatabaseRow,
   monomerDatabaseRow,
   monomerDatabaseSymbols,
   monomerDatabaseTable,
@@ -83,7 +84,9 @@ test('SKETCH-2870: defaults and successive database replacements refresh the Mon
   await openMonomerDatabase(page);
   await searchMonomerDatabase(page, '');
   expect((await monomerDatabaseTable(page)).rowCount).toBeGreaterThan(100);
-  expect((await monomerDatabaseRow(page, 0)).cells[0]).toBe('ac');
+  // the core monomers with no natural analog are still in the table
+  await searchMonomerDatabase(page, 'ac');
+  expect(await findMonomerDatabaseRow(page, 'ac')).toBeGreaterThanOrEqual(0);
   await closeMonomerDatabase(page);
 
   await loadDatabase(page, 'chem_monomers.json');

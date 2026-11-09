@@ -95,7 +95,8 @@ test('SKETCH-2827: on WASM, a canvas click outside the popup dismisses it withou
   await place(page);
   await expect.poll(() => isMonomerDatabaseOpen(page)).toBe(false);
   await waitAtoms(page, 0);
-  await place(page);
+  // Click somewhere else, so that this isn't treated as a double-click
+  await place(page, 80);
   expect((await waitAtoms(page, 1))[0].label).toBe('ac');
 });
 
@@ -292,7 +293,9 @@ test('SKETCH-2827: the search is reset when the popup opens on a different page 
 test('SKETCH-2827: typing in the search box does not trigger shortcuts, which work again once the popup closes', async ({
   page,
 }) => {
-  await clickWidget(page, 'ala_btn');
+  // Ala is already the active tool. (Clicking its checked button would open
+  // its analog popup instead.)
+  expect((await widgetState(page, 'ala_btn')).checked).toBe(true);
   await openMonomerDatabase(page);
   await page.keyboard.type('g', { delay: 10 });
   expect(await searchText(page)).toBe('g');
@@ -409,7 +412,8 @@ test('SKETCH-2920: below its minimum layout size, the popup keeps its top-left c
   expect(popup.y).toBeGreaterThanOrEqual(0);
   // the unavoidable overflow is to the right and bottom
   expect(popup.x + popup.width > size.width || popup.y + popup.height > size.height).toBe(true);
-  await clickWidget(page, 'monomer_db_close_btn');
+  // The x and Close are on the right, so they may be outside the canvas
+  await page.keyboard.press('Escape');
   await expect.poll(() => isMonomerDatabaseOpen(page)).toBe(false);
 });
 
