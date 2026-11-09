@@ -10,17 +10,18 @@
 
 #include <QAbstractButton>
 #include <QAction>
+#include <QApplication>
 #include <QFile>
 #include <QFileDialog>
 #include <QGraphicsSceneMouseEvent>
 #include <QHeaderView>
+#include <QHoverEvent>
 #include <QImage>
 #include <QLabel>
 #include <QLineEdit>
 #include <QPainter>
 #include <QProxyStyle>
 #include <QSignalSpy>
-#include <QStyleOptionViewItem>
 #include <QTableView>
 #include <QTemporaryDir>
 #include <QTest>
@@ -756,53 +757,69 @@ BOOST_AUTO_TEST_CASE(current_row_highlight)
 }
 
 /**
- * A style that records the state of each item view cell it draws
+ * A style that records the state of each table cell it draws: its row
+ * background and its contents
  */
 class CellStateRecordingStyle : public QProxyStyle
 {
   public:
+    void drawPrimitive(PrimitiveElement element, const QStyleOption* option,
+                       QPainter* painter, const QWidget* widget) const override
+    {
+        if (element == PE_PanelItemViewRow) {
+            m_row_states.push_back(option->state);
+        }
+        QProxyStyle::drawPrimitive(element, option, painter, widget);
+    }
+
     void drawControl(ControlElement element, const QStyleOption* option,
                      QPainter* painter, const QWidget* widget) const override
     {
         if (element == CE_ItemViewItem) {
-            m_states.push_back(option->state);
+            m_item_states.push_back(option->state);
         }
         QProxyStyle::drawControl(element, option, painter, widget);
     }
 
-    mutable std::vector<QStyle::State> m_states;
+    mutable std::vector<QStyle::State> m_row_states;
+    mutable std::vector<QStyle::State> m_item_states;
 };
 
 /**
- * The table's cells never pass a hover or focus state on to the style, so
- * styles such as the Windows style don't highlight the cell under the cursor
- * or draw a focus rectangle around one cell
+ * The cell under the cursor is never drawn as hovered, so styles such as the
+ * Windows style don't highlight that one cell. QTableView passes the hover
+ * state to the style when it paints the cell's row background, as well as
+ * through the delegate.
  */
-BOOST_AUTO_TEST_CASE(no_cell_hover_or_focus)
+BOOST_AUTO_TEST_CASE(no_cell_hover_highlight)
 {
     PopupFixture fixture;
     auto* popup = fixture.openPopup();
     auto* table = get_monomer_db_table(*popup);
     BOOST_REQUIRE(table->model()->rowCount() > 0);
-    // The delegate paints with the style of the option's widget. The widget
-    // doesn't own its style, so the style must outlive it.
-    auto style = std::make_unique<CellStateRecordingStyle>();
-    QWidget style_widget;
-    style_widget.setStyle(style.get());
-    QStyleOptionViewItem option;
-    option.initFrom(table);
-    option.widget = &style_widget;
-    option.rect = QRect(0, 0, 100, 20);
-    option.state |= QStyle::State_MouseOver | QStyle::State_HasFocus;
-    QImage image(option.rect.size(), QImage::Format_ARGB32);
-    {
-        QPainter painter(&image);
-        table->itemDelegate()->paint(&painter, option,
-                                     table->model()->index(0, 1));
+    // Record what the table's own style passes on to its base style, through
+    // the popup's style sheet. The table's style takes ownership of its base.
+    auto* table_style = table->findChild<QProxyStyle*>();
+    BOOST_REQUIRE(table_style != nullptr);
+    auto* recording_style = new CellStateRecordingStyle();
+    table_style->setBaseStyle(recording_style);
+
+    // hover over a cell that isn't current or selected
+    const auto cell_center =
+        table->visualRect(table->model()->index(0, 1)).center();
+    QHoverEvent hover(QEvent::HoverMove, cell_center,
+                      table->viewport()->mapToGlobal(cell_center), cell_center);
+    QApplication::sendEvent(table->viewport(), &hover);
+    table->viewport()->grab();
+
+    BOOST_TEST(!recording_style->m_row_states.empty());
+    BOOST_TEST(!recording_style->m_item_states.empty());
+    for (const auto& states :
+         {recording_style->m_row_states, recording_style->m_item_states}) {
+        for (auto state : states) {
+            BOOST_TEST(!(state & QStyle::State_MouseOver));
+        }
     }
-    BOOST_REQUIRE(style->m_states.size() == 1);
-    BOOST_TEST(!(style->m_states.front() & QStyle::State_MouseOver));
-    BOOST_TEST(!(style->m_states.front() & QStyle::State_HasFocus));
     popup->hide();
 }
 

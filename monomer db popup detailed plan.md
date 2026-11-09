@@ -257,7 +257,12 @@ scene tool becomes a `DrawMonomerSceneTool` for that monomer.
   - Turn off the style's per-cell hover highlight (the Windows style draws
     one under the cursor) and its per-cell focus rectangle. Both mark a
     single cell, which looks out of place in a table that only highlights
-    whole rows.
+    whole rows. The delegate can drop the focus state, but not the hover
+    state: `QTableView` also passes it to the style when it paints the
+    cell's row background (`PE_PanelItemViewRow`), before calling the
+    delegate. It sets the hovered cell from hover events, mouse moves while
+    a button is pressed, and scrolling, so the table's own `QProxyStyle`
+    removes the hover state where it's painted.
 - **Preview row:** use the selected row if there is one, otherwise the valid
   current index. Selection and current index are independent; clearing the
   selection must not clear the current index. If neither exists, the preview

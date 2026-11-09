@@ -1,10 +1,14 @@
 #include "schrodinger/sketcher/widget/monomer_database_table_view.h"
 
+#include <optional>
+
 #include <QColor>
 #include <QHeaderView>
 #include <QKeyEvent>
 #include <QPainter>
 #include <QPaintEvent>
+#include <QProxyStyle>
+#include <QStyleOptionViewItem>
 #include <QStyledItemDelegate>
 
 #include "schrodinger/sketcher/sketcher_css_style.h"
@@ -21,10 +25,8 @@ namespace
 {
 
 /**
- * Paint the current row's background when it isn't selected. Skip the style's
- * per-cell focus rectangle, since the current row as a whole is highlighted,
- * and its per-cell hover highlight (drawn by e.g. the Windows style), which
- * looks out of place in a table that only highlights whole rows.
+ * Paint the current row's background when it isn't selected, and skip Qt's
+ * per-cell focus rectangle, since the current row as a whole is highlighted
  */
 class CurrentRowDelegate : public QStyledItemDelegate
 {
@@ -42,14 +44,68 @@ class CurrentRowDelegate : public QStyledItemDelegate
             index.row() == m_view->currentIndex().row()) {
             painter->fillRect(option.rect, QColor(HOVER_BACKGROUND_COLOR));
         }
-        auto cell_option = option;
-        cell_option.state &=
-            ~(QStyle::State_HasFocus | QStyle::State_MouseOver);
-        QStyledItemDelegate::paint(painter, cell_option, index);
+        auto option_without_focus = option;
+        option_without_focus.state &= ~QStyle::State_HasFocus;
+        QStyledItemDelegate::paint(painter, option_without_focus, index);
     }
 
   private:
     QTableView* m_view;
+};
+
+/**
+ * A style that never draws the table's cells as hovered. QTableView passes the
+ * hover state of the cell under the cursor to the style both when it paints
+ * the cell's row background and through the delegate, and styles such as the
+ * Windows style then highlight that one cell, which looks out of place in a
+ * table that only highlights whole rows. The view sets that cell from several
+ * places (hover events, mouse moves while a button is pressed and scrolling),
+ * so the hover state is removed where it's painted instead.
+ */
+class NoCellHoverStyle : public QProxyStyle
+{
+  public:
+    void drawPrimitive(PrimitiveElement element, const QStyleOption* option,
+                       QPainter* painter,
+                       const QWidget* widget = nullptr) const override
+    {
+        auto option_without_hover = get_item_option_without_hover(option);
+        if (option_without_hover.has_value() &&
+            (element == PE_PanelItemViewRow ||
+             element == PE_PanelItemViewItem)) {
+            option = &*option_without_hover;
+        }
+        QProxyStyle::drawPrimitive(element, option, painter, widget);
+    }
+
+    void drawControl(ControlElement element, const QStyleOption* option,
+                     QPainter* painter,
+                     const QWidget* widget = nullptr) const override
+    {
+        auto option_without_hover = get_item_option_without_hover(option);
+        if (option_without_hover.has_value() && element == CE_ItemViewItem) {
+            option = &*option_without_hover;
+        }
+        QProxyStyle::drawControl(element, option, painter, widget);
+    }
+
+  private:
+    /**
+     * @return A copy of the given item view option without the hover state,
+     * or nullopt if it isn't an item view option
+     */
+    static std::optional<QStyleOptionViewItem>
+    get_item_option_without_hover(const QStyleOption* option)
+    {
+        auto* view_option =
+            qstyleoption_cast<const QStyleOptionViewItem*>(option);
+        if (view_option == nullptr) {
+            return std::nullopt;
+        }
+        auto option_without_hover = *view_option;
+        option_without_hover.state &= ~State_MouseOver;
+        return option_without_hover;
+    }
 };
 
 } // namespace
@@ -58,6 +114,10 @@ MonomerDatabaseTableView::MonomerDatabaseTableView(QWidget* parent) :
     QTableView(parent)
 {
     setItemDelegate(new CurrentRowDelegate(this));
+    // The table owns its style. (A widget doesn't own the style it's given.)
+    auto* style = new NoCellHoverStyle();
+    style->setParent(this);
+    setStyle(style);
     setSelectionMode(QAbstractItemView::SingleSelection);
     setSelectionBehavior(QAbstractItemView::SelectRows);
     setEditTriggers(QAbstractItemView::NoEditTriggers);
