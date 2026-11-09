@@ -1150,10 +1150,15 @@ Keep the existing monomer-item rendering and top-bar tests green.
     no hover or pressed feedback; disabling it while blank is the simplest
     way.
   - **Style:** match the neighbouring side-bar buttons.
-- **DB button:** a plain (non-checkable) `QToolButton`, objectName
+- **DB button:** a non-checkable `MenuArrowToolButton`, objectName
   `monomer_db_btn`.
-  - It shows the `monomer_db.svg` icon and a popup-indicator arrow, matching
-    the spec's "NMA [folder▾]" look.
+  - It shows the `monomer_db.svg` icon, matching the spec's "NMA
+    [folder▾]" look.
+  - Like "+ Custom", it shows the platform style's standard menu arrow only
+    on hover, not the corner arrow of the monomer buttons
+    (`ToolButtonWithPopup`). Move `CustomMonomerButton`'s painting into a
+    shared `MenuArrowToolButton` base class that both buttons use, rather
+    than copying it.
   - Clicking it while the popup is open closes the popup. It doesn't
     close and reopen it.
 - **DB popup:**

@@ -30,6 +30,7 @@
 #include "schrodinger/sketcher/dialog/custom_monomer_dialog.h"
 #include "schrodinger/sketcher/widget/amino_acid_symbol_popup.h"
 #include "schrodinger/sketcher/widget/custom_monomer_button.h"
+#include "schrodinger/sketcher/widget/menu_arrow_tool_button.h"
 #include "schrodinger/sketcher/widget/modular_tool_button.h"
 #include "schrodinger/sketcher/widget/monomer_database_last_used_button.h"
 #include "schrodinger/sketcher/widget/monomer_database_popup.h"
@@ -415,12 +416,15 @@ BOOST_AUTO_TEST_CASE(monomer_db_buttons_layout)
         BOOST_TEST(widget.findChild<ToolButtonWithPopup*>(name) == nullptr);
     }
     auto* last_used_button = get_last_used_button(widget);
-    auto* db_button = widget.findChild<ToolButtonWithPopup*>("monomer_db_btn");
+    // the database button shows the same standard menu arrow on hover as the
+    // custom monomer button
+    auto* db_button = widget.findChild<MenuArrowToolButton*>("monomer_db_btn");
     BOOST_REQUIRE(db_button != nullptr);
+    BOOST_TEST(widget.findChild<MenuArrowToolButton*>("custom_monomer_btn") !=
+               nullptr);
     BOOST_TEST(last_used_button->group() == nullptr);
     BOOST_TEST(db_button->group() == nullptr);
     BOOST_TEST(!db_button->isCheckable());
-    BOOST_TEST(db_button->getPopupWidget() == nullptr);
     BOOST_TEST(!db_button->icon().isNull());
 
     auto global_y = [](const QWidget* child) {

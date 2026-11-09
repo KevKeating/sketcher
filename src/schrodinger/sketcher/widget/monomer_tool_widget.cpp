@@ -53,10 +53,6 @@ MonomerToolWidget::MonomerToolWidget(QWidget* parent) :
     }
     ui->unk_btn->setStyleSheet(UNKNOWN_MONOMER_STYLE);
     ui->na_n_btn->setStyleSheet(UNKNOWN_MONOMER_STYLE);
-    // The Monomer Database button is a ToolButtonWithPopup only for its popup
-    // indicator. It opens its popup on click rather than on press-and-hold, so
-    // the popup isn't installed with setPopupWidget().
-    ui->monomer_db_btn->showPopupIndicator(true);
 
     using ButtonAminoAcidBimapType =
         boost::bimap<QAbstractButton*, AminoAcidTool>;
