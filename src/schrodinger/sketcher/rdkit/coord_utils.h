@@ -32,8 +32,10 @@ namespace sketcher
  * conformers will be discarded.
  *
  * @param mol Molecule whose conformers should be normalized.
+ * @return whether new 2d coordinates were generated (as opposed to keeping
+ * the existing 2d coordinates)
  */
-SKETCHER_API void update_2d_coordinates(RDKit::ROMol& mol);
+SKETCHER_API bool update_2d_coordinates(RDKit::ROMol& mol);
 
 /**
  * Determine the length of a typical bond in the given molecule.  If the
