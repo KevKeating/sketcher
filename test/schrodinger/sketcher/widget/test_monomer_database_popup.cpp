@@ -436,6 +436,17 @@ BOOST_AUTO_TEST_CASE(title_bar)
         find_popup_child<QToolButton>(*popup, "monomer_db_close_btn");
     BOOST_TEST(title_bar->getCloseButton() == close_button);
     BOOST_TEST(!close_button->icon().isNull());
+
+    // On desktop builds, the popup's outline uses the palette's mid-tone, which
+    // suits the native-like title bar
+    const auto image = popup->grab().toImage();
+    const auto mid = popup->palette().color(QPalette::Mid);
+    for (const auto& point : {QPoint(0, image.height() / 2),
+                              QPoint(image.width() - 1, image.height() / 2),
+                              QPoint(image.width() / 2, image.height() - 1)}) {
+        BOOST_TEST(image.pixelColor(point).name() == mid.name());
+    }
+
     close_button->click();
     BOOST_TEST(!popup->isVisible());
 }

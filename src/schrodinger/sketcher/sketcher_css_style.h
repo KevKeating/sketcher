@@ -162,11 +162,22 @@ const QString AMINO_OR_NUCLEIC_TOGGLE_STYLE{
 const QString CUSTOM_MONOMER_DIALOG_STYLE{
     "#sketcher_widget_holder { background-color: white; }"};
 
+/// The Monomer Database popup's outline color. On WASM, it matches the popup's
+/// dark title bar. Elsewhere, it's the palette's mid-tone, which suits the
+/// native-like title bar.
+#ifdef __EMSCRIPTEN__
+const QString MONOMER_DATABASE_POPUP_BORDER_COLOR{"#333333"};
+#else
+const QString MONOMER_DATABASE_POPUP_BORDER_COLOR{"palette(mid)"};
+#endif
+
 /// style for the Monomer Database popup. Its title bar is a CustomTitleBar,
 /// which styles itself.
 const QString MONOMER_DATABASE_POPUP_STYLE{
     "#monomer_db_popup { background-color: white; "
-    "    border: 1px solid #333333; }"
+    "    border: 1px solid " +
+    MONOMER_DATABASE_POPUP_BORDER_COLOR +
+    "; }"
     "#monomer_db_match_count_lbl { font-size: 11px; font-style: italic; "
     "    color: " +
     INFO_TEXT_COLOR +

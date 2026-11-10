@@ -1190,10 +1190,16 @@ Keep the existing monomer-item rendering and top-bar tests green.
     its button. A `Qt::Popup` never gets native window chrome, and switching
     to a real window (e.g. `Qt::Tool`) would lose the popup behaviour this
     plan relies on, so:
-    - **WASM:** the dark appearance, as in the mockup and the WASM dialogs;
+    - **WASM:** the dark appearance, as in the mockup and the WASM dialogs,
+      with a matching dark (`#333333`) outline around the popup;
     - **Desktop:** the native-like appearance (`NATIVE_LIKE`): the system
       palette's window and text colors, and the platform style's close icon
-      (`QStyle::SP_TitleBarCloseButton`).
+      (`QStyle::SP_TitleBarCloseButton`). The popup's outline and the title
+      bar's separator line use `QPalette::Mid`.
+    - **No platform-specific code** beyond the WASM/desktop split: no system
+      calls for cosmetic details. In particular, don't round the popup's
+      corners, since that would need OS calls (e.g. Windows 11's
+      `DwmSetWindowAttribute`).
   - **Content:**
     - **Search box:** a `QLineEdit` with a leading search icon,
       `setClearButtonEnabled(true)` and live filtering on `textChanged`.
