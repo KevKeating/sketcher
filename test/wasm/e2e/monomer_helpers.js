@@ -154,8 +154,8 @@ export async function openMonomerDatabase(page) {
 
 /**
  * Close the Monomer Database popup with its Close link, unless it's already
- * closed. On WASM, a click outside the popup only dismisses it, so a test that
- * needs to click the canvas next should close the popup first.
+ * closed. A click outside the popup only dismisses it, so a test that needs to
+ * click the canvas next should close the popup first.
  */
 export async function closeMonomerDatabase(page) {
   if (!(await isMonomerDatabaseOpen(page))) return;

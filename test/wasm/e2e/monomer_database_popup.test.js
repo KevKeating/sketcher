@@ -85,13 +85,13 @@ test('SKETCH-2827: the popup opens from its button and closes with the x, Close,
   expect((await lastUsed(page)).checked).toBe(false);
 });
 
-test('SKETCH-2827: on WASM, a canvas click outside the popup dismisses it without placing a monomer', async ({
+test('SKETCH-2827 / SKETCH-2929: a canvas click outside the popup dismisses it without placing a monomer', async ({
   page,
 }) => {
   await chooseFromMonomerDatabase(page, 'ac', { close: false });
   expect((await lastUsed(page)).checked).toBe(true);
-  // Native builds also pass the click on to the canvas. WASM doesn't, which
-  // this asserts so that a change in Qt's WASM click handling is noticed.
+  // A click that dismisses a side bar popup only dismisses it, on every
+  // platform
   await place(page);
   await expect.poll(() => isMonomerDatabaseOpen(page)).toBe(false);
   await waitAtoms(page, 0);
