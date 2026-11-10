@@ -180,6 +180,41 @@ BOOST_AUTO_TEST_CASE(test_prepare_mol_keeps_existing_wedges)
 }
 
 /**
+ * SKETCH-2872: If an input mol with 2D coordinates has wedges that contradict
+ * its chiral tags, the wedges take precedence and the stereochemistry is
+ * recalculated from them (the same as for MDL input). This test documents that
+ * behavior so that it isn't changed unintentionally.
+ */
+BOOST_AUTO_TEST_CASE(test_prepare_mol_wedges_override_conflicting_chiral_tags)
+{
+    auto mol = get_mol_with_nonstandard_wedge();
+    auto chiral_atom = mol->getAtomWithIdx(2);
+    auto input_chirality = chiral_atom->getChiralTag();
+    BOOST_REQUIRE(input_chirality == RDKit::Atom::CHI_TETRAHEDRAL_CW ||
+                  input_chirality == RDKit::Atom::CHI_TETRAHEDRAL_CCW);
+    auto inverted_chirality = input_chirality == RDKit::Atom::CHI_TETRAHEDRAL_CW
+                                  ? RDKit::Atom::CHI_TETRAHEDRAL_CCW
+                                  : RDKit::Atom::CHI_TETRAHEDRAL_CW;
+
+    // flip the wedge so that it no longer agrees with the chiral tag
+    auto o_bond = mol->getBondWithIdx(3);
+    auto conflicting_dir =
+        o_bond->getBondDir() == RDKit::Bond::BondDir::BEGINWEDGE
+            ? RDKit::Bond::BondDir::BEGINDASH
+            : RDKit::Bond::BondDir::BEGINWEDGE;
+    o_bond->setBondDir(conflicting_dir);
+
+    prepare_mol(*mol);
+    BOOST_TEST(o_bond->getBondDir() == conflicting_dir);
+    BOOST_TEST(mol->getBondWithIdx(2)->getBondDir() ==
+               RDKit::Bond::BondDir::NONE);
+
+    update_molecule_on_change(*mol);
+    BOOST_TEST(o_bond->getBondDir() == conflicting_dir);
+    BOOST_TEST(chiral_atom->getChiralTag() == inverted_chirality);
+}
+
+/**
  * If the input has no coordinates, then any existing bond directions are
  * meaningless and should be recalculated
  */
