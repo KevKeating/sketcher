@@ -51,11 +51,14 @@ jobs:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           run-id: ${{ inputs.run-id }}
 
-      - name: Run playwright with --update-snapshots
+      - name: Run playwright with --update-snapshots=all
         run: |
           cd test/wasm
           npm install
-          npm run test -- --update-snapshots
+          # "all" rewrites every snapshot that differs at all.  The default,
+          # "changed", only rewrites snapshots that fail the comparison
+          # tolerance, so smaller appearance changes would never be recorded.
+          npm run test -- --update-snapshots=all
 
       - name: Upload regenerated snapshots
         if: always()
