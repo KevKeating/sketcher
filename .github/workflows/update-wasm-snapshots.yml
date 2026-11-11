@@ -8,11 +8,11 @@ name: Update Wasm Snapshots
 # Trigger this from the Actions tab. Provide the run ID of a sketcher-builder
 # run that contains the wasm artifact (the numeric ID at the end of the run
 # URL). The wasm artifact is uploaded whenever the C++ build succeeds, even
-# if the wasm playwright tests fail — which is exactly when snapshots need
-# regenerating.
+# if that run's playwright tests fail, for example because screenshots no
+# longer match. That is exactly when snapshots need regenerating.
 #
-# The run fails if any test fails for a reason other than a screenshot
-# difference.  The failures are annotated on the run's summary page.
+# This workflow fails if any test fails for a reason other than a screenshot
+# difference.  The failures are annotated on its run's summary page.
 
 on:
   workflow_dispatch:
