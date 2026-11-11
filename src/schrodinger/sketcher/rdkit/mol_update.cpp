@@ -242,7 +242,7 @@ void prepare_mol(RDKit::ROMol& mol)
     if (has_molblock_cfgs(mol)) {
         RDKit::Chirality::reapplyMolBlockWedging(mol);
     } else {
-        // Otherwise, calculate chiral bond directions.  If the input came with
+        // Otherwise, calculate chiral bond directions. If the input came with
         // coordinates, then honor any wedges that were already present (e.g.
         // set via RDKit's WedgeBond or SetBondDir, or from an RDKit pickle when
         // copying and pasting within the Sketcher) and only add wedges to

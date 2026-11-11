@@ -56,7 +56,7 @@ RDKIT_EXTENSIONS_API void assign_stereochemistry(RDKit::ROMol& mol);
  * for all chiral centers.  If true, existing wedged, dashed, and wavy bonds
  * will be kept as-is, and wedges will only be added for chiral centers that
  * don't already have one.  This should only be used when the existing bond
- * directions are known to be consistent with conf.
+ * directions are known to be consistent with the conformer.
  */
 RDKIT_EXTENSIONS_API void wedgeMolBonds(RDKit::ROMol& mol,
                                         const RDKit::Conformer* conf,
