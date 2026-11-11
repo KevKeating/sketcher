@@ -48,9 +48,19 @@ RDKIT_EXTENSIONS_API void assign_stereochemistry(RDKit::ROMol& mol);
 /**
  * A custom wrapper around RDkit's WedgeMolBonds() that makes sure
  * we don't wedge attachment point dummy atoms
+ *
+ * @param mol The molecule to wedge
+ * @param conf The conformer to use when determining wedge directions
+ * @param keep_existing_wedges If false, all existing single bond directions
+ * (and any MDL wedging info) will be cleared and wedges will be recalculated
+ * for all chiral centers.  If true, existing wedged, dashed, and wavy bonds
+ * will be kept as-is, and wedges will only be added for chiral centers that
+ * don't already have one.  This should only be used when the existing bond
+ * directions are known to be consistent with the conformer.
  */
 RDKIT_EXTENSIONS_API void wedgeMolBonds(RDKit::ROMol& mol,
-                                        const RDKit::Conformer* conf);
+                                        const RDKit::Conformer* conf,
+                                        bool keep_existing_wedges = false);
 
 } // namespace rdkit_extensions
 } // namespace schrodinger
