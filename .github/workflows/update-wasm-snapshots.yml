@@ -10,6 +10,9 @@ name: Update Wasm Snapshots
 # URL). The wasm artifact is uploaded whenever the C++ build succeeds, even
 # if the wasm playwright tests fail — which is exactly when snapshots need
 # regenerating.
+#
+# The run fails if any test fails for a reason other than a screenshot
+# difference.  The failures are annotated on the run's summary page.
 
 on:
   workflow_dispatch:
@@ -51,14 +54,38 @@ jobs:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           run-id: ${{ inputs.run-id }}
 
+      - name: Install playwright
+        working-directory: test/wasm
+        run: npm install
+
       - name: Run playwright with --update-snapshots=all
+        id: regenerate
+        working-directory: test/wasm
+        env:
+          # Start from no e2e snapshots, so that snapshots no test takes
+          # anymore are left out of the regenerated set.
+          SKETCHER_REGENERATE_SNAPSHOTS: '1'
+        # "all" rewrites every snapshot that differs at all.  The default,
+        # "changed", only rewrites snapshots that fail the comparison tolerance,
+        # so smaller appearance changes would never be recorded.  It also means
+        # that any test that still fails failed for some other reason.  The
+        # github reporter annotates those failures on the run's summary page.
+        run: npm run test -- --update-snapshots=all --reporter=list,github
+
+      - name: Report test failures
+        if: failure() && steps.regenerate.outcome == 'failure'
         run: |
-          cd test/wasm
-          npm install
-          # "all" rewrites every snapshot that differs at all.  The default,
-          # "changed", only rewrites snapshots that fail the comparison
-          # tolerance, so smaller appearance changes would never be recorded.
-          npm run test -- --update-snapshots=all
+          cat >> "$GITHUB_STEP_SUMMARY" <<'EOF'
+          ## Some tests failed for reasons other than screenshot differences
+
+          Every screenshot difference was written to the new snapshots, so the
+          failures annotated on this page are other problems, such as a failed
+          assertion, a timeout, or a screenshot that never became stable.
+
+          A test that failed may have stopped before taking all of its
+          screenshots, and the snapshots it didn't take are missing from the
+          artifact.  Repacking its snapshots would delete them from its archive.
+          EOF
 
       - name: Upload regenerated snapshots
         if: always()

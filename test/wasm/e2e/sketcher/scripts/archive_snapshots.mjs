@@ -59,19 +59,22 @@ if (!existsSync(snapshotRoot)) {
   throw new Error(`No extracted Playwright snapshots found at ${snapshotRoot}`);
 }
 
+function testExists(testName) {
+  return existsSync(path.join(e2eDir, testName));
+}
+
 // Only archive snapshots of test files that still exist, so that leftovers of
 // deleted or renamed tests don't come back as new archives.
 const snapshots = [];
 for (const entry of readdirSync(snapshotRoot, { withFileTypes: true })) {
   if (!entry.isDirectory()) continue;
-  if (existsSync(path.join(e2eDir, entry.name))) {
+  if (testExists(entry.name)) {
     snapshots.push(entry.name);
   } else {
     console.warn(`Skipping ${entry.name} snapshots: there is no e2e/${entry.name} test`);
   }
 }
 snapshots.sort();
-const expectedArchives = new Set(snapshots.map((name) => `${name}.tar.gz`));
 
 const tar = findGnuTar();
 mkdirSync(archiveRoot, { recursive: true });
@@ -94,8 +97,11 @@ for (const name of snapshots) {
   renameSync(temporaryPath, archivePath);
 }
 
+// Remove an archive only when its test is gone.  A test without a snapshot
+// directory may just not have run, or may have failed before its first
+// screenshot, after SKETCHER_REGENERATE_SNAPSHOTS started from empty.
 for (const entry of readdirSync(archiveRoot)) {
-  if (entry.endsWith('.tar.gz') && !expectedArchives.has(entry)) {
+  if (entry.endsWith('.tar.gz') && !testExists(entry.slice(0, -'.tar.gz'.length))) {
     rmSync(path.join(archiveRoot, entry));
   }
 }
