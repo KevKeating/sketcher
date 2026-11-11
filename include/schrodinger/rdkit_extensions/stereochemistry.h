@@ -71,7 +71,9 @@ RDKIT_EXTENSIONS_API bool is_wedge_or_dash(const RDKit::Bond& bond);
  *     consider that chiral center to be wedged already and wouldn't give it a
  *     wedge that describes its stereochemistry.
  * Regardless of this value, any double bond direction markers on single bonds
- * (i.e. "/" and "\" from SMILES) and any MDL wedging info are cleared.
+ * (i.e. "/" and "\" from SMILES) are cleared, as is the MDL wedging info for
+ * wedged and dashed bonds. The MDL wedging info for wavy single bonds and
+ * crossed double bonds is only cleared if this value is false.
  */
 RDKIT_EXTENSIONS_API void wedgeMolBonds(RDKit::ROMol& mol,
                                         const RDKit::Conformer* conf,

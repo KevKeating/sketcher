@@ -228,6 +228,27 @@ static auto get_mol_with_nonstandard_wedge()
 }
 
 /**
+ * Make the given bond a wedge or a dash
+ * @param bond The bond to modify
+ * @param bond_dir The direction for the bond. Must be BEGINWEDGE or BEGINDASH.
+ * @param as_molblock_info If false, the bond direction is set on the bond. If
+ * true, the bond direction is cleared and the wedge or dash is instead stored
+ * as MDL wedging info, the same as if it had just been read from a V3000
+ * molblock.
+ */
+static void set_wedge(RDKit::Bond* bond, const RDKit::Bond::BondDir bond_dir,
+                      const bool as_molblock_info)
+{
+    if (as_molblock_info) {
+        bond->setBondDir(RDKit::Bond::BondDir::NONE);
+        int cfg = bond_dir == RDKit::Bond::BondDir::BEGINWEDGE ? 1 : 3;
+        bond->setProp(RDKit::common_properties::_MolFileBondCfg, cfg);
+    } else {
+        bond->setBondDir(bond_dir);
+    }
+}
+
+/**
  * SKETCH-2872: wedges set on an RDKit mol with 2D coordinates should be
  * honored, even if there's no MDL wedging info present
  */
@@ -256,9 +277,11 @@ BOOST_AUTO_TEST_CASE(test_prepare_mol_keeps_existing_wedges)
  * precedence. The wedge stays on the same bond, but it's flipped so that it
  * agrees with the chiral tag. Otherwise, a molecule with stale bond directions
  * (e.g. one where the conformer was mirrored after the wedges were assigned)
- * would silently have its stereochemistry inverted.
+ * would silently have its stereochemistry inverted. This applies regardless of
+ * whether the wedge is stored as a bond direction or as MDL wedging info.
  */
-BOOST_AUTO_TEST_CASE(test_prepare_mol_chiral_tags_override_conflicting_wedges)
+BOOST_DATA_TEST_CASE(test_prepare_mol_chiral_tags_override_conflicting_wedges,
+                     bdata::make({false, true}), as_molblock_info)
 {
     auto mol = get_mol_with_nonstandard_wedge();
     auto chiral_atom = mol->getAtomWithIdx(2);
@@ -271,7 +294,7 @@ BOOST_AUTO_TEST_CASE(test_prepare_mol_chiral_tags_override_conflicting_wedges)
     auto conflicting_dir = correct_dir == RDKit::Bond::BondDir::BEGINWEDGE
                                ? RDKit::Bond::BondDir::BEGINDASH
                                : RDKit::Bond::BondDir::BEGINWEDGE;
-    o_bond->setBondDir(conflicting_dir);
+    set_wedge(o_bond, conflicting_dir, as_molblock_info);
 
     prepare_mol(*mol);
     BOOST_TEST(o_bond->getBondDir() == correct_dir);
@@ -286,9 +309,12 @@ BOOST_AUTO_TEST_CASE(test_prepare_mol_chiral_tags_override_conflicting_wedges)
  * A wedge that starts at a non-chiral atom and ends at a stereocenter says
  * nothing about that stereocenter. If it's the only wedge touching the
  * stereocenter, then it must not prevent the stereocenter from getting a wedge
- * of its own, since the stereochemistry would be lost otherwise.
+ * of its own, since the stereochemistry would be lost otherwise. This applies
+ * regardless of whether the wedge is stored as a bond direction or as MDL
+ * wedging info.
  */
-BOOST_AUTO_TEST_CASE(test_prepare_mol_wedge_pointing_into_stereocenter)
+BOOST_DATA_TEST_CASE(test_prepare_mol_wedge_pointing_into_stereocenter,
+                     bdata::make({false, true}), as_molblock_info)
 {
     const unsigned int CHIRAL_ATOM_IDX = 2;
     auto mol = get_unwedged_mol();
@@ -299,7 +325,8 @@ BOOST_AUTO_TEST_CASE(test_prepare_mol_wedge_pointing_into_stereocenter)
     // the C2-C3 bond starts at C2, which isn't a stereocenter
     auto incoming_bond = mol->getBondWithIdx(1);
     BOOST_REQUIRE(incoming_bond->getEndAtomIdx() == CHIRAL_ATOM_IDX);
-    incoming_bond->setBondDir(RDKit::Bond::BondDir::BEGINWEDGE);
+    set_wedge(incoming_bond, RDKit::Bond::BondDir::BEGINWEDGE,
+              as_molblock_info);
 
     prepare_mol(*mol);
     // the only wedge should now be one that starts at the stereocenter. (Note
@@ -338,20 +365,34 @@ BOOST_AUTO_TEST_CASE(test_prepare_mol_keeps_extra_wedge_into_stereocenter)
 }
 
 /**
- * Wavy bonds on an input mol with 2D coordinates should be kept
+ * Wavy bonds on an input mol with 2D coordinates should be kept. If the wavy
+ * bond was read from a molblock, then its MDL wedging info should be kept as
+ * well, since RDKit's CXSMILES writer uses it.
  */
-BOOST_AUTO_TEST_CASE(test_prepare_mol_keeps_wavy_bonds)
+BOOST_DATA_TEST_CASE(test_prepare_mol_keeps_wavy_bonds,
+                     bdata::make({false, true}), has_molblock_info)
 {
+    using RDKit::common_properties::_MolFileBondCfg;
+    const int WAVY_CFG = 2;
     auto mol = get_mol_with_nonstandard_wedge();
     auto o_bond = mol->getBondWithIdx(3);
     auto input_dir = o_bond->getBondDir();
     // the C1-C2 bond doesn't touch the stereocenter
     auto wavy_bond = mol->getBondWithIdx(0);
     wavy_bond->setBondDir(RDKit::Bond::BondDir::UNKNOWN);
+    if (has_molblock_info) {
+        wavy_bond->setProp(_MolFileBondCfg, WAVY_CFG);
+    }
 
     prepare_mol(*mol);
     BOOST_TEST(wavy_bond->getBondDir() == RDKit::Bond::BondDir::UNKNOWN);
     BOOST_TEST(o_bond->getBondDir() == input_dir);
+    BOOST_TEST(count_wedges(*mol) == 1);
+    if (has_molblock_info) {
+        int cfg = 0;
+        BOOST_TEST(wavy_bond->getPropIfPresent(_MolFileBondCfg, cfg));
+        BOOST_TEST(cfg == WAVY_CFG);
+    }
 
     update_molecule_on_change(*mol);
     BOOST_TEST(wavy_bond->getBondDir() == RDKit::Bond::BondDir::UNKNOWN);

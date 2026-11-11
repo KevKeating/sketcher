@@ -1,8 +1,6 @@
 #include "schrodinger/sketcher/rdkit/mol_update.h"
 
 #include <algorithm>
-#include <initializer_list>
-#include <string_view>
 #include <vector>
 
 #include <rdkit/GraphMol/Atropisomers.h>
@@ -65,27 +63,16 @@ static bool has_molblock_cfgs(RDKit::ROMol& mol)
 }
 
 /**
- * Remove the given integer property from the bond if it's set to one of the
- * given values
- */
-static void clear_prop_if_value_in(RDKit::Bond& bond,
-                                   const std::string_view prop_name,
-                                   std::initializer_list<int> values)
-{
-    int value = 0;
-    if (bond.getPropIfPresent(prop_name, value) &&
-        std::ranges::find(values, value) != values.end()) {
-        bond.clearProp(prop_name);
-    }
-}
-
-/**
  * Convert the wedging info that was read from an MDL molblock into bond
  * directions. If the molecule already has wedged or dashed bonds (e.g. set via
  * RDKit's WedgeBond or SetBondDir after the molblock was read, or from an RDKit
  * pickle of a structure that was edited in the Sketcher), then those take
  * precedence over the molblock's wedging info for the atoms that they start
  * from (SKETCH-2872).
+ *
+ * Note that this leaves the wedging info on the molecule. It's expected that
+ * rdkit_extensions::wedgeMolBonds will be called afterwards, which removes the
+ * info that would otherwise go stale.
  */
 static void apply_molblock_wedging(RDKit::ROMol& mol)
 {
@@ -107,19 +94,6 @@ static void apply_molblock_wedging(RDKit::ROMol& mol)
         if (bond->getBondType() == RDKit::Bond::SINGLE &&
             atom_has_input_wedge[bond->getBeginAtomIdx()]) {
             bond->setBondDir(input_bond_dirs[bond->getIdx()]);
-        }
-        // The molblock's wedges and dashes are now stored as bond directions,
-        // so discard the properties that they were read from. Otherwise, the
-        // properties would go stale as soon as the user edits a wedge, and they
-        // would be copied along with the molecule (the Sketcher's clipboard
-        // pickle includes private properties). We leave the properties for
-        // wavy single bonds and crossed double bonds in place, since RDKit's
-        // CXSMILES and MAE writers read those.
-        if (bond->getBondType() == RDKit::Bond::SINGLE) {
-            clear_prop_if_value_in(
-                *bond, RDKit::common_properties::_MolFileBondCfg, {1, 3});
-            clear_prop_if_value_in(
-                *bond, RDKit::common_properties::_MolFileBondStereo, {1, 6});
         }
     }
 }
@@ -303,23 +277,23 @@ void prepare_mol(RDKit::ROMol& mol)
     // Update all input chiral centers to have enhanced stereo; honors MDL input
     add_enhanced_stereo_to_chiral_atoms(mol);
 
-    // Convert parities back to wedges/dashes
+    // Convert the wedges/dashes from MDL molblock input into bond directions
     if (has_molblock_cfgs(mol)) {
         apply_molblock_wedging(mol);
-    } else {
-        // Otherwise, calculate chiral bond directions. If the input came with
-        // coordinates, then honor any wedges that were already present (e.g.
-        // set via RDKit's WedgeBond or SetBondDir, or from an RDKit pickle when
-        // copying and pasting within the Sketcher) and only add wedges to
-        // chiral centers that are missing them (SKETCH-2872). Note that the
-        // chiral tags take precedence over any existing wedges that disagree
-        // with them; see rdkit_extensions::wedgeMolBonds for details. If we
-        // just generated coordinates, then any existing wedges are meaningless,
-        // so we recalculate all of them.
-        bool keep_existing_wedges = !coords_generated;
-        rdkit_extensions::wedgeMolBonds(mol, &mol.getConformer(),
-                                        keep_existing_wedges);
     }
+
+    // Convert parities back to wedges/dashes. If the input came with
+    // coordinates, then honor any wedges that are already present (e.g. from
+    // the molblock, set via RDKit's WedgeBond or SetBondDir, or from an RDKit
+    // pickle when copying and pasting within the Sketcher) and only add wedges
+    // to chiral centers that are missing them (SKETCH-2872). Note that the
+    // chiral tags take precedence over any existing wedges that disagree with
+    // them; see rdkit_extensions::wedgeMolBonds for details. If we just
+    // generated coordinates, then any existing wedges are meaningless, so we
+    // recalculate all of them.
+    bool keep_existing_wedges = !coords_generated;
+    rdkit_extensions::wedgeMolBonds(mol, &mol.getConformer(),
+                                    keep_existing_wedges);
 }
 
 /**
