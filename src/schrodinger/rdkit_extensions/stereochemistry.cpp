@@ -58,6 +58,66 @@ void assign_stereochemistry(RDKit::ROMol& mol)
                                          flagPossibleStereoCenters);
 }
 
+bool is_wedge_or_dash(const RDKit::Bond& bond)
+{
+    auto bond_dir = bond.getBondDir();
+    return bond_dir == RDKit::Bond::BondDir::BEGINWEDGE ||
+           bond_dir == RDKit::Bond::BondDir::BEGINDASH;
+}
+
+/**
+ * @return whether the given atom has a tetrahedral chiral tag, which is the
+ * only type of chirality that RDKit's WedgeMolBonds() adds wedges for
+ */
+static bool has_tetrahedral_chiral_tag(const RDKit::Atom& atom)
+{
+    auto chiral_tag = atom.getChiralTag();
+    return chiral_tag == RDKit::Atom::CHI_TETRAHEDRAL_CW ||
+           chiral_tag == RDKit::Atom::CHI_TETRAHEDRAL_CCW;
+}
+
+/**
+ * Update the existing bond directions of the given molecule so that they can be
+ * kept when the molecule is passed to RDKit's WedgeMolBonds(). See the
+ * wedgeMolBonds() docstring for a description of the bond directions that are
+ * changed.
+ */
+static void clean_up_existing_bond_directions(RDKit::ROMol& mol,
+                                              const RDKit::Conformer* conf)
+{
+    std::vector<bool> atom_has_wedge(mol.getNumAtoms(), false);
+    for (auto bond : mol.bonds()) {
+        if (is_wedge_or_dash(*bond)) {
+            atom_has_wedge[bond->getBeginAtomIdx()] = true;
+        }
+    }
+
+    for (auto bond : mol.bonds()) {
+        auto bond_dir = bond->getBondDir();
+        if (bond->getBondType() == RDKit::Bond::SINGLE &&
+            (bond_dir == RDKit::Bond::BondDir::ENDUPRIGHT ||
+             bond_dir == RDKit::Bond::BondDir::ENDDOWNRIGHT)) {
+            // these only describe the stereochemistry of a neighboring double
+            // bond, which is recorded on the double bond itself
+            bond->setBondDir(RDKit::Bond::BondDir::NONE);
+        } else if (!is_wedge_or_dash(*bond)) {
+            continue;
+        } else if (has_tetrahedral_chiral_tag(*bond->getBeginAtom())) {
+            // recalculate the direction of this bond from the chiral tag, which
+            // will flip the bond if it disagreed with the tag. (Note that
+            // wedgeBond leaves the bond as-is if it's not a single bond or if
+            // it can't determine a direction.)
+            RDKit::Chirality::wedgeBond(bond, bond->getBeginAtomIdx(), conf);
+        } else if (has_tetrahedral_chiral_tag(*bond->getEndAtom()) &&
+                   !atom_has_wedge[bond->getEndAtomIdx()]) {
+            // RDKit won't add a wedge to a chiral center if a wedge or dash
+            // ends there, even though such a bond says nothing about the
+            // center's stereochemistry
+            bond->setBondDir(RDKit::Bond::BondDir::NONE);
+        }
+    }
+}
+
 void wedgeMolBonds(RDKit::ROMol& mol, const RDKit::Conformer* conf,
                    bool keep_existing_wedges)
 {
@@ -73,10 +133,12 @@ void wedgeMolBonds(RDKit::ROMol& mol, const RDKit::Conformer* conf,
         }
     }
 
-    if (!keep_existing_wedges) {
+    if (keep_existing_wedges) {
+        clean_up_existing_bond_directions(mol, conf);
+    } else {
         RDKit::ClearSingleBondDirFlags(mol);
-        RDKit::Chirality::clearMolBlockWedgingInfo(mol);
     }
+    RDKit::Chirality::clearMolBlockWedgingInfo(mol);
     // Note that RDKit's WedgeMolBonds() won't add a wedge to any chiral atom
     // that already has one
 
