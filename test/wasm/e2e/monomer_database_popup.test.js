@@ -475,11 +475,18 @@ test('SKETCH-2827: Enter in tool mode activates the current row without closing 
   await loadDatabase(page, 'mixed_monomers.json');
   await chooseFromMonomerDatabase(page, 'Aib');
   await clickWidget(page, 'ala_btn');
-  // the current row is still Aib, but nothing is selected
+  // reopening with a standard tool active leaves no row current or selected
   await openMonomerDatabase(page);
-  await page.keyboard.press('Tab');
   let table = await monomerDatabaseTable(page);
+  expect(table.currentRow).toBe(-1);
   expect(table.selectedRow).toBe(-1);
+  // The search text "Aib" is kept, so Aib is the only row. Tab moves the focus
+  // from the search box to the table, which makes it current without
+  // selecting or activating it.
+  await page.keyboard.press('Tab');
+  table = await monomerDatabaseTable(page);
+  expect(table.selectedRow).toBe(-1);
+  expect((await lastUsed(page)).checked).toBe(false);
   expect((await monomerDatabaseRow(page, table.currentRow)).cells[0]).toBe('Aib');
   await page.keyboard.press('Enter');
   await expect.poll(async () => (await lastUsed(page)).checked).toBe(true);

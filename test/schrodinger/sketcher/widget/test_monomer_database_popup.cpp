@@ -704,22 +704,21 @@ BOOST_AUTO_TEST_CASE(selection_mirroring)
 }
 
 /**
- * Enter, Return and Space activate the current row in tool mode, even after
- * the popup reopens with a standard tool active, and never close the popup
+ * Enter, Return and Space activate the current row in tool mode, even when a
+ * standard tool replaced its monomer while the popup was open, and never close
+ * the popup
  */
 BOOST_AUTO_TEST_CASE(commit_keys_tool_mode)
 {
     PopupFixture fixture;
     load_custom_monomers(TEST_MONOMERS_JSON, NUM_TEST_MONOMERS);
     auto& model = fixture.model;
-    auto* popup = fixture.openPopup();
-    auto* table = get_monomer_db_table(*popup);
-    click_monomer_db_row(*table, "pepA");
-    popup->hide();
     for (const auto key : {Qt::Key_Return, Qt::Key_Enter, Qt::Key_Space}) {
+        auto* popup = fixture.openPopup();
+        auto* table = get_monomer_db_table(*popup);
+        click_monomer_db_row(*table, "pepA");
         fixture.widget.findChild<QAbstractButton*>("ala_btn")->click();
         BOOST_CHECK(model.getDrawTool() == DrawTool::MONOMER);
-        popup = fixture.openPopup();
         BOOST_TEST(get_selected_rows(*table).empty());
         BOOST_TEST(get_current_symbol(*table) == "pepA");
         table->setFocus();
@@ -761,6 +760,33 @@ BOOST_AUTO_TEST_CASE(current_row_highlight)
     BOOST_TEST(get_current_symbol(*table) == "pepA");
     BOOST_TEST(row_color("pepA").name() == HOVER_BACKGROUND_COLOR);
     BOOST_TEST(row_color("pepX").name() != HOVER_BACKGROUND_COLOR);
+    popup->hide();
+}
+
+/**
+ * Reopening the popup doesn't keep the row that was current when it closed,
+ * unless that row's monomer is still the active tool, which selects it
+ */
+BOOST_AUTO_TEST_CASE(current_row_cleared_on_reopen)
+{
+    PopupFixture fixture;
+    load_custom_monomers(TEST_MONOMERS_JSON, NUM_TEST_MONOMERS);
+    auto* popup = fixture.openPopup();
+    auto* table = get_monomer_db_table(*popup);
+    click_monomer_db_row(*table, "pepA");
+    popup->hide();
+
+    // the database monomer is still the active tool
+    popup = fixture.openPopup();
+    BOOST_TEST(get_current_symbol(*table) == "pepA");
+    BOOST_TEST(get_selected_rows(*table).size() == 1);
+    popup->hide();
+
+    // a standard tool replaced it
+    fixture.widget.findChild<QAbstractButton*>("ala_btn")->click();
+    popup = fixture.openPopup();
+    BOOST_TEST(get_current_symbol(*table).empty());
+    BOOST_TEST(get_selected_rows(*table).empty());
     popup->hide();
 }
 

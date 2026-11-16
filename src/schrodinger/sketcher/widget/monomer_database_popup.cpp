@@ -226,6 +226,10 @@ void MonomerDatabasePopup::showFromButton(QWidget* anchor, MonomerToolType page)
     }
     m_mutation_mode = m_model->hasActiveSelection();
     m_ui->monomer_db_table->setMutationMode(m_mutation_mode);
+    // Don't keep highlighting the row that was current when the popup last
+    // closed. If the model has a row selected, refiltering makes it current
+    // again.
+    m_ui->monomer_db_table->selectionModel()->clearCurrentIndex();
     refilter();
 
     m_anchor = anchor;

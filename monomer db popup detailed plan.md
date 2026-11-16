@@ -254,6 +254,10 @@ scene tool becomes a `DrawMonomerSceneTool` for that monomer.
   `#edf7fc`, the side bar's existing hover color, which is a pale tint of the
   `#d4e6f1` checked color, and use `#d4e6f1` for the selected row. Make sure
   the whole old and new rows repaint when the current index changes.
+  - Opening the popup clears the current index, so the row that was current
+    when it last closed isn't highlighted (for example, a database monomer
+    that a standard tool has since replaced). Synchronizing the selection
+    afterwards makes a row selected by the model current again.
   - Turn off the style's per-cell hover highlight (the Windows style draws
     one under the cursor) and its per-cell focus rectangle. Both mark a
     single cell, which looks out of place in a table that only highlights
@@ -1190,16 +1194,14 @@ Keep the existing monomer-item rendering and top-bar tests green.
     its button. A `Qt::Popup` never gets native window chrome, and switching
     to a real window (e.g. `Qt::Tool`) would lose the popup behaviour this
     plan relies on, so:
-    - **WASM:** the dark appearance, as in the mockup and the WASM dialogs,
-      with a matching dark (`#333333`) outline around the popup;
-    - **Desktop:** the native-like appearance (`NATIVE_LIKE`): the system
-      palette's window and text colors, and the platform style's close icon
-      (`QStyle::SP_TitleBarCloseButton`). The popup's outline and the title
-      bar's separator line use `QPalette::Mid`.
-    - **No platform-specific code** beyond the WASM/desktop split: no system
-      calls for cosmetic details. In particular, don't round the popup's
-      corners, since that would need OS calls (e.g. Windows 11's
-      `DwmSetWindowAttribute`).
+    - **Every build** uses the popup appearance (`TitleBarAppearance::POPUP`):
+      a 24 px title bar with a 12 px white title and a white × on a
+      `#666666` background (`POPUP_TITLE_BAR_COLOR`), with a matching
+      `#666666` outline around the popup. It's smaller and lighter than the
+      dialogs' title bar (`TitleBarAppearance::DIALOG`), which is unchanged.
+    - **No platform-specific code:** no system calls for cosmetic details.
+      In particular, don't round the popup's corners, since that would need
+      OS calls (e.g. Windows 11's `DwmSetWindowAttribute`).
   - **Content:**
     - **Search box:** a `QLineEdit` with a leading search icon,
       `setClearButtonEnabled(true)` and live filtering on `textChanged`.
@@ -1213,7 +1215,8 @@ Keep the existing monomer-item rendering and top-bar tests green.
       - the Enter/Return/Space handling (see "Enter/Return and Space");
       - no editing;
       - no vertical header;
-      - fixed row heights;
+      - fixed row heights, with a little padding (the font height + 2 px);
+      - alternating row colors, using the style's default alternate color;
       - sorting enabled through the model's `sortRequested`. The initial
         sort is the `MonomerDbSort` default, Symbol ascending. Set the
         header's sort indicator from the stored `MonomerDbSort` (with
@@ -1267,7 +1270,8 @@ Keep the existing monomer-item rendering and top-bar tests green.
   - **API:**
     - `showFromButton(QWidget* anchor, MonomerToolType page)` positions the
       popup with `show_popup_next_to_widget`. Before showing, it applies the
-      reset rule from "Design decisions" and reads the mode.
+      reset rule from "Design decisions", reads the mode and clears the
+      table's current index.
     - On every close (×, Close, outside click, Escape, DB button, load/update
       link, a mode change), the popup records the current
       `MONOMER_TOOL_TYPE`. Hook `hideEvent` so that no path is missed.
@@ -1395,13 +1399,17 @@ new `test_monomer_database_popup.cpp`.
     mode closes it too; a change that keeps a selection non-empty doesn't.
 - **Enter/Return and Space:**
   - in tool mode, on a current row that isn't the active monomer (for
-    example after reopening with a standard tool active), they activate it;
+    example after a standard tool replaced it while the popup was open, or
+    after Tab made the first row current), they activate it;
   - they never close the popup in either mode.
 - **Current-row highlight:** a current row that isn't selected paints the
   highlight color; the selected row paints the selection color.
 - **Current index across resets:** preserve by ID after sorting/filtering
   or DB refresh when still visible; clear when removed/filtered out. No
   reset or synchronization commits a mutation.
+- **Current index on reopening:** reopening clears the current index, so the
+  row that was current at the last close isn't highlighted; a row selected
+  by the model is current again after reopening.
 - **DB reload while the popup exists:** the table refreshes, and a removed
   DB monomer blanks the last-used button (the repair itself is tested in
   Step 2).
