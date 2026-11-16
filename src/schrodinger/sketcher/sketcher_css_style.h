@@ -178,8 +178,7 @@ const QString MONOMER_DATABASE_POPUP_STYLE{
     INFO_TEXT_COLOR +
     "; }"
     "QTableView { selection-background-color: " +
-    CHECKED_BACKGROUND_COLOR +
-    "; selection-color: #333333; }"};
+    CHECKED_BACKGROUND_COLOR + "; selection-color: #333333; }"};
 
 } // namespace sketcher
 } // namespace schrodinger
