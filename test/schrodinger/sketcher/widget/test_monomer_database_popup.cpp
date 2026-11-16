@@ -421,9 +421,8 @@ BOOST_AUTO_TEST_CASE(table_contents)
 }
 
 /**
- * The popup's title bar shows its title and a close button. On desktop builds
- * (which is where these tests run), it has the native-like appearance, whose
- * close button uses the platform style's icon.
+ * The popup's title bar shows its title and a close button, and the popup's
+ * outline matches the title bar's color
  */
 BOOST_AUTO_TEST_CASE(title_bar)
 {
@@ -435,17 +434,15 @@ BOOST_AUTO_TEST_CASE(title_bar)
     auto* close_button =
         find_popup_child<QToolButton>(*popup, "monomer_db_close_btn");
     BOOST_TEST(title_bar->getCloseButton() == close_button);
-    BOOST_TEST(!close_button->icon().isNull());
 
-    // On desktop builds, the popup's outline uses the palette's mid-tone, which
-    // suits the native-like title bar
     const auto image = popup->grab().toImage();
-    const auto mid = popup->palette().color(QPalette::Mid);
     for (const auto& point : {QPoint(0, image.height() / 2),
                               QPoint(image.width() - 1, image.height() / 2),
                               QPoint(image.width() / 2, image.height() - 1)}) {
-        BOOST_TEST(image.pixelColor(point).name() == mid.name());
+        BOOST_TEST(image.pixelColor(point).name() == POPUP_TITLE_BAR_COLOR);
     }
+    BOOST_TEST(image.pixelColor(title_bar->geometry().center()).name() ==
+               POPUP_TITLE_BAR_COLOR);
 
     close_button->click();
     BOOST_TEST(!popup->isVisible());

@@ -1,36 +1,58 @@
 #include "schrodinger/sketcher/dialog/custom_title_bar.h"
 
 #include <QApplication>
+#include <QColor>
 #include <QHBoxLayout>
 #include <QLabel>
 #include <QMouseEvent>
 #include <QPainter>
-#include <QStyle>
 #include <QToolButton>
+
+#include "schrodinger/sketcher/sketcher_css_style.h"
 
 namespace schrodinger
 {
 namespace sketcher
 {
 
-static const QString TITLE_STYLE = "font-size: 14px; font-weight: 600;";
+namespace
+{
 
-static const QString DARK_CLOSE_BUTTON_STYLE =
-    "QToolButton { color: white; font-size: 16px; font-weight: bold; "
-    "    background-color: transparent; border: none; }"
-    "QToolButton:hover { color: #cccccc; }";
+/**
+ * The sizes and colors of a CustomTitleBar
+ */
+struct TitleBarMetrics {
+    int height;
+    int title_font_size;
+    int close_button_font_size;
+    QColor background_color;
+};
+
+} // namespace
+
+/**
+ * @return The sizes and colors for the given title bar appearance
+ */
+static TitleBarMetrics get_metrics(TitleBarAppearance appearance)
+{
+    if (appearance == TitleBarAppearance::POPUP) {
+        return {24, 12, 14, QColor(POPUP_TITLE_BAR_COLOR)};
+    }
+    return {30, 14, 16, QColor(64, 64, 64)};
+}
 
 CustomTitleBar::CustomTitleBar(const QString& title, QWidget* parent,
                                TitleBarAppearance appearance) :
     QFrame(parent),
     m_appearance(appearance)
 {
+    const auto metrics = get_metrics(appearance);
     QHBoxLayout* layout = new QHBoxLayout(this);
-    this->setFixedHeight(30);
+    this->setFixedHeight(metrics.height);
     m_title_label = new QLabel(title, this);
-    m_title_label->setStyleSheet(appearance == TitleBarAppearance::DARK
-                                     ? "color: white; " + TITLE_STYLE
-                                     : TITLE_STYLE);
+    m_title_label->setStyleSheet(
+        QString("color: white; font-size: %1px; font-weight: 600;")
+            .arg(metrics.title_font_size));
     layout->addWidget(m_title_label);
 }
 
@@ -43,16 +65,14 @@ QToolButton* CustomTitleBar::addCloseButton()
     }
     m_close_button = new QToolButton(this);
     m_close_button->setToolTip("Close");
-    if (m_appearance == TitleBarAppearance::DARK) {
-        // a multiplication sign, as in the mockups
-        m_close_button->setText(QString(QChar(0x00D7)));
-        m_close_button->setStyleSheet(DARK_CLOSE_BUTTON_STYLE);
-    } else {
-        // Use the platform style's own icon so that the button fits in
-        m_close_button->setIcon(style()->standardIcon(
-            QStyle::SP_TitleBarCloseButton, nullptr, this));
-        m_close_button->setAutoRaise(true);
-    }
+    // a multiplication sign, as in the mockups
+    m_close_button->setText(QString(QChar(0x00D7)));
+    m_close_button->setStyleSheet(
+        QString("QToolButton { color: white; font-size: %1px; "
+                "    font-weight: bold; background-color: transparent; "
+                "    border: none; }"
+                "QToolButton:hover { color: #cccccc; }")
+            .arg(get_metrics(m_appearance).close_button_font_size));
     auto* layout = qobject_cast<QHBoxLayout*>(this->layout());
     // Without vertical margins, the button fits in the fixed height. The title
     // is still centered vertically.
@@ -79,15 +99,14 @@ void CustomTitleBar::setDraggable(bool draggable)
 void CustomTitleBar::paintEvent(QPaintEvent* event)
 {
     QPainter painter(this);
-    if (m_appearance == TitleBarAppearance::DARK) {
-        painter.setBrush(QBrush(QColor(64, 64, 64)));
-        painter.drawRect(rect());
+    const auto background_color = get_metrics(m_appearance).background_color;
+    if (m_appearance == TitleBarAppearance::POPUP) {
+        // the popup draws its own outline
+        painter.fillRect(rect(), background_color);
         return;
     }
-    painter.fillRect(rect(), palette().color(QPalette::Window));
-    // separate the title bar from the contents below it
-    painter.setPen(palette().color(QPalette::Mid));
-    painter.drawLine(rect().bottomLeft(), rect().bottomRight());
+    painter.setBrush(QBrush(background_color));
+    painter.drawRect(rect());
 }
 
 void CustomTitleBar::mousePressEvent(QMouseEvent* event)

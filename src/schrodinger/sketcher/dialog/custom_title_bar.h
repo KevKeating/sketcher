@@ -13,16 +13,14 @@ namespace sketcher
 {
 
 /**
- * How a CustomTitleBar is drawn
+ * How a CustomTitleBar is drawn. Both appearances use white text on a dark
+ * background.
  */
 enum class TitleBarAppearance {
-    // white text on a dark background, which replaces emscripten's title bar
-    // on WASM
-    DARK,
-    // the system palette's text and window colors and the platform style's
-    // close icon, which look like the platform's own controls on desktop
-    // builds
-    NATIVE_LIKE,
+    // a dialog's title bar, which replaces emscripten's title bar on WASM
+    DIALOG,
+    // a smaller, lighter title bar for popups on any platform
+    POPUP,
 };
 
 /**
@@ -38,7 +36,7 @@ class SKETCHER_API CustomTitleBar : public QFrame
     Q_OBJECT
   public:
     CustomTitleBar(const QString& title, QWidget* parent = nullptr,
-                   TitleBarAppearance appearance = TitleBarAppearance::DARK);
+                   TitleBarAppearance appearance = TitleBarAppearance::DIALOG);
     ~CustomTitleBar();
     QLabel* m_title_label = nullptr;
 

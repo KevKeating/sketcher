@@ -123,12 +123,13 @@ MonomerDatabaseTableView::MonomerDatabaseTableView(QWidget* parent) :
     setEditTriggers(QAbstractItemView::NoEditTriggers);
     setWordWrap(false);
     setShowGrid(false);
+    setAlternatingRowColors(true);
     setCornerButtonEnabled(false);
     verticalHeader()->hide();
     // Fixed row heights keep model resets fast for large databases, since only
     // the visible rows need to be laid out. Never use ResizeToContents here.
     verticalHeader()->setSectionResizeMode(QHeaderView::Fixed);
-    verticalHeader()->setDefaultSectionSize(fontMetrics().height() + 6);
+    verticalHeader()->setDefaultSectionSize(fontMetrics().height() + 2);
     horizontalHeader()->setHighlightSections(false);
     horizontalHeader()->setSectionsClickable(true);
 }

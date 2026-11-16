@@ -45,11 +45,10 @@ static void drag_title_bar(CustomTitleBar& title_bar, const QPoint& offset)
  * A title bar has no close button unless one is added, and adding one twice
  * returns the same button
  */
-BOOST_DATA_TEST_CASE(
-    test_close_button,
-    boost::unit_test::data::make({TitleBarAppearance::DARK,
-                                  TitleBarAppearance::NATIVE_LIKE}),
-    appearance)
+BOOST_DATA_TEST_CASE(test_close_button,
+                     boost::unit_test::data::make({TitleBarAppearance::DIALOG,
+                                                   TitleBarAppearance::POPUP}),
+                     appearance)
 {
     QWidget parent;
     auto* title_bar = new CustomTitleBar("Title", &parent, appearance);
@@ -59,15 +58,24 @@ BOOST_DATA_TEST_CASE(
     BOOST_TEST(close_button->parent() == title_bar);
     BOOST_TEST(title_bar->getCloseButton() == close_button);
     BOOST_TEST(title_bar->addCloseButton() == close_button);
-    // the dark title bar shows text, and the native-like one the platform's
-    // icon
-    BOOST_TEST(close_button->icon().isNull() ==
-               (appearance == TitleBarAppearance::DARK));
+    // a multiplication sign
+    BOOST_TEST(close_button->text() == QString(QChar(0x00D7)));
     // the button fits in the title bar's fixed height
     title_bar->resize(200, title_bar->height());
     parent.show();
     QApplication::processEvents();
     BOOST_TEST(title_bar->rect().contains(close_button->geometry()));
+}
+
+/**
+ * A popup's title bar is shorter than a dialog's
+ */
+BOOST_AUTO_TEST_CASE(test_popup_height)
+{
+    CustomTitleBar dialog_title_bar("Title", nullptr,
+                                    TitleBarAppearance::DIALOG);
+    CustomTitleBar popup_title_bar("Title", nullptr, TitleBarAppearance::POPUP);
+    BOOST_TEST(popup_title_bar.height() < dialog_title_bar.height());
 }
 
 /**
