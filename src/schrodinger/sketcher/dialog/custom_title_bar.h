@@ -27,12 +27,13 @@ enum class TitleBarType {
 };
 
 /**
- * Custom title bar with a fixed height and styled QLabel for the title.
- * The default title bar drawn by emscripten looks really bad so dialogs draw
- * their own on WASM. Popups never have a native title bar, so they can use
- * this on any platform. Whether the user can drag the title bar to move the
- * parent widget and whether it has a close button depend on its type. Note:
- * For styling purposes, parent widget's layout needs to have a margin of 0.
+ * Custom title bar with a fixed height and styled QLabel for the title. The
+ * default title bar drawn by emscripten looks really bad so dialogs draw their
+ * own on WASM. Popups never have a native title bar, so popups with a title bar
+ * use this on any platform.
+ *
+ * Note: For styling purposes, parent widget's layout needs to have a margin of
+ * 0.
  */
 class SKETCHER_API CustomTitleBar : public QFrame
 {
