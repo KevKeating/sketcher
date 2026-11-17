@@ -45,7 +45,7 @@ static const TitleBarConfig DIALOG_TITLE_BAR_CONFIG(
     /* close button font size: */ std::nullopt,
     /* draggable: */ true,
     /* paint outline: */ false);
-    
+
 static const TitleBarConfig POPUP_TITLE_BAR_CONFIG(
     /* height: */ 24,
     /* title font size: */ 12,
