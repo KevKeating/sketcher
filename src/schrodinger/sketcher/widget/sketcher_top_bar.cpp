@@ -12,7 +12,6 @@
 #include "schrodinger/rdkit_extensions/file_stream.h"
 #include "schrodinger/sketcher/dialog/message_box_dialog.h"
 #include "schrodinger/sketcher/dialog/file_import_export.h"
-#include "schrodinger/sketcher/dialog/load_monomer_database.h"
 #include "schrodinger/sketcher/dialog/paste_in_text_dialog.h"
 #include "schrodinger/sketcher/menu/cut_copy_action_manager.h"
 #include "schrodinger/sketcher/menu/sketcher_top_bar_menus.h"
