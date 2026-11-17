@@ -15,6 +15,15 @@ const QString CHECKED_BACKGROUND_COLOR{"#d4e6f1"};
 /// The background color of a hovered tool button
 const QString HOVER_BACKGROUND_COLOR{"#edf7fc"};
 
+/// The background color of the current table row when it isn't selected. The
+/// current row is only relevant when the monomer database table is in mutation
+/// mode (i.e. there's a selection in the Sketcher canvas). In that case, we
+/// don't select rows since we can't switch the scene tool, but we use the
+/// current row to give visual feedback in response to a click or keyboard
+/// navigation. This is a very faded (i.e. lowered saturation) version of
+/// HOVER_BACKGROUND_COLOR.
+const QString CURRENT_TABLE_ROW_COLOR{"#f1f6f8"};
+
 /// The text color for informational or status text
 const QString INFO_TEXT_COLOR{"#666666"};
 

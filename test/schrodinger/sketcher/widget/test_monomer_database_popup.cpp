@@ -758,8 +758,8 @@ BOOST_AUTO_TEST_CASE(current_row_highlight)
     // a current row that isn't selected
     fixture.widget.findChild<QAbstractButton*>("ala_btn")->click();
     BOOST_TEST(get_current_symbol(*table) == "pepA");
-    BOOST_TEST(row_color("pepA").name() == HOVER_BACKGROUND_COLOR);
-    BOOST_TEST(row_color("pepX").name() != HOVER_BACKGROUND_COLOR);
+    BOOST_TEST(row_color("pepA").name() == CURRENT_TABLE_ROW_COLOR);
+    BOOST_TEST(row_color("pepX").name() != CURRENT_TABLE_ROW_COLOR);
     popup->hide();
 }
 
