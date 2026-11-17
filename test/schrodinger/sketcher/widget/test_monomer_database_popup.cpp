@@ -791,6 +791,37 @@ BOOST_AUTO_TEST_CASE(current_row_cleared_on_reopen)
 }
 
 /**
+ * Reopening the popup doesn't make a row current, even when the table had the
+ * focus when the popup closed. Showing a popup gives the focus back to the
+ * widget that last had it, and a table that gets the focus without a current
+ * index makes its first row current.
+ */
+BOOST_AUTO_TEST_CASE(current_row_cleared_on_reopen_after_table_focus)
+{
+    PopupFixture fixture;
+    load_custom_monomers(TEST_MONOMERS_JSON, NUM_TEST_MONOMERS);
+    // Closing a popup only moves the focus out of it when another window is
+    // active, so a table that still has the focus wouldn't get it again
+    fixture.widget.activateWindow();
+    BOOST_REQUIRE(QTest::qWaitForWindowActive(&fixture.widget));
+    auto* popup = fixture.openPopup();
+    auto* table = get_monomer_db_table(*popup);
+    click_monomer_db_row(*table, "pepA");
+    // A real click on a row gives the table the focus, but the synthesized one
+    // above doesn't
+    table->setFocus(Qt::MouseFocusReason);
+    popup->hide();
+    BOOST_TEST(!table->hasFocus());
+
+    fixture.widget.findChild<QAbstractButton*>("ala_btn")->click();
+    popup = fixture.openPopup();
+    BOOST_TEST(get_current_symbol(*table).empty());
+    BOOST_TEST(get_selected_rows(*table).empty());
+    BOOST_TEST(get_search_box(*popup)->hasFocus());
+    popup->hide();
+}
+
+/**
  * A style that records the state of each table cell it draws: its row
  * background and its contents
  */

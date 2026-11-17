@@ -241,8 +241,11 @@ void MonomerDatabasePopup::showFromButton(QWidget* anchor, MonomerToolType page)
                     &MonomerDatabasePopup::onAvailableGeometryChanged));
     }
     updateGeometryToFit(get_global_geometry(anchor), get_popup_bounds(anchor));
-    show_popup_next_to_widget(this, anchor);
+    // Showing a popup gives the focus to the widget in it that last had the
+    // focus. Make that the search box before showing, since a table that gets
+    // the focus without a current index makes its first row current.
     m_ui->monomer_db_search_le->setFocus(Qt::PopupFocusReason);
+    show_popup_next_to_widget(this, anchor);
 }
 
 void MonomerDatabasePopup::updateGeometryToFit(const QRect& anchor_rect,
