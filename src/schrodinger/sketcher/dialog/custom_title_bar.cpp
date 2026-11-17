@@ -29,33 +29,34 @@ struct TitleBarConfig {
     int height;
     int title_font_size;
     QColor background_color;
+    // the color of the title bar's outline. If set to an invalid color (i.e.
+    // QColor()), then no outline is painted
+    QColor outline_color;
     // the font size of the close button, or std::nullopt if the title bar
     // shouldn't have a close button
     std::optional<int> close_button_font_size;
     // whether dragging the title bar moves the parent widget
     bool draggable;
-    // whether the title bar paints an outline around its edges
-    bool paint_title_bar_outline;
 };
 
 static const TitleBarConfig DIALOG_TITLE_BAR_CONFIG(
     /* height: */ 30,
     /* title font size: */ 14,
     /* background color: */ QColor(64, 64, 64),
+    /* outline color: */ QColor(Qt::black),
     // no close button
     /* close button font size: */ std::nullopt,
-    /* draggable: */ true,
-    /* paint title bar outline: */ true);
+    /* draggable: */ true);
 
 static const TitleBarConfig POPUP_TITLE_BAR_CONFIG(
     /* height: */ 24,
     /* title font size: */ 12,
     /* background color: */ QColor(POPUP_TITLE_BAR_COLOR),
+    // no outline around the title bar
+    /* outline color: */ QColor(),
     /* close button font size: */ 14,
     // the popup stays next to the widget that opened it
-    /* draggable: */ false,
-    // the popup draws its own outline
-    /* paint title bar outline: */ false);
+    /* draggable: */ false);
 
 /// The color of the title bar outline, for title bars that paint one
 static const QColor TITLE_BAR_OUTLINE_COLOR(Qt::black);
@@ -129,11 +130,11 @@ void CustomTitleBar::paintEvent(QPaintEvent* event)
     QPainter painter(this);
     const auto& config = get_config(m_type);
     painter.fillRect(rect(), config.background_color);
-    if (!config.paint_title_bar_outline) {
+    if (!config.outline_color.isValid()) {
         return;
     }
     const qreal pen_width = 1.0;
-    painter.setPen(QPen(TITLE_BAR_OUTLINE_COLOR, pen_width));
+    painter.setPen(QPen(config.outline_color, pen_width));
     painter.setBrush(Qt::NoBrush);
     // A stroke is centered on the rectangle's edges, so we inset the rectangle
     // by half the pen width to keep the entire stroke inside of the widget.
