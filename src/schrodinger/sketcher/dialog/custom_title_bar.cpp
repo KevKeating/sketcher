@@ -33,8 +33,6 @@ struct TitleBarConfig {
     std::optional<int> close_button_font_size;
     // whether dragging the title bar moves the parent widget
     bool draggable;
-    // whether the title bar paints its own outline
-    bool paint_outline;
 };
 
 static const TitleBarConfig DIALOG_TITLE_BAR_CONFIG(
@@ -43,8 +41,7 @@ static const TitleBarConfig DIALOG_TITLE_BAR_CONFIG(
     /* background color: */ QColor(64, 64, 64),
     // no close button
     /* close button font size: */ std::nullopt,
-    /* draggable: */ true,
-    /* paint outline: */ false);
+    /* draggable: */ true);
 
 static const TitleBarConfig POPUP_TITLE_BAR_CONFIG(
     /* height: */ 24,
@@ -52,8 +49,7 @@ static const TitleBarConfig POPUP_TITLE_BAR_CONFIG(
     /* background color: */ QColor(POPUP_TITLE_BAR_COLOR),
     /* close button font size: */ 14,
     // the popup stays next to the widget that opened it
-    /* draggable: */ false,
-    /* paint outline: */ true);
+    /* draggable: */ false);
 
 } // namespace
 
@@ -124,7 +120,8 @@ void CustomTitleBar::paintEvent(QPaintEvent* event)
     QPainter painter(this);
     const auto config = get_config(m_type);
     const auto background_color = config.background_color;
-    if (config.paint_outline) {
+    if (m_type == TitleBarType::POPUP) {
+        // the popup draws its own outline
         painter.fillRect(rect(), background_color);
         return;
     }
