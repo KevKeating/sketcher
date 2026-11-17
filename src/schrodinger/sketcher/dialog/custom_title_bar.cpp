@@ -58,9 +58,6 @@ static const TitleBarConfig POPUP_TITLE_BAR_CONFIG(
     // the popup stays next to the widget that opened it
     /* draggable: */ false);
 
-/// The color of the title bar outline, for title bars that paint one
-static const QColor TITLE_BAR_OUTLINE_COLOR(Qt::black);
-
 } // namespace
 
 /**
@@ -134,10 +131,10 @@ void CustomTitleBar::paintEvent(QPaintEvent* event)
     if (config.outline_color.isValid()) {
         const qreal pen_width = 1.0;
         painter.setPen(QPen(config.outline_color, pen_width));
-        // A stroke is centered on the rectangle's edges, so we inset the rectangle
-        // by half the pen width to keep the entire stroke inside of the widget.
-        // Otherwise, part of the outline would be clipped, and which edges are
-        // visible would depend on the device pixel ratio.
+        // A stroke is centered on the rectangle's edges, so we inset the
+        // rectangle by half the pen width to keep the entire stroke inside of
+        // the widget. Otherwise, part of the outline would be clipped, and
+        // which edges are visible would depend on the device pixel ratio.
         const qreal inset = pen_width / 2;
         paint_rect.adjust(inset, inset, -inset, -inset);
     } else {
