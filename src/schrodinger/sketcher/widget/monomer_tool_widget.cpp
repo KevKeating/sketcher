@@ -632,7 +632,7 @@ void MonomerToolWidget::onMonomerDbButtonClicked()
         popup->hide();
         return;
     }
-    popup->showFromButton(ui->monomer_db_btn, model->getMonomerToolType());
+    popup->showPopup();
 }
 
 void MonomerToolWidget::onMonomerDbLastUsedButtonClicked()
@@ -649,7 +649,8 @@ void MonomerToolWidget::onMonomerDbLastUsedButtonClicked()
 MonomerDatabasePopup* MonomerToolWidget::getMonomerDatabasePopup()
 {
     if (m_monomer_db_popup == nullptr) {
-        m_monomer_db_popup = new MonomerDatabasePopup(getModel(), this);
+        m_monomer_db_popup =
+            new MonomerDatabasePopup(getModel(), ui->monomer_db_btn, this);
         m_monomer_db_popup->setLoadDatabaseVisible(
             m_load_monomer_database_visible);
         configure_button_popup(ui->monomer_db_btn, m_monomer_db_popup);

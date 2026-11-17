@@ -55,9 +55,10 @@ static QString get_match_count_text(int num_matches)
 }
 
 MonomerDatabasePopup::MonomerDatabasePopup(const SketcherModel* model,
-                                           QWidget* parent) :
+                                           QWidget* anchor, QWidget* parent) :
     SketcherViewWithWasmOutlineFix(parent),
-    m_model(model)
+    m_model(model),
+    m_anchor(anchor)
 {
     setObjectName("monomer_db_popup");
     m_ui.reset(new Ui::MonomerDatabasePopup());
@@ -213,8 +214,12 @@ void MonomerDatabasePopup::syncSelectionToModel()
     table->viewport()->update();
 }
 
-void MonomerDatabasePopup::showFromButton(QWidget* anchor, MonomerToolType page)
+void MonomerDatabasePopup::showPopup()
 {
+    if (!m_anchor) {
+        return;
+    }
+    const auto page = m_model->getMonomerToolType();
     if (!m_page_at_close.has_value() || *m_page_at_close != page) {
         {
             QSignalBlocker blocker(m_ui->monomer_db_search_le);
@@ -230,22 +235,22 @@ void MonomerDatabasePopup::showFromButton(QWidget* anchor, MonomerToolType page)
     m_ui->monomer_db_table->selectionModel()->clearCurrentIndex();
     refilter();
 
-    m_anchor = anchor;
     // On WASM builds, each canvas is its own screen, so this also notices the
     // canvas resizing
-    auto* screen = anchor->screen();
+    auto* screen = m_anchor->screen();
     for (auto signal :
          {&QScreen::availableGeometryChanged, &QScreen::geometryChanged}) {
         m_screen_connections.push_back(
             connect(screen, signal, this,
                     &MonomerDatabasePopup::onAvailableGeometryChanged));
     }
-    updateGeometryToFit(get_global_geometry(anchor), get_popup_bounds(anchor));
+    updateGeometryToFit(get_global_geometry(m_anchor),
+                        get_popup_bounds(m_anchor));
     // Showing a popup gives the focus to the widget in it that last had the
     // focus. Make that the search box before showing, since a table that gets
     // the focus without a current index makes its first row current.
     m_ui->monomer_db_search_le->setFocus(Qt::PopupFocusReason);
-    show_popup_next_to_widget(this, anchor);
+    show_popup_next_to_widget(this, m_anchor);
 }
 
 void MonomerDatabasePopup::updateGeometryToFit(const QRect& anchor_rect,

@@ -307,6 +307,9 @@ scene tool becomes a `DrawMonomerSceneTool` for that monomer.
       - NUCLEIC_ACID: polymer type {Nucleic acid, Structure}, Any, Any or
         None.
   - **Otherwise:** the search text, filter and sort are kept.
+  - **Opened from a folder entry (Step 5):** the rule is skipped, and the
+    requested filter and an empty search are used instead (see
+    `showPopupWithFilter()`).
 
   Recording the page at close time is what lets the page switch when a row
   is chosen. For example:
@@ -324,9 +327,16 @@ scene tool becomes a `DrawMonomerSceneTool` for that monomer.
   of the current page. It leaves search text and sort unchanged. This is
   distinct from the page-default reset on opening: Clear All leaves zero
   filters applied, no bold combos, and a normal filter button.
-- **Anchor.** A page switch while the popup is open must not move the popup's
-  anchor. The side bar's `amino_or_nucleic_stack` sizes itself to its
-  largest page, so the shared buttons below it shouldn't move. Verify this.
+- **Anchor.** The DB popup is always shown next to the side bar's
+  `monomer_db_btn`, however it's opened. When it's opened from a long-press
+  monomer popup's folder entry (Step 5), that popup closes and the DB popup
+  appears next to `monomer_db_btn`, not next to the folder entry. How the
+  popup is opened affects only its filter and search text, never its
+  location. The anchor is therefore fixed: it's passed once at construction,
+  and the method that shows the popup takes no anchor.
+  - A page switch while the popup is open must not move the anchor. The side
+    bar's `amino_or_nucleic_stack` sizes itself to its largest page, so the
+    shared buttons below it shouldn't move. Verify this.
 - **Popup bounds and resizing.**
   - **Available area:** `anchor->screen()->availableGeometry()`. That is the
     desktop on native builds and the hosting canvas on WASM, because each
@@ -406,7 +416,7 @@ scene tool becomes a `DrawMonomerSceneTool` for that monomer.
     one value per type was rejected: it could restore a value the user had
     long forgotten after time spent on the other type.
   - **Explicit resets forget everything:** Clear All, the page-default reset
-    on opening, and `setFilter()` (the Step 5 folder entry).
+    on opening, and `showPopupWithFilter()` (the Step 5 folder entry).
   - The memory lives in `MonomerDatabaseFilter`, not in the combo widgets.
     The filter popup is rebuilt from the filter each time it opens, and the
     analog combo's items are rebuilt when the polymer types change, so a
@@ -1185,8 +1195,10 @@ Keep the existing monomer-item rendering and top-bar tests green.
   - It's a `SketcherViewWithWasmOutlineFix` with `Qt::Popup`, modeled on
     `FileSaveImagePopup`.
   - It holds a `const SketcherModel*`, passed once at construction or
-    through a setter. It reads tool state and `hasActiveSelection()` from it
-    and listens to its `selectionChanged`.
+    through a setter. It reads tool state, `MONOMER_TOOL_TYPE` and
+    `hasActiveSelection()` from it and listens to its `selectionChanged`.
+  - Its constructor also takes its anchor, `monomer_db_btn` (see "Anchor"
+    under Design decisions).
   - **Header:** a `CustomTitleBar` (`dialog/custom_title_bar.h`), the title
     bar that `ModalDialog` uses on WASM, with the title "Monomer Database"
     and an × (`monomer_db_close_btn`). The title bar's type
@@ -1272,10 +1284,12 @@ Keep the existing monomer-item rendering and top-bar tests green.
       monomer by row number. Explicitly refresh the preview after this
       process.
   - **API:**
-    - `showFromButton(QWidget* anchor, MonomerToolType page)` positions the
-      popup with `show_popup_next_to_widget`. Before showing, it applies the
-      reset rule from "Design decisions", reads the mode and clears the
-      table's current index.
+    - `showPopup()` positions the popup next to the anchor given at
+      construction with `show_popup_next_to_widget`. It takes no anchor,
+      since the popup is always shown next to `monomer_db_btn`, and no page,
+      since it reads `MONOMER_TOOL_TYPE` from the model. Before showing, it
+      applies the reset rule from "Design decisions", reads the mode and
+      clears the table's current index.
     - On every close (×, Close, outside click, Escape, DB button, load/update
       link, a mode change), the popup records the current
       `MONOMER_TOOL_TYPE`. Hook `hideEvent` so that no path is missed.
@@ -1577,8 +1591,9 @@ Reposition an open filter popup if canvas resizing moves its anchor.
   outside the popup" under Design decisions).
 - **`filterChanged`:** store the filter, re-filter, update the Type-column
   visibility and re-sync the selection.
-- **Step 5 API:** add `setFilter(const MonomerDatabaseFilter&)`,
-  `getFilter()` and `clearSearchText()`.
+- **Step 5 API:** keep `getFilter()` for tests. Don't add a public
+  `setFilter()` or `clearSearchText()`; Step 5 adds
+  `showPopupWithFilter()` instead.
 
 ### Tests
 
@@ -1761,18 +1776,35 @@ Reposition an open filter popup if canvas resizing moves its anchor.
     popup, the popup stays open without it; if it leaves the popup empty,
     hide the popup.
   - dR and R share the filter SPECIFIC `R`, so they always agree.
-- **`MonomerToolWidget` on `monomerDatabaseRequested`:**
-  - build a filter with exactly that one polymer type, monomer type Any,
-    and the given analog (the shared function above);
-  - `setFilter` it and `clearSearchText()`;
-  - open the popup from **`monomer_db_btn`**, not from the long-press popup;
-  - skip the reset rule for this opening, so that it doesn't overwrite the
-    requested filter.
+- **`MonomerDatabasePopup::showPopupWithFilter(const
+  MonomerDatabaseFilter&)`:** a second way to open the popup, next to
+  `showPopup()`. It:
+  - sets the filter to the given one, which forgets any remembered hidden
+    values like any explicit reset (see "Values hidden by applicability are
+    remembered, not cleared" under Design decisions);
+  - clears the search text;
+  - opens the popup like `showPopup()`, except that it skips the reset rule,
+    so the reset can't overwrite the requested filter. Like every opening, it
+    appears next to **`monomer_db_btn`**, not next to the long-press popup,
+    which has already closed (see "Anchor" under Design decisions).
 
-  The page is recorded at close as usual, so the next ordinary opening on
-  the same page keeps this filter.
-
-  It doesn't activate anything.
+  Doing all three in one call keeps "skip the reset rule" inside the popup:
+  callers can't open the popup with a filter and forget to clear the search
+  or skip the reset, and the popup needs no public flag or setter for
+  skipping it. It also replaces the public `setFilter()` and
+  `clearSearchText()` that Step 4 would otherwise add, which nothing else
+  needs.
+  - Share the opening code with `showPopup()`: move everything after the
+    reset rule (reading the mode, clearing the current index, re-filtering,
+    positioning and showing) into a private helper that both call, rather
+    than adding a `bool skip_reset` parameter to `showPopup()`.
+  - The sort is kept, as with any opening.
+  - The page is recorded at close as usual, so the next ordinary opening on
+    the same page keeps this filter.
+  - It doesn't activate anything.
+- **`MonomerToolWidget` on `monomerDatabaseRequested`:** build a filter with
+  exactly that one polymer type, monomer type Any, and the given analog (the
+  shared function above), and call `showPopupWithFilter()` with it.
 - **Remove dead code.** Remove code paths that existed only for large
   custom-analog popups, such as the ">80 analogs" scroll area, if no core
   popup can reach that threshold.

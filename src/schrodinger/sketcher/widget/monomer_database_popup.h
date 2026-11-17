@@ -46,7 +46,7 @@ class SketcherModel;
  *    and down arrows move the table's current row but don't trigger a mutation.
  *    Hitting Enter, Return, or Space mutate all selected monomers to match the
  *    monomer of the table's current row.
- * 
+ *
  * The popup closes itself if a canvas selection appears or disappears while
  * it's open.
  *
@@ -59,26 +59,27 @@ class SKETCHER_API MonomerDatabasePopup : public SketcherViewWithWasmOutlineFix
     Q_OBJECT
   public:
     /**
-     * @param model The model to read the tool state and canvas selection from.
-     * It must outlive the popup.
+     * @param model The model to read the tool state, side bar page and canvas
+     * selection from. It must outlive the popup.
+     * @param anchor The widget that the popup is always shown next to, i.e. the
+     * side bar's monomer database button, however the popup is opened
      * @param parent The parent widget, which is also used as the parent of the
      * file chooser and dialogs opened by the load database link
      */
-    MonomerDatabasePopup(const SketcherModel* model, QWidget* parent = nullptr);
+    MonomerDatabasePopup(const SketcherModel* model, QWidget* anchor,
+                         QWidget* parent = nullptr);
     ~MonomerDatabasePopup();
 
     /**
-     * Show the popup next to the given button. If this is the first opening,
-     * or the page differs from the page when the popup last closed, the
-     * search text is cleared and the filter is reset to the page's default.
-     * Otherwise, the search text, filter and sort are kept.
+     * Show the popup next to the anchor given at construction. If this is the
+     * first opening, or the model's side bar page differs from the page when
+     * the popup last closed, the search text is cleared and the filter is
+     * reset to the page's default. Otherwise, the search text, filter and sort
+     * are kept.
      *
      * Opening the popup never chooses a monomer.
-     *
-     * @param anchor The button to show the popup next to
-     * @param page The current side bar page
      */
-    void showFromButton(QWidget* anchor, MonomerToolType page);
+    void showPopup();
 
     /**
      * Select the table row of the model's active database monomer, if there
@@ -218,6 +219,7 @@ class SKETCHER_API MonomerDatabasePopup : public SketcherViewWithWasmOutlineFix
     // whether the table is being updated programmatically, during which
     // selection changes must not choose a monomer
     bool m_updating_table = false;
+    // The side bar's monomer database button
     QPointer<QWidget> m_anchor;
     std::vector<QMetaObject::Connection> m_screen_connections;
     boost::signals2::scoped_connection m_database_connection;
