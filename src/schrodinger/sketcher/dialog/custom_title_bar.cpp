@@ -47,6 +47,7 @@ static const TitleBarConfig DIALOG_TITLE_BAR_CONFIG(
     /* height: */ 30,
     /* title font size: */ 14,
     /* background color: */ QColor(64, 64, 64),
+    // no close button
     /* close button font size: */ std::nullopt,
     /* draggable: */ true);
 
