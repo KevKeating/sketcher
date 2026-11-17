@@ -8,6 +8,7 @@
 #include <QLabel>
 #include <QMouseEvent>
 #include <QPainter>
+#include <QPen>
 #include <QToolButton>
 #include <QtGlobal>
 
@@ -33,6 +34,8 @@ struct TitleBarConfig {
     std::optional<int> close_button_font_size;
     // whether dragging the title bar moves the parent widget
     bool draggable;
+    // whether the title bar paints an outline around its edges
+    bool paint_title_bar_outline;
 };
 
 static const TitleBarConfig DIALOG_TITLE_BAR_CONFIG(
@@ -41,7 +44,8 @@ static const TitleBarConfig DIALOG_TITLE_BAR_CONFIG(
     /* background color: */ QColor(64, 64, 64),
     // no close button
     /* close button font size: */ std::nullopt,
-    /* draggable: */ true);
+    /* draggable: */ true,
+    /* paint title bar outline: */ true);
 
 static const TitleBarConfig POPUP_TITLE_BAR_CONFIG(
     /* height: */ 24,
@@ -49,7 +53,12 @@ static const TitleBarConfig POPUP_TITLE_BAR_CONFIG(
     /* background color: */ QColor(POPUP_TITLE_BAR_COLOR),
     /* close button font size: */ 14,
     // the popup stays next to the widget that opened it
-    /* draggable: */ false);
+    /* draggable: */ false,
+    // the popup draws its own outline
+    /* paint title bar outline: */ false);
+
+/// The color of the title bar outline, for title bars that paint one
+static const QColor TITLE_BAR_OUTLINE_COLOR(Qt::black);
 
 } // namespace
 
@@ -118,15 +127,20 @@ QToolButton* CustomTitleBar::getCloseButton() const
 void CustomTitleBar::paintEvent(QPaintEvent* event)
 {
     QPainter painter(this);
-    const auto config = get_config(m_type);
-    const auto background_color = config.background_color;
-    if (m_type == TitleBarType::POPUP) {
-        // the popup draws its own outline
-        painter.fillRect(rect(), background_color);
+    const auto& config = get_config(m_type);
+    painter.fillRect(rect(), config.background_color);
+    if (!config.paint_title_bar_outline) {
         return;
     }
-    painter.setBrush(QBrush(background_color));
-    painter.drawRect(rect());
+    const qreal pen_width = 1.0;
+    painter.setPen(QPen(TITLE_BAR_OUTLINE_COLOR, pen_width));
+    painter.setBrush(Qt::NoBrush);
+    // A stroke is centered on the rectangle's edges, so we inset the rectangle
+    // by half the pen width to keep the entire stroke inside of the widget.
+    // Otherwise, part of the outline would be clipped, and which edges are
+    // visible would depend on the device pixel ratio.
+    const qreal inset = pen_width / 2;
+    painter.drawRect(QRectF(rect()).adjusted(inset, inset, -inset, -inset));
 }
 
 void CustomTitleBar::mousePressEvent(QMouseEvent* event)
