@@ -40,10 +40,13 @@ class SketcherModel;
  *
  * The popup has two modes, which are fixed while it's open:
  *  - In tool mode (no canvas selection), changing rows with the mouse or
- *    keyboard chooses the row's monomer.
- *  - In mutation mode (canvas selection), keyboard navigation only moves the
- *    current index, and clicking a row, Enter, Return or Space chooses the
- *    row's monomer. No row is ever selected.
+ *    keyboard switches the scene tool to the row's monomer.
+ *  - In mutation mode (canvas selection), clicking on a row mutates all
+ *    selected monomers to match the clicked monomer.  With the keyboard, the up
+ *    and down arrows move the table's current row but don't trigger a mutation.
+ *    Hitting Enter, Return, or Space mutate all selected monomers to match the
+ *    monomer of the table's current row.
+ * 
  * The popup closes itself if a canvas selection appears or disappears while
  * it's open.
  *
