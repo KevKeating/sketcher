@@ -19,7 +19,7 @@ namespace sketcher
  *
  * The checked state is controlled by the owning tool widget rather than by
  * clicks. Without a monomer, the button is blank and disabled, so that it
- * looks like empty space and ignores clicks.
+ * looks and acts like empty space.
  */
 class SKETCHER_API MonomerDatabaseLastUsedButton : public QToolButton
 {
