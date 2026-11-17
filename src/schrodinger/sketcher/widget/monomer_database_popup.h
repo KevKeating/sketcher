@@ -34,9 +34,10 @@ class SketcherModel;
 /**
  * A popup for searching the monomer database and choosing a monomer from it.
  *
- * The table lists the custom monomers plus the core monomers with no natural
- * analog (see get_monomer_database_table_monomers()), filtered and sorted
- * without re-reading the database.
+ * The table lists the core monomers with no natural analog plus the custom
+ * monomers that don't shadow a core monomer with a natural analog (see
+ * get_monomer_database_table_monomers()), filtered and sorted without
+ * re-reading the database.
  *
  * The popup has two modes, which are fixed while it's open:
  *  - In tool mode (no canvas selection), changing rows with the mouse or

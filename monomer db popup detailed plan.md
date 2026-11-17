@@ -42,8 +42,9 @@ scene tool becomes a `DrawMonomerSceneTool` for that monomer.
 
 ### The table
 
-- **The table contains custom monomers plus the core monomers that have no
-  natural analog.**
+- **The table contains the core monomers that have no natural analog, plus
+  the custom monomers that don't shadow a core monomer with a natural
+  analog.**
   - "No natural analog" is the type-specific "None" rule below: empty, or
     `X` for peptides and `N` for nucleic acids.
   - In today's core DB this adds only `ac` and `am` (PEPTIDE Terminal, analog
@@ -51,9 +52,17 @@ scene tool becomes a `DrawMonomerSceneTool` for that monomer.
     work removes.
   - Every other core monomer is reachable through the side-bar buttons and
     their long-press popups, so it's excluded from the table.
-  - A custom monomer with the same symbol and polymer type as an included
-    core one replaces it, matching the custom-first rule of
-    `get_info_from_database`. The core row isn't shown as well.
+  - A custom monomer shadows a core monomer when it has the same symbol and
+    polymer type. Whether the shadowing custom monomer is shown depends only
+    on the **core** monomer's natural analog, not on the custom one's:
+    - If the core monomer has no natural analog, the custom monomer replaces
+      it, matching the custom-first rule of `get_info_from_database`. The
+      core row isn't shown as well.
+    - If the core monomer has a natural analog, neither row is shown. The ID
+      is already reachable from its palette, which draws the custom
+      definition (see Step 5). For example, a custom Alanine (`A`, PEPTIDE)
+      or a custom `meG` gets no row, even if the custom definition's analog
+      is X.
 - **One read per database change; everything else happens in memory.**
   - `MonomerDatabase` gets two small public calls, `getCustomMonomers()` and
     `getCoreMonomers()`. Both use one shared row-reading loop.
@@ -168,10 +177,10 @@ scene tool becomes a `DrawMonomerSceneTool` for that monomer.
   - A page's `*_DB_MONOMER` is valid when it's in the table's source list.
     Check this with Step 1's `get_monomer_database_table_monomers()`; don't
     re-implement the inclusion rule. This is about membership, not
-    drawability. For example, if a custom override of core `meG` is
-    unloaded, `meG` reverts to a core monomer with analog G, leaves the
-    table, and is cleared from the slot, even though it can still be drawn
-    from the G palette.
+    drawability. For example, `meG` is a core monomer with analog G, so it's
+    never in the table, even while a custom override of it is loaded. A slot
+    holding `meG` is therefore cleared on the next database change, even
+    though `meG` can still be drawn from the G palette.
   - For each page whose slot is no longer valid, including an inactive page
     and while atomistic mode is active:
     - reset the slot to an empty `MonomerID`, which blanks the last-used
@@ -557,7 +566,7 @@ things clean:
 | Polymer type: single-select (PEPTIDE / RNA / CHEM / Any) | Multi-select ("Peptide", "Nucleic acid", "Structure"), the same on both pages |
 | Default filter: PEPTIDE + backbone on the AA tab, RNA on the NA tab | AA: {Peptide, Structure}. NA: {Nucleic acid, Structure}. Monomer type Any, analog Any or None |
 | Apply button | No Apply. Changes apply live |
-| Table includes all monomers; first item selected by default | Custom monomers, plus core monomers with no natural analog. No default selection; the selection mirrors the active DB tool |
+| Table includes all monomers; first item selected by default | Core monomers with no natural analog, plus custom monomers that don't shadow a core monomer with a natural analog. No default selection; the selection mirrors the active DB tool |
 | Monomer type: chooser contents depend on the polymer type | Monomer type and Natural analog stay enabled with Structure checked, and CHEM rows only match their permissive values |
 | Opening the popup loads the last-used item | It doesn't. Only the last-used button does |
 | Peptide analog list includes X and omits N | Includes N and omits X (X is "None") |
@@ -794,9 +803,10 @@ class MonomerDatabaseFilter
     bool operator==(const MonomerDatabaseFilter&) const = default;
 };
 
-// The table's source list: every custom monomer, plus each core monomer whose
-// natural analog is "None" (type-specific; see has_no_natural_analog) unless a
-// custom monomer has the same symbol and polymer type
+// The table's source list: each core monomer whose natural analog is "None"
+// (type-specific; see has_no_natural_analog), plus each custom monomer unless
+// it shadows (same symbol and polymer type) a core monomer with a natural
+// analog. A custom monomer that shadows an included core monomer replaces it.
 std::vector<rdkit_extensions::MonomerInfo> get_monomer_database_table_monomers(
     std::vector<rdkit_extensions::MonomerInfo> custom_monomers,
     const std::vector<rdkit_extensions::MonomerInfo>& core_monomers);
@@ -867,11 +877,15 @@ std::vector<std::size_t> filter_by_search_text(
 **Tests** go in `test/schrodinger/sketcher/model/test_monomer_database_filter.cpp`.
 Use hand-built `MonomerInfo` vectors, so no DB is needed. Cover:
 - `get_monomer_database_table_monomers`:
-  - it keeps every custom monomer;
+  - it keeps every custom monomer that doesn't shadow a core monomer with a
+    natural analog;
   - it keeps core monomers with X, N or empty analogs only, by type, so a
     core peptide with analog `N` (Asn) is excluded;
-  - a custom monomer replaces a core one with the same symbol and polymer
-    type, but not one of a different polymer type;
+  - a custom monomer replaces a core one with no natural analog and the same
+    symbol and polymer type, but not one of a different polymer type;
+  - a custom monomer that shadows a core monomer with a natural analog is
+    excluded, even if the custom monomer itself has no natural analog, but
+    one with the same symbol and a different polymer type is kept;
 - every polymer-type combination, including NONE and ALL;
 - applicability for every combination, including Structure combined with
   Peptide or Nucleic acid, and that inapplicable combos have effective
@@ -1079,8 +1093,9 @@ existing tests (or in a new `test_widget_utils.cpp`).
   - removal with a canvas selection causes no mutation and no undo entry, and
     keeps Select or Move/Rotate;
   - the page's standard tool and symbol are kept;
-  - unloading a custom override of a core monomer with an analog (`meG`)
-    clears a slot holding it;
+  - a slot holding a core monomer with an analog (`meG`) is cleared on a
+    database change that loads a custom override of it, since the override
+    doesn't add it to the table;
   - the repair emits `valuesChanged` but no `valuePinged`.
 - **Unclassified buttons:** rewrite the existing `unclassified_monomers` and
   `unclassified_chem_monomers` cases, and the related cases in
@@ -1369,8 +1384,9 @@ new `test_monomer_database_popup.cpp`.
     data after a load. In Step 4, also verify that the filter is preserved.
     Changing page while hidden still invokes the normal page-default reset.
 - **Table contents:**
-  - The table holds custom monomers plus core monomers with no natural
-    analog, with custom winning on a symbol clash.
+  - The table holds core monomers with no natural analog plus custom
+    monomers, with custom winning on a symbol clash. A custom monomer that
+    shadows a core monomer with a natural analog has no row.
   - The AA default shows peptide and CHEM rows. The NA default shows nucleic
     acid and CHEM rows. The Type column is visible.
 - **Reset rule (keyed on the page at close):**
@@ -1733,9 +1749,11 @@ Reposition an open filter popup if canvas resizing moves its anchor.
     mutate a canvas selection. Folder entries retain their core-associated
     symbol/analog filter; they are not selectable monomer entries.
   - Activation continues to resolve the same ID custom-first, so the tooltip
-    describes the definition that will actually be drawn. The searchable DB
-    table independently keeps only the custom row for a shadowed core ID, as
-    already specified by its source-list builder.
+    describes the definition that will actually be drawn. Every palette ID
+    is a core monomer with a natural analog, so the searchable DB table
+    independently has no row at all for a shadowed palette ID, as already
+    specified by its source-list builder. The palette is the only way to
+    pick it.
 - **Folder entry** in `build_monomer_symbol_buttons()`
   (`widget/monomer_symbol_popup_utils.cpp`):
   - **Placement and look:** add a final row with a `QToolButton` named
@@ -1768,8 +1786,10 @@ Reposition an open filter popup if canvas resizing moves its anchor.
   - Core monomers with an analog aren't in the table (they're in the
     palettes), and every core peptide and base is its own analog, so with
     only the core DB loaded no folder entry is shown. In practice the entry
-    appears when a custom monomer has that polymer type and analog,
-    including a custom override of a core ID such as `meG`.
+    appears when a custom monomer has that polymer type and analog, unless
+    that custom monomer is an override of a core ID with an analog, such as
+    `meG`. Such overrides aren't in the table, so they don't show a folder
+    entry on their own.
   - Re-evaluate it on every database change, together with whether the
     button has a popup at all (see "A button whose popup would be empty has
     no popup"). If a database change hides the folder entry of an open
@@ -1851,8 +1871,8 @@ Reposition an open filter popup if canvas resizing moves its anchor.
       and the parent button's tooltip without changing palette membership;
       selecting it draws the custom definition, and removing the override
       restores core metadata;
-    - the searchable DB popup shows only the custom entry for that shadowed
-      ID, with no duplicate core row.
+    - the searchable DB popup shows no row for that shadowed ID, neither
+      custom nor core.
   - **Update tests that pick custom monomers from long-press popups.** These
     will break. Switch them to `chooseFromMonomerDatabase` (or the folder
     entry), and grep `test/wasm/e2e` for `choosePopup`, `clickPopupTool`,
