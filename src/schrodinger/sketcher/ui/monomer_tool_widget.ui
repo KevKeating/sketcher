@@ -1284,7 +1284,7 @@
        </property>
        <property name="iconSize">
         <size>
-         <width>32</width>
+         <width>30</width>
          <height>32</height>
         </size>
        </property>
