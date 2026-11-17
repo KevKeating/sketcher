@@ -13,13 +13,16 @@ namespace sketcher
 {
 
 /**
- * How a CustomTitleBar is drawn. Both appearances use white text on a dark
- * background.
+ * The kind of a CustomTitleBar, which determines how it's drawn and how it
+ * behaves. Both types use white text on a dark background.
  */
-enum class TitleBarAppearance {
-    // a dialog's title bar, which replaces emscripten's title bar on WASM
+enum class TitleBarType {
+    // a dialog's title bar, which replaces emscripten's title bar on WASM. It
+    // can be dragged to move the dialog and has no close button.
     DIALOG,
-    // a smaller, lighter title bar for popups on any platform
+    // a smaller, lighter title bar for popups on any platform. It can't be
+    // dragged, since popups stay next to the widget that opened them, and it
+    // has a close button.
     POPUP,
 };
 
@@ -27,39 +30,33 @@ enum class TitleBarAppearance {
  * Custom title bar with a fixed height and styled QLabel for the title.
  * The default title bar drawn by emscripten looks really bad so dialogs draw
  * their own on WASM. Popups never have a native title bar, so they can use
- * this on any platform. By default, the user can drag the title bar to move
- * the parent widget. Note: For styling purposes, parent widget's layout needs
- * to have a margin of 0.
+ * this on any platform. Whether the user can drag the title bar to move the
+ * parent widget and whether it has a close button depend on its type. Note:
+ * For styling purposes, parent widget's layout needs to have a margin of 0.
  */
 class SKETCHER_API CustomTitleBar : public QFrame
 {
     Q_OBJECT
   public:
     CustomTitleBar(const QString& title, QWidget* parent = nullptr,
-                   TitleBarAppearance appearance = TitleBarAppearance::DIALOG);
+                   TitleBarType type = TitleBarType::DIALOG);
     ~CustomTitleBar();
     QLabel* m_title_label = nullptr;
 
     /**
-     * Add a close button to the right end of the title bar, if there isn't one
-     * already. The title bar doesn't connect it to anything.
-     *
-     * @return The close button
-     */
-    QToolButton* addCloseButton();
-
-    /**
-     * @return The close button, or nullptr if addCloseButton() was never
-     * called
+     * @return The close button, or nullptr if this type of title bar doesn't
+     * have one. The title bar doesn't connect it to anything.
      */
     QToolButton* getCloseButton() const;
 
-    /**
-     * Set whether dragging the title bar moves the parent widget
-     */
-    void setDraggable(bool draggable);
-
   private:
+    /**
+     * Add a close button to the right end of the title bar
+     *
+     * @param font_size The font size of the close button, in pixels
+     */
+    void addCloseButton(int font_size);
+
     /**
      * Paints the background of the title bar.
      */
@@ -75,9 +72,8 @@ class SKETCHER_API CustomTitleBar : public QFrame
      */
     void mouseMoveEvent(QMouseEvent* event) override;
 
-    TitleBarAppearance m_appearance;
+    TitleBarType m_type;
     QToolButton* m_close_button = nullptr;
-    bool m_draggable = true;
     QPointF m_cursor_start_pos;
     bool m_drag_started = false;
 };

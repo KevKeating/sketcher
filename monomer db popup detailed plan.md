@@ -1189,16 +1189,20 @@ Keep the existing monomer-item rendering and top-bar tests green.
     and listens to its `selectionChanged`.
   - **Header:** a `CustomTitleBar` (`dialog/custom_title_bar.h`), the title
     bar that `ModalDialog` uses on WASM, with the title "Monomer Database"
-    and an × (`monomer_db_close_btn`). Extend it with an optional close
-    button and an option to turn off dragging, since the popup stays next to
-    its button. A `Qt::Popup` never gets native window chrome, and switching
-    to a real window (e.g. `Qt::Tool`) would lose the popup behaviour this
-    plan relies on, so:
-    - **Every build** uses the popup appearance (`TitleBarAppearance::POPUP`):
-      a 24 px title bar with a 12 px white title and a white × on a
-      `#666666` background (`POPUP_TITLE_BAR_COLOR`), with a matching
-      `#666666` outline around the popup. It's smaller and lighter than the
-      dialogs' title bar (`TitleBarAppearance::DIALOG`), which is unchanged.
+    and an × (`monomer_db_close_btn`). The title bar's type
+    (`TitleBarType`) selects a `TitleBarConfig` that sets its sizes and
+    colors, whether it has a close button, and whether dragging it moves the
+    parent. The popup type has a close button and can't be dragged, since the
+    popup stays next to its button. The popup gets the × from
+    `getCloseButton()` to name it and connect it. A `Qt::Popup` never gets
+    native window chrome, and switching to a real window (e.g. `Qt::Tool`)
+    would lose the popup behaviour this plan relies on, so:
+    - **Every build** uses the popup type (`TitleBarType::POPUP`): a 24 px
+      title bar with a 12 px white title and a white × on a `#666666`
+      background (`POPUP_TITLE_BAR_COLOR`), with a matching `#666666` outline
+      around the popup. It's smaller and lighter than the dialogs' title bar
+      (`TitleBarType::DIALOG`), which can be dragged and has no close button,
+      as before.
     - **No platform-specific code:** no system calls for cosmetic details.
       In particular, don't round the popup's corners, since that would need
       OS calls (e.g. Windows 11's `DwmSetWindowAttribute`).

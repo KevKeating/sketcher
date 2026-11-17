@@ -66,12 +66,10 @@ MonomerDatabasePopup::MonomerDatabasePopup(const SketcherModel* model,
     setStyleSheet(MONOMER_DATABASE_POPUP_STYLE);
     // A popup never has a native title bar
     auto* title_bar =
-        new CustomTitleBar(windowTitle(), this, TitleBarAppearance::POPUP);
+        new CustomTitleBar(windowTitle(), this, TitleBarType::POPUP);
     title_bar->setObjectName("monomer_db_title_bar");
     title_bar->m_title_label->setObjectName("monomer_db_title_lbl");
-    // the popup stays next to its button
-    title_bar->setDraggable(false);
-    auto* close_button = title_bar->addCloseButton();
+    auto* close_button = title_bar->getCloseButton();
     close_button->setObjectName("monomer_db_close_btn");
     m_ui->main_layout->insertWidget(0, title_bar);
     m_ui->monomer_db_load_link->setStyleSheet(TEXT_LINK_STYLE);

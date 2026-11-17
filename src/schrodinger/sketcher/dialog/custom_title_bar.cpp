@@ -1,5 +1,7 @@
 #include "schrodinger/sketcher/dialog/custom_title_bar.h"
 
+#include <optional>
+
 #include <QApplication>
 #include <QColor>
 #include <QHBoxLayout>
@@ -20,64 +22,71 @@ namespace
 {
 
 /**
- * The sizes and colors of a CustomTitleBar
+ * The sizes, colors, and behavior of a CustomTitleBar
  */
-struct TitleBarMetrics {
+struct TitleBarConfig {
     int height;
     int title_font_size;
-    int close_button_font_size;
     QColor background_color;
+    // the font size of the close button, or std::nullopt if the title bar
+    // shouldn't have a close button
+    std::optional<int> close_button_font_size;
+    // whether dragging the title bar moves the parent widget
+    bool draggable;
 };
 
-static const TitleBarMetrics POPUP_TITLE_BAR_METRICS(
+static const TitleBarConfig POPUP_TITLE_BAR_CONFIG(
     /* height: */ 24,
     /* title font size: */ 12,
+    /* background color: */ QColor(POPUP_TITLE_BAR_COLOR),
     /* close button font size: */ 14,
-    /* background color: */ QColor(POPUP_TITLE_BAR_COLOR));
+    // the popup stays next to the widget that opened it
+    /* draggable: */ false);
 
-static const TitleBarMetrics DIALOG_TITLE_BAR_METRICS(
+static const TitleBarConfig DIALOG_TITLE_BAR_CONFIG(
     /* height: */ 30,
     /* title font size: */ 14,
-    /* close button font size: */ 16,
-    /* background color: */ QColor(64, 64, 64));
+    /* background color: */ QColor(64, 64, 64),
+    /* close button font size: */ std::nullopt,
+    /* draggable: */ true);
 
 } // namespace
 
 /**
- * @return The sizes and colors for the given title bar appearance
+ * @return The sizes, colors, and behavior for the given title bar type
  */
-static TitleBarMetrics get_metrics(TitleBarAppearance appearance)
+static const TitleBarConfig& get_config(TitleBarType type)
 {
-    if (appearance == TitleBarAppearance::POPUP) {
-        return POPUP_TITLE_BAR_METRICS;
-    } else if (appearance == TitleBarAppearance::DIALOG) {
-        return DIALOG_TITLE_BAR_METRICS;
+    if (type == TitleBarType::POPUP) {
+        return POPUP_TITLE_BAR_CONFIG;
+    } else if (type == TitleBarType::DIALOG) {
+        return DIALOG_TITLE_BAR_CONFIG;
     }
-    Q_UNREACHABLE_RETURN(DIALOG_TITLE_BAR_METRICS);
+    Q_UNREACHABLE_RETURN(DIALOG_TITLE_BAR_CONFIG);
 }
 
 CustomTitleBar::CustomTitleBar(const QString& title, QWidget* parent,
-                               TitleBarAppearance appearance) :
+                               TitleBarType type) :
     QFrame(parent),
-    m_appearance(appearance)
+    m_type(type)
 {
-    const auto metrics = get_metrics(appearance);
+    const auto& config = get_config(type);
     QHBoxLayout* layout = new QHBoxLayout(this);
-    this->setFixedHeight(metrics.height);
+    this->setFixedHeight(config.height);
     m_title_label = new QLabel(title, this);
     m_title_label->setStyleSheet(
         QString("color: white; font-size: %1px; font-weight: 600;")
-            .arg(metrics.title_font_size));
+            .arg(config.title_font_size));
     layout->addWidget(m_title_label);
+    if (config.close_button_font_size.has_value()) {
+        addCloseButton(*config.close_button_font_size);
+    }
 }
 
 CustomTitleBar::~CustomTitleBar() = default;
 
-QToolButton* CustomTitleBar::addCloseButton()
+void CustomTitleBar::addCloseButton(int font_size)
 {
-    if (m_close_button != nullptr) {
-        return m_close_button;
-    }
     m_close_button = new QToolButton(this);
     m_close_button->setToolTip("Close");
     // a multiplication sign, as in the mockups
@@ -87,7 +96,7 @@ QToolButton* CustomTitleBar::addCloseButton()
                 "    font-weight: bold; background-color: transparent; "
                 "    border: none; }"
                 "QToolButton:hover { color: #cccccc; }")
-            .arg(get_metrics(m_appearance).close_button_font_size));
+            .arg(font_size));
     auto* layout = qobject_cast<QHBoxLayout*>(this->layout());
     // Without vertical margins, the button fits in the fixed height. The title
     // is still centered vertically.
@@ -98,7 +107,6 @@ QToolButton* CustomTitleBar::addCloseButton()
     layout->setContentsMargins(margins);
     layout->addStretch();
     layout->addWidget(m_close_button);
-    return m_close_button;
 }
 
 QToolButton* CustomTitleBar::getCloseButton() const
@@ -106,16 +114,11 @@ QToolButton* CustomTitleBar::getCloseButton() const
     return m_close_button;
 }
 
-void CustomTitleBar::setDraggable(bool draggable)
-{
-    m_draggable = draggable;
-}
-
 void CustomTitleBar::paintEvent(QPaintEvent* event)
 {
     QPainter painter(this);
-    const auto background_color = get_metrics(m_appearance).background_color;
-    if (m_appearance == TitleBarAppearance::POPUP) {
+    const auto background_color = get_config(m_type).background_color;
+    if (m_type == TitleBarType::POPUP) {
         // the popup draws its own outline
         painter.fillRect(rect(), background_color);
         return;
@@ -134,7 +137,7 @@ void CustomTitleBar::mousePressEvent(QMouseEvent* event)
 
 void CustomTitleBar::mouseMoveEvent(QMouseEvent* event)
 {
-    if (!m_draggable) {
+    if (!get_config(m_type).draggable) {
         return;
     }
     if (event->buttons() & Qt::LeftButton) {
