@@ -12,8 +12,7 @@ namespace sketcher
 /// The background color of a checked tool button or a selected table row
 const QString CHECKED_BACKGROUND_COLOR{"#d4e6f1"};
 
-/// The background color of a hovered tool button, or of the current table row
-/// when it isn't selected
+/// The background color of a hovered tool button
 const QString HOVER_BACKGROUND_COLOR{"#edf7fc"};
 
 /// The text color for informational or status text

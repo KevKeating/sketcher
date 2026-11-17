@@ -17,12 +17,19 @@ namespace schrodinger
 {
 namespace sketcher
 {
+namespace
+{
 
 static const QString NO_MATCHES_TEXT =
     "No monomers match search & filter criteria";
 
-namespace
-{
+// The current table row is only relevant when the table is in mutation mode
+// (i.e. there's a selection in the Sketcher canvas). In that case, we don't
+// select rows since we can't switch the scene tool, but we use the current
+// table row to give visual feedback in response to a click or keyboard
+// navigation. #f1f6f8 is a very faded (i.e. lowered saturation) version of
+// HOVER_BACKGROUND_COLOR (#edf7fc).
+static const QColor CURRENT_TABLE_ROW_COLOR("#f1f6f8");
 
 /**
  * Paint the current row's background when it isn't selected, and skip Qt's
@@ -42,7 +49,7 @@ class CurrentRowDelegate : public QStyledItemDelegate
     {
         if (!(option.state & QStyle::State_Selected) &&
             index.row() == m_view->currentIndex().row()) {
-            painter->fillRect(option.rect, QColor(HOVER_BACKGROUND_COLOR));
+            painter->fillRect(option.rect, CURRENT_TABLE_ROW_COLOR);
         }
         auto option_without_focus = option;
         option_without_focus.state &= ~QStyle::State_HasFocus;
