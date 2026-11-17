@@ -7,6 +7,7 @@
 #include <QMouseEvent>
 #include <QPainter>
 #include <QToolButton>
+#include <QtGlobal>
 
 #include "schrodinger/sketcher/sketcher_css_style.h"
 
@@ -28,6 +29,18 @@ struct TitleBarMetrics {
     QColor background_color;
 };
 
+static const TitleBarMetrics POPUP_TITLE_BAR_METRICS(
+    /* height: */ 24,
+    /* title font size: */ 12,
+    /* close button font size: */ 14,
+    /* background color: */ QColor(POPUP_TITLE_BAR_COLOR));
+
+static const TitleBarMetrics DIALOG_TITLE_BAR_METRICS(
+    /* height: */ 30,
+    /* title font size: */ 14,
+    /* close button font size: */ 16,
+    /* background color: */ QColor(64, 64, 64));
+
 } // namespace
 
 /**
@@ -36,9 +49,11 @@ struct TitleBarMetrics {
 static TitleBarMetrics get_metrics(TitleBarAppearance appearance)
 {
     if (appearance == TitleBarAppearance::POPUP) {
-        return {24, 12, 14, QColor(POPUP_TITLE_BAR_COLOR)};
+        return POPUP_TITLE_BAR_METRICS;
+    } else if (appearance == TitleBarAppearance::DIALOG) {
+        return DIALOG_TITLE_BAR_METRICS;
     }
-    return {30, 14, 16, QColor(64, 64, 64)};
+    Q_UNREACHABLE_RETURN(DIALOG_TITLE_BAR_METRICS);
 }
 
 CustomTitleBar::CustomTitleBar(const QString& title, QWidget* parent,
