@@ -692,8 +692,6 @@ things clean:
   - **Screenshot references:** regenerate only those that the step
     intentionally changes, such as side-bar layout. List each regenerated
     snapshot in the hand-off summary.
-  - **Coverage table:** update `test/wasm/RESOLVED_CASE_COVERAGE.md` rows
-    for any suite whose coverage changes.
 - **When finishing**
   - Run clang-format on changed C++, and prettier on changed JS (see
     `CLAUDE.md`).

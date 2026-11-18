@@ -41,6 +41,7 @@ import {
   openMonomerSketcher,
   searchMonomerDatabase,
   setPolymerTypeChecked,
+  tabFromSearchToMonomerDatabaseTable,
 } from './monomer_helpers.js';
 
 test.beforeEach(async ({ page }) => {
@@ -431,9 +432,9 @@ test('SKETCH-2827: with a canvas selection, browsing never mutates and each clic
   await pasteText(page, 'PEPTIDE1{A}$$$$V2.0');
   await selectAll(page);
   await openMonomerDatabase(page);
-  // Tab moves the focus from the search box to the table, which makes the
-  // first row current without selecting or committing it
-  await page.keyboard.press('Tab');
+  // Moving the focus from the search box to the table makes the first row
+  // current without selecting or committing it
+  await tabFromSearchToMonomerDatabaseTable(page);
   await page.keyboard.press('ArrowDown');
   await page.keyboard.press('ArrowDown');
   let table = await monomerDatabaseTable(page);
@@ -487,10 +488,10 @@ test('SKETCH-2827: Enter in tool mode activates the current row without closing 
   let table = await monomerDatabaseTable(page);
   expect(table.currentRow).toBe(-1);
   expect(table.selectedRow).toBe(-1);
-  // The search text "Aib" is kept, so Aib is the only row. Tab moves the focus
-  // from the search box to the table, which makes it current without
-  // selecting or activating it.
-  await page.keyboard.press('Tab');
+  // The search text "Aib" is kept, so Aib is the only row. Moving the focus
+  // from the search box to the table makes it current without selecting or
+  // activating it.
+  await tabFromSearchToMonomerDatabaseTable(page);
   table = await monomerDatabaseTable(page);
   expect(table.selectedRow).toBe(-1);
   expect((await lastUsed(page)).checked).toBe(false);
@@ -780,6 +781,27 @@ test('SKETCH-2827: clicking the filter button while the filter popup is open onl
   await closeMonomerDatabase(page);
 });
 
+test('SKETCH-2827: Tab moves the focus from the search box to the filter button and then to the table', async ({
+  page,
+}) => {
+  await openMonomerDatabase(page);
+  // the popup opens with the focus in the search box, so one Tab reaches the
+  // filter button, which Space presses
+  await page.keyboard.press('Tab');
+  await page.keyboard.press('Space');
+  await expect.poll(() => isMonomerDatabaseFilterOpen(page)).toBe(true);
+  // closing the filter popup returns the focus to the filter button
+  await page.keyboard.press('Escape');
+  await expect.poll(() => isMonomerDatabaseFilterOpen(page)).toBe(false);
+  expect(await isMonomerDatabaseOpen(page)).toBe(true);
+  expect((await monomerDatabaseTable(page)).currentRow).toBe(-1);
+  // the next Tab reaches the table, which makes its first row current
+  await page.keyboard.press('Tab');
+  await expect.poll(async () => (await monomerDatabaseTable(page)).currentRow).toBe(0);
+  expect(await isMonomerDatabaseFilterOpen(page)).toBe(false);
+  await closeMonomerDatabase(page);
+});
+
 test('SKETCH-2827: updating the database keeps the filter, search and sort on the same page', async ({
   page,
 }) => {
@@ -857,8 +879,8 @@ test('SKETCH-2827: with a canvas selection, browsing to an RNA row keeps the pag
     await closePolymerTypeDropdown(page);
     await closeMonomerDatabaseFilter(page);
     await searchMonomerDatabase(page, 'meA');
-    // Tab moves the focus to the table, which makes meA current
-    await page.keyboard.press('Tab');
+    // moving the focus to the table makes meA current
+    await tabFromSearchToMonomerDatabaseTable(page);
     const table = await monomerDatabaseTable(page);
     expect((await monomerDatabaseRow(page, table.currentRow)).cells[0]).toBe('meA');
     expect((await widgetState(page, 'amino_monomer_btn')).checked).toBe(true);

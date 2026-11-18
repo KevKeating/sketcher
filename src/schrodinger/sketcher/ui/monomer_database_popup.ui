@@ -162,8 +162,8 @@
  </widget>
  <tabstops>
   <tabstop>monomer_db_search_le</tabstop>
-  <tabstop>monomer_db_table</tabstop>
   <tabstop>monomer_db_filter_btn</tabstop>
+  <tabstop>monomer_db_table</tabstop>
   <tabstop>monomer_db_load_link</tabstop>
   <tabstop>monomer_db_close_link</tabstop>
  </tabstops>

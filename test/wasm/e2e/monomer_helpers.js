@@ -247,6 +247,16 @@ export async function chooseFromMonomerDatabase(
   if (close) await closeMonomerDatabase(page);
 }
 
+/**
+ * Move the keyboard focus from the open popup's search box to its table with
+ * Tab, which makes the table's first row current if no row is current. The tab
+ * order is the search box, the filter button and then the table.
+ */
+export async function tabFromSearchToMonomerDatabaseTable(page) {
+  await page.keyboard.press('Tab');
+  await page.keyboard.press('Tab');
+}
+
 export async function isMonomerDatabaseFilterOpen(page) {
   return isWidgetVisible(page, 'monomer_db_filter_popup');
 }

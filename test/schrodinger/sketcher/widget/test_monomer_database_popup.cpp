@@ -1552,6 +1552,43 @@ BOOST_AUTO_TEST_CASE(cross_page_row_choice)
 }
 
 /**
+ * @return The widget after the given one that Tab moves the focus to, i.e. the
+ * next visible, enabled widget in the focus chain that accepts Tab focus
+ */
+static QWidget* get_next_tab_stop(QWidget* widget)
+{
+    for (auto* next = widget->nextInFocusChain(); next != widget;
+         next = next->nextInFocusChain()) {
+        if ((next->focusPolicy() & Qt::TabFocus) && next->isVisible() &&
+            next->isEnabled()) {
+            return next;
+        }
+    }
+    return nullptr;
+}
+
+/**
+ * Tab moves the focus from the search box to the filter button, then to the
+ * table and then to the links
+ */
+BOOST_AUTO_TEST_CASE(tab_order)
+{
+    PopupFixture fixture;
+    auto* popup = fixture.openPopup();
+    QWidget* widget = get_search_box(*popup);
+    for (const auto* name : {"monomer_db_filter_btn", "monomer_db_table",
+                             "monomer_db_load_link", "monomer_db_close_link"}) {
+        BOOST_TEST_CONTEXT(name)
+        {
+            widget = get_next_tab_stop(widget);
+            BOOST_REQUIRE(widget != nullptr);
+            BOOST_TEST(widget->objectName().toStdString() == name);
+        }
+    }
+    popup->hide();
+}
+
+/**
  * With a canvas selection under Select or Move/Rotate, navigating to an RNA
  * row doesn't switch pages, while committing it does, keeping the draw tool
  * and each page's last monomeric tool
