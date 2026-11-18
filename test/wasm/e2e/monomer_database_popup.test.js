@@ -23,17 +23,24 @@ import {
 } from './e2e_helpers.js';
 import {
   MONOMER_DB_TABLE,
+  chooseFilterItem,
   chooseFromMonomerDatabase,
+  clickComboItem,
   closeMonomerDatabase,
+  closeMonomerDatabaseFilter,
+  closePolymerTypeDropdown,
   findMonomerDatabaseRow,
+  isMonomerDatabaseFilterOpen,
   isMonomerDatabaseOpen,
   loadDatabase,
   monomerDatabaseRow,
   monomerDatabaseSymbols,
   monomerDatabaseTable,
   openMonomerDatabase,
+  openMonomerDatabaseFilter,
   openMonomerSketcher,
   searchMonomerDatabase,
+  setPolymerTypeChecked,
 } from './monomer_helpers.js';
 
 test.beforeEach(async ({ page }) => {
@@ -538,4 +545,333 @@ test('SKETCH-2827: a structure can be chosen from either page', async ({ page })
   // each page remembers its own structure
   await clickWidget(page, 'amino_monomer_btn');
   await expect.poll(async () => (await lastUsed(page)).text).toBe('CHM2');
+});
+
+/** The filter button's style sheet shows the orange icon when filtering */
+async function isFilterButtonFiltering(page) {
+  return (await widgetState(page, 'monomer_db_filter_btn')).styleSheet.includes(
+    'filter-menu_lb_filtering.png',
+  );
+}
+
+/** Return a filter popup combo box's displayed text, enabled state and boldness */
+async function comboState(page, combo) {
+  const { text, enabled, bold } = await widgetState(page, combo);
+  return { text, enabled, bold };
+}
+
+async function filtersApplied(page) {
+  return (await widgetState(page, 'filters_applied_lbl')).text;
+}
+
+/** Move the mouse off the filter button so that it isn't drawn hovered */
+async function moveMouseToPopupTitle(page) {
+  const title = await requireRect(page, 'widget:monomer_db_title_lbl');
+  await page.mouse.move(title.x + 5, title.y + title.height / 2);
+}
+
+test('SKETCH-2827: polymer types are toggled in a dropdown nested in two popups, and filter the table live', async ({
+  page,
+}) => {
+  await loadDatabase(page, 'mixed_monomers.json');
+  await openMonomerDatabaseFilter(page);
+  // the amino acid page's default
+  expect(await comboState(page, 'polymer_type_combo')).toEqual({
+    text: 'Peptide, Structure',
+    enabled: true,
+    bold: true,
+  });
+  expect((await comboState(page, 'monomer_type_combo')).enabled).toBe(true);
+  expect((await comboState(page, 'natural_analog_combo')).enabled).toBe(true);
+  expect(await filtersApplied(page)).toBe('1 filter applied');
+  expect((await monomerDatabaseTable(page)).headers).toEqual(['Symbol', 'Name', 'Type', 'Analog']);
+
+  // checking Nucleic acid keeps the dropdown, the filter popup and the
+  // Monomer Database popup open
+  await setPolymerTypeChecked(page, 'Nucleic acid', true);
+  expect((await widgetState(page, 'polymer_type_combo')).open).toBe(true);
+  expect(await isMonomerDatabaseFilterOpen(page)).toBe(true);
+  expect(await isMonomerDatabaseOpen(page)).toBe(true);
+  expect(await comboState(page, 'polymer_type_combo')).toEqual({
+    text: 'Any',
+    enabled: true,
+    bold: false,
+  });
+  expect(await comboState(page, 'monomer_type_combo')).toEqual({
+    text: 'Any',
+    enabled: false,
+    bold: false,
+  });
+  expect(await comboState(page, 'natural_analog_combo')).toEqual({
+    text: 'Any or None',
+    enabled: false,
+    bold: false,
+  });
+  expect(await filtersApplied(page)).toBe('No filters applied');
+  expect(await matchCount(page)).toBe('11 matches');
+
+  // nucleic acids only
+  await setPolymerTypeChecked(page, 'Peptide', false);
+  await setPolymerTypeChecked(page, 'Structure', false);
+  expect((await comboState(page, 'polymer_type_combo')).text).toBe('Nucleic acid');
+  expect((await comboState(page, 'monomer_type_combo')).enabled).toBe(false);
+  expect((await comboState(page, 'natural_analog_combo')).enabled).toBe(true);
+  expect(await monomerDatabaseSymbols(page)).toEqual(['meA', 'NAx']);
+  expect(await matchCount(page)).toBe('2 matches');
+  // a single polymer type hides the Type column
+  expect((await monomerDatabaseTable(page)).headers).toEqual(['Symbol', 'Name', 'Analog']);
+
+  // the last polymer type can't be unchecked
+  await clickComboItem(page, 'polymer_type_combo', 'Nucleic acid');
+  expect((await comboState(page, 'polymer_type_combo')).text).toBe('Nucleic acid');
+  expect((await widgetState(page, 'polymer_type_combo')).open).toBe(true);
+
+  // Escape closes only the dropdown
+  await closePolymerTypeDropdown(page);
+  expect(await isMonomerDatabaseFilterOpen(page)).toBe(true);
+  expect(await isMonomerDatabaseOpen(page)).toBe(true);
+
+  // the analog filter applies to nucleic acids
+  await chooseFilterItem(page, 'natural_analog_combo', 'A');
+  expect((await comboState(page, 'natural_analog_combo')).bold).toBe(true);
+  expect(await filtersApplied(page)).toBe('2 filters applied');
+  expect(await monomerDatabaseSymbols(page)).toEqual(['meA']);
+  await closeMonomerDatabaseFilter(page);
+  await closeMonomerDatabase(page);
+});
+
+test('SKETCH-2827: Backbone and an analog survive checking and unchecking Nucleic acid, but not switching to it', async ({
+  page,
+}) => {
+  await loadDatabase(page, 'mixed_monomers.json');
+  await openMonomerDatabaseFilter(page);
+  await setPolymerTypeChecked(page, 'Structure', false);
+  await closePolymerTypeDropdown(page);
+  await chooseFilterItem(page, 'monomer_type_combo', 'Backbone');
+  await chooseFilterItem(page, 'natural_analog_combo', 'A');
+  expect(await monomerDatabaseSymbols(page)).toEqual(['dAla']);
+  expect(await filtersApplied(page)).toBe('3 filters applied');
+
+  // checking Nucleic acid disables both combos, which show Any and Any or None
+  await setPolymerTypeChecked(page, 'Nucleic acid', true);
+  expect(await comboState(page, 'monomer_type_combo')).toEqual({
+    text: 'Any',
+    enabled: false,
+    bold: false,
+  });
+  expect(await comboState(page, 'natural_analog_combo')).toEqual({
+    text: 'Any or None',
+    enabled: false,
+    bold: false,
+  });
+  expect(await filtersApplied(page)).toBe('1 filter applied');
+  expect(await matchCount(page)).toBe('9 matches');
+
+  // unchecking it restores them
+  await setPolymerTypeChecked(page, 'Nucleic acid', false);
+  expect(await comboState(page, 'monomer_type_combo')).toEqual({
+    text: 'Backbone',
+    enabled: true,
+    bold: true,
+  });
+  expect(await comboState(page, 'natural_analog_combo')).toEqual({
+    text: 'A',
+    enabled: true,
+    bold: true,
+  });
+  expect(await monomerDatabaseSymbols(page)).toEqual(['dAla']);
+
+  // checking Nucleic acid and then unchecking Peptide forgets both
+  await setPolymerTypeChecked(page, 'Nucleic acid', true);
+  await setPolymerTypeChecked(page, 'Peptide', false);
+  expect((await comboState(page, 'natural_analog_combo')).text).toBe('Any or None');
+  expect((await comboState(page, 'natural_analog_combo')).enabled).toBe(true);
+  await setPolymerTypeChecked(page, 'Peptide', true);
+  await setPolymerTypeChecked(page, 'Nucleic acid', false);
+  expect(await comboState(page, 'monomer_type_combo')).toEqual({
+    text: 'Any',
+    enabled: true,
+    bold: false,
+  });
+  expect(await comboState(page, 'natural_analog_combo')).toEqual({
+    text: 'Any or None',
+    enabled: true,
+    bold: false,
+  });
+  await closePolymerTypeDropdown(page);
+  await closeMonomerDatabaseFilter(page);
+  await closeMonomerDatabase(page);
+});
+
+test('SKETCH-2827: Clear All shows every monomer on either page and keeps the search and sort', async ({
+  page,
+}) => {
+  await loadDatabase(page, 'mixed_monomers.json');
+  for (const pageButton of ['amino_monomer_btn', 'nucleic_monomer_btn']) {
+    await clickWidget(page, pageButton);
+    await openMonomerDatabase(page);
+    await searchMonomerDatabase(page, 'a');
+    // sort by name, descending
+    const table = await monomerDatabaseTable(page);
+    const nameHeader = { x: table.x + table.width / 2, y: table.y + 10 };
+    await mouseClick(page, nameHeader.x, nameHeader.y);
+    await mouseClick(page, nameHeader.x, nameHeader.y);
+    expect(await isFilterButtonFiltering(page)).toBe(true);
+    if (pageButton === 'amino_monomer_btn') {
+      await moveMouseToPopupTitle(page);
+      await screenshotRegion(
+        page,
+        'monomer-db-filter-button-filtering.png',
+        await requireRect(page, 'widget:monomer_db_filter_btn'),
+      );
+    }
+
+    await openMonomerDatabaseFilter(page);
+    await clickWidget(page, 'filter_clear_all_link');
+    await expect.poll(() => filtersApplied(page)).toBe('No filters applied');
+    expect(await comboState(page, 'polymer_type_combo')).toEqual({
+      text: 'Any',
+      enabled: true,
+      bold: false,
+    });
+    expect((await comboState(page, 'monomer_type_combo')).text).toBe('Any');
+    expect((await comboState(page, 'natural_analog_combo')).text).toBe('Any or None');
+    expect(await isFilterButtonFiltering(page)).toBe(false);
+    await closeMonomerDatabaseFilter(page);
+    expect(await searchText(page)).toBe('a');
+    // every polymer type, still sorted by name, descending
+    const symbols = await monomerDatabaseSymbols(page);
+    expect(symbols).toContain('meA');
+    expect(symbols).toContain('dAla');
+    const { rowCount } = await monomerDatabaseTable(page);
+    const names = [];
+    for (let row = 0; row < rowCount; row += 1) {
+      names.push((await monomerDatabaseRow(page, row)).cells[1].toLowerCase());
+    }
+    expect(names).toEqual([...names].sort().reverse());
+    expect((await monomerDatabaseTable(page)).headers).toEqual([
+      'Symbol',
+      'Name',
+      'Type',
+      'Analog',
+    ]);
+    if (pageButton === 'amino_monomer_btn') {
+      await moveMouseToPopupTitle(page);
+      await screenshotRegion(
+        page,
+        'monomer-db-filter-button-normal.png',
+        await requireRect(page, 'widget:monomer_db_filter_btn'),
+      );
+    }
+    await closeMonomerDatabase(page);
+  }
+});
+
+test('SKETCH-2827: clicking the filter button while the filter popup is open only closes it', async ({
+  page,
+}) => {
+  await openMonomerDatabaseFilter(page);
+  await clickWidget(page, 'monomer_db_filter_btn');
+  await expect.poll(() => isMonomerDatabaseFilterOpen(page)).toBe(false);
+  // give a reopened popup time to appear
+  await page.waitForTimeout(500);
+  expect(await isMonomerDatabaseFilterOpen(page)).toBe(false);
+  expect(await isMonomerDatabaseOpen(page)).toBe(true);
+  await closeMonomerDatabase(page);
+});
+
+test('SKETCH-2827: updating the database keeps the filter, search and sort on the same page', async ({
+  page,
+}) => {
+  await loadDatabase(page, 'mixed_monomers.json');
+  await openMonomerDatabaseFilter(page);
+  await chooseFilterItem(page, 'monomer_type_combo', 'Terminal');
+  expect(await monomerDatabaseSymbols(page)).toEqual(['ac', 'am', 'Bz']);
+  // with the filter popup open, a click on the load link only closes the
+  // filter popup
+  await clickWidget(page, 'monomer_db_load_link');
+  await expect.poll(() => isMonomerDatabaseFilterOpen(page)).toBe(false);
+  expect(await isMonomerDatabaseOpen(page)).toBe(true);
+  await searchMonomerDatabase(page, 'a');
+
+  await setFilePickerResult(page, path.join(FIXTURES, 'chem_monomers.json'));
+  await clickLoadLink(page, 'Update Database...');
+  expect(await isMonomerDatabaseFilterOpen(page)).toBe(false);
+  await expectDialog(page, 'Monomer Database', 30000);
+  await closeDialog(page);
+  expect(await isMonomerDatabaseOpen(page)).toBe(false);
+
+  await openMonomerDatabase(page);
+  expect(await searchText(page)).toBe('a');
+  // chem_monomers.json has no terminal peptides
+  expect(await monomerDatabaseSymbols(page)).toEqual(['ac', 'am']);
+  await openMonomerDatabaseFilter(page);
+  expect((await comboState(page, 'monomer_type_combo')).text).toBe('Terminal');
+  await closeMonomerDatabaseFilter(page);
+  await closeMonomerDatabase(page);
+});
+
+test('SKETCH-2827: choosing an RNA row on the amino acid page switches pages, and the filter is kept there', async ({
+  page,
+}) => {
+  await loadDatabase(page, 'mixed_monomers.json');
+  await openMonomerDatabaseFilter(page);
+  await setPolymerTypeChecked(page, 'Nucleic acid', true);
+  await setPolymerTypeChecked(page, 'Structure', false);
+  await closePolymerTypeDropdown(page);
+  await closeMonomerDatabaseFilter(page);
+  const before = await requireRect(page, 'widget:monomer_db_popup');
+
+  await chooseFromMonomerDatabase(page, 'meA', { close: false });
+  await expect
+    .poll(async () => (await widgetState(page, 'nucleic_monomer_btn')).checked)
+    .toBe(true);
+  expect((await lastUsed(page)).text).toBe('meA');
+  // the popup stays open where it was
+  expect(await isMonomerDatabaseOpen(page)).toBe(true);
+  const after = await requireRect(page, 'widget:monomer_db_popup');
+  expect({ x: after.x, y: after.y }).toEqual({ x: before.x, y: before.y });
+  await closeMonomerDatabase(page);
+
+  await openMonomerDatabase(page);
+  expect(await searchText(page)).toBe('meA');
+  await openMonomerDatabaseFilter(page);
+  expect((await comboState(page, 'polymer_type_combo')).text).toBe('Peptide, Nucleic acid');
+  await closeMonomerDatabaseFilter(page);
+  await closeMonomerDatabase(page);
+});
+
+test('SKETCH-2827: with a canvas selection, browsing to an RNA row keeps the page and committing it switches pages', async ({
+  page,
+}) => {
+  await loadDatabase(page, 'mixed_monomers.json');
+  await pasteText(page, 'PEPTIDE1{A}$$$$V2.0');
+  await selectAll(page);
+  for (const toolButton of ['select_tool_btn', 'move_rotate_btn']) {
+    if (toolButton === 'move_rotate_btn') await clickWidget(page, toolButton);
+    await expect.poll(async () => (await widgetState(page, toolButton)).checked).toBe(true);
+    expect((await widgetState(page, 'amino_monomer_btn')).checked).toBe(true);
+
+    await openMonomerDatabaseFilter(page);
+    await setPolymerTypeChecked(page, 'Nucleic acid', true);
+    await closePolymerTypeDropdown(page);
+    await closeMonomerDatabaseFilter(page);
+    await searchMonomerDatabase(page, 'meA');
+    // Tab moves the focus to the table, which makes meA current
+    await page.keyboard.press('Tab');
+    const table = await monomerDatabaseTable(page);
+    expect((await monomerDatabaseRow(page, table.currentRow)).cells[0]).toBe('meA');
+    expect((await widgetState(page, 'amino_monomer_btn')).checked).toBe(true);
+
+    await page.keyboard.press('Enter');
+    await expect
+      .poll(async () => (await widgetState(page, 'nucleic_monomer_btn')).checked)
+      .toBe(true);
+    expect((await widgetState(page, toolButton)).checked).toBe(true);
+    // the selected peptide can't become a nucleic acid monomer
+    expect(await getExportedHelm(page)).toBe('PEPTIDE1{A}$$$$V2.0');
+    expect(await isMonomerDatabaseOpen(page)).toBe(true);
+    await closeMonomerDatabase(page);
+    await clickWidget(page, 'amino_monomer_btn');
+  }
 });
