@@ -663,6 +663,42 @@ test('SKETCH-2827: after an item is clicked, a click elsewhere in the filter pop
   await closeMonomerDatabase(page);
 });
 
+test('SKETCH-2827: after a filter combo box is used, a click on the Monomer Database popup still closes the filter popup', async ({
+  page,
+}) => {
+  /** Click the Monomer Database popup outside of the filter popup */
+  async function clickMonomerDatabasePopup() {
+    await clickWidget(page, 'monomer_db_title_lbl');
+  }
+
+  // a dropdown closed by a click in the filter popup
+  await openMonomerDatabaseFilter(page);
+  await openComboDropdown(page, 'monomer_type_combo');
+  await clickWidget(page, 'polymer_type_lbl');
+  await expect.poll(async () => (await widgetState(page, 'monomer_type_combo')).open).toBe(false);
+  await clickMonomerDatabasePopup();
+  await expect.poll(() => isMonomerDatabaseFilterOpen(page)).toBe(false);
+  expect(await isMonomerDatabaseOpen(page)).toBe(true);
+
+  // a dropdown closed by choosing an item
+  await openMonomerDatabaseFilter(page);
+  await chooseFilterItem(page, 'monomer_type_combo', 'Backbone');
+  await clickMonomerDatabasePopup();
+  await expect.poll(() => isMonomerDatabaseFilterOpen(page)).toBe(false);
+  expect(await isMonomerDatabaseOpen(page)).toBe(true);
+
+  // an open dropdown takes one click to close, and the filter popup another
+  await openMonomerDatabaseFilter(page);
+  await openComboDropdown(page, 'polymer_type_combo');
+  await clickMonomerDatabasePopup();
+  await expect.poll(async () => (await widgetState(page, 'polymer_type_combo')).open).toBe(false);
+  expect(await isMonomerDatabaseFilterOpen(page)).toBe(true);
+  await clickMonomerDatabasePopup();
+  await expect.poll(() => isMonomerDatabaseFilterOpen(page)).toBe(false);
+  expect(await isMonomerDatabaseOpen(page)).toBe(true);
+  await closeMonomerDatabase(page);
+});
+
 test('SKETCH-2827: Backbone and an analog survive checking and unchecking Nucleic acid, but not switching to it', async ({
   page,
 }) => {

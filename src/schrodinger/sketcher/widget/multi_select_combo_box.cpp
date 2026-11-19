@@ -52,13 +52,6 @@ MultiSelectComboBox::MultiSelectComboBox(QWidget* parent) : QComboBox(parent)
     // itself in response to it.
     view()->installEventFilter(this);
     view()->viewport()->installEventFilter(this);
-    // Clicking an item leaves the dropdown open, so keep that click from
-    // giving the dropdown the focus. Otherwise, on WASM, a later click on a
-    // popup that contains this combo box would move the focus back to that
-    // popup, which makes it the active popup instead of the dropdown, so the
-    // dropdown would ignore the click and stay open. (The dropdown still gets
-    // key presses since Qt sends them to the active popup.)
-    view()->window()->setWindowFlag(Qt::WindowDoesNotAcceptFocus);
 }
 
 void MultiSelectComboBox::onRowsInserted(const QModelIndex& parent, int first,

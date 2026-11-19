@@ -402,7 +402,11 @@ generate_git_patch_command(
   # is fixed upstream in Qt 6.12.1 and 6.13.
   qt_QTBUG-151788.patch
   # Support the $CFGDIR paths written by Emscripten 6.0.4 and later.
-  qt_emsdk_cfgdir.patch)
+  qt_emsdk_cfgdir.patch
+  # On WASM, keep a click on a popup from reordering the open popups, which left
+  # a child popup (e.g. a combo box's dropdown) open when its parent popup was
+  # clicked. Not yet reported upstream.
+  qt_nested_popup_focus.patch)
 
 set_cmake_arg(QT_BUILD_SUBMODULES ${QT_GIT_SUBMODULES})
 ExternalProject_Add(
