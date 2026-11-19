@@ -61,6 +61,33 @@ async function searchText(page) {
   return (await widgetState(page, 'monomer_db_search_le')).text;
 }
 
+/** The Monomer Database table's names, lowercased, in display order */
+async function monomerDatabaseNames(page) {
+  const { rowCount } = await monomerDatabaseTable(page);
+  const names = [];
+  for (let row = 0; row < rowCount; row += 1) {
+    names.push((await monomerDatabaseRow(page, row)).cells[1].toLowerCase());
+  }
+  return names;
+}
+
+/**
+ * Click the Monomer Database table's Name header twice, which sorts by name,
+ * descending, when the table is sorted by another column or by name,
+ * descending.
+ */
+async function sortMonomerDatabaseByNameDescending(page) {
+  const table = await monomerDatabaseTable(page);
+  const x = table.x + table.width / 2;
+  const y = table.y + 10;
+  await mouseClick(page, x, y);
+  // Click somewhere else in the header, so that Qt doesn't treat the second
+  // click as a double-click, which wouldn't change the sort again
+  await mouseClick(page, x + 20, y);
+  const names = await monomerDatabaseNames(page);
+  expect(names).toEqual([...names].sort().reverse());
+}
+
 /** Click the link that loads or updates the monomer database */
 async function clickLoadLink(page, expectedText) {
   expect((await widgetState(page, 'monomer_db_load_link')).text).toBe(expectedText);
@@ -149,14 +176,7 @@ test('SKETCH-2827: loading or updating closes the popup, which stays closed and 
   await loadDatabase(page, 'mixed_monomers.json');
   await openMonomerDatabase(page);
   await searchMonomerDatabase(page, 'a');
-  // sort by name, descending
-  const table = await monomerDatabaseTable(page);
-  const nameHeader = {
-    x: table.x + table.width / 2,
-    y: table.y + 10,
-  };
-  await mouseClick(page, nameHeader.x, nameHeader.y);
-  await mouseClick(page, nameHeader.x, nameHeader.y);
+  await sortMonomerDatabaseByNameDescending(page);
   const sorted = await monomerDatabaseSymbols(page);
 
   // cancelling the file chooser
@@ -779,11 +799,7 @@ test('SKETCH-2827: Clear All shows every monomer on either page and keeps the se
     await clickWidget(page, pageButton);
     await openMonomerDatabase(page);
     await searchMonomerDatabase(page, 'a');
-    // sort by name, descending
-    const table = await monomerDatabaseTable(page);
-    const nameHeader = { x: table.x + table.width / 2, y: table.y + 10 };
-    await mouseClick(page, nameHeader.x, nameHeader.y);
-    await mouseClick(page, nameHeader.x, nameHeader.y);
+    await sortMonomerDatabaseByNameDescending(page);
     expect(await isFilterButtonFiltering(page)).toBe(true);
     if (pageButton === 'amino_monomer_btn') {
       await moveMouseToPopupTitle(page);
@@ -811,11 +827,7 @@ test('SKETCH-2827: Clear All shows every monomer on either page and keeps the se
     const symbols = await monomerDatabaseSymbols(page);
     expect(symbols).toContain('meA');
     expect(symbols).toContain('dAla');
-    const { rowCount } = await monomerDatabaseTable(page);
-    const names = [];
-    for (let row = 0; row < rowCount; row += 1) {
-      names.push((await monomerDatabaseRow(page, row)).cells[1].toLowerCase());
-    }
+    const names = await monomerDatabaseNames(page);
     expect(names).toEqual([...names].sort().reverse());
     expect((await monomerDatabaseTable(page)).headers).toEqual([
       'Symbol',
