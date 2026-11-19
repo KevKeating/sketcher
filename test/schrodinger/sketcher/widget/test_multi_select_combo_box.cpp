@@ -1,9 +1,13 @@
 #define BOOST_TEST_MODULE test_multi_select_combo_box
 #include <boost/test/unit_test.hpp>
 
+#include <utility>
+#include <vector>
+
 #include <QAbstractItemView>
 #include <QApplication>
 #include <QFontMetrics>
+#include <QMouseEvent>
 #include <QScrollBar>
 #include <QSignalBlocker>
 #include <QSignalSpy>
@@ -49,6 +53,52 @@ struct ComboFixture {
             view->viewport(), Qt::LeftButton, Qt::NoModifier,
             view->visualRect(combo.model()->index(row, 0)).center());
         QApplication::processEvents();
+    }
+
+    /**
+     * Move the mouse over the given item in the open dropdown
+     */
+    void hoverItem(int row)
+    {
+        auto* view = combo.view();
+        BOOST_REQUIRE(view->isVisible());
+        auto* viewport = view->viewport();
+        const auto pos =
+            view->visualRect(combo.model()->index(row, 0)).center();
+        QMouseEvent move(QEvent::MouseMove, pos, viewport->mapToGlobal(pos),
+                         Qt::NoButton, Qt::NoButton, Qt::NoModifier);
+        QApplication::sendEvent(viewport, &move);
+    }
+
+    /**
+     * Press the given key in the open dropdown
+     */
+    void pressKey(Qt::Key key, Qt::KeyboardModifiers modifiers = {})
+    {
+        auto* view = combo.view();
+        BOOST_REQUIRE(view->isVisible());
+        QTest::keyClick(view, key, modifiers);
+    }
+
+    /**
+     * @return The rows that the dropdown highlights
+     */
+    std::vector<int> getHighlightedRows()
+    {
+        std::vector<int> rows;
+        for (const auto& index :
+             combo.view()->selectionModel()->selectedIndexes()) {
+            rows.push_back(index.row());
+        }
+        return rows;
+    }
+
+    /**
+     * @return The dropdown's current row, which keyboard input applies to
+     */
+    int getCurrentRow()
+    {
+        return combo.view()->currentIndex().row();
     }
 
     std::vector<bool> getCheckStates()
@@ -180,30 +230,158 @@ BOOST_AUTO_TEST_CASE(click_toggles)
 }
 
 /**
- * Space, Enter and Return toggle the current item and keep the dropdown open,
- * and Escape closes it
+ * Space toggles the current item, keeps the dropdown open and highlights the
+ * current item, so that the next Up or Down moves the highlight. Escape
+ * closes the dropdown.
  */
-BOOST_AUTO_TEST_CASE(keys_toggle)
+BOOST_AUTO_TEST_CASE(space_toggles)
 {
     ComboFixture fixture;
     auto& combo = fixture.combo;
     combo.showPopup();
     auto* view = combo.view();
     BOOST_REQUIRE(view->isVisible());
-    view->setCurrentIndex(combo.model()->index(1, 0));
+    BOOST_TEST(fixture.getHighlightedRows().empty());
+
+    fixture.pressKey(Qt::Key_Space);
+    BOOST_TEST(fixture.getCheckStates() ==
+                   (std::vector<bool>{true, false, false}),
+               boost::test_tools::per_element());
+    BOOST_TEST(fixture.getHighlightedRows() == std::vector<int>{0},
+               boost::test_tools::per_element());
+    BOOST_TEST(view->isVisible());
+
+    fixture.pressKey(Qt::Key_Down);
+    BOOST_TEST(fixture.getCurrentRow() == 1);
+    BOOST_TEST(fixture.getHighlightedRows() == std::vector<int>{1},
+               boost::test_tools::per_element());
+    fixture.pressKey(Qt::Key_Space);
+    BOOST_TEST(fixture.getCheckStates() ==
+                   (std::vector<bool>{true, true, false}),
+               boost::test_tools::per_element());
+    BOOST_TEST(view->isVisible());
+
+    fixture.pressKey(Qt::Key_Escape);
+    BOOST_TEST(!view->isVisible());
+    BOOST_TEST(fixture.getCheckStates() ==
+                   (std::vector<bool>{true, true, false}),
+               boost::test_tools::per_element());
+}
+
+/**
+ * The dropdown opens with no highlight. The first Up or Down highlights the
+ * current item without moving it, and later ones move the highlight.
+ */
+BOOST_AUTO_TEST_CASE(arrows_move_highlight)
+{
+    ComboFixture fixture;
+    auto& combo = fixture.combo;
+    combo.showPopup();
+    BOOST_TEST(fixture.getHighlightedRows().empty());
+    BOOST_TEST(fixture.getCurrentRow() == 0);
+
+    fixture.pressKey(Qt::Key_Down);
+    BOOST_TEST(fixture.getCurrentRow() == 0);
+    BOOST_TEST(fixture.getHighlightedRows() == std::vector<int>{0},
+               boost::test_tools::per_element());
+    fixture.pressKey(Qt::Key_Down);
+    fixture.pressKey(Qt::Key_Down);
+    BOOST_TEST(fixture.getCurrentRow() == 2);
+    BOOST_TEST(fixture.getHighlightedRows() == std::vector<int>{2},
+               boost::test_tools::per_element());
+    fixture.pressKey(Qt::Key_Up);
+    BOOST_TEST(fixture.getCurrentRow() == 1);
+    BOOST_TEST(fixture.getHighlightedRows() == std::vector<int>{1},
+               boost::test_tools::per_element());
+    // navigating doesn't check anything
+    BOOST_TEST(combo.checkedData().isEmpty());
+
+    // reopening keeps the current item but hides the highlight until the next
+    // key press, and the keypad's arrows behave like the main ones
+    combo.hidePopup();
+    combo.showPopup();
+    BOOST_TEST(fixture.getHighlightedRows().empty());
+    BOOST_TEST(fixture.getCurrentRow() == 1);
+    fixture.pressKey(Qt::Key_Up, Qt::KeypadModifier);
+    BOOST_TEST(fixture.getCurrentRow() == 1);
+    BOOST_TEST(fixture.getHighlightedRows() == std::vector<int>{1},
+               boost::test_tools::per_element());
+    fixture.pressKey(Qt::Key_Up, Qt::KeypadModifier);
+    BOOST_TEST(fixture.getCurrentRow() == 0);
+    BOOST_TEST(fixture.getHighlightedRows() == std::vector<int>{0},
+               boost::test_tools::per_element());
+}
+
+/**
+ * Hovering over an item highlights it and makes it current, so that Space
+ * toggles it and the first Up or Down moves away from it
+ */
+BOOST_AUTO_TEST_CASE(hover_highlights)
+{
+    ComboFixture fixture;
+    auto& combo = fixture.combo;
+    combo.showPopup();
+    fixture.hoverItem(2);
+    BOOST_TEST(fixture.getCurrentRow() == 2);
+    BOOST_TEST(fixture.getHighlightedRows() == std::vector<int>{2},
+               boost::test_tools::per_element());
+    fixture.pressKey(Qt::Key_Space);
+    BOOST_TEST(fixture.getCheckStates() ==
+                   (std::vector<bool>{false, false, true}),
+               boost::test_tools::per_element());
+    fixture.pressKey(Qt::Key_Up);
+    BOOST_TEST(fixture.getCurrentRow() == 1);
+    BOOST_TEST(fixture.getHighlightedRows() == std::vector<int>{1},
+               boost::test_tools::per_element());
+
+    // a hover highlight from before the dropdown closed doesn't reappear
+    combo.hidePopup();
+    combo.showPopup();
+    BOOST_TEST(fixture.getHighlightedRows().empty());
+}
+
+/**
+ * Enter and Return toggle the current item and close the dropdown, unless the
+ * item is disabled
+ */
+BOOST_AUTO_TEST_CASE(enter_toggles_and_closes)
+{
+    ComboFixture fixture;
+    auto& combo = fixture.combo;
+    auto* view = combo.view();
+    combo.showPopup();
+    fixture.pressKey(Qt::Key_Down);
+    fixture.pressKey(Qt::Key_Down);
+    BOOST_REQUIRE(fixture.getCurrentRow() == 1);
     std::vector<bool> expected{false, false, false};
-    for (const auto key : {Qt::Key_Space, Qt::Key_Enter, Qt::Key_Return}) {
-        BOOST_TEST_CONTEXT("key=" << key)
+    for (const auto& [key, modifiers] :
+         std::vector<std::pair<Qt::Key, Qt::KeyboardModifiers>>{
+             {Qt::Key_Enter, Qt::NoModifier},
+             {Qt::Key_Return, Qt::NoModifier},
+             {Qt::Key_Enter, Qt::KeypadModifier}}) {
+        BOOST_TEST_CONTEXT("key=" << key << " modifiers=" << modifiers.toInt())
         {
-            QTest::keyClick(view, key);
+            if (!view->isVisible()) {
+                combo.showPopup();
+            }
+            fixture.pressKey(key, modifiers);
             expected[1] = !expected[1];
             BOOST_TEST(fixture.getCheckStates() == expected,
                        boost::test_tools::per_element());
-            BOOST_TEST(view->isVisible());
+            BOOST_TEST(!view->isVisible());
         }
     }
-    QTest::keyClick(view, Qt::Key_Escape);
-    BOOST_TEST(!view->isVisible());
+
+    // a disabled item can't be toggled, so the dropdown stays open
+    auto* model = qobject_cast<QStandardItemModel*>(combo.model());
+    BOOST_REQUIRE(model != nullptr);
+    model->item(1)->setEnabled(false);
+    combo.showPopup();
+    BOOST_REQUIRE(fixture.getCurrentRow() == 1);
+    fixture.pressKey(Qt::Key_Return);
+    BOOST_TEST(fixture.getCheckStates() == expected,
+               boost::test_tools::per_element());
+    BOOST_TEST(view->isVisible());
 }
 
 /**

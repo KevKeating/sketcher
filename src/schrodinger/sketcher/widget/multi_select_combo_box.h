@@ -7,6 +7,7 @@
 
 #include "schrodinger/sketcher/definitions.h"
 
+class QKeyEvent;
 class QStandardItemModel;
 
 namespace schrodinger
@@ -19,8 +20,16 @@ namespace sketcher
  *
  * Every item added to the combo box (e.g. with addItem() or addItems()) is
  * user-checkable and starts unchecked. Clicking an item in the dropdown, or
- * pressing Space, Enter or Return on it, toggles it and keeps the dropdown
- * open. Escape or a click outside the dropdown closes it.
+ * pressing Space on it, toggles it and keeps the dropdown open. Pressing Enter
+ * or Return toggles the item and closes the dropdown. Escape or a click
+ * outside the dropdown closes it.
+ *
+ * The dropdown highlights the item that keyboard input applies to, i.e. the
+ * view's current item, by selecting it. Since the current item isn't
+ * meaningful to the user when several items are checked, the dropdown opens
+ * with no highlight. Hovering over an item highlights it and makes it current,
+ * and pressing Space or a navigation key highlights the current item. The
+ * first press of Up or Down only reveals the highlight, without moving it.
  *
  * The combo box displays its checked items joined with ", " in item order,
  * "Any" when every item is checked, or "None" when no item is checked. The
@@ -67,8 +76,8 @@ class SKETCHER_API MultiSelectComboBox : public QComboBox
     QSize sizeHint() const override;
 
     /**
-     * Overridden QComboBox methods: clear any hover highlight in the dropdown
-     * when it opens and closes
+     * Overridden QComboBox methods: clear any highlight in the dropdown when
+     * it opens and any hover highlight when it closes
      */
     void showPopup() override;
     void hidePopup() override;
@@ -97,8 +106,29 @@ class SKETCHER_API MultiSelectComboBox : public QComboBox
     /**
      * Toggle the item at the given row in response to the user, unless the
      * item is disabled
+     *
+     * @return Whether the item was toggled
      */
-    void toggleItemByUser(int row);
+    bool toggleItemByUser(int row);
+
+    /**
+     * Respond to a key press in the dropdown
+     *
+     * @return Whether the key press was handled, in which case the view
+     * shouldn't also handle it
+     */
+    bool handleDropdownKeyPress(QKeyEvent* event);
+
+    /**
+     * @return Whether the dropdown's current item is highlighted, i.e.
+     * selected
+     */
+    bool isCurrentItemHighlighted() const;
+
+    /**
+     * Highlight the dropdown's current item by selecting it
+     */
+    void highlightCurrentItem();
 
     /**
      * Make newly added items checkable and unchecked

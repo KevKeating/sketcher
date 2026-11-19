@@ -36,6 +36,25 @@ static bool is_toggle_key(int key)
            key == Qt::Key_Return;
 }
 
+/**
+ * @return Whether the key moves the dropdown's current item
+ */
+static bool is_navigation_key(int key)
+{
+    return key == Qt::Key_Up || key == Qt::Key_Down || key == Qt::Key_Home ||
+           key == Qt::Key_End || key == Qt::Key_PageUp ||
+           key == Qt::Key_PageDown;
+}
+
+/**
+ * @return Whether the key event has no modifiers, ignoring the keypad modifier
+ * so that the keypad's Enter and arrow keys behave like the main ones
+ */
+static bool has_no_modifiers(const QKeyEvent* event)
+{
+    return (event->modifiers() & ~Qt::KeypadModifier) == Qt::NoModifier;
+}
+
 MultiSelectComboBox::MultiSelectComboBox(QWidget* parent) : QComboBox(parent)
 {
     m_model = new QStandardItemModel(this);
@@ -74,7 +93,11 @@ void MultiSelectComboBox::onRowsInserted(const QModelIndex& parent, int first,
     QSignalBlocker blocker(m_model);
     for (int row = first; row <= last; ++row) {
         auto* item = m_model->item(row);
-        item->setFlags(Qt::ItemIsEnabled | Qt::ItemIsUserCheckable);
+        // Items are selectable so that the view's selection can highlight the
+        // current item, which is the item that keyboard input applies to.
+        // The selection doesn't affect which items are checked.
+        item->setFlags(Qt::ItemIsEnabled | Qt::ItemIsSelectable |
+                       Qt::ItemIsUserCheckable);
         item->setCheckState(Qt::Unchecked);
     }
 }
@@ -150,13 +173,60 @@ QString MultiSelectComboBox::getDisplayText() const
     return checked_texts.join(DISPLAY_TEXT_SEPARATOR);
 }
 
-void MultiSelectComboBox::toggleItemByUser(int row)
+bool MultiSelectComboBox::toggleItemByUser(int row)
 {
     auto* item = m_model->item(row);
     if (item == nullptr || !item->isEnabled()) {
-        return;
+        return false;
     }
     setItemChecked(row, !isItemChecked(row));
+    return true;
+}
+
+bool MultiSelectComboBox::isCurrentItemHighlighted() const
+{
+    return view()->selectionModel()->isSelected(view()->currentIndex());
+}
+
+void MultiSelectComboBox::highlightCurrentItem()
+{
+    view()->selectionModel()->select(view()->currentIndex(),
+                                     QItemSelectionModel::ClearAndSelect);
+}
+
+bool MultiSelectComboBox::handleDropdownKeyPress(QKeyEvent* event)
+{
+    const int key = event->key();
+    if (is_navigation_key(key)) {
+        // The mouse may still be hovering over an item that some styles
+        // highlight, so clear that highlight to leave only the keyboard's
+        // highlight
+        clearHoverHighlight();
+        if ((key == Qt::Key_Up || key == Qt::Key_Down) &&
+            view()->currentIndex().isValid() && !isCurrentItemHighlighted()) {
+            // The user couldn't see which item was current, so reveal it
+            // rather than moving away from it
+            highlightCurrentItem();
+            return true;
+        }
+        // Let the view move the current item, which also selects it
+        return false;
+    }
+    if (!is_toggle_key(key)) {
+        return false;
+    }
+    if (event->isAutoRepeat()) {
+        return true;
+    }
+    const bool toggled = toggleItemByUser(view()->currentIndex().row());
+    if (key == Qt::Key_Space) {
+        highlightCurrentItem();
+    } else if (toggled) {
+        // Enter and Return also close the dropdown, so the user can quickly
+        // toggle a single item
+        hidePopup();
+    }
+    return true;
 }
 
 bool MultiSelectComboBox::eventFilter(QObject* watched, QEvent* event)
@@ -193,16 +263,16 @@ bool MultiSelectComboBox::eventFilter(QObject* watched, QEvent* event)
         if (event->type() == QEvent::ShortcutOverride ||
             event->type() == QEvent::KeyPress) {
             auto* key_event = static_cast<QKeyEvent*>(event);
-            if (is_toggle_key(key_event->key()) &&
-                key_event->modifiers() == Qt::NoModifier) {
-                if (event->type() == QEvent::ShortcutOverride) {
+            if (has_no_modifiers(key_event)) {
+                if (event->type() == QEvent::KeyPress) {
+                    return handleDropdownKeyPress(key_event);
+                } else if (is_toggle_key(key_event->key())) {
                     // Ask for the key press rather than letting the dropdown
-                    // close itself in response to Enter or Return
+                    // close itself in response to Enter or Return without
+                    // toggling the item
                     event->accept();
-                } else if (!key_event->isAutoRepeat()) {
-                    toggleItemByUser(item_view->currentIndex().row());
+                    return true;
                 }
-                return true;
             }
         }
     }
@@ -220,6 +290,9 @@ void MultiSelectComboBox::showPopup()
 {
     QComboBox::showPopup();
     clearHoverHighlight();
+    // Keep the current item, which keyboard input applies to, but don't
+    // highlight it until the user hovers over an item or presses a key
+    view()->selectionModel()->clearSelection();
 }
 
 void MultiSelectComboBox::hidePopup()
