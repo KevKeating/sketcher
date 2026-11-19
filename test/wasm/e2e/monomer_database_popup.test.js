@@ -36,6 +36,7 @@ import {
   monomerDatabaseRow,
   monomerDatabaseSymbols,
   monomerDatabaseTable,
+  openComboDropdown,
   openMonomerDatabase,
   openMonomerDatabaseFilter,
   openMonomerSketcher,
@@ -637,6 +638,27 @@ test('SKETCH-2827: polymer types are toggled in a dropdown nested in two popups,
   expect((await comboState(page, 'natural_analog_combo')).bold).toBe(true);
   expect(await filtersApplied(page)).toBe('2 filters applied');
   expect(await monomerDatabaseSymbols(page)).toEqual(['meA']);
+  await closeMonomerDatabaseFilter(page);
+  await closeMonomerDatabase(page);
+});
+
+test('SKETCH-2827: after an item is clicked, a click elsewhere in the filter popup closes only the polymer type dropdown', async ({
+  page,
+}) => {
+  await openMonomerDatabaseFilter(page);
+  // clicking an item must not leave the filter popup unable to close the
+  // dropdown
+  await setPolymerTypeChecked(page, 'Nucleic acid', true);
+  await clickWidget(page, 'polymer_type_lbl');
+  await expect.poll(async () => (await widgetState(page, 'polymer_type_combo')).open).toBe(false);
+  expect(await isMonomerDatabaseFilterOpen(page)).toBe(true);
+  expect(await isMonomerDatabaseOpen(page)).toBe(true);
+
+  // a reopened dropdown is still the popup that Escape closes
+  await openComboDropdown(page, 'polymer_type_combo');
+  await page.keyboard.press('Escape');
+  await expect.poll(async () => (await widgetState(page, 'polymer_type_combo')).open).toBe(false);
+  expect(await isMonomerDatabaseFilterOpen(page)).toBe(true);
   await closeMonomerDatabaseFilter(page);
   await closeMonomerDatabase(page);
 });
