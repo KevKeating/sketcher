@@ -386,6 +386,11 @@ scene tool becomes a `DrawMonomerSceneTool` for that monomer.
     while open is only for the DB popup and its filter popup.
 - **Polymer type is a multi-select combo** with "Peptide", "Nucleic acid"
   and "Structure" (CHEM). Its contents don't depend on the page.
+  - **The user may uncheck every polymer type.** The combo then shows
+    "None", the table is empty, and both other combos are inapplicable. The
+    empty state isn't useful on its own, but a user switching from {Peptide}
+    to {Nucleic acid} will likely uncheck Peptide first. Ignoring that click
+    would make the combo look broken.
 - **Applicability rules.** Structure (CHEM) never affects applicability.
   - The **Monomer type** combo applies only when Peptide is checked and
     Nucleic acid isn't: {Peptide} or {Peptide, Structure}. It only applies
@@ -830,8 +835,8 @@ std::vector<std::size_t> filter_by_search_text(
   - Map `MonomerInfo::polymer_type` with `rdkit_extensions::toChainType`:
     PEPTIDE→PEPTIDE, RNA→NUCLEIC_ACID, CHEM→CHEM.
   - Rows with a missing or unparseable type never match.
-  - `NONE` matches nothing. The UI never produces it (Step 4), but the API
-    stays total.
+  - `NONE` matches nothing. The UI produces it when the user unchecks every
+    polymer type (Step 4).
 - **Applicability** is defined once, by the methods above. Everything else
   calls them: `matches()`, the count, the description, and Step 4's combo
   enabling.
@@ -1541,11 +1546,11 @@ intent, but don't port its implementation:
   - Clear the view's hover highlight when the dropdown opens and closes.
 - **Signal:** `checkedItemsChanged()` fires on any check change, including
   programmatic ones. Use `QSignalBlocker` for silent updates.
-- **API:** `setCheckedData` / `checkedData`, `setItemChecked`, and
-  `setMinimumCheckedCount(int)`. The filter popup uses 1, and unchecking the
-  last checked item is ignored.
+- **API:** `setCheckedData` / `checkedData`, `setItemChecked`. There's no
+  minimum checked count: the user can uncheck the last checked item (see
+  "The user may uncheck every polymer type").
 - **Display text:** paint the checked items joined with ", ", in item order.
-  Show "Any" when every item is checked.
+  Show "Any" when every item is checked and "None" when no item is checked.
   - Use `QStylePainter` with the combo option's `currentText` overridden.
   - Never use `setCurrentText`.
 - **Bold** works through the widget font, as for a normal combo.
@@ -1623,6 +1628,12 @@ Reposition an open filter popup if canvas resizing moves its anchor.
   - with {Peptide, Structure}, choosing Terminal or a specific analog hides
     the CHEM rows, and choosing None keeps them;
   - "Any" is displayed when all three types are checked;
+  - unchecking the last polymer type in the open dropdown displays "None",
+    keeps the dropdown open, disables both other combos, counts one filter
+    and empties the table; then checking another type works;
+  - from {Peptide} + Backbone + C, unchecking and re-checking Peptide
+    restores Backbone and C, while unchecking Peptide and then checking
+    Nucleic acid forgets both;
   - the analog choices switch between peptide and nucleic acid;
   - a combo that becomes disabled shows "Any" / "Any or None", isn't bold,
     and doesn't count;
@@ -1657,7 +1668,8 @@ Reposition an open filter popup if canvas resizing moves its anchor.
     - checking and unchecking polymer types in the dropdown, with the
       dropdown, filter popup and DB popup all staying open (this triple
       popup nesting is the main WASM risk);
-    - the last item can't be unchecked;
+    - unchecking the last item shows "None", keeps the dropdown open and
+      empties the table, and checking it again restores the rows;
     - monomer type and analog enabling;
     - Backbone + C survive checking and unchecking Nucleic acid, while the
       disabled combos show "Any" / "Any or None"; checking Nucleic acid and

@@ -25,7 +25,6 @@ import {
   MONOMER_DB_TABLE,
   chooseFilterItem,
   chooseFromMonomerDatabase,
-  clickComboItem,
   closeMonomerDatabase,
   closeMonomerDatabaseFilter,
   closePolymerTypeDropdown,
@@ -623,10 +622,20 @@ test('SKETCH-2827: polymer types are toggled in a dropdown nested in two popups,
   // a single polymer type hides the Type column
   expect((await monomerDatabaseTable(page)).headers).toEqual(['Symbol', 'Name', 'Analog']);
 
-  // the last polymer type can't be unchecked
-  await clickComboItem(page, 'polymer_type_combo', 'Nucleic acid');
-  expect((await comboState(page, 'polymer_type_combo')).text).toBe('Nucleic acid');
+  // unchecking the last polymer type empties the table and keeps the dropdown
+  // open, and checking it again restores the rows
+  await setPolymerTypeChecked(page, 'Nucleic acid', false);
+  expect(await comboState(page, 'polymer_type_combo')).toEqual({
+    text: 'None',
+    enabled: true,
+    bold: true,
+  });
   expect((await widgetState(page, 'polymer_type_combo')).open).toBe(true);
+  expect((await comboState(page, 'natural_analog_combo')).enabled).toBe(false);
+  expect(await monomerDatabaseSymbols(page)).toEqual([]);
+  expect(await matchCount(page)).toBe('0 matches');
+  await setPolymerTypeChecked(page, 'Nucleic acid', true);
+  expect(await monomerDatabaseSymbols(page)).toEqual(['meA', 'NAx']);
 
   // Escape closes only the dropdown
   await closePolymerTypeDropdown(page);

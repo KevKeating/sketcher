@@ -1385,7 +1385,8 @@ BOOST_AUTO_TEST_CASE(filter_defaults_and_clear_all)
 /**
  * Every filter change re-filters the table live. With {Peptide, Structure},
  * Terminal or a specific analog hides the structure rows and None keeps them.
- * The Type column hides when the filter allows a single polymer type.
+ * The Type column hides when the filter allows a single polymer type, and no
+ * polymer types empties the table.
  */
 BOOST_AUTO_TEST_CASE(live_filtering)
 {
@@ -1423,6 +1424,14 @@ BOOST_AUTO_TEST_CASE(live_filtering)
     BOOST_TEST(
         table->isColumnHidden(static_cast<int>(MonomerDbColumn::POLYMER_TYPE)));
     BOOST_TEST(is_filter_button_filtering(*popup));
+
+    // no polymer types shows nothing, and rechecking Peptide restores the
+    // remembered analog
+    set_polymer_type_checked(*filter_popup, "Peptide", false);
+    check_symbols({});
+    BOOST_TEST(is_filter_button_filtering(*popup));
+    set_polymer_type_checked(*filter_popup, "Peptide", true);
+    check_symbols({"ac", "am", "pepX"});
 
     // every polymer type shows everything and makes the button normal
     set_polymer_type_checked(*filter_popup, "Structure", true);

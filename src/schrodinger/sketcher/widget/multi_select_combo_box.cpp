@@ -21,6 +21,7 @@ namespace sketcher
 {
 
 static const QString ALL_CHECKED_TEXT = "Any";
+static const QString NONE_CHECKED_TEXT = "None";
 static const QString DISPLAY_TEXT_SEPARATOR = ", ";
 
 /**
@@ -123,22 +124,6 @@ bool MultiSelectComboBox::isItemChecked(int index) const
     return item != nullptr && item->checkState() == Qt::Checked;
 }
 
-void MultiSelectComboBox::setMinimumCheckedCount(int count)
-{
-    m_minimum_checked_count = count;
-}
-
-int MultiSelectComboBox::getCheckedCount() const
-{
-    int checked_count = 0;
-    for (int row = 0; row < count(); ++row) {
-        if (isItemChecked(row)) {
-            ++checked_count;
-        }
-    }
-    return checked_count;
-}
-
 QString MultiSelectComboBox::getDisplayText() const
 {
     QStringList checked_texts;
@@ -147,7 +132,9 @@ QString MultiSelectComboBox::getDisplayText() const
             checked_texts.append(itemText(row));
         }
     }
-    if (count() > 0 && checked_texts.size() == count()) {
+    if (checked_texts.isEmpty()) {
+        return NONE_CHECKED_TEXT;
+    } else if (checked_texts.size() == count()) {
         return ALL_CHECKED_TEXT;
     }
     return checked_texts.join(DISPLAY_TEXT_SEPARATOR);
@@ -159,11 +146,7 @@ void MultiSelectComboBox::toggleItemByUser(int row)
     if (item == nullptr || !item->isEnabled()) {
         return;
     }
-    const bool checked = isItemChecked(row);
-    if (checked && getCheckedCount() <= m_minimum_checked_count) {
-        return;
-    }
-    setItemChecked(row, !checked);
+    setItemChecked(row, !isItemChecked(row));
 }
 
 bool MultiSelectComboBox::eventFilter(QObject* watched, QEvent* event)
@@ -241,7 +224,8 @@ QSize MultiSelectComboBox::sizeHint() const
     auto hint = QComboBox::sizeHint();
     // The widest text that can be displayed has every item checked but one
     const auto metrics = fontMetrics();
-    int text_width = metrics.horizontalAdvance(ALL_CHECKED_TEXT);
+    int text_width = std::max(metrics.horizontalAdvance(ALL_CHECKED_TEXT),
+                              metrics.horizontalAdvance(NONE_CHECKED_TEXT));
     for (int skipped = 0; skipped < count(); ++skipped) {
         QStringList texts;
         for (int row = 0; row < count(); ++row) {

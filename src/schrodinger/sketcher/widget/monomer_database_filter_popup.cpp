@@ -83,8 +83,6 @@ MonomerDatabaseFilterPopup::MonomerDatabaseFilterPopup(QWidget* anchor,
             QString::fromStdString(get_polymer_type_display_text(polymer_type)),
             static_cast<unsigned>(polymer_type));
     }
-    // A filter that shows no polymer types would show nothing
-    polymer_type_combo->setMinimumCheckedCount(1);
     for (const auto& [monomer_type, text] : MONOMER_TYPE_ITEMS) {
         m_ui->monomer_type_combo->addItem(text, static_cast<int>(monomer_type));
     }

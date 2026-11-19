@@ -64,7 +64,8 @@ struct ComboFixture {
 
 /**
  * Added items are checkable and unchecked, and the display text joins the
- * checked items in item order, or reads "Any" when all are checked
+ * checked items in item order, or reads "Any" when all are checked or "None"
+ * when none are
  */
 BOOST_AUTO_TEST_CASE(display_text)
 {
@@ -75,7 +76,7 @@ BOOST_AUTO_TEST_CASE(display_text)
         BOOST_TEST(flags.testFlag(Qt::ItemIsUserCheckable));
         BOOST_TEST(!combo.isItemChecked(row));
     }
-    BOOST_TEST(combo.getDisplayText().isEmpty());
+    BOOST_TEST(combo.getDisplayText() == "None");
     combo.setItemChecked(2, true);
     combo.setItemChecked(0, true);
     BOOST_TEST(combo.getDisplayText() == "Peptide, Structure");
@@ -205,31 +206,26 @@ BOOST_AUTO_TEST_CASE(keys_toggle)
 }
 
 /**
- * The user can't uncheck an item if that would leave fewer checked items than
- * the minimum, but programmatic changes aren't limited
+ * The user can uncheck the last checked item, which leaves no items checked,
+ * and can then check another item
  */
-BOOST_AUTO_TEST_CASE(minimum_checked_count)
+BOOST_AUTO_TEST_CASE(uncheck_last_item)
 {
     ComboFixture fixture;
     auto& combo = fixture.combo;
-    combo.setMinimumCheckedCount(1);
-    combo.setCheckedData({1, 2});
+    combo.setCheckedData({2});
     combo.showPopup();
-    fixture.clickItem(0);
-    BOOST_CHECK(combo.checkedData() == (QList<QVariant>{2}));
-    // unchecking the last checked item is ignored
     fixture.clickItem(1);
-    BOOST_CHECK(combo.checkedData() == (QList<QVariant>{2}));
-    combo.view()->setCurrentIndex(combo.model()->index(1, 0));
-    QTest::keyClick(combo.view(), Qt::Key_Space);
-    BOOST_CHECK(combo.checkedData() == (QList<QVariant>{2}));
-    // checking another item is still allowed
-    fixture.clickItem(2);
-    BOOST_CHECK(combo.checkedData() == (QList<QVariant>{2, 4}));
-    combo.hidePopup();
-
-    combo.setCheckedData({});
     BOOST_TEST(combo.checkedData().isEmpty());
+    BOOST_TEST(combo.getDisplayText() == "None");
+    BOOST_TEST(combo.view()->isVisible());
+    fixture.clickItem(0);
+    BOOST_CHECK(combo.checkedData() == (QList<QVariant>{1}));
+    BOOST_TEST(combo.getDisplayText() == "Peptide");
+    combo.view()->setCurrentIndex(combo.model()->index(0, 0));
+    QTest::keyClick(combo.view(), Qt::Key_Space);
+    BOOST_TEST(combo.checkedData().isEmpty());
+    combo.hidePopup();
 }
 
 } // namespace sketcher

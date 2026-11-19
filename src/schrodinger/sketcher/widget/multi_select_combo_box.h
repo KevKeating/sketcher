@@ -22,8 +22,9 @@ namespace sketcher
  * pressing Space, Enter or Return on it, toggles it and keeps the dropdown
  * open. Escape or a click outside the dropdown closes it.
  *
- * The combo box displays its checked items joined with ", " in item order, or
- * "Any" when every item is checked. The current index is not used.
+ * The combo box displays its checked items joined with ", " in item order,
+ * "Any" when every item is checked, or "None" when no item is checked. The
+ * current index is not used.
  */
 class SKETCHER_API MultiSelectComboBox : public QComboBox
 {
@@ -53,15 +54,9 @@ class SKETCHER_API MultiSelectComboBox : public QComboBox
     bool isItemChecked(int index) const;
 
     /**
-     * Set the minimum number of checked items. The user can't uncheck an item
-     * if that would leave fewer items checked than this. This only limits the
-     * user's toggles, not programmatic changes.
-     */
-    void setMinimumCheckedCount(int count);
-
-    /**
      * @return The text that the combo box displays: the checked items' text
-     * joined with ", ", or "Any" if every item is checked
+     * joined with ", ", "Any" if every item is checked, or "None" if no item
+     * is checked
      */
     QString getDisplayText() const;
 
@@ -100,8 +95,8 @@ class SKETCHER_API MultiSelectComboBox : public QComboBox
 
   private:
     /**
-     * Toggle the item at the given row in response to the user, unless doing
-     * so would leave too few items checked or the item is disabled
+     * Toggle the item at the given row in response to the user, unless the
+     * item is disabled
      */
     void toggleItemByUser(int row);
 
@@ -122,13 +117,7 @@ class SKETCHER_API MultiSelectComboBox : public QComboBox
      */
     void clearHoverHighlight();
 
-    /**
-     * @return The number of checked items
-     */
-    int getCheckedCount() const;
-
     QStandardItemModel* m_model = nullptr;
-    int m_minimum_checked_count = 0;
     // The row that a mouse press in the dropdown landed on, or -1
     int m_pressed_row = -1;
     // Whether checkedItemsChanged() is suppressed during a batch update

@@ -244,26 +244,41 @@ BOOST_AUTO_TEST_CASE(filter_changed_and_clear_all)
 }
 
 /**
- * The user can't uncheck the last polymer type in the dropdown
+ * The user can uncheck the last polymer type in the dropdown, which shows
+ * "None" and disables the other combo boxes, so that switching from one
+ * polymer type to another can uncheck the old type before checking the new one
  */
-BOOST_AUTO_TEST_CASE(last_polymer_type)
+BOOST_AUTO_TEST_CASE(no_polymer_types)
 {
     FilterPopupFixture fixture{MonomerDatabaseFilter(PEPTIDE)};
     auto* combo = fixture.polymer_type_combo;
     combo->showPopup();
     auto* view = combo->view();
-    QTest::mouseClick(view->viewport(), Qt::LeftButton, Qt::NoModifier,
-                      view->visualRect(combo->model()->index(0, 0)).center());
-    BOOST_CHECK(fixture.popup.getFilter().getPolymerTypes() == PEPTIDE);
-    BOOST_TEST(combo->getDisplayText() == "Peptide");
+    auto click_item = [&](int row) {
+        QTest::mouseClick(
+            view->viewport(), Qt::LeftButton, Qt::NoModifier,
+            view->visualRect(combo->model()->index(row, 0)).center());
+    };
+    click_item(0);
+    BOOST_CHECK(fixture.popup.getFilter().getPolymerTypes() ==
+                MonomerDbPolymerType::NONE);
     BOOST_TEST(view->isVisible());
+    fixture.checkCombos("None", true, "Any", false, false, "Any or None", false,
+                        false);
+    BOOST_TEST(fixture.filters_applied_lbl->text() == "1 filter applied");
+
+    click_item(1);
+    BOOST_CHECK(fixture.popup.getFilter().getPolymerTypes() == NUCLEIC_ACID);
+    fixture.checkCombos("Nucleic acid", true, "Any", false, false,
+                        "Any or None", true, false);
     combo->hidePopup();
 }
 
 /**
  * Values hidden by applicability are shown as the permissive values, and
- * restored when they apply again for the same polymer type. Checking Nucleic
- * acid and then unchecking Peptide forgets them.
+ * restored when they apply again for the same polymer type, including after
+ * passing through no polymer types. Switching to Nucleic acid forgets them,
+ * whether Nucleic acid is checked before or after Peptide is unchecked.
  */
 BOOST_AUTO_TEST_CASE(remembered_values)
 {
@@ -290,6 +305,26 @@ BOOST_AUTO_TEST_CASE(remembered_values)
                         true);
     BOOST_TEST(fixture.filters_applied_lbl->text() == "3 filters applied");
     combo->hidePopup();
+
+    // unchecking and rechecking Peptide restores both
+    fixture.setPolymerTypeChecked("Peptide", false);
+    fixture.checkCombos("None", true, "Any", false, false, "Any or None", false,
+                        false);
+    fixture.setPolymerTypeChecked("Peptide", true);
+    fixture.checkCombos("Peptide", true, "Backbone", true, true, "C", true,
+                        true);
+
+    // unchecking Peptide and then checking Nucleic acid forgets both
+    fixture.setPolymerTypeChecked("Peptide", false);
+    fixture.setPolymerTypeChecked("Nucleic acid", true);
+    fixture.checkCombos("Nucleic acid", true, "Any", false, false,
+                        "Any or None", true, false);
+    fixture.setPolymerTypeChecked("Nucleic acid", false);
+    fixture.setPolymerTypeChecked("Peptide", true);
+    fixture.checkCombos("Peptide", true, "Any", true, false, "Any or None",
+                        true, false);
+    fixture.choose(fixture.monomer_type_combo, "Backbone");
+    fixture.choose(fixture.natural_analog_combo, "C");
 
     // checking Nucleic acid and then unchecking Peptide forgets both
     fixture.setPolymerTypeChecked("Nucleic acid", true);
