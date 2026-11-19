@@ -4,6 +4,7 @@
 #include <QAbstractItemView>
 #include <QApplication>
 #include <QFontMetrics>
+#include <QScrollBar>
 #include <QSignalBlocker>
 #include <QSignalSpy>
 #include <QStandardItemModel>
@@ -226,6 +227,25 @@ BOOST_AUTO_TEST_CASE(uncheck_last_item)
     QTest::keyClick(combo.view(), Qt::Key_Space);
     BOOST_TEST(combo.checkedData().isEmpty());
     combo.hidePopup();
+}
+
+/**
+ * The dropdown leaves space above its first item and below its last item, and
+ * is tall enough to show every item without scrolling
+ */
+BOOST_AUTO_TEST_CASE(dropdown_padding)
+{
+    ComboFixture fixture;
+    auto& combo = fixture.combo;
+    combo.showPopup();
+    auto* view = combo.view();
+    BOOST_REQUIRE(view->isVisible());
+    const auto first_rect = view->visualRect(combo.model()->index(0, 0));
+    const auto last_rect =
+        view->visualRect(combo.model()->index(combo.count() - 1, 0));
+    BOOST_TEST(first_rect.top() > 0);
+    BOOST_TEST(last_rect.bottom() < view->viewport()->height() - 1);
+    BOOST_TEST(view->verticalScrollBar()->maximum() == 0);
 }
 
 } // namespace sketcher

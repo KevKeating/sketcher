@@ -8,6 +8,7 @@
 #include <QAbstractItemView>
 #include <QApplication>
 #include <QComboBox>
+#include <QFont>
 #include <QLabel>
 #include <QTest>
 #include <QToolButton>
@@ -87,8 +88,23 @@ struct FilterPopupFixture {
     }
 
     /**
+     * Check that the combo box's dropdown draws none of its items in bold,
+     * regardless of whether the combo box itself is bold. The dropdown draws
+     * an item with the item's Qt::FontRole data if it has any, and with the
+     * combo box's font otherwise.
+     */
+    void checkItemsNotBold(QComboBox* combo)
+    {
+        for (int row = 0; row < combo->count(); ++row) {
+            const auto font_data = combo->itemData(row, Qt::FontRole);
+            BOOST_TEST_REQUIRE(font_data.isValid());
+            BOOST_TEST(!font_data.value<QFont>().bold());
+        }
+    }
+
+    /**
      * Check what each combo box shows, whether it's enabled and whether it's
-     * bold
+     * bold. The combo boxes' dropdown items are never bold.
      */
     void checkCombos(const QString& polymer_types, bool polymer_types_bold,
                      const QString& monomer_type, bool monomer_type_enabled,
@@ -103,6 +119,10 @@ struct FilterPopupFixture {
         BOOST_TEST(natural_analog_combo->currentText() == analog);
         BOOST_TEST(natural_analog_combo->isEnabled() == analog_enabled);
         BOOST_TEST(natural_analog_combo->font().bold() == analog_bold);
+        for (auto* combo : {static_cast<QComboBox*>(polymer_type_combo),
+                            monomer_type_combo, natural_analog_combo}) {
+            checkItemsNotBold(combo);
+        }
     }
 
     QWidget anchor;

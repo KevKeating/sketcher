@@ -53,16 +53,19 @@ static QString get_filters_applied_text(int num_filters)
 
 /**
  * Make the combo box's text bold or not, without making its dropdown's items
- * bold
+ * bold. This must be called again after any items are added to the combo box.
  */
 static void set_combo_bold(QComboBox* combo, bool bold)
 {
     auto font = combo->font();
+    font.setBold(false);
+    // The dropdown draws an item using the item's Qt::FontRole data if there
+    // is any, and the combo box's font otherwise
+    for (int row = 0; row < combo->count(); ++row) {
+        combo->setItemData(row, font, Qt::FontRole);
+    }
     font.setBold(bold);
     combo->setFont(font);
-    auto view_font = combo->view()->font();
-    view_font.setBold(false);
-    combo->view()->setFont(view_font);
 }
 
 MonomerDatabaseFilterPopup::MonomerDatabaseFilterPopup(QWidget* anchor,

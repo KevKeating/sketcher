@@ -7,6 +7,7 @@
 #include <QFontMetrics>
 #include <QHoverEvent>
 #include <QKeyEvent>
+#include <QListView>
 #include <QMouseEvent>
 #include <QSignalBlocker>
 #include <QStandardItemModel>
@@ -23,6 +24,8 @@ namespace sketcher
 static const QString ALL_CHECKED_TEXT = "Any";
 static const QString NONE_CHECKED_TEXT = "None";
 static const QString DISPLAY_TEXT_SEPARATOR = ", ";
+// The empty space around each item in the dropdown, in pixels
+static const int ITEM_SPACING = 2;
 
 /**
  * @return Whether the key toggles the current item of the dropdown
@@ -53,6 +56,13 @@ MultiSelectComboBox::MultiSelectComboBox(QWidget* parent) : QComboBox(parent)
     // itself in response to it.
     view()->installEventFilter(this);
     view()->viewport()->installEventFilter(this);
+    // The item checkboxes fill most of each item's height, so space out the
+    // items to keep the checkboxes away from each other and from the edges of
+    // the dropdown. QComboBox accounts for the spacing when it sizes the
+    // dropdown.
+    if (auto* list_view = qobject_cast<QListView*>(view())) {
+        list_view->setSpacing(ITEM_SPACING);
+    }
 }
 
 void MultiSelectComboBox::onRowsInserted(const QModelIndex& parent, int first,
