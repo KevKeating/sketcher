@@ -131,6 +131,15 @@ class SKETCHER_API MultiSelectComboBox : public QComboBox
     void highlightCurrentItem();
 
     /**
+     * Fill the dropdown's empty space, including the spacing around each
+     * item, with the same color as the items' background. Styles that draw
+     * the dropdown like a menu, such as Fusion, fill each item with the menu's
+     * window color instead of the view's base color, so without this the
+     * spacing would show up as stripes of the base color.
+     */
+    void updateDropdownBackground();
+
+    /**
      * Make newly added items checkable and unchecked
      */
     void onRowsInserted(const QModelIndex& parent, int first, int last);

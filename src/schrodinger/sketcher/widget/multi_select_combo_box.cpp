@@ -9,6 +9,7 @@
 #include <QKeyEvent>
 #include <QListView>
 #include <QMouseEvent>
+#include <QPalette>
 #include <QSignalBlocker>
 #include <QStandardItemModel>
 #include <QStringList>
@@ -286,8 +287,35 @@ void MultiSelectComboBox::clearHoverHighlight()
     QApplication::sendEvent(view()->viewport(), &leave);
 }
 
+void MultiSelectComboBox::updateDropdownBackground()
+{
+    QStyleOptionComboBox option;
+    initStyleOption(&option);
+    auto* viewport = view()->viewport();
+    if (!style()->styleHint(QStyle::SH_ComboBox_Popup, &option, this)) {
+        // The items have no background of their own, so the view's base color
+        // already shows behind them
+        viewport->setBackgroundRole(QPalette::Base);
+        return;
+    }
+    // Use the same palette that Qt's menu-style item delegate
+    // (QComboMenuDelegate) uses to fill each item
+    const auto item_palette =
+        view()->palette().resolve(QApplication::palette("QMenu"));
+    auto viewport_palette = viewport->palette();
+    for (auto group :
+         {QPalette::Active, QPalette::Inactive, QPalette::Disabled}) {
+        viewport_palette.setBrush(group, QPalette::Window,
+                                  item_palette.brush(group, QPalette::Window));
+    }
+    viewport->setPalette(viewport_palette);
+    viewport->setBackgroundRole(QPalette::Window);
+}
+
 void MultiSelectComboBox::showPopup()
 {
+    // The style or palette may have changed since the dropdown was last shown
+    updateDropdownBackground();
     QComboBox::showPopup();
     clearHoverHighlight();
     // Keep the current item, which keyboard input applies to, but don't

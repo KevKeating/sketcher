@@ -1,17 +1,22 @@
 #define BOOST_TEST_MODULE test_multi_select_combo_box
 #include <boost/test/unit_test.hpp>
 
+#include <memory>
 #include <utility>
 #include <vector>
 
 #include <QAbstractItemView>
 #include <QApplication>
 #include <QFontMetrics>
+#include <QImage>
 #include <QMouseEvent>
 #include <QScrollBar>
 #include <QSignalBlocker>
 #include <QSignalSpy>
 #include <QStandardItemModel>
+#include <QStyle>
+#include <QStyleFactory>
+#include <QStyleOptionComboBox>
 #include <QTest>
 
 #include "../test_common.h"
@@ -424,6 +429,54 @@ BOOST_AUTO_TEST_CASE(dropdown_padding)
     BOOST_TEST(first_rect.top() > 0);
     BOOST_TEST(last_rect.bottom() < view->viewport()->height() - 1);
     BOOST_TEST(view->verticalScrollBar()->maximum() == 0);
+}
+
+/**
+ * With a style that draws the dropdown like a menu, such as Fusion (which the
+ * WASM build uses), the space around the items has the same color as the
+ * items' background
+ */
+BOOST_AUTO_TEST_CASE(dropdown_spacing_matches_item_background)
+{
+    // Declared before the fixture so that the style outlives the combo box
+    std::unique_ptr<QStyle> fusion_style(QStyleFactory::create("Fusion"));
+    BOOST_REQUIRE(fusion_style != nullptr);
+    ComboFixture fixture;
+    auto& combo = fixture.combo;
+    combo.setStyle(fusion_style.get());
+    QStyleOptionComboBox option;
+    option.initFrom(&combo);
+    BOOST_REQUIRE(
+        fusion_style->styleHint(QStyle::SH_ComboBox_Popup, &option, &combo));
+    combo.showPopup();
+    auto* view = combo.view();
+    BOOST_REQUIRE(view->isVisible());
+    const auto first_rect = view->visualRect(combo.model()->index(0, 0));
+    const auto second_rect = view->visualRect(combo.model()->index(1, 0));
+    const auto last_rect =
+        view->visualRect(combo.model()->index(combo.count() - 1, 0));
+    BOOST_REQUIRE(first_rect.top() > 0);
+    BOOST_REQUIRE(first_rect.left() > 0);
+    BOOST_REQUIRE(second_rect.top() > first_rect.bottom() + 1);
+    BOOST_REQUIRE(last_rect.bottom() < view->viewport()->height() - 1);
+
+    // QImage::pixel() takes device pixels rather than logical pixels
+    const auto image = view->viewport()->grab().toImage();
+    const qreal ratio = view->viewport()->devicePixelRatioF();
+    auto color_at = [&image, ratio](int x, int y) {
+        return image.pixel(qRound(x * ratio), qRound(y * ratio));
+    };
+    // Sample the middle of each row, which is past the checkboxes. The top row
+    // of an item's pixels is above its checkbox and text.
+    const int viewport_width = view->viewport()->width();
+    const int x = viewport_width / 2;
+    const auto item_color = color_at(x, first_rect.top());
+    BOOST_TEST(color_at(x, first_rect.top() - 1) == item_color);
+    BOOST_TEST(color_at(x, (first_rect.bottom() + second_rect.top()) / 2) ==
+               item_color);
+    BOOST_TEST(color_at(x, last_rect.bottom() + 1) == item_color);
+    BOOST_TEST(color_at(first_rect.left() - 1, first_rect.top()) == item_color);
+    BOOST_TEST(color_at(viewport_width - 1, first_rect.top()) == item_color);
 }
 
 } // namespace sketcher
