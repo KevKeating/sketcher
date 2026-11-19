@@ -188,15 +188,15 @@ const QString MONOMER_DATABASE_POPUP_STYLE{
     "QTableView { selection-background-color: " +
     CHECKED_BACKGROUND_COLOR + "; selection-color: #333333; }"};
 
-/// style for the Monomer Database popup's filter button when the filter is the
-/// most permissive filter
+/// style for the Monomer Database popup's filter button when no filtering is
+/// applied (i.e. the most permissive filter)
 const QString MONOMER_DATABASE_FILTER_BUTTON_STYLE{
     "QToolButton { border: none; background-color: transparent; "
     "    image: url(:icons/filter-menu_lb.png); }"
     "QToolButton:hover { image: url(:icons/filter-menu_lb_hvr.png); }"
     "QToolButton:pressed { image: url(:icons/filter-menu_lb_act.png); }"};
 
-/// style for the Monomer Database popup's filter button when any filter is
+/// style for the Monomer Database popup's filter button when filtering is
 /// applied
 const QString MONOMER_DATABASE_FILTER_BUTTON_FILTERING_STYLE{
     "QToolButton { border: none; background-color: transparent; "
