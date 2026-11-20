@@ -4,7 +4,7 @@ On wasm, clicking a popup activates it, and QGuiApplicationPrivate::
 processFocusWindowEvent() then moves it to the end of popup_list. If a child
 popup is open, clicking its parent popup therefore makes the parent the active
 popup, so the click goes to the parent instead of closing the child, and the
-child stays open. Not yet reported upstream.
+child stays open. Reported as QTBUG-152514.
 
 diff --git a/src/gui/kernel/qguiapplication.cpp b/src/gui/kernel/qguiapplication.cpp
 --- a/src/gui/kernel/qguiapplication.cpp
