@@ -116,9 +116,9 @@ MonomerDatabasePopup::MonomerDatabasePopup(const SketcherModel* model,
 
     auto* filter_button = m_ui->monomer_db_filter_btn;
     m_filter_popup = new MonomerDatabaseFilterPopup(filter_button, this);
-    // A click outside the filter popup, including on the filter button, only
-    // dismisses it
     configure_button_popup(filter_button, m_filter_popup);
+    // A click outside the filter popup, including on the filter button, only
+    // dismisses it and doesn't fire this signal/slot
     connect(filter_button, &QToolButton::clicked, this,
             &MonomerDatabasePopup::onFilterButtonClicked);
     connect(m_filter_popup, &MonomerDatabaseFilterPopup::filterChanged, this,

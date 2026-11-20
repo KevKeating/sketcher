@@ -192,10 +192,10 @@ void MonomerDatabaseFilterPopup::updateWidgets()
             }
         }
         combo->setCheckedData(checked_data);
+        set_combo_bold(combo, m_filter.isPolymerTypeFiltered());
         // the display text doesn't depend on the current item, so make sure
         // that the combo box repaints
         combo->update();
-        set_combo_bold(combo, m_filter.isPolymerTypeFiltered());
     }
     {
         auto* combo = m_ui->monomer_type_combo;
